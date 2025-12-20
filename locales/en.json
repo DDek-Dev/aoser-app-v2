@@ -1,0 +1,1199 @@
+{
+  "onboarding": {
+    "skip": "Skip",
+    "s_t_1": "Find freelancers",
+    "s_t_1_description": "See all of interesting freelancer"
+  },
+  "tab": {
+    "home": "Home",
+    "works": "Works",
+    "newWork": "New Work",
+    "notifications": "Notifications",
+    "profile": "Profile"
+  },
+  "language": {
+    "title": "Language",
+    "chooseLanguage": "Choose Your Language",
+    "description": "Please select your preferred language for using the Aoser application."
+  },
+  "protectedRoute": {
+    "authentication_require": "Authentication Required",
+    "description": "Please sign in to access this feature",
+    "googleLogin": "Login with Google",
+    "signIn": "Sign In",
+    "newhere": "New Here?",
+    "singup_to_start": "Sign up to get started",
+    "signInToPost": "Sign in to post new work",
+    "signInToViewNotifications": "Sign in to view notifications",
+    "back": "Back"
+  },
+  "---auth--": " ------------------ PAGES OF TABS ------------------ ",
+  "loginScreen": {
+    "login": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "forgot_password": "Forgot Password",
+    "login_with_google": "Login with Google",
+    "noaccount": "Don't have an account?",
+    "signup": "Sign Up",
+    "or": "Or",
+    "email_password_error": "Email or Password is incorrect",
+    "signning_In": "Sign in...",
+    "email_exist": "Email already exist, please try login."
+  },
+  "signUpScreen": {
+    "sign_up": "Sign Up",
+    "gender": "Gender",
+    "selectGender": "Select Gender",
+    "male": "Male",
+    "female": "Female",
+    "fullname": "Full Name",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "password": "Password",
+    "confirm_password": "Confirm Password",
+    "forgot_password": "Forgot Password",
+    "login_with_google": "Login with Google",
+    "haveAccount": "Have an account?",
+    "signIn": "Sign In",
+    "or": "Or",
+    "email_password_error": "Email or Password is incorrect",
+    "signning_In": "Sign in...",
+    "gender_required": "Gender is required",
+    "firstName_required": "First name is required",
+    "lastName_required": "Last name is required",
+    "email_invalid": "Invalid email",
+    "email_required": "Email is required",
+    "password_min": "Password must be number and characters",
+    "password_required": "Password is required",
+    "password_match": "Passwords must match",
+    "rePassword_required": "Please confirm your password",
+    "email_exist": "Email already exists, Please login.",
+    "sending_OTP": "Sending OTP...",
+    "send_otp_request": "Send OTP request"
+  },
+  "otpScreen": {
+    "welcome": "",
+    "otp_sent_to": "We just sent OTP to",
+    "otp_required": "OTP password is required",
+    "otp_length": "OTP must be 6 digits",
+    "didnt_receive": "Didn't receive?",
+    "resend_in": "Resend in",
+    "send_again": "Send again",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "haveAccount": "Have an account?",
+    "signIn": "Sign In",
+    "copyright": "© 2025 Aoser",
+    "error_title": "Error",
+    "form_data_not_found": "Form data not found. Please start the signup process again.",
+    "registration_failed": "Registration failed",
+    "success_title": "Success",
+    "otp_resent": "OTP has been resent to your email",
+    "resend_failed": "Failed to resend OTP",
+    "registration_successful": "Registration successful!"
+  },
+  "----": " ------------------ PAGES OF TABS ------------------ ",
+  "home": {
+    "search_freelancer": "Search freelancers...",
+    "top_freelancers": "Top Freelancers",
+    "recommended_freelancers": "Recommended Freelancers",
+    "nomore_freelancers": "No more freelancers to load",
+    "loading_more":"Loading more...",
+    "freelancers": "Freelancer",
+    "fast_search": "Fast Search",
+    "history_search": "History of Search",
+    "clear_all": "Clear All"
+  },
+  "profile": {
+    "profile": "Profile",
+    "signin": "Sign In",
+    "favorites": "Favorites",
+    "history": "History",
+    "account_settings": "Account Settings",
+    "logout": "Log Out",
+    "logout_confirmation": "Are you sure you want to logout?",
+    "cancel": "Cancel",
+    "freelancer": "Freelancer",
+    "see_freelancer_profile": "Your freelance details",
+    "accommodation": "Accommodation",
+    "driver": "Driver",
+    "company": "Company",
+    "edit_profile": "Edit Profile",
+    "language": "Language",
+    "change_password": "Change Password",
+    "notification": "Notification Preferences",
+    "help_support": "Help & Support",
+    "ask_question": "Ask a Question",
+    "how_aoser_work": "How Aoser Works",
+    "conditions_policies": "Conditions & Policies",
+    "privacy_policy": "Privacy Policy",
+    "application_version": "Version",
+    "freelancer_profile": "Freelancer Profile"
+  },
+  "works": {
+    "lets_find_work": " Let's find best",
+    "work": "Work",
+    "start_public_work": "Start your Public Work",
+    "post_to_apply": "Post what you're working on and let freelancers apply.",
+    "start_post": "Start Post",
+    "post_on": "Post on",
+    "result_found": "",
+    "more": "More",
+    "search_work": "Search work...",
+    "error": {
+      "some_wrong": "Oops! Something went wrong",
+      "couldnot_load": "We couldn't load the jobs right now",
+      "try_again": "Try Again",
+      "if_the_problem": "If the problem persists, please check your internet connection",
+      "no_job_available": "No jobs available",
+      "refresh": "Refresh"
+    }
+  },
+  "postWork": {
+    "public_work": "Public work",
+    "posting_public_work": "You are posting a public work",
+    "next": "Next",
+    "work_title": "Work Title",
+    "work_title_placeholder": "I'm looking for...",
+    "work_title_required": "Work Title is required",
+    "work_type": "Work Type",
+    "online": "Online",
+    "offline": "Offline",
+    "work_description": "Work Description",
+    "work_description_placeholder": "Explain more about the project...",
+    "work_description_required": "Work description is required",
+    "sample_work": "Sample Work (Optional)",
+    "sample_work_placeholder": "Paste link or reference",
+    "service_type": "Service Type",
+    "service_type_required": "Service type is required",
+    "budget_type": "Budget Type",
+    "fixed_price": "Fixed Price",
+    "hourly": "Hourly",
+    "budget": "Budget",
+    "budget_required": "Budget is required",
+    "deadline_requirement": "Deadline Requirement?",
+    "yes": "Yes",
+    "no": "No",
+    "from": "From",
+    "to": "To",
+    "date_placeholder": "mm/dd/yy",
+    "select_both_dates": "Please select both start and end dates",
+    "end_date_after_start": "End date must be after start date",
+    "select_jobs": "Select Jobs",
+    "confirm": {
+      "confirm": "Confirm",
+      "confirm_message": "Please confirm your work details before submission.",
+      "complete_job_details": "Complete Job Details",
+      "system_review_description": "To help freelancers understand your request clearly, please make sure your job details are complete and attractive.",
+      "important_notice": "Important Notice",
+      "important_notice_description": "Every job must follow Aoser’s hiring policy. Any posts that contain prohibited content, misleading information, or tasks unrelated to hiring a freelancer may be removed automatically by the system.",
+      "ensure_clear_post": "Make sure your job request is allowed, clear, and safe for our platform.",
+      "confirming": "Confirming...",
+      "confirm_submit": "Confirm & Submit",
+      "error": "Error!",
+      "success": "Success!",
+      "work_created_successfully": "Your public work has been created successfully."
+    },
+    "sub_work_details": "Sub Work Details",
+    "add_sections": "Add sections with multiple subtasks. Each section represents a major part of your project.",
+    "freelancer_no_found": "No freelancer found",
+    "status": {
+      "published": "Published",
+      "private": "Private",
+      "assigned": "Assigned",
+      "completed": "Completed",
+      "awaiting_payment": "Awaiting Payment",
+      "in_progress": "In Progress",
+      "pending_review": "Pending Review",
+      "delayed": "Delayed"
+    }
+  },
+  "notification": {
+    "notification": "Notifications"
+  },
+  "---": " ------------------ COMPONENTS  ------------------ ",
+  "categoryTabs": {
+    "all": "All"
+  },
+  "freelancer_profile": {
+    "header_back_text": "Freelancer Profile",
+    "active": "Active",
+    "busy": "I am busy",
+    "reviews": "reviews",
+        "busyUntil": "Busy until",
+
+    "hire": "Hire",
+    "hour": "hour",
+    "whatExpect": "What you can expext from me?",
+    "infoStats": {
+      "work_completed": "Work Completed",
+      "total_work": "Total Work",
+      "doing": "Doing"
+    },
+    "tabbedProfile": {
+      "experience": "Experience",
+      "skill": "Skills",
+      "portfolio": "Portfolio",
+      "aboutme": "About me"
+    },
+    "review": {
+      "customer_reviews": "Customer Reviews",
+      "review": "reviews",
+      "from": "From",
+      "seemore": "See more",
+      "no_rewiew": "No reviews yet"
+    },
+    "similar_Freelancer": "Similar Freelancer"
+  },
+  "workDetail": {
+    "work_detail": "Work detail",
+    "look_all_details": "look all of work details here",
+    "edit": "Edit",
+    "offer": "Offer",
+    "add_work": "Add work",
+    "accept_unlock_payment": "Make accept for this work and unlock customer payment",
+    "accept_question": "accept ?",
+    "project_paid_successfully": "This project has been paid successfully Make a complete for get your money",
+    "project_did_successfully": "This work is completed Please make a review or",
+    "rehire": "Rehire ?",
+    "work_overview": "Overview",
+    "sub_work_list": "Sub list",
+    "interested_freelancers": "Interested Freelancers",
+    "private": "Private",
+    "accept": "Accept",
+    "accepting": "Accepting...",
+    "accepted": "Accepted ✓",
+    "pending_for_accept": "Pending for Accept",
+    "make_payment": "Make a payment",
+    "waiting_for_start": "Waiting for start work",
+    "doing": "Doing",
+    "submit_work": "Submit",
+    "submitting": "Submitting...",
+    "submitted": "Submitted ✓",
+    "try_again": "Try Again",
+    "confirm": "Comfirm",
+    "pending_for_confirm": "Pending for comfirm",
+    "make_review": "Make an Review",
+    "rehire_button": "Re-Hire",
+    "description": "Description",
+    "example_work": "Example Work",
+    "categories": "Categories",
+    "deadline": "Deadline",
+    "progress": "Progress",
+    "step_by_step": "Step-by-step tasks to complete this work",
+    "add_sub_task": "Add sub task...",
+    "add_new_section": "Add new section...",
+    "add_plus": "Add +",
+    "delete_section": "Delete Section",
+    "delete_section_confirm": "Are you sure you want to delete this section?",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "open_in_browser": "Open in Browser",
+    "video_preview_not_available": "Video preview not available",
+    "tap_to_open": "Tap to open in browser",
+    "file_cannot_preview": "This file cannot be previewed. Tap to open in browser.",
+    "external_link": "External link",
+    "error": "Error",
+    "cannot_open_file": "Cannot open this file type",
+    "failed_to_open": "Failed to open file",
+    "success": "Success",
+    "textBody_of_success": "Please wait for aprove.",
+    "textBody_of_error": "Please Try Again Later.",
+    "textBody_of_accept_success": "Accept Success",
+    "become_freelancer_role": "Become a Freelancer on Aoser",
+    "set_up_freelancer_role": "Set up your freelancer profile and receive job offers.",
+    "start_freelancer_role": "Start Freelancer Role.",
+    "hire": "Hire",
+    "hiring": "Hiring..."
+  },
+  "editWork": {
+    "title": "Update work",
+    "subtitle": "Carefully update your work",
+    "updateButton": "Update",
+    "loadingText": "Loading work details...",
+    "errorText": "Failed to load work details",
+    "retryButton": "Retry",
+    "workTitle": {
+      "label": "Work Title",
+      "placeholder": "I'm looking for...",
+      "error": "Work Title is required"
+    },
+    "workType": {
+      "label": "Work Type",
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "workDescription": {
+      "label": "Work Description",
+      "placeholder": "Explain more about the project...",
+      "error": "Work description is required"
+    },
+    "sampleWork": {
+      "label": "Sample Work (Optional)",
+      "placeholder": "Paste link or reference"
+    },
+    "serviceType": {
+      "label": "Service Type",
+      "error": "Service type is required"
+    },
+    "budgetType": {
+      "label": "Budget Type",
+      "fixedPrice": "Fixed Price",
+      "hourly": "Hourly"
+    },
+    "budget": {
+      "label": "Budget",
+      "error": "Budget is required"
+    },
+    "deadline": {
+      "label": "Deadline Requirement?",
+      "yes": "Yes",
+      "no": "No",
+      "from": "From",
+      "to": "To",
+      "fromPlaceholder": "mm/dd/yy",
+      "toPlaceholder": "mm/dd/yy",
+      "errorBothDates": "Please select both start and end dates",
+      "errorEndDate": "End date must be after start date"
+    },
+    "toast": {
+      "success": "Success!",
+      "text_success": "Your work has been updated successfully.",
+      "error": "Opps!",
+      "text_error": "Something went wrong. Please try again."
+    }
+  },
+  "sortBy": {
+    "all": "All",
+    "high_low": "Price: Low to High",
+    "low_high": "Price: High to Low",
+    "near_far": "Distance: Near to Far",
+    "far_near": "Distance: Far to Near"
+  },
+  "favorites": {
+    "favorites": "Favorites",
+    "public_works": "Public works",
+    "freelancer": "Freelancer",
+    "accommodation": "Accommodation",
+    "driver": "Driver",
+    "company": "Company",
+    "work": {
+      "no_favorite": "No favorites yet",
+      "items_will_appear_here": "Items you mark as favorite will appear here"
+    },
+    "freelancers": {},
+    "favorite_no_result": {
+      "no_favorite": "No favorites yet",
+      "items_will_appear_here": "You haven't added any favorites yet. Start exploring and add your favorites"
+    },
+    "history_no_result": {
+      "no_favorite": "No history yet",
+      "items_will_appear_here": "You haven't added any work yet. Start exploring and add your work"
+    }
+  },
+  "history": {
+    "history": "History",
+    "public_works": "Public works",
+    "freelancer": "Freelancer",
+    "accommodation": "Accommodation",
+    "driver": "Driver",
+    "company": "Company",
+    "work": {
+      "no_favorite": "No history yet",
+      "items_will_appear_here": "Items you mark as history will appear here"
+    },
+    "freelancers": {},
+    "history_no_result": {
+      "no_history": "No history yet",
+      "items_will_appear_here": "You haven't added any work yet. Start exploring and add your work"
+    }
+  },
+  "editProfile": {
+    "edit_profile": "Edit Profile",
+    "new_image_selected": "New image selected",
+    "profile_photo_help": "Your profile photo helps others recognize you.",
+    "profile_image_required": "Profile image is required",
+    "first_name": "First Name",
+    "first_name_placeholder": "e.g. John",
+    "first_name_required": "First name is required",
+    "last_name": "Last Name",
+    "last_name_placeholder": "e.g. Doe",
+    "last_name_required": "Last name is required",
+    "cancel": "Cancel",
+    "update": "Update",
+    "processing": "Processing...",
+    "permission_required": "Permission Required",
+    "permission_message": "Permission is required to access your gallery",
+    "error": "Error",
+    "pick_image_error": "Failed to pick image. Please try again.",
+    "upload_error": "Failed to upload profile image",
+    "success": "Success!",
+    "profile_updated": "Profile updated successfully.",
+    "oops": "Oops!",
+    "update_failed": "Failed to update profile. Please try again.",
+    "phone_required": "Please enter your phone number",
+    "phone": "Phone",
+    "select_contry": "Select Country",
+    "country_no_found": "No countries found",
+    "save": "Save",
+    "saving": "Saving...",
+    "delete_image_title": "Delete Image",
+    "delete_image_message": "Are you sure you want to delete this profile image?",
+    "delete_image": "Delete Image",
+    "delete_image_desc": "Remove current profile photo",
+    "choose_image_source": "Choose Image Source",
+    "take_photo": "Take Photo",
+    "take_photo_desc": "Use your camera to take a photo",
+    "choose_from_gallery": "Choose from Gallery",
+    "choose_from_gallery_desc": "Select from your photo library",
+    "camera_permission_required": "Camera Permission Required",
+    "camera_permission_message": "Please allow camera access to take photos",
+    "camera_error": "Failed to open camera",
+    "current_image": "Current profile image"
+  },
+  "changePassword": {
+    "title": "Reset Password",
+    "enterEmail": "Reset your password",
+    "emailInstructions": "Enter your email to receive a verification code",
+    "email": "Email Address",
+    "emailPlaceholder": "Enter your email",
+    "verifyOtp": "Enter verification code",
+    "otpSentTo": "Verification code sent to",
+    "enterOtp": "Enter 6-digit code",
+    "didntReceiveOtp": "Didn't receive code?",
+    "resendIn": "Resend in",
+    "resendOtp": "Resend code",
+    "otpResent": "New code has been sent",
+    "otpSent": "Verification code sent successfully",
+    "otpAlreadySent": "Code already sent to",
+    "setNewPassword": "Create new password",
+    "passwordInstructions": "Enter a strong new password",
+    "verifyingOtp": "Verifying code",
+    "sentTo": "Sent to",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter new password",
+    "updateButton": "Reset Password",
+    "sendOtp": "Send Code",
+    "verifyOtpButton": "Verify Code",
+    "editEmail": "Edit Email",
+    "editOtp": "Edit OTP",
+    "sendToDifferentEmail": "Send to different email",
+    "changeEmailTitle": "Change Email",
+    "changeEmailMessage": "Do you want to edit this email or send the code to a different email?",
+    "changeEmailConfirm": "Do you want to go back and edit your email?",
+    "wrongOtpTryAgain": "Wrong OTP? Try again",
+    "success": "Password has been reset successfully!",
+    "errors": {
+      "emailRequired": "Email is required",
+      "invalidEmail": "Please enter a valid email",
+      "otpRequired": "Please enter the 6-digit code",
+      "failedToSendOtp": "Failed to send verification code",
+      "newPasswordRequired": "New password is required",
+      "passwordMinLength": "Password must be number and characters",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordsNotMatch": "Passwords do not match",
+      "resetFailed": "Failed to reset password"
+    }
+  },
+  "common": {
+    "success": "Success",
+    "error": "OOP!",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "yes": "Yes"
+  },
+  "askQuestion": {
+    "title": "Ask a Question",
+    "description": "Have something on your mind? Ask us anything related to your account, work, bookings, or the app.",
+    "nameLabel": "Your Name",
+    "namePlaceholder": "Enter your name",
+    "emailLabel": "Your Email",
+    "emailPlaceholder": "Enter your email",
+    "categoryLabel": "Choose Category",
+    "questionLabel": "Describe your question or issue",
+    "questionPlaceholder": "Describe your question or issue in detail...",
+    "attachFile": "Attach image/video file to explain better (optional)",
+    "submitButton": "Send My Question",
+    "quickAnswersTitle": "Need a quick answer?",
+    "quickAnswers": {
+      "howItWorks": "How does Aoser work?",
+      "howToBook": "How to book a driver?",
+      "howToTopUp": "How to top-up my account?",
+      "accountIssues": "Having account issues?",
+      "paymentIssues": "Payment not working?"
+    },
+    "errors": {
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "categoryRequired": "Please select a category",
+      "questionRequired": "Please describe your question"
+    }
+  },
+  "privacyPolicy": {
+    "title": "AOSER Policies",
+    "intro": "These policies take effect immediately upon your registration as a member or user of AOSER.",
+    "section1": {
+      "title": "Security & Privacy Policy",
+      "description": "AOSER places the highest priority on the security of user data and is committed to strictly protecting personal information in accordance with international standards.",
+      "dataCollection": {
+        "title": "Data Collection and Use",
+        "items": [
+          "Only essential data will be collected: name, phone number, email, photos, location, and identity verification documents",
+          "Data will be used solely for service-related purposes: identity verification, bookings, coordination, and invoicing"
+        ]
+      },
+      "dataProtection": {
+        "title": "Data Protection",
+        "items": [
+          "Data encryption is applied to all transactions",
+          "Information is stored on secure servers with backup systems",
+          "Strict internal access controls are enforced",
+          "Two-factor authentication (2FA) is required for critical accounts"
+        ]
+      },
+      "userRights": {
+        "title": "Your Rights",
+        "items": [
+          "Request access, correction, or account deletion at any time",
+          "File complaints regarding personal data breaches",
+          "Contact us at: support@aoser.app"
+        ]
+      }
+    },
+    "section2": {
+      "title": "Platform Usage Policy",
+      "customers": {
+        "title": "For Customers",
+        "requirements": {
+          "title": "Requirements:",
+          "items": [
+            "Must register with accurate, verifiable information",
+            "Illegal use such as human trafficking, gambling, or sexual services is strictly prohibited",
+            "Fake orders or fraud to exploit service providers is prohibited"
+          ]
+        },
+        "violations": {
+          "title": "Violations:",
+          "items": [
+            "AOSER reserves the right to suspend or terminate accounts without prior notice",
+            "Repeated violations may result in referral to legal authorities"
+          ]
+        }
+      },
+      "providers": {
+        "title": "For Service Providers",
+        "requirements": {
+          "title": "Requirements:",
+          "items": [
+            "Must verify identity with documents (Passport, ID card, license, rental contract)",
+            "Must provide accurate service/property details (real photos/videos, pricing, hours)",
+            "Illegal or immoral services are strictly prohibited"
+          ]
+        },
+        "violations": {
+          "title": "Violations:",
+          "items": [
+            "More than 3 poor-quality service reports may lead to temporary suspension",
+            "Fraud (bait-and-switch or fake service) will result in permanent account termination"
+          ]
+        }
+      }
+    },
+    "section3": {
+      "title": "Payment & Payout Policy",
+      "paymentMethods": {
+        "title": "Payment Methods",
+        "items": [
+          "QR Code",
+          "Mobile Banking",
+          "Credit/Debit Cards",
+          "Supported E-Wallets (domestic)"
+        ]
+      },
+      "payoutConditions": {
+        "title": "Provider Payout Conditions",
+        "items": [
+          "Payment is released after service completion and customer confirmation",
+          "Funds are transferred within 1–2 business days to registered bank account"
+        ]
+      },
+      "platformFees": {
+        "title": "Platform Fees",
+        "table": {
+          "freelancer": {
+            "service": "Freelancer",
+            "fee": "11–15% of total service fee"
+          },
+          "booking": {
+            "service": "Accommodation Bookings",
+            "fee": "10% per night"
+          },
+          "rental": {
+            "service": "Rental/Real Estate & Personal Property",
+            "fee": "5–10%, depending on service type"
+          }
+        },
+        "note": "* Fees are automatically deducted before disbursing payments to providers"
+      }
+    },
+    "section4": {
+      "title": "Quality Assurance & Rating Policy",
+      "ratingSystem": {
+        "title": "Rating System",
+        "items": [
+          "Customers can rate services from 1 to 5 stars after completion",
+          "Reviews must be respectful and constructive",
+          "Ratings influence the provider's visibility on the platform"
+        ]
+      },
+      "topRated": {
+        "title": "Top Rated Benefits",
+        "description": "Providers with an average rating of 3.5 stars and above will be listed as \"Top Rated\" with benefits:",
+        "items": [
+          "Homepage visibility",
+          "Priority recommendations",
+          "Access to promotional campaigns"
+        ]
+      },
+      "qualityMonitoring": {
+        "title": "Quality Monitoring",
+        "items": [
+          "3+ complaints for poor service result in temporary suspension",
+          "Random monthly checks for accuracy, cleanliness, and provider behavior"
+        ]
+      }
+    },
+    "section5": {
+      "title": "Cancellation & Refund Policy",
+      "customerCancellations": {
+        "title": "Customer Cancellations",
+        "table": {
+          "beforeStart": {
+            "time": "Before provider begins",
+            "refund": "✅ 100% full refund"
+          },
+          "partialCompletion": {
+            "time": "After partial completion",
+            "refund": "⚠ 50% refund"
+          },
+          "fullCompletion": {
+            "time": "After full completion",
+            "refund": "❌ No refund (unless faulty)"
+          }
+        },
+        "note": "* Refunds are processed within 3–7 business days via original payment method"
+      },
+      "providerCancellations": {
+        "title": "Provider Cancellations",
+        "items": [
+          "Customer receives 100% refund if provider cancels without valid reason",
+          "Provider's credibility score will be reduced and may face temporary suspension"
+        ]
+      },
+      "serviceNotAsAdvertised": {
+        "title": "Service Not as Advertised",
+        "items": [
+          "Complaints must be submitted within 48 hours",
+          "Full refunds for misrepresentation, partial refunds for valid damages"
+        ]
+      }
+    },
+    "section6": {
+      "title": "Support & Dispute Resolution",
+      "contactSupport": {
+        "title": "Contact Support (24/7)",
+        "items": [
+          "In-app chat",
+          "Email: support@aoser.app",
+          "Telephone (Laos): xx-xxxx-xxxx"
+        ]
+      },
+      "responseTimes": {
+        "title": "Response Times",
+        "items": [
+          "General inquiries: within 24 hours",
+          "Urgent issues (fraud): within 1–12 hours",
+          "Complaint resolution: within 5 business days"
+        ]
+      }
+    },
+    "section7": {
+      "title": "Growth & Transparency Policy",
+      "platformExpansion": {
+        "title": "Platform Expansion",
+        "items": [
+          "Aiming to expand from Laos to ASEAN within 2–5 years",
+          "Building local partnerships to support freelancers, hospitality, and rental services",
+          "Prioritizing local employment and in-country development teams"
+        ]
+      },
+      "transparencyCommitment": {
+        "title": "Transparency Commitment",
+        "items": [
+          "Quarterly performance reports will be published",
+          "System updates every 3 months with security and UX/UI testing",
+          "User feedback used to inform future improvements"
+        ]
+      }
+    },
+    "section8": {
+      "title": "Terms of Use & Legal Disclaimer",
+      "prohibitedUses": {
+        "title": "Prohibited Uses",
+        "items": [
+          "Illegal or immoral activities",
+          "Fake accounts or misleading content",
+          "Posting inappropriate material"
+        ]
+      },
+      "liabilityLimitation": {
+        "title": "Liability Limitation",
+        "items": [
+          "AOSER acts solely as a platform to connect clients with providers",
+          "Not liable for actions or errors by users unless directly caused by platform failure",
+          "If payment is made outside the AOSER platform, AOSER will not be liable for any disputes or damages"
+        ]
+      },
+      "policyAmendments": {
+        "title": "Policy Amendments",
+        "items": [
+          "AOSER reserves the right to amend policies without prior notice",
+          "Users should regularly review terms to ensure compliance with the latest version"
+        ]
+      }
+    },
+    "footer": "Last updated: July 2025\nBy using AOSER, you agree to these policies and terms of service."
+  },
+  "reviewModal": {
+    "title": "Write a Review",
+    "rateFreelancer": "Rate the Freelancer",
+    "starsOutOf": "{{rating}} out of 5 stars",
+    "addTags": "Add Tags (Optional)",
+    "writeReview": "Write Your Review (Optional)",
+    "reviewPlaceholder": "Share your experience working with this freelancer...",
+    "cancel": "Cancel",
+    "submitReview": "Submit Review",
+    "ratingRequired": "Rating Required",
+    "ratingRequiredMessage": "Please provide a rating before submitting.",
+    "submitError": "Oops!",
+    "submitErrorMessage": "Failed to submit review. Please try again.",
+    "thankYou": "Thank You!",
+    "thankYouMessage": "Your review has been submitted successfully.\nWe appreciate your feedback!",
+    "starRating": "{{rating}} star rating",
+    "tags": {
+      "professional": "Professional",
+      "onTime": "On Time",
+      "greatCommunication": "Great Communication",
+      "highQuality": "High Quality",
+      "creative": "Creative",
+      "responsive": "Responsive",
+      "reliable": "Reliable",
+      "expertSkills": "Expert Skills",
+      "problemSolver": "Problem Solver",
+      "exceededExpectations": "Exceeded Expectations"
+    }
+  },
+  "profile_in_command": {
+    "apply": "Apply",
+    "cancel": "Cancel"
+  },
+  "forgotPassword": {
+    "title": "Forgot Password",
+    "subtitle": "Enter your email address and we'll send you a verification code to reset your password.",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "Aoser@example.com",
+    "sendButton": "Send Verification Code",
+    "sending": "Sending OTP...",
+    "send_otp_request": "Send OTP request",
+    "verificationTitle": "Enter Verification Code",
+    "verificationSubtitle": "We sent a 6-digit code to your email. Enter it below to reset your password.",
+    "verificationCodeLabel": "Verification Code",
+    "didntReceive": "Didn't receive the code?",
+    "resendTimer": "Resend ",
+    "sendAgain": "Send again",
+    "newPasswordLabel": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPasswordLabel": "Confirm New Password",
+    "confirmPasswordPlaceholder": "Confirm new password",
+    "changeEmail": "Change Email Address",
+    "resetButton": "Reset Password",
+    "resetting": "Resetting...",
+    "otpSentTitle": "OTP Sent",
+    "otpSentMessage": "We've sent a 6-digit verification code to your email. Please check your inbox.",
+    "otpResendMessage": "A new verification code has been sent to your email.",
+    "userNotFound": "User not found. Please try another email address.",
+    "resendFailed": "Failed to resend OTP. Please try again.",
+    "successTitle": "Success",
+    "successMessage": "Your password has been reset successfully. You can now sign in with your new password.",
+    "otpIncorrect": "Otp is incorrect. Please try again.",
+    "errorTitle": "Opp!",
+    "opt_requird": "OTP is required",
+    "opt_must_number": "OTP must be a number",
+    "password_reset_success": "Your password has been reset successfully. You can now sign in with your new password.",
+    "otp_request": "OTP request"
+  },
+  "freelancerRoleGate": {
+    "becomeFreelancerTitle": "Become a Freelancer",
+    "becomeFreelancerSubtitle": "You are not a freelancer yet. Upgrade your role to offer services and get hired with free.",
+    "getStartedButton": "Get Started",
+    "pendingTitle": "Application Under Review",
+    "pendingSubtitle": "Your freelancer account is currently being reviewed. Please wait while our team approves your application.",
+    "backToHomeButton": "Back to Home"
+  },
+  "kyc": {
+    "steps": {
+      "profile": "Profile",
+      "basicInfo": "Basic Info",
+      "skills": "Skills",
+      "category": "Category",
+      "availability": "Availability",
+      "portfolio": "Portfolio",
+      "bankInfo": "Bank Information",
+      "confirmation": "Confirmation",
+      "review": "Review"
+    },
+    "toast": {
+      "uploading": {
+        "title": "Uploading...",
+        "body": "Please wait while we upload your files and submit your application."
+      },
+      "success": {
+        "title": "Success!",
+        "body": "Your freelancer application has been submitted successfully. Please wait for admin approval."
+      },
+      "error": {
+        "title": "Error",
+        "body": "Failed to process your application. Please try again."
+      },
+      "oops": {
+        "title": "Opp!",
+        "body": "Something went wrong. Please try again."
+      }
+    },
+    "buttons": {
+      "back": "Back",
+      "next": "Next",
+      "submit": "Submit",
+      "cancel": "Close"
+    },
+    "aoser_profile": {
+      "some_wrong": "Sorry! Something went wrong",
+      "describe_profile": "Your profile photo helps others recognize you.",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "enter_first_name": "Please enter your first name",
+      "enter_last_name": "Please enter your last name"
+    },
+    "step1": {
+      "jobTitle": {
+        "label": "Job Title",
+        "placeholder": "e.g. Web developer and designer...",
+        "required": "Job title is required"
+      },
+      "bannerImage": {
+        "label": "Banner Image",
+        "required": "Banner image is required"
+      },
+      "promoVideo": {
+        "label": "Promote Yourself (Video)"
+      },
+      "freelancerType": {
+        "label": "Freelancer Type",
+        "fulltime": "Full-time",
+        "parttime": "Part-time",
+        "offering": "Offering"
+      },
+      "serviceType": {
+        "label": "Choose Service Type",
+        "required": "Service type is required"
+      }
+    },
+    "step2": {
+      "headline": "Describe About You for Customers",
+      "subtitle": "Let your customers understand your background, skills, and experience.",
+      "about_label": "About me",
+      "about_placeholder": "Hi, I'm a UI/UX Designer....",
+      "about_required": "About me is required",
+      "about_tip": "Tip: Briefly share your experience and specialties.",
+      "skills_title": "Skills",
+      "skills_placeholder": "e.g. React Native",
+      "skills_required": "Skills is required",
+      "experience_title": "Work Experience",
+      "experience_placeholder": "e.g. Lead Designer",
+      "experience_required": "Work experience is required",
+      "resume_label": "Your Resume",
+      "certificate_label": "Your Certificates (optional)",
+      "add_more": "Add more",
+      "select_image": "Select Image"
+    },
+    "step3": {
+      "title": "What Do You Offer?",
+      "subtitle": "Write what customer can expect on you and make explain clearly in the tag",
+      "serviceDescription": {
+        "label": "What customers can expect from you?",
+        "placeholder": "Describe your service, your process, and what makes you unique. Be clear and concise...",
+        "error": "Service Description is required"
+      },
+      "hourlyRate": {
+        "label": "Hourly Rate",
+        "error": "Hourly Rate is required"
+      },
+      "tip": "This will help customers understand your value.",
+      "click_change_currency": "Click to change currency"
+    },
+    "step4": {
+      "title": "Your Real Information",
+      "subtitle": "Please provide your actual information as required for the system.",
+      "documentTypes": {
+        "ID_CARD": "ID Card",
+        "PASSPORT": "Passport",
+        "VISA": "Visa"
+      },
+      "cardId": {
+        "label": "Card ID",
+        "placeholder": "Enter Card ID",
+        "error": "Card ID is required"
+      },
+      "expiryDate": {
+        "label": "Card Expired Date",
+        "placeholder": "Select Date",
+        "error": "Card Expiry Date is required"
+      },
+      "phoneNumber": {
+        "label": "Phone Number",
+        "error": "Phone number is required"
+      },
+      "location": {
+        "title": "Current Location",
+        "province": {
+          "label": "Province",
+          "placeholder": "Select Province",
+          "error": "Province is required"
+        },
+        "district": {
+          "label": "District",
+          "placeholder": "Select District",
+          "error": "District is required"
+        },
+        "village": {
+          "label": "Village",
+          "placeholder": "Enter village name",
+          "error": "Village is required",
+          "hint": "Please select a district first"
+        }
+      },
+      "loading": {
+        "title": "Current Location"
+      },
+      "error": "Failed to load location data. Please try again."
+    },
+    "step5": {
+      "title": "Verify Your Identity",
+      "subtitle": "Upload a photo of your personal card and a selfie of you holding the card.",
+      "selfieWithCard": {
+        "label": "Selfie With Card",
+        "description": "Clearly show your face and the card you own.",
+        "error": "This image is required"
+      },
+      "cardImage": {
+        "label": "Card Image",
+        "description": "Show your personal card clearly and without blur.",
+        "error": "This image is required"
+      }
+    },
+    "step6": {
+      "title": "Payment Method",
+      "subtitle": "Bank account is sensitive information, so info to freelancer carefully with this data",
+      "methods": {
+        "LAOS_BANK": "Lao Bank",
+        "PAYPAL": "PayPal"
+      },
+      "accountName": {
+        "label": "Account Name",
+        "placeholder": "Enter your account name",
+        "error": "Account name is required"
+      },
+      "bankAccount": {
+        "label": "Bank account number",
+        "placeholder": "e.g. 123456789",
+        "error": "Bank number should be at least 8 digits",
+        "hint": "Account number should be 8–17 digits"
+      },
+      "paypal": {
+        "label": "PayPal Email / Phone",
+        "placeholder": "e.g. you@example.com or +85620...",
+        "error": "PayPal email or phone is required"
+      }
+    },
+    "step7": {
+      "title": "Confirm Your Freelancer Role",
+      "subtitle": "Make a confirm and wait for admin approve your freelancer account.",
+      "points": {
+        "review": {
+          "icon": "System or admin will review and approve your account around 24h.",
+          "text": "System or admin will review and approve your account around 24h."
+        },
+        "notification": {
+          "icon": "You'll be notified if there are any issues with your profile.",
+          "text": "You'll be notified if there are any issues with your profile."
+        },
+        "payment": {
+          "icon": "Once approved, your profile will be visible to customers for hiring.",
+          "text": "Once approved, your profile will be visible to customers for hiring."
+        }
+      },
+      "agreement": {
+        "text": "I confirm that the data I provided is correct, and I understand the",
+        "policy": "policy",
+        "error": "Please agree to the terms and conditions"
+      }
+    }
+  },
+  "payment": {
+    "title": "Payment",
+    "paymentForWork": "Payment for work",
+    "amountToPay": "Amount to Pay",
+    "downloadQR": "Download QR Code",
+    "saving": "Saving...",
+    "saveQRHint": "Save QR code to pay later",
+    "unlockPotential": "Unlock Your Freelancer Potential",
+    "upgradeFee": "A one-time upgrade fee is required to access all premium features on Asor.",
+    "howToPay": "How to Pay",
+    "step1": "Open your BCEL One app",
+    "step2": "Scan the QR code above",
+    "step3": "Confirm the payment details",
+    "step4": "Complete the transaction",
+    "securePayment": "Secure Payment",
+    "invoiceId": "Invoice ID",
+    "workCode": "Work Code",
+    "paymentMethod": {
+      "selectMethod": "Select Payment Method",
+      "BCEL": "BCEL One"
+    },
+    "errors": {
+      "permissionRequired": "Permission Required",
+      "permissionMessage": "Please grant permission to save images",
+      "qrSaveSuccess": "QR code saved to gallery!",
+      "qrSaveError": "Failed to save QR code. Please try again."
+    }
+  },
+  "payment_success": {
+    "title": "Payment Successful",
+    "payment_details": "Payment Details",
+    "amount": "Amount:",
+    "payment_type": "Payment Type:",
+    "paid_via": "Paid Via:",
+    "receipt_id": "Receipt ID:",
+    "close": "Close",
+    "save_bill": "Save Bill",
+    "saving": "Saving...",
+    "powered_by": "POWERED BY AOSER",
+    "scan_qr": "Scan QR code to verify payment status",
+    "success_message": "Bill saved to gallery!",
+    "error_message": "Failed to save Bill. Please try again.",
+    "no_data_title": "No Payment Data",
+    "no_data_message": "Payment information is not available",
+    "try_again": "Try Again",
+    "loading": "Loading payment details...",
+    "error_loading": "Failed to Load",
+    "error_loading_message": "Unable to load payment details. Please try again.",
+    "completed": "Payment Completed",
+    "pending": "Payment Pending",
+    "payment_receipt": "Payment Receipt",
+    "total_amount": "Total Amount",
+    "invoice_id": "Invoice ID",
+    "terminal_id": "Terminal ID",
+    "transaction_time": "Transaction Time",
+    "ticket": "Ticket Reference",
+    "fcc_ref": "FCC Reference",
+    "customer_info": "Customer Information",
+    "name": "Name",
+    "phone": "Phone",
+    "address": "Address",
+    "merchant_info": "Merchant Information",
+    "merchant_name": "Merchant Name",
+    "merchant_id": "Merchant ID",
+    "secure_payment": "Secure Payment Platform"
+  },
+  "chat": {
+    "chatroom": {
+      "typing": "typing...",
+      "typeMessage": "Type a message...",
+      "replyingTo": "Replying to",
+      "permissionNeeded": "Permission needed",
+      "cameraPermissionMessage": "We need camera roll permissions to select images and videos.",
+      "error": "Error",
+      "failedToSelectMedia": "Failed to select media",
+      "failedToSelectFiles": "Failed to select files",
+      "uploadError": "Upload error",
+      "failedToPrepareUpload": "Failed to prepare file upload.",
+      "uploadFailed": "Upload failed",
+      "uploadFailedMessage": "One or more file uploads failed.",
+      "failedToSendMessage": "Failed to send message",
+      "failedToSendFiles": "Failed to send files",
+      "failedToSendProject": "Failed to send project",
+      "fileTooLarge": "File too large",
+      "fileTooLargeMessage": "The following files exceed the allowed size limits and cannot be uploaded:\n\n{fileList}\n\nPlease compress or trim them and try again. Default limits: images {imageLimit}MB, videos {videoLimit}MB.",
+      "send": "Send",
+      "image": "image",
+      "video": "video",
+      "document": "document",
+      "file": "file",
+      "message_unsent": "🕓 This message was unsent",
+      "edit": "Edit",
+      "delete": "Delete",
+      "reply": "Reply",
+      "delete_for_me": "Delete for me",
+      "unsend": "Unsend",
+      "copy": "Copy",
+      "project": "Project",
+      "media": "Photos",
+      "location": "Location"
+    },
+    "list": {
+      "title": "Chats",
+      "searchPlaceholder": "Search chats...",
+      "noChatsYet": "No chats yet",
+      "startConversation": "Start a conversation to see it here",
+      "noChatsFound": "No chats found",
+      "tryDifferentKeywords": "Try searching with different keywords",
+      "chatOptions": "Options",
+      "deleteChat": "Delete Chat",
+      "cancel": "Cancel",
+      "deleteChatTitle": "Delete Chat",
+      "deleteChatMessage": "Are you sure you want to delete this conversation? This action cannot be undone.",
+      "deleteError": "Failed to delete chat"
+    },
+    "chatContainer": {
+      "Delete_Messages": "Delete Messages",
+      "are_you_sure": "Are you sure you want 1to delete {{selectedMessages.size}} message {{selectedMessages.size > 1 ? 's' : ''}} ?",
+      "delete": "Delete"
+    },
+    "offer": {
+      "select_project": "Select Project",
+      "offer": "Offer",
+      "send": "Send",
+      "review_select": "Review selected projects and update budget/deadline if needed:",
+      "send_offer": "Send Offer"
+    }
+  },
+  "selectVideo": {
+    "permissionRequired": "Permission Required",
+    "permissionMessage": "Permission to access media library is required!",
+    "fileTooLarge": "File Too Large",
+    "fileTooLargeMessage": "Please select a video smaller than 50MB or reduce the video duration/quality",
+    "videoTooLong": "Video Too Long",
+    "videoTooLongMessage": "Please select a video shorter than 60 seconds",
+    "invalidFormat": "Invalid Format",
+    "invalidFormatMessage": "Please select a valid video file (MP4, MOV, AVI, M4V)",
+    "error": "Error",
+    "errorMessage": "Failed to process the selected video",
+    "uploadPrompt": "Video (16:9, max 1 minute)",
+    "ok": "OK",
+    "upload_banner_Prompt": "Upload Banner image (16:9)"
+  }
+}

@@ -1,0 +1,215 @@
+// import  { useState } from 'react';
+// import { View, Text, Image, TouchableOpacity } from 'react-native';
+// import { MaterialIcons } from '@expo/vector-icons';
+
+// type Review = {
+//   name: string;
+//   date: string;
+//   content: string;
+//   avatar: string;
+//   rating: number;
+// };
+
+// type ReviewsProps = {
+//   reviews: Review[];
+// };
+
+// const renderStars = (rating: number) => {
+//   const fullStars = Math.floor(rating);
+//   const hasHalfStar = rating % 1 >= 0.5;
+//   const stars = [];
+
+//   for (let i = 0; i < fullStars; i++) {
+//     stars.push(<MaterialIcons key={`star-${i}`} name="star" size={20} color="#facc15" />);
+//   }
+
+//   if (hasHalfStar) {
+//     stars.push(<MaterialIcons key="half" name="star-half" size={20} color="#facc15" />);
+//   }
+
+//   return <View className="flex-row">{stars}</View>;
+// };
+
+// export default function Reviews({ reviews }: ReviewsProps) {
+//   const [visibleCount, setVisibleCount] = useState(3);
+
+//   const handleSeeMore = () => {
+//     setVisibleCount(prev => prev + 5);
+//   };
+
+//   const visibleReviews = reviews.slice(0, visibleCount);
+//   const showSeeMore = reviews.length > visibleCount;
+
+//   const avgRating = reviews.length
+//     ? (
+//         reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+//       ).toFixed(1)
+//     : '0.0';
+
+//   return (
+//     <View className="mt-12 px-5">
+//       <View className="flex-row justify-between items-center mb-3">
+//         <Text className="text-base font-semibold text-gray-800">Customer Reviews</Text>
+//         <Text className="text-xs text-blue-600">{reviews.length.toLocaleString()} reviews</Text>
+//       </View>
+
+//       <View className="flex-row gap-4 items-center">
+//         <View className="items-center h-24 w-24 bg-blue-100 justify-center rounded-full">
+//           <Text className="text-2xl font-bold text-blue-600">{avgRating}</Text>
+//           <Text className="text-gray-500 text-sm">from 5.0</Text>
+//         </View>
+//         <View className="items-center">
+//           {renderStars(parseFloat(avgRating))}
+//         </View>
+//       </View>
+
+//       {visibleReviews.map((review, i) => (
+//         <View key={i} className="mb-2 mt-6">
+//           <View className="flex-row items-center justify-between">
+//             <View className="flex-row items-center gap-2">
+//               <Image source={{ uri: review.avatar }} className="w-10 h-10 rounded-full" />
+//               <View>
+//                 <Text className="font-semibold text-gray-700">{review.name}</Text>
+//                 {renderStars(review.rating)}
+//               </View>
+//             </View>
+//             <Text className="text-xs text-gray-400">{review.date}</Text>
+//           </View>
+//           <Text className="mt-2 text-sm text-gray-600 w-[80%]">{review.content}</Text>
+//           <View className="h-[1px] w-full bg-gray-200 mt-2" />
+//         </View>
+//       ))}
+
+//       {showSeeMore && (
+//         <TouchableOpacity onPress={handleSeeMore} className="self-center mt-2 border border-gray-200 w-full py-2 rounded">
+//           <Text className="text-blue-600 text-sm font-medium text-center">See more</Text>
+//         </TouchableOpacity>
+//       )}
+//     </View>
+//   );
+// }
+
+
+
+
+
+// components/profile/Reviews.tsx
+import { useState } from 'react';
+import { View, Text, Image, TouchableOpacity } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { Review } from 'types';
+import { useTranslation } from 'react-i18next';
+import { profileImage } from 'assets';
+
+
+
+type ReviewsProps = {
+  reviews: Review[];
+};
+
+const renderStars = (rating: number) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <MaterialIcons
+        key={`star-${i}`}
+        name={i <= rating ? 'star' : i - 0.5 <= rating ? 'star-half' : 'star-outline'}
+        size={20}
+        color="#facc15"
+      />
+    );
+  }
+  return <View className="flex-row">{stars}</View>;
+};
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
+export default function Reviews({ reviews }: ReviewsProps) {
+  const [visibleCount, setVisibleCount] = useState(3);
+
+
+  const handleSeeMore = () => {
+    setVisibleCount(prev => prev + 5);
+  };
+
+  const visibleReviews = reviews.slice(0, visibleCount);
+  const showSeeMore = reviews.length > visibleCount;
+
+  const avgRating = reviews.length
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+    : '0.0';
+
+  const { t } = useTranslation()
+  return (
+    <View className="mt-12 px-5">
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-base font-semibold text-gray-800">{t('freelancer_profile.review.customer_reviews')}</Text>
+        <Text className="text-xs text-blue-600">{reviews.length} {t('freelancer_profile.review.review')}</Text>
+      </View>
+
+      <View className="flex-row gap-4 items-center mb-6">
+        <View className="items-center h-24 w-24 bg-blue-100 justify-center rounded-full">
+          <Text className="text-2xl font-bold text-blue-600">{avgRating}</Text>
+          <Text className="text-gray-500 text-sm">{t('freelancer_profile.review.from')} 5.0</Text>
+        </View>
+        <View className="items-center">
+          {renderStars(parseFloat(avgRating))}
+        </View>
+      </View>
+
+      {visibleReviews.length > 0 ? (
+        <>
+          {visibleReviews.map((review) => (
+            <View key={review._id} className="mb-6">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center gap-2">
+                  <Image
+                    source={
+                      review.reviewer.profileImage
+                        ? { uri: review.reviewer.profileImage }
+                        : profileImage
+                    }
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <View>
+                    <Text className="font-semibold text-gray-700">
+                      {review.reviewer.firstName} {review.reviewer.lastName}
+                    </Text>
+                    {renderStars(review.rating)}
+                  </View>
+                </View>
+                <Text className="text-xs text-gray-400">{formatDate(review.createdAt)}</Text>
+              </View>
+              {review.comment && (
+                <Text className="mt-2 text-sm text-gray-600">{review.comment}</Text>
+              )}
+              {/* {review.work && (
+                <Text className="mt-1 text-xs text-gray-500">Project: {review.work.workTitle}</Text>
+              )} */}
+              <View className="h-[1px] w-full bg-gray-200 mt-4" />
+            </View>
+          ))}
+
+          {showSeeMore && (
+            <TouchableOpacity
+              onPress={handleSeeMore}
+              className="self-center mt-2 border border-gray-200 w-full py-2 rounded"
+            >
+              <Text className="text-blue-600 text-sm font-medium text-center">{t('freelancer_profile.review.seemore')}</Text>
+            </TouchableOpacity>
+          )}
+        </>
+      ) : (
+        <View className="py-8 items-center">
+          <Text className="text-gray-500">{t('freelancer_profile.review.no_rewiew')}</Text>
+        </View>
+      )}
+    </View>
+  );
+}

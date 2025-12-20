@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "534310388147",
+    "project_id": "aoser-fcm",
+    "storage_bucket": "aoser-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:534310388147:android:9fe421c135b26f6edbcbc6",
+        "android_client_info": {
+          "package_name": "com.aoser.aoser"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCygdCBN2vnZALNMIU6s2HtnnHoHhZy3C4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+    
+  ],
+  "configuration_version": "1"
+}

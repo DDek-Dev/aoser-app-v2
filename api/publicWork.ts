@@ -1,0 +1,232 @@
+// api/publiceWorkApi.ts
+import axios from 'axios';
+import { BookingFormData, Job, SubWorkDetail, WorkApplies, WorkById } from 'types';
+
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+// const API_BASE_URL = "http://192.168.0.185:8000"
+
+export const publiceWorkApi = {
+    getPublicWork: async (token: string): Promise<Job[]> => {
+
+        console.log("API_BASE_URL2 : ", API_BASE_URL);
+
+        try {
+            const res = await axios.get(`${API_BASE_URL}/worker/works`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+            return res.data.data;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+
+    },
+    getAllMyWork: async (token: string) => {
+
+        try {
+            const res = await axios.get(`${API_BASE_URL}/worker/my-works`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+            return res.data.data;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
+
+    // Add these methods if you need them
+    getPublicWorkById: async (id: string): Promise<WorkById> => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/worker/work/${id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            return res.data.data;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+
+    },
+    updateWorkById: async (id: string, data: any, token: string): Promise<Job> => {
+        try {
+            console.log("DATA in Update API : ", id);
+            const res = await axios.put(`${API_BASE_URL}/worker/work/${id}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+
+            console.log("RES UPdate in Update API : ", res.data);
+
+            return res.data.data.work;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
+    // API - Add status parameter
+    updateSubworkStatus: async (id: string, data: SubWorkDetail[], token: string): Promise<SubWorkDetail[]> => {
+        
+        try {
+            const res = await axios.put(
+                `${API_BASE_URL}/worker/freelancer-work/${id}`,
+                data,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Aoser ${token}`,
+                    },
+                }
+            );
+
+            return res.data.data;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
+    acceptWork: async(id:string, data: any, token: string) => {
+        try {
+            const res = await axios.put(
+                `${API_BASE_URL}/worker/freelancer-work-exception/${id}`,data,{
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Aoser ${token}`,
+                    },
+                })
+                
+                return res.data.data
+        } catch (error) {
+            console.log("ERROR : ", error);
+        }
+    },
+    submitWork: async (id: string, token: string): Promise<SubWorkDetail[]> => {
+        
+        try {
+            const res = await axios.put(
+                `${API_BASE_URL}/worker/freelancer-work-submit/${id}`,
+                {},
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Aoser ${token}`,
+                    },
+                }
+            );
+
+    
+            return res.data.data;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
+
+     completetWork: async(id:string, data: any, token: string) => {
+        try {
+            const res = await axios.put(
+                `${API_BASE_URL}/worker/work-confirm-complete/${id}`,data,{
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Aoser ${token}`,
+                    },
+                })
+                
+                return res.data.data
+        } catch (error) {
+            console.log("ERROR : ", error);
+        }
+    },
+
+
+    createPublicWork: async (data: BookingFormData, token: string) => {
+        // Transform data to match backend format with safety checks
+        const requestData = {
+            workTitle: data.workTitle,
+            description: data.description,
+            budget: data.budget || 0, // Ensure budget is never null
+            kindOfWork: data.kindOfWork,
+            deadLine: data.deadLine ? new Date(data.deadLine) : undefined,
+            startDate: data.startDate ? new Date(data.startDate) : undefined,
+            subWorkDetails: data.subWorkDetails || [], // Ensure array exists
+            currency: data.currency,
+            budgetType: data.budgetType,
+            serviceType: data.serviceType,
+            jobs: data.jobs || [],
+            exampleWork: undefined,
+            assignedTo: undefined,
+        };
+
+        // Remove undefined values to avoid sending empty fields
+        const cleanData = Object.fromEntries(
+            Object.entries(requestData).filter(([_, value]) => value !== undefined)
+        );
+
+        const res = await axios.post(`${API_BASE_URL}/worker/work`, cleanData, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Aoser ${token}`,
+            },
+        });
+
+        return res.data.data;
+    },
+
+    deletePublicWork: async (id: string) => {
+        const res = await axios.delete(`${API_BASE_URL}/worker/work/${id}`, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return res.data.data;
+    },
+
+    freelancerApplyWork: async (workId: string, token: string) => {
+
+        const res = await axios.post(`${API_BASE_URL}/worker/freelancer-work-apply/${workId}`, {}, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Aoser ${token}`,
+            },
+        });
+        return res.data.data;
+    },
+    getAllApplyWork: async ( token: string): Promise<WorkApplies[]> => {
+       
+        try {
+            
+            const res = await axios.get(`${API_BASE_URL}/worker/freelancer-work-applies`,  {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+    
+  
+       
+            return res.data.data;
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
+
+ 
+};

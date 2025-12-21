@@ -33,8 +33,8 @@ const SelectFreelancerType = forwardRef<{ focus: () => void }, Props>(
     // Define the display mapping
     const FREELANCER_TYPE_DISPLAY = {
       FULLTIME: t('kyc.step1.freelancerType.fulltime'),
-      PART_TIME: t('kyc.step1.freelancerType.parttime'),
-      OFFERING: t('kyc.step1.freelancerType.offering'),
+      PART_TIME: t('kyc.step1.freelancerType.parttime')
+    
     };
 
     useImperativeHandle(ref, () => ({

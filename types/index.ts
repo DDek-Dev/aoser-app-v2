@@ -148,7 +148,7 @@ export type BookingFormData = {
   startDate?: string | null;
   subWorkDetails: SubWorkDetail[];
   currency: 'LAK' | 'USD';
-  budgetType: 'FIXED_PRICE' | 'HOURLY';
+  budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
   serviceType: string;
   jobs?: string[];
 };

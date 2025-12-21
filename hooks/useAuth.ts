@@ -73,7 +73,7 @@ export const useAuth = () => {
       queryClient.setQueryData(AUTH_KEYS.tokens, newTokens);
       queryClient.setQueryData(AUTH_KEYS.user, userData);
 
-     
+
       // navigation.goBack();
       return { success: true };
 
@@ -104,10 +104,14 @@ export const useAuth = () => {
       // Update cache
       queryClient.setQueryData(AUTH_KEYS.tokens, newTokens);
       queryClient.setQueryData(AUTH_KEYS.user, data.data.userProfile);
- 
+      const isUserProfileSetup = data.data.userProfile.gender && data.data.userProfile.firstName && data.data.userProfile.lastName && data.data.userProfile.phone && data.data.userProfile.address;
+      if (isUserProfileSetup) {
+        navigation.replace('MainTabs');
+      } else {
+        navigation.navigate('ProfileSetup');
+      }
 
       // navigation.goBack();
-      navigation.replace('ProfileSetup');
 
     },
     onError: (error) => {
@@ -125,8 +129,11 @@ export const useAuth = () => {
         offlineAccess: false,
       });
       await GoogleSignin.hasPlayServices();
-      const user: any = await GoogleSignin.signIn();
 
+      // 🔥 IMPORTANT: clear previous session
+      await GoogleSignin.signOut();
+
+      const user: any = await GoogleSignin.signIn();
       const idToken = user.data.idToken;
 
       await googleUrlMutation.mutate(idToken);
@@ -154,7 +161,7 @@ export const useAuth = () => {
         refreshToken: data.data.refreshToken,
       };
 
-  
+
       await storeTokens(newTokens);
       await storeUser(userData as UserProfile);
 

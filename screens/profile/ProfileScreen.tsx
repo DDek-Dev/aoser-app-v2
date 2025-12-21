@@ -115,7 +115,7 @@ const ProfileScreen = () => {
         className="bg-blue-50 px-8 py-4 rounded-lg mb-3"
         activeOpacity={0.8}
       >
-        <Text className="text-warning font-semibold text-body text-center">
+        <Text className="text-warning font-semibold text-body  h-6 text-center">
           {t('profile.signin')}
         </Text>
       </TouchableOpacity>
@@ -133,16 +133,16 @@ const ProfileScreen = () => {
 
   const QuickActions = () => (
     <View className="flex-row gap-8">
-      <TouchableOpacity 
-        onPress={() => navigation.navigate('FavoriteScreen')} 
+      <TouchableOpacity
+        onPress={() => navigation.navigate('FavoriteScreen')}
         className="flex-col items-center"
       >
         <Ionicons name="heart-outline" size={32} color="#3B82F6" />
         <Text className="text-caption text-textSecondary">{t('profile.favorites')}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        onPress={() => navigation.navigate('HistoryScreen')} 
+      <TouchableOpacity
+        onPress={() => navigation.navigate('HistoryScreen')}
         className="flex-col items-center"
       >
         <Ionicons name="time-outline" size={32} color="#3B82F6" />
@@ -209,9 +209,9 @@ const ProfileScreen = () => {
         <QuickActions />
       </View>
 
-      <ScrollView 
-        className="flex-1" 
-        showsHorizontalScrollIndicator={false} 
+      <ScrollView
+        className="flex-1"
+        showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
       >
         {/* Main Content Card */}
@@ -236,7 +236,7 @@ const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
         )}
-        
+
 
         {/* Footer */}
         <View className="h-12 items-center justify-center mb-12 mt-4">

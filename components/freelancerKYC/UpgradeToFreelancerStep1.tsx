@@ -77,7 +77,6 @@ const UpgradeToFreelancerStep1 = (
     const freelancerTypes = [
         { value: 'FULLTIME', display: t('kyc.step1.freelancerType.fulltime') },
         { value: 'PART_TIME', display: t('kyc.step1.freelancerType.parttime') },
-        { value: 'OFFERING', display: t('kyc.step1.freelancerType.offering') },
     ];
 
 

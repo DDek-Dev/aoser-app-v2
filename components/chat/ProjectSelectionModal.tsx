@@ -548,7 +548,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
           {t('chat.offer.select_project')} ({selectedProjects.length})
         </Text>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={handleNext}
           className={`px-6 py-2 rounded-lg ${selectedProjects.length > 0
             ? 'bg-primary'
@@ -562,7 +562,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
             }`}>
             {t('chat.offer.offer')}
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity
           onPress={handleSend}
           className={`px-6 py-2 rounded-lg ${selectedProjects.length > 0

@@ -172,6 +172,7 @@
     "fixed_price": "Fixed Price",
     "hourly": "Hourly",
     "budget": "Budget",
+    "offering": "Offering",
     "budget_required": "Budget is required",
     "deadline_requirement": "Deadline Requirement?",
     "yes": "Yes",

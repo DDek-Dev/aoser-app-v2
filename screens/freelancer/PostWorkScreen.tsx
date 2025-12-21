@@ -11,7 +11,7 @@ import {
 
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import {  useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import { FreelancerStackParamList } from 'types/navigation';
 
@@ -59,7 +59,7 @@ export default function PostWorkScreen() {
   const toInputRef = useRef<TextInput>(null);
   const categoryRef = useRef<{ focus: () => void }>(null);
   const [subcategories, setSubcategories] = useState<string[]>([]);
-  const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY'>('FIXED_PRICE');
+  const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>('FIXED_PRICE');
 
   // 🔄 UPDATED: Change date state to allow null values initially
   const [fromDate, setFromDate] = useState<Date | null>(null);
@@ -70,7 +70,7 @@ export default function PostWorkScreen() {
   const [showToPicker, setShowToPicker] = useState(false);
 
 
-const {t} = useTranslation();
+  const { t } = useTranslation();
   const [errors, setErrors] = useState({
     nameOfWork: false,
     workDetail: false,
@@ -234,10 +234,10 @@ const {t} = useTranslation();
             <View className="bg-blue-50 p-4 rounded-2xl mb-4">
               <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
               <View className="flex-row space-x-4 gap-2 mb-6">
-                {['FIXED_PRICE', 'HOURLY'].map((type) => (
+                {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
                   <TouchableOpacity
                     key={type}
-                    onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY')}
+                    onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
                     className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'
                       }`}
                   >
@@ -246,8 +246,20 @@ const {t} = useTranslation();
                       {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
 
                       <Text className="text-caption text-text">
-                        {type === 'FIXED_PRICE' ? `${t('postWork.fixed_price')}` : `${t('postWork.hourly')}`}
+                        {/* {type === 'FIXED_PRICE' ? `${t('postWork.fixed_price')}` : `${t('postWork.hourly')} `}
+                        
+                        */}
+
+
+                        {type === 'FIXED_PRICE'
+                          ? `${t('postWork.fixed_price')}`
+                          : type === 'HOURLY'
+                            ? `${t('postWork.hourly')}`
+                            : `${t('postWork.offering')}`
+                        }
                       </Text>
+
+
                     </View>
                   </TouchableOpacity>
                 ))}

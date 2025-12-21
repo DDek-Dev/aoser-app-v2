@@ -1,8 +1,7 @@
 // components/auth/ProtectedRoute.tsx
-import React, { use, useEffect } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useAuthContext } from 'contexts/AuthContext';
-import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 import { useNavigation } from '@react-navigation/native';

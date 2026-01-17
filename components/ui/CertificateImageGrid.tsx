@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { 
   Image, 
   Pressable, 
   Text, 
   View, 
   ScrollView, 
-  Dimensions,
+
   Modal,
   TouchableOpacity,
   StyleSheet
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { FreelancerStackParamList } from 'types/navigation';
 import ImageViewer from 'react-native-image-zoom-viewer';
 
 type Props = {
@@ -29,11 +26,11 @@ export default function CertificateImageGrid({
   isReview
 
 }: Props) {
-  const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [viewerVisible, setViewerVisible] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
-  const screenWidth = Dimensions.get('window').width;
+ 
   
   // Auto slide functionality
   useEffect(() => {
@@ -78,7 +75,7 @@ export default function CertificateImageGrid({
   }
 
   // Prepare images for the zoom viewer
-  const imageUrls = certificateImages.map(uri => ({ url: uri }));
+  const imageUrls = certificateImages.map(uri => ({ url: IMAGES_BASE_URL+ uri }));
 
   return (
     <View className="space-y-3">

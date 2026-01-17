@@ -26,10 +26,9 @@ type ChatItemProps = {
 }
 
 export default function ChatItem({
-  _id,
+ 
   participants,
-  createdAt,
-  updatedAt,
+
   lastMessage,
   unreadCount,
   pinned,

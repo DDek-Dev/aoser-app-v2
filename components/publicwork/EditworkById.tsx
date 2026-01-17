@@ -66,7 +66,7 @@ export default function EditWorkById({ route }: Props) {
         budget: false,
         category: false,
         dateInvalid: false,
-        subcategories: false
+        // subcategories: false
     });
 
     const currentLanguage: Language = getCurrentLanguage();
@@ -172,7 +172,7 @@ export default function EditWorkById({ route }: Props) {
             workDetail: currentState.workDetail.trim() === '',
             budget: currentState.budget === 0,
             category: currentState.category.trim() === '',
-            subcategories: currentState.subcategories.length === 0,
+            // subcategories: currentState.subcategories.length === 0,
             dateInvalid,
         };
         setErrors(newErrors);
@@ -226,6 +226,7 @@ export default function EditWorkById({ route }: Props) {
         );
     }
 
+ 
     // Show error state if no data is available
     if (!data) {
         return (

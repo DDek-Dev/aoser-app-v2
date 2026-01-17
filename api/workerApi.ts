@@ -9,7 +9,6 @@ import axios from "axios";
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 
-console.log("API_BASE_URL: ", API_BASE_URL);
 export const workerApi = {
 
     // get my profile
@@ -169,6 +168,10 @@ export const workerApi = {
     },
 
     createFavorite: async (data: Favorite, token: string) => {
+
+        console.log("data to create: ", data);
+        console.log("token API: ", API_BASE_URL);
+ 
         const res = await axios.post(`${API_BASE_URL}/worker/favorite/`, data, {
             headers: {
                 'Content-Type': 'application/json',
@@ -201,6 +204,9 @@ export const workerApi = {
 ,
 
     getAllFavorites: async (token: string): Promise<GetFavorite[]> => {
+
+    console.log("API_BASE_URL: ", API_BASE_URL);
+
         try {
             const response = await axios.get(`${API_BASE_URL}/worker/favorites`, {
                 headers: {
@@ -208,6 +214,8 @@ export const workerApi = {
                     'Authorization': `Aoser ${token}`,
                 },
             });
+
+            console.log("API Response: ", response.data.data);
             return response.data.data || [];
         } catch (error) {
             console.log('Error fetching favorites:', error);
@@ -292,5 +300,5 @@ export const workerApi = {
             console.log('Error fetching hired freelancers:', error);
             throw error;
         }
-    },
+    }
 };

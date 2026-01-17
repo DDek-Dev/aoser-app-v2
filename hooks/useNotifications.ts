@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notificationApi } from "api/notificationApi";
 import { useAuth } from "./useAuth";
 import * as Notifications from 'expo-notifications';
@@ -136,5 +136,32 @@ export const useReadNotification = () => {
     })
 }
 
+export const  useUnreadNotification = ()=>{
+    const { tokens } = useAuth();
 
+    return useQuery({
+        queryKey: ['unreadNotifications'],
+        queryFn: () => notificationApi.unreadCount(tokens?.accessToken || ''),
+        enabled: !!tokens?.accessToken,
+        staleTime: 10000 * 60,
+    });
+}
+export const useMarkNotificationsAsRead = () => {
+    const { tokens } = useAuth();
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: () => notificationApi.markNotificationsAsReadAPI(tokens?.accessToken || ''),
+        onSuccess: () => {
+            // ✅ Invalidate notification queries to refetch fresh data
+            queryClient.invalidateQueries({ queryKey: ['useunReadnotifications'] });
+            queryClient.invalidateQueries({ queryKey: ['unreadNotifications'] });
+            
+            console.log('✅ Notifications marked as read');
+        },
+        onError: (error) => {
+            console.log('❌ Error marking notifications as read:', error);
+        }
+    });
+};
 

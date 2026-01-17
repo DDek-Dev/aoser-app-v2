@@ -28,51 +28,44 @@ const SelectInput = forwardRef<{ focus: () => void }, Props>(
     // Fetch jobs when service type is selected
     const { data: jobs } = useGetJobsByServiceType(selectedCategory);
     const {t} = useTranslation();
+    
     useImperativeHandle(ref, () => ({
       focus: () => setModalVisible(true),
     }));
 
     // Update internal state when props change
-    // useEffect(() => {
-    //   setSelectedCategory(value);
-    //   setSelectedSubcategories(initialSubcategories || []);
-    // }, [value, initialSubcategories]);
-
-    // Notify parent when selection changes
     useEffect(() => {
-      if (selectedCategory) {
-        onSelect(selectedCategory, selectedSubcategories);
+      if (value !== selectedCategory) {
+        setSelectedCategory(value);
       }
-    }, [selectedCategory, selectedSubcategories]);
+    }, [value]);
+
+    useEffect(() => {
+      if (initialSubcategories.length > 0 && 
+          JSON.stringify(initialSubcategories) !== JSON.stringify(selectedSubcategories)) {
+        setSelectedSubcategories(initialSubcategories);
+      }
+    }, [initialSubcategories]);
 
     const handleCategoryChange = (id: string) => {
       setSelectedCategory(id);
-      onSelect(id, []);
       setSelectedSubcategories([]); // Clear old subcategories when category changes
+      onSelect(id, []);
       setModalVisible(false);
     };
 
     const handleToggleSubcategory = (jobId: string) => {
-      // setSelectedSubcategories(prev =>
-      //   prev.includes(jobId)
-      //     ? prev.filter(c => c !== jobId)
-      //     : [...prev, jobId]
-      // );
-
-      setSelectedSubcategories(prev => {
-    const newSubcategories = prev.includes(jobId)
-      ? prev.filter(c => c !== jobId)
-      : [...prev, jobId];
-    
-    // Don't call onSelect here - it causes the render error
-    return newSubcategories;
-      });
-
-
+      const newSubcategories = selectedSubcategories.includes(jobId)
+        ? selectedSubcategories.filter(c => c !== jobId)
+        : [...selectedSubcategories, jobId];
+      
+      setSelectedSubcategories(newSubcategories);
+      // Call onSelect with updated subcategories
+      onSelect(selectedCategory, newSubcategories);
     };
 
     const selectedServiceType = serviceTypes?.find(st => st._id === selectedCategory);
-    const displayValue = selectedServiceType?.name || 'Select a service type';
+    const displayValue = selectedServiceType?.name || t('postWork.service_type') || 'Select a service type';
 
     return (
       <View className="mb-4">
@@ -82,7 +75,7 @@ const SelectInput = forwardRef<{ focus: () => void }, Props>(
 
         {/* Display selected category */}
         <TouchableOpacity
-          className={`border ${inputClassName} rounded-xl px-4 py-4 bg-white flex-row justify-between items-center border border-border`}
+          className={`border ${inputClassName} rounded-xl px-4 py-4 bg-white flex-row justify-between items-center`}
           onPress={() => setModalVisible(true)}
         >
           <View className="flex-row items-center">
@@ -105,7 +98,6 @@ const SelectInput = forwardRef<{ focus: () => void }, Props>(
               {isLoading ? (
                 <View className="p-4 items-center">
                   <LoadingScreen/>
-                 
                 </View>
               ) : (
                 <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false}>
@@ -143,8 +135,7 @@ const SelectInput = forwardRef<{ focus: () => void }, Props>(
                     className="flex-row items-center justify-between mb-2 px-4 py-3 bg-white rounded-xl"
                   >
                     <Text className="text-text text-caption">{job.title}</Text>
-                    <View className={`w-5 h-5 rounded-full border-2 ${isSelected ? 'bg-primary border-primary' : 'border-border'
-                      }`}>
+                    <View className={`w-5 h-5 rounded-full border-2 ${isSelected ? 'bg-primary border-primary' : 'border-border'}`}>
                       {isSelected && (
                         <Ionicons name="checkmark" size={14} color="white" />
                       )}

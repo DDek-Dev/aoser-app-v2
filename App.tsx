@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import './global.css';
-import OnboardingNavigator from 'navigation/OnboardingNavigator';
+// import OnboardingNavigator from 'navigation/OnboardingNavigator';
 import MainNavigator from 'navigation/MainNavigator';
 import './i18n'; // This imports and initializes i18n
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -73,11 +73,11 @@ export default function App() {
                 >
                   <BottomSheetModalProvider>
                     <StatusBar style="auto" />
-                    {isCompleteOnboarding ? (
-                      <MainNavigator />
+                    <MainNavigator />
+                    {/* {isCompleteOnboarding ? (
                     ) : (
                       <OnboardingNavigator />
-                    )}
+                    )} */}
                   </BottomSheetModalProvider>
                 </AlertNotificationRoot>
               </KeyboardProvider>

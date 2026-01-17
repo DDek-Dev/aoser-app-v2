@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
     View,
     Text,
@@ -14,65 +14,64 @@ import dayjs from 'dayjs';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
-import { useMockBusyUntil } from 'hooks/useMockBusyUntil';
+// import { useMockBusyUntil } from 'hooks/useMockBusyUntil';
 import { useTranslation } from 'react-i18next';
 // import { getProfileBusyDateFromDB } from 'your-data-fetching-saource'; // TODO: you implement this
+import { useUpdateFreelancerProfile } from 'hooks/useFreelancer';
+import { Freelancer } from 'types/profile';
 
-const ProfileStatusPopup = () => {
+type Props = {
+    workStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+    isme: boolean;
+}
+const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const [showPopup, setShowPopup] = useState(false);
-    const [fromDate, setFromDate] = useState(new Date());
     const [tempFromDate, setTempFromDate] = useState(new Date());
     const [showFromPicker, setShowFromPicker] = useState(false);
     const [showBusyDateInput, setShowBusyDateInput] = useState(false);
     const [dateError, setDateError] = useState('');
     const fromInputRef = useRef(null);
-    const [status, setStatus] = useState<'Available' | 'Busy'>('Available');
-    const isme = true;
-    // const getProfileBusyDateFromDB = 
-    const today = dayjs().startOf('day');
+    const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE' | 'SUSPENDED'>(workStatus);
 
-    // ✅ Auto switch to "Available" if DB busyUntil is expired
-    //   useEffect(() => {
-    //     const checkStatus = async () => {
-    //       const busyUntil = await getProfileBusyDateFromDB(); // your own Supabase fetch here
-    //       if (!busyUntil || dayjs(busyUntil).isBefore(today)) {
-    //         setStatus('Available');
-    //       } else {
-    //         setStatus('Busy');
-    //         setFromDate(new Date(busyUntil));
-    //       }
-    //     };
-    //     checkStatus();
-    //   }, []);
-    const mockBusyUntil = useMockBusyUntil();
+    const today = dayjs().startOf('day');
+    const updateProfileMutation = useUpdateFreelancerProfile();
 
     const { t } = useTranslation();
-    useEffect(() => {
-        if (!mockBusyUntil) return;
-        const today = dayjs().startOf('day');
 
-        if (dayjs(mockBusyUntil).isBefore(today)) {
-            setStatus('Available');
-        } else {
-            setStatus('Busy');
-            setFromDate(mockBusyUntil);
-        }
-    }, [mockBusyUntil]);
 
     const formatDate = (date: Date | null) => {
         return date ? dayjs(date).format('DD/MM/YYYY') : '';
     };
 
-    const handleChangeStatus = (newStatus: 'Available' | 'Busy') => {
+    const handleChangeStatus = async (newStatus: 'ACTIVE' | 'INACTIVE') => {
+
+
+
+
+        const updateData = {
+            workerStatus: newStatus
+        };
+
+        console.log('updateData', updateData);
+
+        // Update profile
+        const result = await updateProfileMutation.mutateAsync(updateData as Freelancer);
         setShowPopup(false);
-        if (newStatus === 'Busy') {
-            setTempFromDate(fromDate);
-            setShowBusyDateInput(true);
+        if (newStatus === 'INACTIVE') {
+            // setTempFromDate(fromDate);
+            setStatus('INACTIVE');
+
+            // setShowBusyDateInput(true);
         } else {
-            setStatus('Available');
+            setStatus('ACTIVE');
             setShowBusyDateInput(false);
         }
+
+
+
+
+
     };
 
     const confirmBusy = () => {
@@ -82,8 +81,7 @@ const ProfileStatusPopup = () => {
             return;
         }
 
-        setFromDate(tempFromDate);
-        setStatus('Busy');
+        setStatus('INACTIVE');
         setShowBusyDateInput(false);
         setDateError('');
         // Optional: save to database
@@ -108,9 +106,8 @@ const ProfileStatusPopup = () => {
 
             <Pressable onPress={() => setShowPopup(true)} className="p-1 bg-blue-50 rounded-full w-[100px]">
                 <View className="p-3 bg-gray-200 rounded-full">
-                    {status === 'Available' ? <Text className="text-caption text-green-500 text-center">{status === 'Available' ? t('freelancer_profile.active') : t('freelancer_profile.busy')}</Text> :
-                        <Text className="text-caption text-warning text-center">{formatDate(fromDate)}</Text>
-                    }
+                    <Text className="text-caption text-green-500 text-center">{status === 'ACTIVE' ? t('freelancer_profile.active') : t('freelancer_profile.busy')}</Text>
+
                 </View>
             </Pressable>
 
@@ -122,13 +119,13 @@ const ProfileStatusPopup = () => {
 
                     <View className="bg-blue-400 rounded-2xl px-4 py-4 w-[150px] shadow-lg mt-2 z-10">
                         <Pressable
-                            onPress={() => handleChangeStatus('Available')}
+                            onPress={() => handleChangeStatus('ACTIVE')}
                             className="bg-blue-100 px-6 w-full mb-4 py-2 rounded-full"
                         >
                             <Text className="text-secondary text-sm font-semibold text-center">{t('freelancer_profile.active')}</Text>
                         </Pressable>
                         <Pressable
-                            onPress={() => handleChangeStatus('Busy')}
+                            onPress={() => handleChangeStatus('INACTIVE')}
                             className="bg-blue-100 px-6 w-full py-2 rounded-full"
                         >
                             <Text className="text-warning text-sm font-semibold text-center">{t('freelancer_profile.busy')}</Text>

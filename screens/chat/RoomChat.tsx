@@ -60,9 +60,11 @@ const RoomChat = () => {
 
   const { data: chat, isLoading } = useChatRoom(partnerId);
 
+
   if (!user?._id) {
     return null;
   }
+
 
   const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -436,12 +438,14 @@ const RoomChat = () => {
         expiresAt,
       };
 
+      console.log("optimisticMessage", optimisticMessage);
+
       setMessages(prev => [...prev, optimisticMessage as Message]);
 
       SocketService.sendMessage(
         {
           conversationId: chat.conversation._id,
-          tempId,
+          // tempId,
           message: optimisticMessage.message,
           messageType: 'LOCATION',
           location: { latitude, longitude },

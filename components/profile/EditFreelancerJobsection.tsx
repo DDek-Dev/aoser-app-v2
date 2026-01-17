@@ -20,6 +20,7 @@ import { useNavigation } from '@react-navigation/native';
 import { getPresignedUrls, uploadFileToUrl } from 'api/uploadUtils';
 import { Freelancer } from 'types/profile';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import { useTranslation } from 'react-i18next';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -44,13 +45,16 @@ const EditFreelancerJobsection = () => {
     const { data: profile, isLoading } = useFreelancerById(data?._id || '');
     const updateProfileMutation = useUpdateFreelancerProfile();
 
+
+    console.log("profile ----: ", profile)
+    const { t } = useTranslation();
+
     useEffect(() => {
         if (profile) {
-
             console.log("sub ----: ", profile.jobs)
             setJobTitle(profile.jobTitle || '');
             setBannerImage(`${IMAGES_BASE_URL}${profile.bannerImage}` || '');
-            setPromoVideo(`${IMAGES_BASE_URL}${profile.videoPromote}`|| '');
+            setPromoVideo(`${IMAGES_BASE_URL}${profile.videoPromote}` || '');
             setFreelancerType(profile.freelancerType || '');
             setCategory(profile.serviceType || '');
             setSubcategories(profile.jobs || []);
@@ -223,17 +227,18 @@ const EditFreelancerJobsection = () => {
 
             Toast.show({
                 type: ALERT_TYPE.SUCCESS,
-                title: 'Success',
-                textBody: 'Profile updated successfully',
+                title: t('kyc.toast.success.title'),
+                textBody:  t('kyc.toast.success.onupdate'),
             })
 
         } catch (error) {
             console.log('Update error:', error);
             Toast.show({
                 type: ALERT_TYPE.DANGER,
-                title: 'Error',
-                textBody: 'Failed to update profile. Please try again.',
-            })}
+                title: t('kyc.toast.oops.title'),
+                textBody: t('kyc.toast.oops.body'),
+            })
+        }
     };
 
     const handleBack = () => {
@@ -242,8 +247,8 @@ const EditFreelancerJobsection = () => {
 
     const categories = getCategories();
     const freelancerTypes = [
-        { value: 'FULLTIME', display: 'Full-time' },
-        { value: 'PART_TIME', display: 'Part-time' }
+        { value: 'FULLTIME', display: t('kyc.step1.freelancerType.fulltime') },
+        { value: 'PART_TIME', display: t('kyc.step1.freelancerType.parttime') },
     ];
 
     if (isLoading) {
@@ -255,43 +260,46 @@ const EditFreelancerJobsection = () => {
             <ScrollView className="flex-1 px-5 my-4">
                 <View className="flex-row items-center bg-primary p-4 rounded-2xl mb-6">
                     <View>
-                        <Text className="font-semibold text-white text-heading">Job Section</Text>
-                        <Text className="text-white text-body">Update your job section carefully.</Text>
+                        <Text className="font-semibold text-white text-heading">{t('kyc.update.job_section')}</Text>
+                        <Text className="text-white text-body">{t('kyc.update.updateJob_section')}</Text>
                     </View>
                 </View>
 
                 {/* Job Title Input */}
                 <FormInput
-                    label="Job Title"
-                    placeholder="e.g. Web developer and designer..."
+                    label={t('kyc.step1.jobTitle.label')}
+                    placeholder={t('kyc.step1.jobTitle.placeholder')}
                     value={jobTitle}
                     onChangeText={setJobTitle}
-                    inputClassName={errors.jobTitle ? 'border-error' : 'border-border'}
+                    inputClassName={ errors.jobTitle ? 'border-error' : 'border-border'}
                     required
-                    isValidate={errors.jobTitle ? 'Job title is required' : ''}
+                    isValidate={`${errors.jobTitle ? t('kyc.step1.jobTitle.required') : ''}`}
+
                 />
 
                 {/* Banner Upload */}
                 <SelectImage
                     image={typeof bannerImage === 'string' ? `${bannerImage}` : bannerImage.uri}
-                    label="Banner Image"
+                    label={t('kyc.step1.bannerImage.label')}
+
                     onChange={handleImageChange}
                     required
                     inputClassName={errors.bannerImage ? 'border-error' : 'border-border'}
-                    isValidate={errors.bannerImage ? 'Banner image is required' : ''}
+                    isValidate={errors.bannerImage ? t('kyc.step1.bannerImage.required') : ''}
                 />
 
                 {/* Promo Video Upload */}
                 <SelectVideo
                     video={typeof promoVideo === 'string' ? promoVideo : promoVideo.uri}
-                    label="Promote Yourself (Video)"
+                    label={t('kyc.step1.promoVideo.label')}
                     // onChange={setPromoVideo}
                     onChange={promoteVideoChange}
                 />
 
                 {/* Freelancer Type */}
                 <SelectFreelancerType
-                    label="Freelancer Type"
+                    label={t('kyc.step1.freelancerType.label')}
+
                     value={freelancerType}
                     onSelect={setFreelancerType}
                     options={freelancerTypes}
@@ -301,8 +309,8 @@ const EditFreelancerJobsection = () => {
                 />
 
                 <View className='mt-2'>
-                    <SelectInput
-                        label="Choose Category"
+                    {/* <SelectInput
+                        label={t('kyc.step1.serviceType.label')}
                         value={category}
                         initialSubcategories={subcategories}
                         onSelect={(cat, subs) => {
@@ -312,8 +320,19 @@ const EditFreelancerJobsection = () => {
                         inputClassName={errors.category ? 'border-error' : 'border-border'}
                         required
                         ref={categoryRef}
-                        isValidate={errors.category ? 'Category is required' : ''}
-                    />
+                        isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
+                    /> */}
+                    <SelectInput
+                    label={t('kyc.step1.serviceType.label')}
+                    value={category}
+                    initialSubcategories={subcategories}
+                    onSelect={(serviceTypeId, jobIds) => {
+                        setCategory(serviceTypeId);
+                        setSubcategories(jobIds);
+                    }}
+                    required
+                    isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
+                />
                 </View>
             </ScrollView>
 
@@ -325,7 +344,7 @@ const EditFreelancerJobsection = () => {
                     className="bg-textSecondary mt-6 py-4 rounded-full items-center w-1/3"
                     disabled={isUploading}
                 >
-                    <Text className="text-white text-base font-semibold">Cancel</Text>
+                    <Text className="text-white text-base font-semibold">{t('kyc.buttons.back')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -334,7 +353,7 @@ const EditFreelancerJobsection = () => {
                     disabled={isUploading}
                 >
                     <Text className="text-white text-base font-semibold">
-                        {isUploading ? 'Uploading...' : 'Update'}
+                        {isUploading ? t('kyc.toast.uploading.title') : t('kyc.update.update')}
                     </Text>
                 </TouchableOpacity>
             </View>

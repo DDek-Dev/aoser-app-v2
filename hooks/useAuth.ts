@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Linking } from 'react-native';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   authApi,
@@ -18,9 +18,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { Use } from 'react-native-svg';
+
 import { UserProfile } from 'types/profile';
-import { use } from 'react';
+
 
 
 export const AUTH_KEYS = {
@@ -135,6 +135,7 @@ export const useAuth = () => {
 
       const user: any = await GoogleSignin.signIn();
       const idToken = user.data.idToken;
+      console.log('ID Token:', idToken);
 
       await googleUrlMutation.mutate(idToken);
 

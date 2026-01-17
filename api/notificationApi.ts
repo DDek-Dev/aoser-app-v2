@@ -1,5 +1,6 @@
 
 import axios from 'axios';
+import { UreadNotification } from 'types';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -57,6 +58,39 @@ export const notificationApi = {
             throw error;
         }
     },
+    unreadCount: async (token: string): Promise<UreadNotification> => {
 
+
+        try {
+            const response = await axios.get(`${API_BASE_URL}/notification/notification-unread-count`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+            return response.data.data || [];
+        } catch (error) {
+            console.log('Error reading notification:', error);
+            throw error;
+        }
+    },
+    markNotificationsAsReadAPI: async (token: string): Promise<UreadNotification> => {
+    try {
+        const response = await axios.put(
+            `${API_BASE_URL}/notification/notification-viewed?viewed=true`, 
+            { isViewed: true }, 
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            }
+        );
+        return response.data.data || [];
+    } catch (error) {
+        console.log('Error reading notification:', error);
+        throw error;
+    }
+},
 
 };

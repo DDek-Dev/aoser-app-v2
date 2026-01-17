@@ -18,6 +18,7 @@ import { useMyProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
 import { FileWithType } from 'types';
 import { getPresignedUrls, uploadFileToUrl } from 'api/uploadUtils';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import { useTranslation } from 'react-i18next';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -41,6 +42,7 @@ const EditFreelancerAboutMe = () => {
         experiences: false
     });
 
+    const { t } = useTranslation();
     // API hooks
     const { data, isLoading } = useMyProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
@@ -196,22 +198,22 @@ const EditFreelancerAboutMe = () => {
                 onSuccess: () => {
                     Toast.show({
                         type: ALERT_TYPE.SUCCESS,
-                        title: 'Success!',
-                        textBody: 'Profile updated successfully.',
+                        title: t('kyc.toast.success.title'),
+                        textBody: t('kyc.toast.success.onupdate'),
                     })
                 },
                 onError: (error) => {
                     Toast.show({
                         type: ALERT_TYPE.DANGER,
-                        title: 'Error!',
-                        textBody: 'Failed to update profile. Please try again.',
+                        title: t('kyc.toast.oops.title'),
+                        textBody: t('kyc.toast.oops.body'),
                     })
                 },
             });
 
         } catch (error) {
             console.log('Update error:', error);
-            Alert.alert('Error', 'Failed to update profile. Please try again.');
+            // Alert.alert('Error', 'Failed to update profile. Please try again.');
         }
     };
 
@@ -230,21 +232,21 @@ const EditFreelancerAboutMe = () => {
             <ScrollView className="flex-1 px-5 pt-6">
                 <View className="flex-row items-center bg-primary p-4 rounded-2xl mb-6">
                     <View>
-                        <Text className="font-semibold text-white text-heading">Describe About You for Customers</Text>
-                        <Text className="text-white text-body">Let your customers understand your background, skills, and experience.</Text>
+                        <Text className="font-semibold text-white text-heading">{t('kyc.update.describe_to_customers')}</Text>
+                        <Text className="text-white text-body">{t('kyc.update.describe_subtext')}</Text>
                     </View>
                 </View>
 
                 {/* About Me */}
                 <View className="mb-4">
                     <TextArea
-                        label="About me"
-                        placeholder="Hi, I'm a UI/UX Designer...."
+                        label={t('kyc.step2.about_label')}
+                        placeholder={t('kyc.step2.about_placeholder')}
                         value={aboutMe}
                         onChangeText={setAboutMe}
                         inputClassName={errors.aboutMe ? 'border-error' : 'border-border'}
                         required
-                        isValidate={errors.aboutMe ? 'About me is required' : ''}
+                        isValidate={`${errors.aboutMe ? t('kyc.step2.about_required') : ''}`}
                     // editable={!isProcessing}
                     />
                     <Text className="text-caption text-textSecondary mt-1 text-right">
@@ -253,14 +255,14 @@ const EditFreelancerAboutMe = () => {
 
                     <View className="bg-blue-50 border border-primary rounded-xl px-4 py-2 items-center mt-4">
                         <Text className="text-caption text-primary my-2">
-                            💡 Tip: Briefly share your experience and specialties.
+                            💡 {t('kyc.step2.about_tip')}
                         </Text>
                     </View>
                 </View>
 
                 <MultiInputList
-                    title="Skills"
-                    placeholder="e.g. React Native"
+                    title={t('kyc.step2.skills_title')}
+                    placeholder={t('kyc.step2.skills_placeholder')}
                     values={skills}
                     onChange={(text, index) => {
                         const updated = [...skills];
@@ -277,13 +279,13 @@ const EditFreelancerAboutMe = () => {
                     }}
                     required
                     inputClassName={errors.skills ? 'border-error' : 'border-border'}
-                    isValidate={errors.skills ? 'Skills are required' : ''}
+                    isValidate={errors.skills ? t('kyc.step2.skills_required') : ''}
                 // editable={!isProcessing}
                 />
 
                 <MultiInputList
-                    title="Work Experience"
-                    placeholder="e.g. Lead Designer"
+                    title={t('kyc.step2.experience_title')}
+                    placeholder={t('kyc.step2.experience_placeholder')}
                     values={experiences}
                     onChange={(text, index) => {
                         const updated = [...experiences];
@@ -298,13 +300,14 @@ const EditFreelancerAboutMe = () => {
                     }}
                     required
                     inputClassName={errors.experiences ? 'border-error' : 'border-border'}
-                    isValidate={errors.experiences ? 'Work Experience is required' : ''}
+                    isValidate={errors.experiences ? t('kyc.step2.experience_required') : ''}
+
                 // editable={!isProcessing}
                 />
 
                 {/* Resume Upload */}
                 <SelectImage
-                    label="Your Resume"
+                    label={t('kyc.step2.resume_label')}
                     image={resumeImage}
                     onChange={handleResumeImageChange}
                     inputClassName="border border-border"
@@ -313,7 +316,8 @@ const EditFreelancerAboutMe = () => {
 
                 {/* Certificates Upload */}
                 <SelectMultiImage
-                    label="Your Certificates (optional)"
+                    label={t('kyc.step2.certificate_label')}
+
                     images={certificateImages}
                     onChange={handleCertificateImagesChange}
                     inputClassName="border border-border"
@@ -327,7 +331,7 @@ const EditFreelancerAboutMe = () => {
                     className="bg-textSecondary mt-6 py-4 rounded-full items-center w-1/3"
                     disabled={isProcessing}
                 >
-                    <Text className="text-white text-base font-semibold">Cancel</Text>
+                    <Text className="text-white text-base font-semibold">{t('kyc.buttons.back')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -336,7 +340,8 @@ const EditFreelancerAboutMe = () => {
                     disabled={isProcessing}
                 >
                     <Text className="text-white text-base font-semibold">
-                        {isProcessing ? 'Updating...' : 'Update'}
+                        {isUploading ? t('kyc.toast.uploading.title') : t('kyc.update.update')}
+
                     </Text>
                 </TouchableOpacity>
             </View>

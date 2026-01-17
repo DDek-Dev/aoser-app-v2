@@ -3,8 +3,6 @@ import i18n from "i18n";
 
 export type Language = 'en' | 'la';
 
-
-
 export const formatRelativeTime = (dateString: string, language: Language = 'en'): string => {
   if (!dateString) return language === 'en' ? 'Unknown date' : 'ບໍ່ຮູ້ວັນທີ';
   
@@ -106,27 +104,16 @@ export const formatDate = (dateString: string, language: Language = 'en'): strin
   
   try {
     const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
     
     if (language === 'la') {
-      // Lao date formatting
-      const day = date.getDate();
-      const month = date.getMonth();
-      const year = date.getFullYear();
-      
-      const laoMonths = [
-        'ມັງກອນ', 'ກຸມພາ', 'ມີນາ', 'ເມສາ', 
-        'ພຶດສະພາ', 'ມິຖຸນາ', 'ກໍລະກົດ', 'ສິງຫາ',
-        'ກັນຍາ', 'ຕຸລາ', 'ພະຈິກ', 'ທັນວາ'
-      ];
-      
-      return `${day} ${laoMonths[month]} ${year}`;
+      // Lao date formatting - DD/MM/YYYY
+      return `${day}/${month}/${year}`;
     } else {
-      // English date formatting
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+      // English date formatting - DD/MM/YYYY
+      return `${day}/${month}/${year}`;
     }
   } catch (error) {
     console.log('Error formatting date:', error);

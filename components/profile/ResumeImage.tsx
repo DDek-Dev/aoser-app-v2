@@ -31,7 +31,7 @@ export default function ResumeImage({ resumeImage }: Props) {
         </View>
 
         <Pressable
-          onPress={() => navigation.navigate('ResumeImageViewer', { uri: resumeImage })}
+          onPress={() => navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + resumeImage })}
           className="self-center"
         >
           <Image

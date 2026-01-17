@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "aoser-app",
-    "slug": "aoser-app",
+    "name": "Aoser",
+    "slug": "aoser",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/aoser_logo_no_bg.png",
@@ -20,25 +20,29 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/aoser_logo_blue_bg.jpg",
+        "foregroundImage": "./assets/aoser_logo_and.png",
         "backgroundColor": "#ffffff"
       },
-      "usesCleartextTraffic": true,
+
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.aoser.aoser",
+      "package": "com.aoser.app",
       "googleServicesFile": "./google-services.json",
-            "permissions": ["WRITE_EXTERNAL_STORAGE", "READ_EXTERNAL_STORAGE"]
+      "permissions": [
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
-      "favicon": "./assets/aoser_logo_blue_bg.jpg"
+      "favicon": "./assets/aoser_logo_no_bg_blue.png"
     },
     "extra": {
       "eas": {
-        "projectId": "4e2864c6-db81-4c60-b273-8161e6b88246"
+        "projectId": "d60f7004-fd5e-42fa-ab00-fdf08bfc6a94"
       }
     },
-    "owner": "aoser-app",
+    "owner": "aosers",
     "plugins": [
       "expo-font",
       "expo-localization",
@@ -49,4 +53,4 @@
       "expo-image-picker"
     ]
   }
-}
+}  

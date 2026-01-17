@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Animated,
@@ -8,17 +8,16 @@ import {
 } from 'react-native';
 
 import CategoryTabs from 'components/freelancer/CategoryTabs';
-// import PopularServices from 'components/freelancer/PopularServices';
 import Advert from 'components/freelancer/Advert';
-import TopFreelancers from 'components/freelancer/TopFreelancers';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import Freelancers from 'components/freelancer/Freelancers';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useRecommendedFreelancers } from 'hooks/useFreelancer';
+import TopFreelancers from 'components/freelancer/TopFreelancers';
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -26,17 +25,40 @@ export default function HomeScreen() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState(0);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateXAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
   type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'SearchBar'>;
-
   const navigation = useNavigation<SearchBarNavigationProp>();
+  const { t } = useTranslation();
 
- const {t} = useTranslation();
+  // Fetch all freelancers once (no category filter in API call)
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useRecommendedFreelancers(''); // Always fetch all
 
-  // Animations
+  // Flatten all pages
+  const allFreelancers = useMemo(() => {
+    return data?.pages.flat() || [];
+  }, [data]);
+
+  // Filter freelancers locally based on selected category
+  const filteredFreelancers = useMemo(() => {
+    if (!selectedCategoryId || selectedCategory === 'All') {
+      return allFreelancers;
+    }
+
+    return allFreelancers.filter(freelancer =>
+      freelancer.serviceType === selectedCategoryId
+    );
+  }, [allFreelancers, selectedCategoryId, selectedCategory]);
+
+  // Banner animations
   const bannerTextOpacity = scrollY.interpolate({
     inputRange: [0, 180],
     outputRange: [1, 0],
@@ -57,33 +79,31 @@ export default function HomeScreen() {
 
   const searchBarTranslateY = scrollY.interpolate({
     inputRange: [0, 1000],
-    outputRange: [0, -4], 
+    outputRange: [0, -4],
     extrapolate: 'clamp',
   });
 
-  // Sticky CategoryTabs animation - appears when scrolled past advert
   const stickyTabsTranslateY = scrollY.interpolate({
     inputRange: [0, 150, 151],
-    outputRange: [-100, -100, 0], // Hidden until scroll threshold
+    outputRange: [-100, -100, 0],
     extrapolate: 'clamp',
   });
 
   const stickyTabsOpacity = scrollY.interpolate({
-     inputRange: [0, 200, 200],
+    inputRange: [0, 200, 200],
     outputRange: [0, 0, 1],
     extrapolate: 'clamp',
   });
 
-  // Handle category change for both tabs
   const handleCategoryChange = (category: string, index: number, categoryId?: string) => {
-    setPrevIndex(selectedIndex); 
-    setSelectedIndex(index);     
-    setSelectedCategory(category); 
+    setPrevIndex(selectedIndex);
+    setSelectedIndex(index);
+    setSelectedCategory(category);
     setSelectedCategoryId(categoryId || null);
-  };
 
-  useEffect(() => {
-    const direction = selectedIndex > prevIndex ? 1 : -1;
+    // Trigger fade animation
+    const direction = index > selectedIndex ? 1 : -1;
+
     fadeAnim.setValue(0);
     translateXAnim.setValue(30 * direction);
 
@@ -99,31 +119,25 @@ export default function HomeScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [selectedCategory]);
+  };
 
   return (
     <ScreenWrapper safeEdges={[]} style={{ flex: 1 }}>
-      {/* Search Animated Banner */}
+      {/* Search Banner */}
       <Animated.View
         style={[
           styles.banner,
           {
-            zIndex:99
-          },
-
-          {
+            zIndex: 99,
             height: bannerHeight,
             borderBottomLeftRadius: bannerRadius,
             borderBottomRightRadius: bannerRadius,
           },
-          
-        ]
-      }
+        ]}
       >
         <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }] }}>
           <TouchableOpacity
             onPress={() => navigation.navigate('SearchBar', { text: '', focus: true })}
-           
             className="flex-row items-center bg-surface rounded-full border border-gray-300 px-4 py-4 mt-3"
           >
             <Ionicons name="search-outline" size={20} color="#3B82F6" />
@@ -132,16 +146,16 @@ export default function HomeScreen() {
         </Animated.View>
       </Animated.View>
 
-      {/* Sticky CategoryTabs - Fixed at top when scrolling */}
+      {/* Sticky Category Tabs */}
       <Animated.View
         style={{
           position: 'absolute',
-          top: 110, // Below banner
+          top: 110,
           left: 0,
           right: 0,
           backgroundColor: 'white',
           paddingVertical: 8,
-          zIndex:2,
+          zIndex: 2,
           elevation: 4,
           shadowColor: '#3B82F6',
           shadowOffset: { width: 0, height: 2 },
@@ -171,50 +185,45 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Advert */}
-        <Animated.View
-          style={[
-            { opacity: bannerTextOpacity },
-          ]}
-        >
+        <Animated.View style={{ opacity: bannerTextOpacity }}>
           <Advert />
         </Animated.View>
 
-        {/* Regular CategoryTabs (in scroll content) */}
-        <View
-          style={{
-            backgroundColor: 'white',
-            paddingVertical: 8,
-          }}
-        >
+        {/* Regular Category Tabs */}
+        <View style={{ backgroundColor: 'white', paddingVertical: 8 }}>
           <CategoryTabs
             selectedCategory={selectedCategory}
             selectedIndex={selectedIndex}
             onCategoryChange={handleCategoryChange}
           />
         </View>
-        {/* Content */}
+
+        {/* Freelancers List */}
         <Animated.View
           style={{
             paddingTop: 8,
             zIndex: 1,
             opacity: fadeAnim,
+            transform: [{ translateX: translateXAnim }],
           }}
         >
-          {selectedCategory === 'All' ? (
-            <>
-              <TopFreelancers />
-              <Freelancers title={t('home.recommended_freelancers')} />
-            
-            </>
-          ) : (
-            <>
-              <Freelancers
-                title={`${selectedCategory} ${t('home.freelancers')}`}
-                serviceType={selectedCategoryId}
-              />
-              
-            </>
+          {selectedCategory === 'All' && (
+            <TopFreelancers />
           )}
+
+
+          <Freelancers
+            title={selectedCategory === 'All'
+              ? t('home.recommended_freelancers')
+              : `${selectedCategory} ${t('home.freelancers')}`
+            }
+            freelancers={filteredFreelancers}
+            isLoading={isLoading}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
+            scrollY={scrollY}
+          />
         </Animated.View>
       </Animated.ScrollView>
     </ScreenWrapper>
@@ -226,11 +235,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 30,
     paddingBottom: 12,
-  },
-  bannerText: {
-    color: 'white',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 8,
   },
 });

@@ -43,6 +43,30 @@ export const chatApi =  {
             throw error;
         }
     },
+    getUnreadChatcount: async (token: string): Promise<any> => {
+        const url = `${API_BASE_URL}/chat/user-chat-unread-count`;
+        try {
+            const response = await axios.get(url,{
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+
+            console.log("API Response CHAT COUNT: ", response.data.data); 
+            return response.data.data || [];
+        } catch (error: any) {
+            // Axios error handling
+            if (error.response) {
+                console.log('Error fetching chat room: status=', error.response.status, 'data=', error.response.data);
+            } else if (error.request) {
+                console.log('Error fetching chat room: no response, request sent', error.message);
+            } else {
+                console.log('Error fetching chat room:', error.message);
+            }
+            throw error;
+        }
+    },
     
      
 };

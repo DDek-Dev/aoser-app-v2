@@ -1,9 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { chatApi } from 'api/chatApi';
 import { useAuth } from './useAuth';
-// import { chatService } from 'service/chatService';
-import { useInfiniteQuery } from '@tanstack/react-query';
-
 
 export const useChats = () => {
   const { tokens } = useAuth();
@@ -25,6 +22,14 @@ export const useUnreadChats = () => {
   return useQuery({
     queryKey: ['chats', 'unread'],
     // queryFn: chatService.getUnread,
+  });
+};
+export const useUnreadChatCount = (userId: string) => {
+  const { tokens } = useAuth();
+
+  return useQuery({
+    queryKey: ['unreadchatCount' ,userId],
+    queryFn: ()=> chatApi.getUnreadChatcount(tokens?.accessToken || ''),
   });
 };
 

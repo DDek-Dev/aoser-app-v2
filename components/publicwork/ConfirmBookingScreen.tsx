@@ -25,6 +25,8 @@ const ConfirmBookingScreen = () => {
     const [localFormData, setLocalFormData] = useState(params?.formData || {});
     const { t } = useTranslation();
 
+    console.log('localFormData', localFormData);
+
     const handleConfirm = async () => {
         try {
             setIsLoading(true);
@@ -84,7 +86,7 @@ const ConfirmBookingScreen = () => {
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']} >
 
-            <Header_back text={t('postWork.confirm.confirm')} iconColor='#3B82F6' />
+            <Header_back text={t('postWork.confirm.confirm')} iconColor='#3B82F6' onPress={() => navigation.goBack()} />
             <ScrollView
                 contentContainerStyle={{ padding: 20, flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}

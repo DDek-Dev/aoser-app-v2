@@ -111,8 +111,8 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
 
   if (!visible) return null;
   if (isLoading) return <ActivityIndicator />;
-  if (error) return <Text>Error fetching freelancer</Text>;
-  if (!data) return <Text>No freelancer found</Text>;
+  if (error) return <Text>{t('postWork.freelancer_no_found')}</Text>;
+  if (!data) return <Text>{t('postWork.freelancer_no_found')}</Text>;
 
   return (
     <Animated.View

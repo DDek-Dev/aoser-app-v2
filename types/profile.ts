@@ -55,7 +55,7 @@ export type Freelancer = {
   customerStatus?: "NORMALE" | "PREMIUM" | "VIP";
   starRating?: number;
   hourlyRateCurrency: "LAK" | "USD";
-  likes?: Like[];
+  likes: Like[];
   isLiked?: boolean;
   totalWorks?: number;
   totalCompletedWork?: number;

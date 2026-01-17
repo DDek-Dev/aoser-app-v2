@@ -22,15 +22,19 @@ export interface Job {
   _id: string;
   createdBy: UserProfile;
   workTitle: string;
+  jobTitle: string;
+  customerExpect: string;
   kindOfWork: "ONLINE" | "OFFLINE";
   description: string;
   exampleWork: ExampleWork[];
   serviceType: ServiceType;
   jobs: string[];
-
+  hourlyRate: number;
+  bannerImage: string;
   category: string;
   deadLine?: string;
   budgetType: "FIXED_PRICE" | "HOURLY";
+  hourlyRateCurrency: "LAK" | "USD";
   currency: "LAK" | "USD";
   startDate?: string;
   budget: number;
@@ -387,7 +391,7 @@ export type Review = {
 // create Favorite 
 export type Favorite = {
   likedItem: string;
-  likedItemType: 'Work' | 'UserProfile';
+  likedItemType: 'Work' | 'UserProfile' ;
 };
 
 export type GetFavorite = {
@@ -452,4 +456,10 @@ export interface Notifications {
   relatedFreelancer?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+
+export type UreadNotification ={
+  isViewed:boolean;
+  notificationUnreadCount: number;
 }

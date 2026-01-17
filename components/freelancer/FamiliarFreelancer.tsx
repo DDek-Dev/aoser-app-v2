@@ -97,9 +97,9 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
     }
 
     // No results state - FIXED: Added proper return
-    if (allFreelancers?.length === 0) {
-        return <NoResults title={'No freelancers found'} subtitle={'Try searching with different keywords or check your spelling.'} />;
-    }
+    // if (allFreelancers?.length === 0) {
+    //     return <NoResults title={`${t('freelancer_profile.no_freelancer_fimiliar')}`} subtitle={`${t('freelancer_profile.no_freelancer_fimiliar_dec')}`} />;
+    // }
 
     const handleNavigate = (item_id: string) => {
         if (isAuthenticated && user?._id === item_id) {

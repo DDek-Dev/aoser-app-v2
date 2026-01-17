@@ -102,18 +102,6 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
 
   // Handle Android back button
-  useEffect(() => {
-    const onBackPress = () => {
-      if (currentIndex >= 0) {
-        bottomSheetModalRef.current?.dismiss();
-        return true;
-      }
-      return false;
-    };
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => backHandler.remove();
-  }, [currentIndex]);
 
 
 
@@ -184,6 +172,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       return;
     }
 
+    console.log('job::: ', job)
 
     setIsProcessing(true);
 
@@ -341,49 +330,83 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
         bounces={true}
         contentContainerStyle={{ paddingBottom: 200 }}
       >
-        <Text className="text-body font-bold text-text my-3">
+        {/* Job Title */}
+        <Text className="text-xl font-bold text-text my-6 ">
           {job?.workTitle}
         </Text>
 
-        <View className="flex-row items-center mb-4 gap-2">
-          <View>
-            {job?.budgetType === "FIXED_PRICE" ? (
-              <MaterialIcons name="attach-money" size={24} color="gray" />
-            ) : (
-              <Text className='font-bold text-textSecondary text-lg'>₭</Text>
-            )}
+        {/* Key Info Cards */}
+        <View className=" rounded-2xl p-4 mb-6">
+          {/* Budget - Most Important Info First */}
+          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+            <View className="flex-row items-center gap-3">
+              <View className="bg-primary/10 p-2 rounded-lg">
+                <MaterialIcons name="wallet" size={24} color="#3b82f6" />
+              </View>
+              <Text className="text-sm text-textSecondary">{t('postWork.budget')}</Text>
+            </View>
+            <View className="flex-row items-baseline gap-1">
+              <Text className="text-2xl font-bold text-primary">
+                {new Intl.NumberFormat().format(jobBudget)}
+              </Text>
+              <Text className="text-sm font-semibold text-warning">{job?.currency}</Text>
+            </View>
           </View>
-          <Text className="text-subheading font-bold text-primary">
-            {new Intl.NumberFormat().format(jobBudget)}
-          </Text>
-        </View>
 
-        <View className="flex-row items-center mb-4 gap-2">
-          <MaterialIcons name="donut-small" size={24} color="gray" />
-          <View className="bg-blue-50 px-3 py-1 rounded-full">
-            <Text className="text-primary text-body">{jobType === "ONLINE" ? "Online" : "Offline"}</Text>
+          {/* Work Type */}
+          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+            <View className="flex-row items-center gap-3">
+              <View className="bg-primary/10 p-2 rounded-lg">
+                <MaterialIcons name="donut-small" size={24} color="#3b82f6" />
+              </View>
+              <Text className="text-sm text-textSecondary">{t('workDetail.kind_of_work')}</Text>
+            </View>
+            <View className={`px-4 py-2 rounded-full ${jobType === "ONLINE" ? "bg-green-100" : "bg-purple-100"
+              }`}>
+              <Text className={`text-sm font-semibold ${jobType === "ONLINE" ? "text-green-700" : "text-purple-700"
+                }`}>
+                {jobType === "ONLINE" ? "Online" : "Offline"}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        <View className="flex-row items-center mb-4 gap-2">
-          <MaterialIcons name="alarm" size={24} color="gray" />
-          <View className="bg-blue-50 px-3 py-1 rounded-full">
-            <Text className="text-primary text-body">{formatDate(jobDeadline, currentLanguage)}</Text>
-          </View>
-        </View>
-
-        <View className="flex-row items-center mb-4 gap-2">
-          <MaterialIcons name="person" size={24} color="gray" />
-          <View className="px-3 py-1 rounded-full">
-            <Text className="text-primary text-body">
-              {job?.totalLikes || 0} {t('workDetail.interested_freelancers')}
+          {/* Deadline */}
+          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+            <View className="flex-row items-center gap-3">
+              <View className="bg-primary/10 p-2 rounded-lg">
+                <MaterialIcons name="date-range" size={24} color="#3b82f6" />
+              </View>
+              <Text className="text-sm text-textSecondary">{t('workDetail.deadline')}</Text>
+            </View>
+            <Text className="text-sm font-semibold text-text">
+              {formatDate(jobDeadline, currentLanguage)}
             </Text>
           </View>
+
+          {/* Interested Freelancers */}
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3">
+              <View className="bg-primary/10 p-2 rounded-lg">
+                <MaterialIcons name="person" size={24} color="#3b82f6" />
+              </View>
+              <Text className="text-sm text-textSecondary">
+                {t('workDetail.interested_freelancers')}
+              </Text>
+            </View>
+            <View className="bg-primary/20 px-3 py-1.5 rounded-full">
+              <Text className="text-sm font-bold text-primary">
+                {job?.totalLikes || 0}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        <View className='flex-row items-center gap-2 mb-4'>
-          <Text className='text-body font-bold text-text'>{t('workDetail.work_detail')}</Text>
-          <View className='bg-gray-200 flex-1 h-[1px]' />
+        {/* Work Detail Section Header */}
+        <View className="flex-row items-center gap-3 mb-4">
+          <Text className="text-lg font-bold text-text">
+            {t('workDetail.work_detail')}
+          </Text>
+          <View className="flex-1 h-px bg-gray-300" />
         </View>
 
         <View className='bg-blue-100 p-4 rounded-2xl mb-4'>

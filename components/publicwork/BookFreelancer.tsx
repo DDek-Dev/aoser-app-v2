@@ -248,7 +248,7 @@ const BookFreelancer = ({ route }: Props) => {
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <ScreenWrapper safeEdges={['top']} style={{ backgroundColor: 'white', flex: 1 }}>
         <Header_back
-          text="Book Freelancer"
+          text={t('postWork.book_freelancer')}
           onPress={handleBack}
           iconColor='#3B82F6'
           backgroundColor='bg-surface'

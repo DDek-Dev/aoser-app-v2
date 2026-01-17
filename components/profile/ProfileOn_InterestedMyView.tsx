@@ -12,6 +12,7 @@ import { useUpdateWorkById } from 'hooks/usePublicWork';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 
 import { profileImage } from 'assets';
+import { useTranslation } from 'react-i18next';
 
 
 // Import the correct type from your MainNavigator
@@ -31,7 +32,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
 
   const navigation = useNavigation<NavigationProp>();
   const updateWorkById = useUpdateWorkById();
-
+  const {t} = useTranslation();
 //   const userIds = useMemo(() => job.applicant.likes, [job.likes]);
   const currentLanguage = getCurrentLanguage();
   
@@ -84,6 +85,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
     }
   };
 
+
   return (
     <>
 
@@ -115,7 +117,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
                   disabled={updateWorkById.isPending}
                 >
                   <Text className="text-white text-center">
-                    {updateWorkById.isPending ? 'Hiring...' : 'Hire'}
+                    {updateWorkById.isPending ? t('workDetail.hiring') :  t('workDetail.hire')}
                   </Text>
                 </Pressable>
               <Text className="text-gray-400 text-caption py-2 px-4 ">{formatRelativeTime(item.applicant.updatedAt as string, currentLanguage)}</Text>

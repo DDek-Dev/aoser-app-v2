@@ -98,7 +98,7 @@ const SelectImage: React.FC<Props> = ({
   return (
     <>
       {label && (
-        <Text className="text-body font-bold text-text mb-2">
+        <Text className="text-body font-bold text-text mb-2 mt-4">
           {label} {required && <Text className="text-error">*</Text>}
         </Text>
       )}

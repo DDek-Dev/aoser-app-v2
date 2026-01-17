@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import { useUnreadChatCount } from 'hooks/useChat';
+import { useAuth } from 'hooks/useAuth';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BUTTON_SIZE = 60;
@@ -38,6 +40,13 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   const gestureStart = useRef({ x: 0, y: 0 });
   const currentPosition = useRef({ x: initialX, y: initialY });
 
+  const {user} = useAuth();
+  if(!user) return null;
+
+  console.log('user: ', user);
+  const unreadCount = useUnreadChatCount(user?._id || '');
+
+  console.log('Unread count: ', unreadCount);
   // Auto-fade functionality
   const resetFadeTimer = () => {
     if (fadeTimeoutRef.current) {

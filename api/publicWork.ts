@@ -4,7 +4,6 @@ import { BookingFormData, Job, SubWorkDetail, WorkApplies, WorkById } from 'type
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-// const API_BASE_URL = "http://192.168.0.185:8000"
 
 export const publiceWorkApi = {
     getPublicWork: async (token: string): Promise<Job[]> => {
@@ -61,8 +60,10 @@ export const publiceWorkApi = {
 
     },
     updateWorkById: async (id: string, data: any, token: string): Promise<Job> => {
+      
+
         try {
-            console.log("DATA in Update API : ", id);
+         
             const res = await axios.put(`${API_BASE_URL}/worker/work/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',

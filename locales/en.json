@@ -100,7 +100,7 @@
     "top_freelancers": "Top Freelancers",
     "recommended_freelancers": "Recommended Freelancers",
     "nomore_freelancers": "No more freelancers to load",
-    "loading_more":"Loading more...",
+    "loading_more": "Loading more...",
     "freelancers": "Freelancer",
     "fast_search": "Fast Search",
     "history_search": "History of Search",
@@ -130,7 +130,73 @@
     "conditions_policies": "Conditions & Policies",
     "privacy_policy": "Privacy Policy",
     "application_version": "Version",
-    "freelancer_profile": "Freelancer Profile"
+    "freelancer_profile": "Freelancer Profile",
+    "freelancer_workHistory": {
+      "title": "Work History",
+      "subtitle": "Track all your completed projects",
+      "projects_count": "Projects",
+      "new_hire": "New Hire",
+      "re_hire": "Re-hire",
+      "service_type": "Service Type",
+      "deadline_label": "Deadline",
+      "total_budget": "Total Budget",
+      "check_details": "Check Details",
+      "view_project": "View",
+      "empty_state_title": "No Work History Yet",
+      "empty_state_description": "Start taking on projects to build your work history",
+      "status": {
+        "new": "New",
+        "in_progress": "In Progress",
+        "pending": "Pending",
+        "completed": "Completed",
+        "assigned_wait_payment": "Assigned (Waiting for Payment)",
+        "unknown": "Unknown"
+      },
+      "no_service_type": "No service type",
+      "error_title": "Error Loading Work History",
+      "error_description": "Unable to load your work history. Please try again.",
+      "go_back": "Go Back",
+      "assigned": "Assigned"
+    },
+    "freelancerSetting": {
+      "title": "Settings",
+      "recommend_section_label": "Let's our help recommend you",
+      "buy_star": "Buy recommend star",
+      "account_setting_label": "Account setting",
+      "edit_profile": "Edit Profile",
+      "edit_freelancer_data_label": "Edit freelancer data",
+      "job_section": "Job section",
+      "about_section": "About section",
+      "offer_section": "Offer section"
+    },
+    "buyStar": {
+      "title": "Buy recommend star",
+      "banner_title": "Boost Your Profile",
+      "banner_subtitle": "Get recommended to more clients",
+      "banner_description": "Stars help your profile appear higher in search results and recommendations. More stars = more visibility!",
+      "price_per_star": "1 Star = {{price}}",
+      "select_package_label": "Select a package",
+      "popular_badge": "POPULAR",
+      "stars_plural": "Stars",
+      "star_singular": "Star",
+      "custom_amount_label": "Or enter custom amount",
+      "number_of_stars": "Number of stars",
+      "enter_amount_placeholder": "Enter amount",
+      "total_label": "Total",
+      "order_summary": "Order Summary",
+      "stars_label": "Stars",
+      "price_per_star_label": "Price per star",
+      "benefits_title": "Benefits of Stars",
+      "benefit_ranking": "Higher ranking in search results",
+      "benefit_visibility": "More profile visibility",
+      "benefit_reach": "Reach more potential clients",
+      "benefit_standout": "Stand out from competition",
+      "buy_button_text": "Buy {{stars}} Star{{plural}} - {{price}}",
+      "buy_button_disabled": "Select Stars to Continue",
+      "package_accessibility": "Package: {{stars}} stars for {{price}}",
+      "custom_input_accessibility": "Enter custom number of stars",
+      "buy_button_enabled": "Purchase {{stars}} stars for {{price}}"
+    }
   },
   "works": {
     "lets_find_work": " Let's find best",
@@ -150,6 +216,20 @@
       "no_job_available": "No jobs available",
       "refresh": "Refresh"
     }
+    ,"interestedFreelancers": {
+        "title": "Interested Freelancers",
+        "empty": {
+          "title": "No Freelancers Yet",
+          "description": "Your job posting is live! Qualified freelancers will start showing interest soon.",
+          "tip": {
+            "title": "Tip to get more applicants",
+            "description": "Make sure your job description is clear and includes budget details"
+          },
+          "action": {
+            "share": "Share Job Post"
+          }
+        }
+      }
   },
   "postWork": {
     "public_work": "Public work",
@@ -179,6 +259,7 @@
     "no": "No",
     "from": "From",
     "to": "To",
+    "book_freelancer":"Book Freelancer",
     "date_placeholder": "mm/dd/yy",
     "select_both_dates": "Please select both start and end dates",
     "end_date_after_start": "End date must be after start date",
@@ -220,11 +301,15 @@
   },
   "freelancer_profile": {
     "header_back_text": "Freelancer Profile",
+    "loading": "Loading profile...",
+    "no_profile_title": "Freelancer Not Found",
+    "no_profile_description": "We could not load this freelancer profile. This might be due to a network issue or the profile may no longer be available.",
+    "retry": "Try Again",
+    "go_back": "Go Back",
     "active": "Active",
-    "busy": "I am busy",
+    "busy": "Inactive",
     "reviews": "reviews",
-        "busyUntil": "Busy until",
-
+    "busyUntil": "Busy until",
     "hire": "Hire",
     "hour": "hour",
     "whatExpect": "What you can expext from me?",
@@ -246,10 +331,15 @@
       "seemore": "See more",
       "no_rewiew": "No reviews yet"
     },
-    "similar_Freelancer": "Similar Freelancer"
+    "similar_Freelancer": "Similar Freelancer",
+    "no_freelancer_found": "No freelancer found",
+    "search_another_key":"Try searching with different keywords or check your spelling.",
+    "no_freelancer_fimiliar": "No freelancer found",
+    "no_freelancer_fimiliar_dec":""
   },
   "workDetail": {
     "work_detail": "Work detail",
+    "kind_of_work": "Kind of work",
     "look_all_details": "look all of work details here",
     "edit": "Edit",
     "offer": "Offer",
@@ -367,11 +457,12 @@
     }
   },
   "sortBy": {
-    "all": "All",
-    "high_low": "Price: Low to High",
-    "low_high": "Price: High to Low",
-    "near_far": "Distance: Near to Far",
-    "far_near": "Distance: Far to Near"
+     "title": "Sort by",
+      "all": "All",
+      "priceLowHigh": "Price: Low to High",
+      "priceHighLow": "Price: High to Low",
+      "distanceNearFar": "Distance: Near to Far",
+      "distanceFarNear": "Distance: Far to Near"
   },
   "favorites": {
     "favorites": "Favorites",
@@ -857,6 +948,14 @@
       "confirmation": "Confirmation",
       "review": "Review"
     },
+    "update": {
+      "update": "Update",
+      "job_section": "Job Section",
+      "updateJob_section": "Update your job section carefully.",
+      "describe_to_customers": "Describe About You for Customers",
+      "describe_subtext": "Let your customers understand your background, skills, and experience."
+      
+    },
     "toast": {
       "uploading": {
         "title": "Uploading...",
@@ -864,16 +963,22 @@
       },
       "success": {
         "title": "Success!",
-        "body": "Your freelancer application has been submitted successfully. Please wait for admin approval."
+        "body": "Your freelancer application has been submitted successfully. Please wait for admin approval.",
+        "onupdate": "Updated successfully"
       },
       "error": {
         "title": "Error",
-        "body": "Failed to process your application. Please try again."
+        "body": "Failed to process your application. Please try again.",
+        "onupdate": "Failed to update profile. Please try again."
       },
       "oops": {
         "title": "Opp!",
         "body": "Something went wrong. Please try again."
       }
+    },
+    "validation":{
+      "title":"Validation Error",
+      "body":"Please fill all required fields correctly."
     },
     "buttons": {
       "back": "Back",
@@ -1084,11 +1189,11 @@
   },
   "payment_success": {
     "title": "Payment Successful",
-    "payment_details": "Payment Details",
-    "amount": "Amount:",
-    "payment_type": "Payment Type:",
-    "paid_via": "Paid Via:",
-    "receipt_id": "Receipt ID:",
+    "payment_details": "AOSER – Payment Confirmation",
+    "amount": "Amount :",
+    "payment_type": "Payment Type :",
+    "paid_via": "Paid Via :",
+    "receipt_id": "Receipt ID :",
     "close": "Close",
     "save_bill": "Save Bill",
     "saving": "Saving...",
@@ -1105,9 +1210,9 @@
     "completed": "Payment Completed",
     "pending": "Payment Pending",
     "payment_receipt": "Payment Receipt",
-    "total_amount": "Total Amount",
-    "invoice_id": "Invoice ID",
-    "terminal_id": "Terminal ID",
+    "total_amount": "Total Amount :",
+    "invoice_id": "Invoice ID :",
+    "terminal_id": "Terminal ID :",
     "transaction_time": "Transaction Time",
     "ticket": "Ticket Reference",
     "fcc_ref": "FCC Reference",
@@ -1118,7 +1223,9 @@
     "merchant_info": "Merchant Information",
     "merchant_name": "Merchant Name",
     "merchant_id": "Merchant ID",
-    "secure_payment": "Secure Payment Platform"
+    "secure_payment": "Secure Payment Platform",
+    "name_of_customer": "Customer name :",
+    "name_of_freelancer":"Service Provider :"
   },
   "chat": {
     "chatroom": {

@@ -29,6 +29,7 @@ export default function ChatScreen() {
 const {t}= useTranslation();
   const currentUserId = user?._id;
 
+
   // Listen for navigation focus - refetch when returning from chat
   useEffect(() => {
     const unsubscribe = navigator.addListener('focus', () => {
@@ -315,7 +316,7 @@ const {t}= useTranslation();
     )
   }
 
-  const selectedChat = chat?.find(c => c._id === selectedChatId)
+
 
   return (
     <View className="flex-1 bg-surface">

@@ -71,7 +71,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
 }) => {
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
-const {t} = useTranslation();
+  const { t } = useTranslation();
   React.useEffect(() => {
     if (visible) {
       Animated.parallel([
@@ -204,7 +204,7 @@ const {t} = useTranslation();
 
 const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   item,
- 
+
   onUpdateMessage,
   onCopyMessage,
   onReplyToMessage,
@@ -233,7 +233,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const {t} = useTranslation()
+  const { t } = useTranslation()
   // Normalize item.files which may be string[] (urls) or MediaFile[] into MediaFile[]
   const inferTypeFromUri = (uri: string, mimeType?: string) => {
     if (mimeType && mimeType.startsWith('video/')) return 'video';
@@ -312,7 +312,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   };
 
 
- const handleMediaPress = (media: MediaFile) => {
+  const handleMediaPress = (media: MediaFile) => {
     setFullScreenMedia(media);
     setIsFullScreenModalVisible(true);
   };
@@ -330,7 +330,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
     if (!mediaList || mediaList.length === 0) return null;
 
     const mediaCount = mediaList.length;
-// console.log("mediaList in meesafe item: ", mediaList)
+    // console.log("mediaList in meesafe item: ", mediaList)
     if (mediaCount === 1) {
       return (
         <MediaRenderer
@@ -437,6 +437,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   };
 
 
+  // console.log("ITEM: ", item)
   return (
     <>
       <Pressable
@@ -530,7 +531,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                                 <Ionicons name="document-text" size={20} color="#3B82F6" />
                               </View>
                             )}
-                            
+
 
 
                             <View className="">
@@ -592,33 +593,97 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                     )}
 
                     {/* Location Message */}
-                    {item.messageType === 'LOCATION' && ( (item as any).mapsUrl) && (
+                    {item.messageType === 'LOCATION' && (
                       <TouchableOpacity
+                        activeOpacity={0.9}
                         onPress={() => {
                           const mapsUrl = (item as any).mapsUrl || `https://www.google.com/maps/search/?api=1&query=${(item as any).location?.latitude},${(item as any).location?.longitude}`;
                           if (mapsUrl) Linking.openURL(mapsUrl);
                         }}
                         style={{
                           marginTop: 8,
-                          padding: 12,
-                          borderRadius: 8,
-                          backgroundColor: isFromUser ? 'rgba(255,255,255,0.08)' : '#eef2ff',
-                          flexDirection: 'row',
-                          alignItems: 'center',
+                          borderRadius: 16,
+                          overflow: 'hidden',
+                          backgroundColor: isFromUser ? '#3B82F6' : '#fff',
+                          width: 240, // Fixed width looks better for cards
+                          borderWidth: isFromUser ? 0 : 1,
+                          borderColor: '#e5e7eb',
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 4,
+                          elevation: 3,
                         }}
                       >
-                        <View style={{ marginRight: 12 }}>
-                          <Ionicons name="location" size={22} color={isFromUser ? '#fff' : '#3B82F6'} />
+                        {/* Map Preview Placeholder / Static Map */}
+                        <View style={{
+                          height: 120,
+                          backgroundColor: isFromUser ? 'rgba(255,255,255,0.2)' : '#f3f4f6',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}>
+                          {/* If you have a Google Maps API key, replace this with an Image component using Static Maps API */}
+                          <Ionicons
+                            name="map"
+                            size={40}
+                            color={isFromUser ? 'rgba(255,255,255,0.6)' : '#9ca3af'}
+                          />
+                          <View style={{
+                            position: 'absolute',
+                            bottom: 10,
+                            right: 10,
+                            backgroundColor: '#ef4444',
+                            padding: 4,
+                            borderRadius: 20,
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                          }}>
+                            <Ionicons name="location" size={14} color="#fff" />
+                          </View>
                         </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ color: isFromUser ? '#fff' : '#111', fontWeight: '600' }} numberOfLines={1}>
-                            Shared location
+
+                        {/* Info Section */}
+                        <View style={{ padding: 12 }}>
+                          <Text style={{
+                            color: isFromUser ? '#fff' : '#1f2937',
+                            fontWeight: 'bold',
+                            fontSize: 15
+                          }}>
+                            Current Location { (item as any).mapsUrl }
                           </Text>
+
                           {((item as any).expiresAt) && (
-                            <Text style={{ color: isFromUser ? '#e5e7eb' : '#6b7280', fontSize: 12 }}>
-                              Expires {new Date((item as any).expiresAt).toLocaleString()}
+                            <Text style={{
+                              color: isFromUser ? 'rgba(255,255,255,0.8)' : '#6b7280',
+                              fontSize: 11,
+                              marginTop: 2
+                            }}>
+                              Live until {new Date((item as any).expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </Text>
                           )}
+
+                          <View style={{
+                            marginTop: 8,
+                            paddingTop: 8,
+                            borderTopWidth: 1,
+                            borderTopColor: isFromUser ? 'rgba(255,255,255,0.2)' : '#f3f4f6',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}>
+                            <Text style={{
+                              color: isFromUser ? '#fff' : '#3B82F6',
+                              fontWeight: '600',
+                              fontSize: 13
+                            }}>
+                              View on Map {(item as any).location?.latitude}
+                            </Text>
+                            <Ionicons
+                              name="chevron-forward"
+                              size={16}
+                              color={isFromUser ? '#fff' : '#3B82F6'}
+                            />
+                          </View>
                         </View>
                       </TouchableOpacity>
                     )}
@@ -642,7 +707,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                         {formatTime(item.createdAt || '')}
                       </Text>
 
-                      {isFromUser &&item.status === 'SENT' && (
+                      {isFromUser && item.status === 'SENT' && (
                         <Ionicons
                           name="checkmark"
                           size={14}
@@ -690,12 +755,12 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
       />
 
-       <FullScreenMediaModal
-            visible={isFullScreenModalVisible}
-            mediaList={mediaList}
-            initialMedia={fullScreenMedia}
-            onClose={() => setIsFullScreenModalVisible(false)}
-          />
+      <FullScreenMediaModal
+        visible={isFullScreenModalVisible}
+        mediaList={mediaList}
+        initialMedia={fullScreenMedia}
+        onClose={() => setIsFullScreenModalVisible(false)}
+      />
     </>
   );
 };

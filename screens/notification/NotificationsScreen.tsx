@@ -86,7 +86,6 @@ const NotificationsScreen = () => {
   const [localNotifications, setLocalNotifications] = useState<Notifications[]>([]);
 
 
-
   React.useEffect(() => {
     if (data) setLocalNotifications(data as any);
   }, [data]);

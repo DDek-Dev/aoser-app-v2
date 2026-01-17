@@ -224,7 +224,7 @@ const ProfileScreen = () => {
         {/* Logout Section */}
         {isAuthenticated && (
           <View className="mt-6 mx-4 px-4 space-y-4">
-            <View className="bg-gray-300 h-[0.5px] w-full" />
+            <View className="bg-gray-300 h-[0.5px] w-full mb-4" />
             <TouchableOpacity
               onPress={handleLogout}
               className="flex-row justify-between bg-surface border border-border rounded-full px-4 items-center py-3"

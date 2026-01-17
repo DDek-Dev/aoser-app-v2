@@ -77,7 +77,7 @@ export default function PostWorkScreen() {
     budget: false,
     category: false,
     dateInvalid: false,
-    subcategories: false
+    // subcategories: false
   });
 
 
@@ -105,7 +105,7 @@ export default function PostWorkScreen() {
       workDetail: workDetail.trim() === '',
       budget: budget === 0 && budget === null,
       category: category.trim() === '',
-      subcategories: subcategories.length === 0,
+      // subcategories: subcategories.length === 0,
       dateInvalid,
     };
     setErrors(newErrors);
@@ -222,9 +222,9 @@ export default function PostWorkScreen() {
                   setCategory(serviceTypeId);
                   setSubcategories(jobIds);
                 }}
-                required
+                // required
                 inputClassName={errors.category ? 'border-error' : 'border-border'}
-                isValidate={errors.category ? `${t('postWork.service_type_required')}` : ''}
+                // isValidate={errors.category ? `${t('postWork.service_type_required')}` : ''}
                 ref={categoryRef}
               />
 

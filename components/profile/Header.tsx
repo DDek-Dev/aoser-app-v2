@@ -59,8 +59,8 @@ export default function Header({
           className="w-20 h-20 rounded-full border-4 border-white"
         />
         {isme ? (
-          <ProfileStatusPopup
-          />
+          <ProfileStatusPopup workStatus={status}  isme />
+         
         ) : (
           <View className="absolute right-4 top-12  flex-row items-center gap-8">
             {status === 'ACTIVE' ? (

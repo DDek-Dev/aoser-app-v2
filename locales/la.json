@@ -25,7 +25,7 @@
         "singup_to_start": "ສະໝັກບັນຊີໄໝ່",
         "signInToPost": "ເຂົ້າສູ່ລະບົບເພື່ອໂພສວຽກໃໝ່",
         "signInToViewNotifications": "ເຂົ້າສູ່ລະບົບເພື່ອເບິ່ງການແຈ້ງເຕືອນ",
-        "back": "ກັບຄືນ"
+        "protectedRoute": "ກັບຄືນ"
     },
     "---auth--": " ------------------ PAGES OF TABS ------------------ ",
     "loginScreen": {
@@ -100,7 +100,7 @@
         "top_freelancers": "ຟຣີແລນເຊີອັນດັບຕົ້ນ",
         "recommended_freelancers": "ຟຣີແລນເຊີທີ່ແນະນຳ",
         "nomore_freelancers": "ບໍ່ມີຟຣີແລນເຊີເພີ່ມອີກແລ້ວ",
-        "loading_more":"ກໍາລັງໂລດຕື່ມ",
+        "loading_more": "ກໍາລັງໂລດຕື່ມ",
         "freelancers": "ຟຣີແລນເຊີ",
         "fast_search": "ຕົວເລືອກ",
         "history_search": "ປະຫວັດການຊອກຫາ",
@@ -130,7 +130,73 @@
         "conditions_policies": "ເງື່ອນໄຂ ແລະ ນະໂຍບາຍ",
         "privacy_policy": "ນະໂຍບາຍຂອງ Aoser",
         "application_version": "ເວີຊັນແອັບ",
-        "freelancer_profile": "ຟລີແລນເຊີໂປຣໄຟລ"
+        "freelancer_profile": "ຟລີແລນເຊີໂປຣໄຟລ",
+        "freelancer_workHistory": {
+            "title": "ປະຫວັດການເຮັດວຽກ",
+            "subtitle": "ຕິດຕາມໂຄງການທີ່ສຳເລັດແລ້ວ",
+            "projects_count": "ໂຄງການ",
+            "new_hire": "ຈ້າງໃໝ່",
+            "re_hire": "ຈ້າງຄືນ",
+            "service_type": "ປະເພດການບໍລິການ",
+            "deadline_label": "ກຳນົດເວລາ",
+            "total_budget": "ງົບປະມານທັງໝົດ",
+            "check_details": "ເບິ່ງລາຍລະອຽດ",
+            "view_project": "ເບິ່ງໂຄງການ",
+            "empty_state_title": "ຍັງບໍ່ມີປະຫວັດການເຮັດວຽກ",
+            "empty_state_description": "ເລີ່ມຮັບໂຄງການເພື່ອສ້າງປະຫວັດການເຮັດວຽກຂອງທ່ານ",
+            "status": {
+                "new": "ໃໝ່",
+                "in_progress": "ກຳລັງດຳເນີນ",
+                "pending": "ລໍຖ້າ",
+                "completed": "ສຳເລັດ",
+                "assigned_wait_payment": "ລໍຖ້າເລີ່ມວຽກ",
+                "unknown": "ບໍ່ຮູ້"
+            },
+            "no_service_type": "ບໍ່ມີປະເພດບໍລິການ",
+            "error_title": "ເກີດຂໍ້ຜິດພາດໃນການໂຫຼດປະຫວັດ",
+            "error_description": "ບໍ່ສາມາດໂຫຼດປະຫວັດການເຮັດວຽກຂອງທ່ານໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
+            "go_back": "ກັບຄືນ",
+            "assigned": "ມອບໝາຍແລ້ວ"
+        },
+        "freelancerSetting": {
+            "title": "ຕັ້ງຄ່າ",
+            "recommend_section_label": "ໃຫ້ພວກເຮົາຊ່ວຍແນະນຳທ່ານ",
+            "buy_star": "ຊື້ດາວແນະນຳ",
+            "account_setting_label": "ຕັ້ງຄ່າບັນຊີ",
+            "edit_profile": "ແກ້ໄຂໂປຣໄຟລ໌",
+            "edit_freelancer_data_label": "ແກ້ໄຂຂໍ້ມູນຟຣີແລນເຊີ",
+            "job_section": "ພາກສ່ວນວຽກ",
+            "about_section": "ພາກສ່ວນກ່ຽວກັບ",
+            "offer_section": "ພາກສ່ວນຂໍ້ເສະໜີ"
+        },
+        "buyStar": {
+            "title": "ຊື້ດາວແນະນຳ",
+            "banner_title": "ເພີ່ມຄວາມໂດດເດັ່ນໃຫ້ໂປຣໄຟລ໌",
+            "banner_subtitle": "ຮັບການແນະນຳໃຫ້ລູກຄ້າຫຼາຍຂຶ້ນ",
+            "banner_description": "ດາວຊ່ວຍໃຫ້ໂປຣໄຟລ໌ຂອງທ່ານປາກົດສູງຂຶ້ນໃນຜົນການຊອກຫາ ແລະ ການແນະນຳ. ດາວຫຼາຍ = ການເບິ່ງເຫັນຫຼາຍ!",
+            "price_per_star": "1 ດາວ = {{price}}",
+            "select_package_label": "ເລືອກແພັກເກັດ",
+            "popular_badge": "ນິຍົມ",
+            "stars_plural": "ດາວ",
+            "star_singular": "ດາວ",
+            "custom_amount_label": "ຫຼື ໃສ່ຈຳນວນເອງ",
+            "number_of_stars": "ຈຳນວນດາວ",
+            "enter_amount_placeholder": "ໃສ່ຈຳນວນ",
+            "total_label": "ລວມ",
+            "order_summary": "ສະຫຼຸບການສັ່ງຊື້",
+            "stars_label": "ດາວ",
+            "price_per_star_label": "ລາຄາຕໍ່ດາວ",
+            "benefits_title": "ຜົນປະໂຫຍດຂອງດາວ",
+            "benefit_ranking": "ອັນດັບສູງຂຶ້ນໃນຜົນການຊອກຫາ",
+            "benefit_visibility": "ການເບິ່ງເຫັນໂປຣໄຟລ໌ຫຼາຍຂຶ້ນ",
+            "benefit_reach": "ເຂົ້າເຖິງລູກຄ້າທີ່ມີທ່າແຮງຫຼາຍຂຶ້ນ",
+            "benefit_standout": "ໂດດເດັ່ນກວ່າຄູ່ແຂ່ງ",
+            "buy_button_text": "ຊື້ {{stars}} ດາວ - {{price}}",
+            "buy_button_disabled": "ເລືອກດາວເພື່ອສືບຕໍ່",
+            "package_accessibility": "แພັກເກັດ: {{stars}} ດາວ ລາຄາ {{price}}",
+            "custom_input_accessibility": "ໃສ່ຈຳນວນດາວເອງ",
+            "buy_button_enabled": "ຊື້ {{stars}} ດາວ ລາຄາ {{price}}"
+        }
     },
     "works": {
         "lets_find_work": "ຫາວຽກທີ່ດີທີ່ສຸດທີ່ເໝາະ",
@@ -149,6 +215,20 @@
             "if_the_problem": "ຖ້າບັນຫາຍັງຄົງຢູ່, ກະລຸນາກວດເຊັກການເຊື່ອມຕໍ່ອິນເຕີເນັດຂອງທ່ານ",
             "no_job_available": "ບໍ່ມີວຽກພ້ອມໃຫ້ສະໝັກ",
             "refresh": "ໂຫຼດໃໝ່"
+        },
+        "interestedFreelancers": {
+            "title": "ຟຣີແລນເຊີທີ່ສົນໃຈ",
+            "empty": {
+                "title": "ຍັງບໍ່ມີຟຣີແລນເຊີທີ່ໃຫ້ຄວາມສົນໃຈ",
+                "description": "ການປະກາດວຽກຂອງທ່ານຖືກເຜີຍແຜ່ແລ້ວ! ຟຣີແລນເຊີທີ່ມີຄຸນສົມບັດຈະເລີ່ມສະແດງຄວາມສົນໃຈໃນໄວໆນີ້.",
+                "tip": {
+                    "title": "ຄຳແນະນຳເພື່ອຮັບຜູ້ສະໝັກຫຼາຍຂຶ້ນ",
+                    "description": "ໃຫ້ແນ່ໃຈວ່າລາຍລະອຽດວຽກຂອງທ່ານຊັດເຈນ ແລະ ລວມເອົາລາຍລະອຽດງົບປະມານ"
+                },
+                "action": {
+                    "share": "ແບ່ງປັນວຽກ"
+                }
+            }
         }
     },
     "postWork": {
@@ -166,19 +246,20 @@
         "work_description_required": "ກະລຸນາໃສ່ລາຍລະອຽດວຽກ",
         "sample_work": "ຕົວຢ່າງວຽກ (ບໍ່ບັງຄັບ)",
         "sample_work_placeholder": "ວາງລິ້ງ ຫຼື ອ້າງອີງ",
-        "service_type": "ປະເພດການບໍລິການ",
+        "service_type": "ເລືອກປະເພດການບໍລິການ",
         "service_type_required": "ກະລຸນາເລືອກປະເພດການບໍລິການ",
         "budget_type": "ປະເພດງົບປະມານ",
         "fixed_price": "ລາຄາເລີ່ມຕົ້ນ",
         "hourly": "ຕາມຊົ່ວໂມງ",
         "budget": "ງົບປະມານ",
-         "offering": "ຕາມຂໍ້ສະເໜີ",
+        "offering": "ຕາມຂໍ້ສະເໜີ",
         "budget_required": "ກະລຸນາໃສ່ງົບປະມານ",
         "deadline_requirement": "ຕ້ອງການກຳນົດເວລາບໍ?",
         "yes": "ຕ້ອງການ",
         "no": "ບໍ່ຕ້ອງການ",
         "from": "ຈາກວັນທີ",
         "to": "ຫາວັນທີ",
+        "book_freelancer": "ຈອງຟຣີແລນເຊີ",
         "date_placeholder": "ວ/ດ/ປ",
         "select_both_dates": "ກະລຸນາເລືອກວັນທີເລີ່ມຕົ້ນແລະສິ້ນສຸດ",
         "end_date_after_start": "ວັນທີສິ້ນສຸດຕ້ອງຫຼັງຈາກວັນທີເລີ່ມຕົ້ນ",
@@ -220,6 +301,11 @@
     },
     "freelancer_profile": {
         "header_back_text": "ຟຣີແລນເຊີ",
+        "loading": "ກຳລັງໂຫຼດໂປຣໄຟ...",
+        "no_profile_title": "ບໍ່ພົບໂປຣໄຟຟຣີແລນເຊີ",
+        "no_profile_description": "ພວກເຮົາບໍ່ສາມາດໂຫຼດໂປຣໄຟຟຣີແລນເຊີນີ້ໄດ້. ອາດຈະເປັນເພາະບັນຫາເຄືອຂ່າຍ ຫຼື ໂປຣໄຟອາດຈະບໍ່ມີຢູ່ແລ້ວ.",
+        "retry": "ລອງໃໝ່ອີກຄັ້ງ",
+        "go_back": "ກັບຄືນ",
         "active": "ໃຊ້ງານຢູ່",
         "busy": "ບໍ່ສະດວກ",
         "busyUntil": "ບໍ່ສະດວກຈົນເຖີງ",
@@ -245,11 +331,16 @@
             "seemore": "ເພີ່ມເຕີມ",
             "no_rewiew": "ຍັງບໍ່ມີການລີວິວ"
         },
-        "similar_Freelancer": "ຟຣີແລນເຊີທີ່ຄ້າຍຄືກັນ"
+        "similar_Freelancer": "ຟຣີແລນເຊີທີ່ຄ້າຍຄືກັນ",
+        "no_freelancer_found": "ຄົ້ນຫາບໍ່ເຫັນຟຣີແລນເຊີນີ້",
+        "search_another_key": "ກະລຸນາຄົ້ນຫາດ້ວຍຄຳສຳຄັນອື່ນ ຫຼື ກວດສອບການສະກົດຄຳຂອງທ່ານ.",
+        "no_freelancer_fimiliar": "ຍັງບໍ່ມີຟຣີແລນເຊີທີ່ຄ້າຍຄືກັນ",
+        "no_freelancer_fimiliar_dec": ""
     },
     "workDetail": {
         "work_detail": "ລາຍລະອຽດວຽກ",
         "look_all_details": "ເບິ່ງລາຍລະອຽດວຽກທັງໝົດຢູ່ທີ່ນີ້",
+        "kind_of_work": "ປະເພດວຽກ",
         "edit": "ແກ້ໄຂ",
         "offer": "ສະເໜີລາຄາ",
         "add_work": "ເພີ່ມວຽກ",
@@ -366,11 +457,12 @@
         }
     },
     "sortBy": {
+        "title": "ຈັດລຽງຕາມ",
         "all": "ທັງໝົດ",
-        "high_low": "ລາຄາ: ຕ່ຳ - ສູງ",
-        "low_high": "ລາຄາ: ສູງ - ຕ່ຳ",
-        "near_far": "ໄລຍະທາງ: ໃກ້ - ໄກ",
-        "far_near": "ໄລຍະທາງ: ໄກ - ໃກ້"
+        "priceLowHigh": "ລາຄາ: ຕໍ່າຫາສູງ",
+        "priceHighLow": "ລາຄາ: ສູງຫາຕໍ່າ",
+        "distanceNearFar": "ໄລຍະທາງ: ໃກ້ຫາໄກ",
+        "distanceFarNear": "ໄລຍະທາງ: ໄກຫາໃກ້"
     },
     "favorites": {
         "favorites": "ລາຍການທີ່ມັກ",
@@ -856,16 +948,29 @@
             },
             "success": {
                 "title": "ສຳເລັດ!",
-                "body": "ຄຳຮ້ອງສະໝັກ freelancer ຂອງທ່ານຖືກສົ່ງສຳເລັດແລ້ວ. ກະລຸນາລໍຖ້າການອະນຸມັດຈາກຜູ້ດູແລ."
+                "body": "ຄຳຮ້ອງສະໝັກ freelancer ຂອງທ່ານຖືກສົ່ງສຳເລັດແລ້ວ. ກະລຸນາລໍຖ້າການອະນຸມັດຈາກຜູ້ດູແລ.",
+                "onupdate": "ອັບເດດສໍາເລັດ"
             },
             "error": {
                 "title": "ຜິດພາດ",
-                "body": "ບໍ່ສາມາດດຳເນີນການຄຳຮ້ອງສະໝັກຂອງທ່ານໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ."
+                "body": "ບໍ່ສາມາດດຳເນີນການຄຳຮ້ອງສະໝັກຂອງທ່ານໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.",
+                "onupdate": "ບໍ່ສາມາດອັບເດດຂໍ້ມູນຂອງທ່ານໄດ້. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ."
             },
             "oops": {
                 "title": "ໂອຍ!",
                 "body": "ມີບາງຢ່າງຜິດພາດ. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ."
             }
+        },
+        "validation": {
+            "title": "ຂໍ້ຜິດພາດໃນການກວດສອບ",
+            "body": "ກະລຸນາຕື່ມຂໍ້ມູນໃຫ້ຄົບຖ້ວນແລະຖືກຕ້ອງໃນທຸກຊ່ອງທີ່ຈຳເປັນ."
+        },
+        "update": {
+            "update": "ອັບເດດ",
+            "job_section": "ພາກວຽກ",
+            "updateJob_section": "ອັບເດດພາກວຽກຂອງທ່ານຢ່າງລະມັດລະວັງ.",
+            "describe_to_customers": "ອະທິບາຍກ່ຽວກັບຕົວທ່ານໃຫ້ລູກຄ້າຮູ້ຈັກ",
+            "describe_subtext": "ໃຫ້ລູກຄ້າເຂົ້າໃຈປະຫວັດ, ທັກສະ ແລະ ປະສົບການຂອງທ່ານ."
         },
         "buttons": {
             "back": "ກັບຄືນ",
@@ -1076,9 +1181,9 @@
     },
     "payment_success": {
         "title": "ຊໍາລະສໍາເລັດ",
-        "payment_details": "ລາຍລະອຽດການຊໍາລະ",
+        "payment_details": "AOSER – ໃບຢືນຢັນການຊໍາລະເງີນ (Payment Confirmation)",
         "amount": "ຈໍານວນເງິນ :",
-        "payment_type": "ປະເພດການຈ່າຍເງີນ :",
+        "payment_type": "ງານທີ່ໃຊ້ບໍລີການ :",
         "paid_via": "ຊໍາລະຜ່ານ :",
         "receipt_id": "ລະຫັດບິນ :",
         "terminalId": "ລະຫັດບິນ",
@@ -1098,8 +1203,8 @@
         "completed": "ຊຳລະສຳເລັດ",
         "pending": "ລໍຖ້າການຊຳລະ",
         "payment_receipt": "ໃບຮັບເງິນ",
-        "total_amount": "ຈຳນວນເງິນທັງໝົດ",
-        "invoice_id": "ລະຫັດບິນ :",
+        "total_amount": "ຍອດທີ່ສໍາລະທັງໝົດ",
+        "invoice_id": "ເລກທີ່ :",
         "terminal_id": "ລະຫັດເຄື່ອງ",
         "transaction_time": "ເວລາຊໍາລະ :",
         "ticket": "ລະຫັດອ້າງອີງ",
@@ -1111,7 +1216,9 @@
         "merchant_info": "ຂໍ້ມູນຮ້ານຄ້າ",
         "merchant_name": "ຊື່ຮ້ານຄ້າ",
         "merchant_id": "ລະຫັດຮ້ານຄ້າ",
-        "secure_payment": "ລະບົບຊຳລະເງິນທີ່ປອດໄພ"
+        "secure_payment": "ລະບົບຊຳລະເງິນທີ່ປອດໄພ",
+        "name_of_customer": "ຊື່ລູກຄ້າ :",
+        "name_of_freelancer": "ຜູ້ໃຫ້ບໍລີການ :"
     },
     "chat": {
         "chatroom": {

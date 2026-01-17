@@ -9,15 +9,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { formatDate } from 'utils/dateFormatter';
 import { aoserlogo_no_bg_blue, bcelone, pal } from 'assets';
 import { useNavigation } from '@react-navigation/native';
-import moment from 'moment';
 type Props = {
     route: any;
 };
 
+
 const PaymentDetail_Id = ({ route }: Props) => {
     const { t } = useTranslation();
     const { workId } = route.params;
-
+   
     const getBillDataMutation = useGetBillData(workId);
     const navigation = useNavigation();
 
@@ -41,7 +41,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (getBillDataMutation.isPending) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center">
                     <ActivityIndicator size="large" color="#3B82F6" />
@@ -55,7 +55,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (getBillDataMutation.isError) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center px-6">
                     <View className="w-16 h-16 rounded-full bg-red-100 items-center justify-center mb-4">
@@ -86,7 +86,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (!billData || !billData.payment) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center px-6">
                     <Text className="text-xl font-bold text-gray-800 mb-2">
@@ -111,11 +111,12 @@ const PaymentDetail_Id = ({ route }: Props) => {
         invoiceid,
         fromBankInformation,
         createdAt: paymentCreatedAt,
+        payTo
     } = payment;
 
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']}>
-            <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+            <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
             <ScrollView className="flex-1 px-4 py-4">
                 {/* Status Badge */}
@@ -204,6 +205,14 @@ const PaymentDetail_Id = ({ route }: Props) => {
                         <View className="flex-row justify-between py-3 border-b border-border">
                             <Text className="text-text">{t('payment_success.invoice_id')}</Text>
                             <Text className="text-gray-900 font-semibold">{invoiceid}</Text>
+                        </View>
+                        <View className="flex-row justify-between py-3 border-b border-border">
+                            <Text className="text-text">{t('payment_success.name_of_customer')}</Text>
+                            <Text className="text-gray-900 font-semibold">{createdBy.firstName} {createdBy.lastName}</Text>
+                        </View>
+                        <View className="flex-row justify-between py-3 border-b border-border">
+                            <Text className="text-text">{t('payment_success.name_of_freelancer')}</Text>
+                            <Text className="text-gray-900 font-semibold">{payTo.firstName} {payTo.lastName}</Text>
                         </View>
 
                         {/* Payment Type */}

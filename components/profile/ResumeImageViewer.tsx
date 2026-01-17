@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, StatusBar, Platform, Pressable } from 'react-native';
-// import ImageViewer from 'react-native-image-zoom-viewer';
+import ImageViewer from 'react-native-image-zoom-viewer';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Modal from 'react-native-modal';
 
@@ -13,6 +13,7 @@ export default function ResumeImageViewer() {
   const route = useRoute<ResumeImageViewerRouteProp>();
   const { uri } = route.params;
 
+  console.log('uri', uri);
   return (
     <Modal
       isVisible
@@ -22,13 +23,13 @@ export default function ResumeImageViewer() {
       onBackButtonPress={() => navigation.goBack()}
     >
       <View style={styles.container}>
-        {/* <ImageViewer
+        <ImageViewer
           imageUrls={[{ url: uri }]}
           enableSwipeDown
           onSwipeDown={() => navigation.goBack()}
           // renderIndicator={() => null}
           backgroundColor="black"
-        /> */}
+        />
 
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>← Back</Text>

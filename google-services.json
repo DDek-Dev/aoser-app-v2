@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:534310388147:android:9fe421c135b26f6edbcbc6",
+        "mobilesdk_app_id": "1:534310388147:android:2c2e62af7751db8bdbcbc6",
         "android_client_info": {
-          "package_name": "com.aoser.aoser"
+          "package_name": "com.aoser.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "534310388147-tuisjc8oj44do4ii2urpgejm4p6qvj63.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCygdCBN2vnZALNMIU6s2HtnnHoHhZy3C4"
@@ -20,11 +25,15 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "534310388147-tuisjc8oj44do4ii2urpgejm4p6qvj63.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
-    
   ],
   "configuration_version": "1"
 }

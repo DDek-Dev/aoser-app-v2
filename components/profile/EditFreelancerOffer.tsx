@@ -13,6 +13,7 @@ import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useMyProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import { useTranslation } from 'react-i18next';
 
 const EditFreelancerOffer = () => {
     const insets = useSafeAreaInsets();
@@ -20,11 +21,11 @@ const EditFreelancerOffer = () => {
     const [serviceDesc, setServiceDesc] = useState('');
     const [hourlyRate, setHourlyRate] = useState<number | null>(null); // Allow null
     const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
-    const [errors, setErrors] = useState({ 
-        serviceDesc: false, 
-        hourlyRate: false 
+    const [errors, setErrors] = useState({
+        serviceDesc: false,
+        hourlyRate: false
     });
-
+    const { t } = useTranslation();
     const { data, isLoading } = useMyProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
 
@@ -37,14 +38,13 @@ const EditFreelancerOffer = () => {
 
 
     }, [data]);
-    console.log("data show ing --- ", data?.hourlyRateCurrency , data?.hourlyRate, data?.customerExpect);
 
     const validateForm = () => {
         const newErrors = {
             serviceDesc: !serviceDesc.trim(),
             hourlyRate: hourlyRate === null || hourlyRate === 0 || hourlyRate === undefined
         };
-        
+
         setErrors(newErrors);
         return !Object.values(newErrors).some(error => error);
     };
@@ -57,8 +57,8 @@ const EditFreelancerOffer = () => {
         if (!validateForm()) {
             Toast.show({
                 type: ALERT_TYPE.DANGER,
-                title: 'Validation Error',
-                textBody: 'Please fill all required fields correctly.',
+                title: t('kyc.validation.title'),
+                textBody: t('kyc.validation.body'),
             });
             return;
         }
@@ -76,26 +76,26 @@ const EditFreelancerOffer = () => {
                 onSuccess: () => {
                     Toast.show({
                         type: ALERT_TYPE.SUCCESS,
-                        title: 'Success!',
-                        textBody: 'Profile updated successfully.',
+                        title: t('kyc.toast.success.title'),
+                        textBody: t('kyc.toast.success.onupdate'),
                     });
                     navigation.goBack();
                 },
                 onError: (error) => {
                     Toast.show({
                         type: ALERT_TYPE.DANGER,
-                        title: 'Error!',
-                        textBody: error.message || 'Failed to update profile. Please try again.',
+                        title: t('kyc.toast.oops.title'),
+                        textBody: t('kyc.toast.oops.body'),
                     });
 
                     console.log('Error updating profile:', error);
-                }   
+                }
             });
         } catch (error) {
             Toast.show({
                 type: ALERT_TYPE.DANGER,
-                title: 'Error!',
-                textBody: 'An unexpected error occurred.',
+                title: t('kyc.toast.oops.title'),
+                textBody: t('kyc.toast.oops.body'),
             });
         }
     };
@@ -109,15 +109,15 @@ const EditFreelancerOffer = () => {
             <ScrollView className="flex-1 px-5 pt-6">
                 <View className="flex-row items-center bg-primary p-4 rounded-2xl mb-6">
                     <View>
-                        <Text className="font-semibold text-white text-heading">What Do You Offer?</Text>
-                        <Text className="text-white text-body">Write what customer can expect on you and make explain clearly in the tag.</Text>
+                        <Text className="font-semibold text-white text-heading">{t('kyc.step3.title')}</Text>
+                        <Text className="text-white text-body">{t('kyc.step3.subtitle')}</Text>
                     </View>
                 </View>
 
                 <View className='bg-blue-50 rounded-xl p-4'>
                     <TextArea
-                        label="What customers can expect from you?"
-                        placeholder="Describe your service, your process, and what makes you unique. Be clear and concise..."
+                        label={t('kyc.step3.serviceDescription.label')}
+                        placeholder={t('kyc.step3.serviceDescription.placeholder')}
                         value={serviceDesc}
                         onChangeText={(text) => {
                             setServiceDesc(text);
@@ -127,11 +127,13 @@ const EditFreelancerOffer = () => {
                         }}
                         inputClassName={errors.serviceDesc ? 'border-error' : 'border-border'}
                         required
-                        isValidate={errors.serviceDesc ? 'Service Description is required' : ''}
+                        isValidate={`${errors.serviceDesc ? t('kyc.step3.serviceDescription.error') : ''}`}
+
                     />
 
                     <BudgetInput
-                        label="Hourly Rate"
+                        label={t('kyc.step3.hourlyRate.label')}
+
                         value={hourlyRate}
                         onChange={(value) => {
                             setHourlyRate(value);
@@ -143,12 +145,13 @@ const EditFreelancerOffer = () => {
                         onCurrencyChange={setBudgetCurrency}
                         error={errors.hourlyRate}
                         required
-                        isValidate={errors.hourlyRate ? 'Hourly Rate is required' : ''}
+                        isValidate={`${errors.serviceDesc ? t('kyc.step3.hourlyRate.error') : ''}`}
+
                     />
 
                     <View className="bg-blue-50 border border-primary rounded-xl px-4 py-2 items-center mt-4">
                         <Text className="text-caption text-primary my-2">
-                            💡 This will help customers understand your value.
+                            💡 {t('kyc.step3.tip')}
                         </Text>
                     </View>
                 </View>
@@ -160,7 +163,7 @@ const EditFreelancerOffer = () => {
                     className="bg-textSecondary mt-6 py-4 rounded-full items-center w-1/3"
                     disabled={isUpdating}
                 >
-                    <Text className="text-white text-base font-semibold">Cancel</Text>
+                    <Text className="text-white text-base font-semibold">{t('kyc.buttons.back')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -169,11 +172,12 @@ const EditFreelancerOffer = () => {
                     disabled={isUpdating}
                 >
                     <Text className="text-white text-base font-semibold">
-                        {isUpdating ? 'Updating...' : 'Update'}
+                        {isUpdating ? t('kyc.toast.uploading.title') : t('kyc.update.update')}
+
                     </Text>
                 </TouchableOpacity>
             </View>
-            
+
             <View style={{ height: insets.bottom }} />
         </ScreenWrapper>
     );

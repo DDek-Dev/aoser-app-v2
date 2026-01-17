@@ -189,9 +189,15 @@ class SocketService {
       this.socket.emit('message:update', messageId, message);
     }
   }
+  
   deletChatroom(conversationId:string) {
     if (this.socket) {
       this.socket.emit('conversation:deleteChatRoomAndConversations', conversationId);
+    }
+  }
+  unreadChatCount(totalChatUnread:string) {
+    if (this.socket) {
+      this.socket.emit('chat:messages:unread:count', totalChatUnread);
     }
   }
 
@@ -245,6 +251,8 @@ class SocketService {
       console.log('Socket disconnected manually');
     }
   }
+
+
 
   // Get socket instance
   getSocket() {

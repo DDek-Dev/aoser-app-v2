@@ -5,7 +5,7 @@ import FloatingChatButton from 'screens/chat/FloatingChatButton';
 
 type ScreenWrapperProps = {
   children: React.ReactNode;
-  safeEdges?: Edge[]; // e.g. ['top', 'bottom']
+  safeEdges?: Edge[]; 
   style?: ViewStyle;
   isbluetop?: boolean;
 };

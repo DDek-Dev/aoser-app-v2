@@ -37,7 +37,7 @@ export default function EditWorkById({ route }: Props) {
     const navigation = useNavigation<SearchBarNavigationProp>();
     const insets = useSafeAreaInsets();
     const { t } = useTranslation();
-    
+
     const [workType, setWorkType] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
     const [hasDeadline, setHasDeadline] = useState(true);
     const [subWorkDetails, setSubWorkDetails] = useState<SubWorkDetail[]>([]);
@@ -51,7 +51,7 @@ export default function EditWorkById({ route }: Props) {
     const toInputRef = useRef<TextInput>(null);
     const categoryRef = useRef<{ focus: () => void }>(null);
     const [subcategories, setSubcategories] = useState<string[]>([]);
-    const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY'>('FIXED_PRICE');
+    const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>('FIXED_PRICE');
 
     const [fromDate, setFromDate] = useState<Date | null>(null);
     const [toDate, setToDate] = useState<Date | null>(null);
@@ -59,6 +59,12 @@ export default function EditWorkById({ route }: Props) {
     const [tempToDate, setTempToDate] = useState(new Date());
     const [showFromPicker, setShowFromPicker] = useState(false);
     const [showToPicker, setShowToPicker] = useState(false);
+
+
+
+    // date 
+    const [fromDateString, setFromDateString] = useState('');
+    const [toDateString, setToDateString] = useState('');
 
     const [errors, setErrors] = useState({
         nameOfWork: false,
@@ -96,10 +102,12 @@ export default function EditWorkById({ route }: Props) {
             setCategory(data.serviceType._id);
 
             if (data.startDate) {
-                setFromDate(new Date(data.startDate));
+                // setFromDate(new Date(data.startDate));
+                setFromDateString(formatDate(data.startDate, currentLanguage));
             }
             if (data.deadLine) {
-                setToDate(new Date(data.deadLine));
+                // setToDate(new Date(data.deadLine));
+                setToDateString(formatDate(data.deadLine, currentLanguage));
                 setHasDeadline(true);
             } else {
                 setHasDeadline(false);
@@ -159,6 +167,17 @@ export default function EditWorkById({ route }: Props) {
         };
     }, [nameOfWork, workDetail, budget, category, workType, hasDeadline, toDate, fromDate, subWorkDetails, budgetCurrency, budgetType, subcategories]);
 
+
+    const parseDate = (dateString: string): Date | null => {
+        if (!dateString || dateString.length !== 10) return null;
+
+        const [day, month, year] = dateString.split('/');
+        const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+        // Validate the date
+        if (isNaN(date.getTime())) return null;
+        return date;
+    };
     const handleSubmit = useCallback(async () => {
         const currentState = formStateRef.current;
         const dateInvalid = hasDeadline && (
@@ -226,7 +245,7 @@ export default function EditWorkById({ route }: Props) {
         );
     }
 
- 
+
     // Show error state if no data is available
     if (!data) {
         return (
@@ -269,6 +288,24 @@ export default function EditWorkById({ route }: Props) {
                         className='p-4'
                     >
                         <View className='bg-blue-50 p-4 rounded-2xl mb-6'>
+
+                            <View className='bg-blue-50 rounded-2xl mb-4'>
+                                <SelectInput
+                                    label={t('editWork.serviceType.label')}
+                                    value={category}
+                                    initialSubcategories={subcategories}
+                                    onSelect={(serviceTypeId, jobIds) => {
+                                        setCategory(serviceTypeId);
+                                        setSubcategories(jobIds);
+                                    }}
+                                    required
+                                    inputClassName={errors.category ? 'border-error' : 'border-border'}
+                                    isValidate={errors.category ? t('editWork.serviceType.error') : ''}
+                                    ref={categoryRef}
+                                />
+                            </View>
+
+
                             <FormInput
                                 label={t('editWork.workTitle.label')}
                                 placeholder={t('editWork.workTitle.placeholder')}
@@ -307,58 +344,57 @@ export default function EditWorkById({ route }: Props) {
                                 isValidate={errors.workDetail ? t('editWork.workDescription.error') : ''}
                             />
 
-                            <FormInput 
-                                label={t('editWork.sampleWork.label')} 
-                                placeholder={t('editWork.sampleWork.placeholder')} 
-                                inputClassName="border-border" 
-                            />
+                            {/* <FormInput
+                                label={t('editWork.sampleWork.label')}
+                                placeholder={t('editWork.sampleWork.placeholder')}
+                                inputClassName="border-border"
+                            /> */}
                         </View>
 
-                        <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
-                            <SelectInput
-                                label={t('editWork.serviceType.label')}
-                                value={category}
-                                initialSubcategories={subcategories}
-                                onSelect={(serviceTypeId, jobIds) => {
-                                    setCategory(serviceTypeId);
-                                    setSubcategories(jobIds);
-                                }}
-                                required
-                                inputClassName={errors.category ? 'border-error' : 'border-border'}
-                                isValidate={errors.category ? t('editWork.serviceType.error') : ''}
-                                ref={categoryRef}
-                            />
-                        </View>
+
 
                         <View className="bg-blue-50 p-4 rounded-2xl mb-4">
                             <Text className="text-body mb-2 text-text font-bold">{t('editWork.budgetType.label')}</Text>
                             <View className="flex-row space-x-4 gap-2 mb-6">
-                                {['FIXED_PRICE', 'HOURLY'].map((type) => (
+                                {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
                                     <TouchableOpacity
                                         key={type}
-                                        onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY')}
+                                        onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
                                         className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'}`}
                                     >
                                         <View className="flex-row items-center gap-2">
                                             {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
                                             <Text className="text-caption text-text">
-                                                {type === 'FIXED_PRICE' ? t('editWork.budgetType.fixedPrice') : t('editWork.budgetType.hourly')}
+                                                {type === 'FIXED_PRICE'
+                                                    ? `${t('postWork.fixed_price')}`
+                                                    : type === 'HOURLY'
+                                                        ? `${t('postWork.hourly')}`
+                                                        : `${t('postWork.offering')}`
+                                                }
                                             </Text>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
                             </View>
 
-                            <BudgetInput
-                                label={t('editWork.budget.label')}
-                                value={budget}
-                                onChange={setBudget}
-                                currency={budgetCurrency}
-                                onCurrencyChange={setBudgetCurrency}
-                                error={errors.budget}
-                                isValidate={errors.budget ? t('editWork.budget.error') : ''}
-                                required
-                            />
+                            {budgetType === 'OFFERING' ? (
+                                <View className='flex-row mb-4'>
+                                    <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                                </View>
+                            ) : (
+                                <BudgetInput
+                                    label={t('editWork.budget.label')}
+                                    value={budget}
+                                    onChange={setBudget}
+                                    currency={budgetCurrency}
+                                    onCurrencyChange={setBudgetCurrency}
+                                    error={errors.budget}
+                                // isValidate={errors.budget ? t('editWork.budget.error') : ''}
+                                // required
+                                />
+                            )}
+
+
                         </View>
 
                         <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
@@ -387,11 +423,24 @@ export default function EditWorkById({ route }: Props) {
                                             <FormInput
                                                 label={t('editWork.deadline.from')}
                                                 placeholder={t('editWork.deadline.fromPlaceholder')}
-                                                value={formatDateForDisplay(fromDate)}
+                                                // value={formatDateForDisplay(fromDate)}
+                                                value={fromDateString || ''}
+
                                                 inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
                                                 ref={fromInputRef}
-                                                editable={false}
-                                                pointerEvents="none"
+                                                // editable={false}
+                                                // pointerEvents="none"
+                                                isDate={true} // Enable date formatting
+                                                onChangeText={(text) => {
+                                                    setFromDateString(text);
+                                                    // Only update the date state when we have a complete date
+                                                    if (text.length === 10) {
+                                                        const parsedDate = parseDate(text);
+                                                        if (parsedDate) {
+                                                            setFromDate(parsedDate);
+                                                        }
+                                                    }
+                                                }}
                                             />
                                         </View>
                                         <TouchableOpacity
@@ -410,11 +459,25 @@ export default function EditWorkById({ route }: Props) {
                                             <FormInput
                                                 label={t('editWork.deadline.to')}
                                                 placeholder={t('editWork.deadline.toPlaceholder')}
-                                                value={formatDateForDisplay(toDate)}
+                                                // value={formatDateForDisplay(toDate)}
+                                                value={toDateString || ''}
+
                                                 inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
                                                 ref={toInputRef}
-                                                editable={false}
-                                                pointerEvents="none"
+                                                isDate={true} // Enable date formatting
+
+                                                onChangeText={(text) => {
+                                                    // Parse the formatted date string and update state
+                                                    // You'll need to implement date parsing logic
+                                                    setToDateString(text);
+                                                    // Only update the date state when we have a complete date
+                                                    if (text.length === 10) {
+                                                        const parsedDate = parseDate(text);
+                                                        if (parsedDate) {
+                                                            setToDate(parsedDate);
+                                                        }
+                                                    }
+                                                }}
                                             />
                                         </View>
                                         <TouchableOpacity
@@ -448,6 +511,7 @@ export default function EditWorkById({ route }: Props) {
                                     setTempDate={setTempFromDate}
                                     setDate={(date: Date) => {
                                         setFromDate(date);
+                                        setFromDateString(formatDateForDisplay(date));
                                         console.log('From date selected:', formatDateForDisplay(date));
                                     }}
                                     onClose={() => {
@@ -465,6 +529,7 @@ export default function EditWorkById({ route }: Props) {
                                     setTempDate={setTempToDate}
                                     setDate={(date: Date) => {
                                         setToDate(date);
+                                        setToDateString(formatDateForDisplay(date));
                                         console.log('To date selected:', formatDateForDisplay(date));
                                     }}
                                     onClose={() => {

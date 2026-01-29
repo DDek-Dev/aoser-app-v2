@@ -119,13 +119,9 @@ const UpgradeToFreelancerStep2 = (
                     updated.splice(index, 1);
                     setSkills(updated);
                 }}
-
                 required
                 inputClassName={errors.skills ? 'border-error' : 'border-border'}
-
                 isValidate={errors.skills ? t('kyc.step2.skills_required') : ''}
-
-
             />
 
             <MultiInputList
@@ -157,9 +153,10 @@ const UpgradeToFreelancerStep2 = (
                 label={t('kyc.step2.resume_label')}
                 image={resumeImageFile?.uri || null}
                 onChange={handleImageChange}
-                inputClassName="border border-border"
-
-            // required
+                // inputClassName="border border-border"
+                inputClassName={errors.resumeImage ? 'border-error' : 'border-border'} // ✅ Add error styling
+                // isValidate={errors.resumeImage ? t('kyc.step2.resume_required') : ''}
+                // required
             />
             {/* certificates Upload */}
             <SelectMultiImage

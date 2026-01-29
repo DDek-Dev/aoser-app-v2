@@ -389,7 +389,7 @@ const BookFreelancer = ({ route }: Props) => {
                     <View className="flex-row justify-between items-center mb-4">
                       <View className="flex-1 mr-2">
                         <FormInput
-                          label={currentLanguage === 'la' ? 'ຈາກວັນທີ' : 'From'}
+                          label={currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'}
                           placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'dd/mm/yy'}
                           value={fromDateText}
                           onChangeText={handleFromDateChange}
@@ -413,8 +413,8 @@ const BookFreelancer = ({ route }: Props) => {
                     <View className="flex-row justify-between mb-4 items-center">
                       <View className="flex-1 mr-2">
                         <FormInput
-                          label={currentLanguage === 'la' ? 'ຫາວັນທີ' : 'To'}
-                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປປປປ' : 'dd/mm/yyyy'}
+                          label={currentLanguage === 'la' ? 'ຫາ' : 'To'}
+                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'dd/mm/yy'}
                           value={toDateText}
                           onChangeText={handleToDateChange}
                           inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
@@ -438,7 +438,7 @@ const BookFreelancer = ({ route }: Props) => {
                       <Text className="text-error text-caption mb-2">
                         {!fromDate || !toDate
                           ? (currentLanguage === 'la' ? 'ກະລຸນາເລືອກວັນທີເລີ່ມຕົ້ນແລະສິ້ນສຸດ' : 'Please select both start and end dates')
-                          : (currentLanguage === 'la' ? 'ວັນທີສິ້ນສຸດຕ້ອງຫຼັງຈາກວັນທີເລີ່ມຕົ້ນ' : 'End date must be after start date')
+                          : (currentLanguage === 'la' ? 'ວັນທີສິ້ນສຸດຕ້ອງຢູ່ຫຼັງວັນທີເລີ່ມຕົ້ນ' : 'End date must be after start date')
                         }
                       </Text>
                     )}

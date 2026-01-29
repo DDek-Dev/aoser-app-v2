@@ -75,6 +75,7 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   profileImage: string;
+ 
   email: string;
   businessType: "CUSTOMER" | "FREELANCER" | "TRANSPORT" | "ACCOMMODATION" | "COMPANY" | "SHOP";
   phone: string;
@@ -87,7 +88,7 @@ export interface UserProfile {
   bankAccountType: string;
   bankAccountNumber: string;
   userWithCardImage: string;
-  registrationStatus: "PENDING" | "APPROVED_WAITING_PAYMENT" | "APPROVED_COMPLETE" | "REJECTED";
+  registrationStatus: "PENDING" | "APPROVED_WAITING_PAYMENT" | "APPROVED_COMPLETE" | "REJECTED" | "";
   address: {
     village: string;
     country: string;

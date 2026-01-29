@@ -1,9 +1,8 @@
-import React, { use, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  Linking,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -21,21 +20,24 @@ type Props = {
 };
 
 const UpgradeToFreelancerStep7 = ({ agreed, setAgreed, errors }: Props) => {
-  const { data: dataStep7, isLoading } = useUpgradeToFreelancerStep7();
   const { t } = useTranslation();
+  const navigation = useNavigation<any>(); // ✅ Move to top, before any returns
+  const { data: dataStep7, isLoading } = useUpgradeToFreelancerStep7();
+  
   useEffect(() => {
     if (dataStep7?.agreed !== undefined) {
       setAgreed(dataStep7.agreed);
     }
   }, [dataStep7?.agreed]);
 
+  const handleAgree = () => {
+    setAgreed((prev) => !prev);
+  };
+
+  // ✅ Now the conditional return comes AFTER all hooks
   if (isLoading) {
     return <LoadingScreen />;
   }
-const navigation= useNavigation<any>();
-  const handleAgree = () => {
-    setAgreed((prev) => !prev); // ✅ Proper toggle
-  };
 
   return (
     <KeyboardAvoidingView
@@ -74,7 +76,7 @@ const navigation= useNavigation<any>();
         </View>
       </View>
 
-      {/* ✅ Fixed to bottom of screen */}
+      {/* Fixed to bottom of screen */}
       <View className="px-5 pb-6">
         <TouchableOpacity
           onPress={handleAgree}
@@ -82,18 +84,15 @@ const navigation= useNavigation<any>();
           activeOpacity={0.8}
         >
           <Checkbox
-
             value={agreed}
             onValueChange={handleAgree}
             color={errors.agreed === true ? '#EF4444' : '#3B82F6'}
-
           />
           <Text className="ml-2 text-body text-text flex-1">
             {t('kyc.step7.agreement.text')}{' '}
             <Text
               className="text-primary underline"
-              // onPress={() => Linking.openURL('#')}
-              onPress={()=> navigation.navigate('PrivacyPolicyScreen')}
+              onPress={() => navigation.navigate('PrivacyPolicyScreen')}
             >
               {t('kyc.step7.agreement.policy')}
             </Text>

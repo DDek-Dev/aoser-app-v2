@@ -28,21 +28,16 @@ export default function TopFreelancers() {
     if (isLoading || !freelancers) return (
 
         <View>
-            <View className="flex-row justify-between items-center px-4 mb-2">
-                <Text className="text-body font-bold mb-2">Top freelancers</Text>
+            <View className="flex-row justify-between items-center px-1 mb-2">
+                <Text className="text-body font-bold mb-2 px-2">{t('home.top_freelancers')}</Text>
             </View>
 
            
             <View className='flex-row pl-4'>
-
-
             <TopFreelancerSkelenton />
             <TopFreelancerSkelenton />
             </View>
-        
-        
-
-
+    
         </View>
     );
     // if (error) return <Text>Error: {error.message}</Text>;
@@ -63,11 +58,11 @@ export default function TopFreelancers() {
     }
     return (
         <View className="mt-2">
-            <View className="flex-row justify-between items-center px-4 mb-2">
-                <Text className="text-body font-bold mb-2">{t('home.top_freelancers')}</Text>
+            <View className="flex-row justify-between items-center px-1 mb-2">
+                <Text className="text-body font-bold mb-2 px-2">{t('home.top_freelancers')}</Text>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-1">
                 {freelancers?.map((item, index) => (
 
                     <Pressable
@@ -77,7 +72,7 @@ export default function TopFreelancers() {
 
                         <View
                             key={index}
-                            className="w-64 mr-4 bg-white rounded-xl overflow-hidden border border-border"
+                            className="w-64 mr-1 bg-white rounded-xl overflow-hidden border border-border"
                         >
                             {item.videoPromote !== null ?
                                 <VDOPromote_free_profile video={item.videoPromote} />

@@ -21,6 +21,7 @@ export default function UpgradeToFreelancerReview() {
 
   const { data: profile, isLoading } = useUpgradeToFreelancerReview();
 
+  console.log("profile", profile?.userProfileImage);
   const { t } = useTranslation();
   if (isLoading) return <LoadingScreen />;
   if (!profile) return null;

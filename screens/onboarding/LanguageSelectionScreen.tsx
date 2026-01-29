@@ -13,7 +13,7 @@ import i18n from 'i18n';
 
 type LanguageScreenNavigationProp = StackNavigationProp<OnboardingStackParamList>;
 
-export default function LanguageSelectionScreen() {
+export default function LanguageSelectionScreen(route : any) {
   const navigation = useNavigation<LanguageScreenNavigationProp>();
 
   const handleSelectLanguage = async (lang: 'la' | 'en') => {
@@ -21,7 +21,9 @@ export default function LanguageSelectionScreen() {
       await i18n.changeLanguage(lang);
       // ✅ Use 'userLanguage' key (same as settings screen)
       await AsyncStorage.setItem('userLanguage', lang);
-      navigation.navigate('Onboarding');
+      // navigation.replace();
+      route.params?.onComplete?.();
+      // return navigation.navigate('Onboarding');
     } catch (error) {
       console.log('Error setting language:', error);
     }

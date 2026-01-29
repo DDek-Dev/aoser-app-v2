@@ -37,6 +37,7 @@ import {
 } from 'utils/fileStorage';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 
 
 interface ErrorState {
@@ -57,7 +58,9 @@ const UpgradeToFreelancer = () => {
     const [profileImg, setProfileImg] = useState<FileWithType | null>(null);
     const [userId, setUserId] = useState('');
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
-
+    const [gender, setGender] = useState('');
+    const [phone, setPhone] = useState('');
+    const queryClient = useQueryClient();
     const steps = [
         t('kyc.steps.profile'),
         t('kyc.steps.basicInfo'),
@@ -71,12 +74,13 @@ const UpgradeToFreelancer = () => {
     ];
 
 
-    const [aoserProfile, setAoserProfile] = useState<ErrorState>({
 
+    const [aoserProfile, setAoserProfile] = useState<ErrorState>({
         firstName: false,
         lastName: false,
         profileImg: false,
-
+        gender: false,
+        phone: false,
     });
 
 
@@ -114,14 +118,12 @@ const UpgradeToFreelancer = () => {
 
     const [cardID, setCardID] = useState('');
     const [fromDate, setFromDate] = useState<Date | null>(null);
-    const [phone, setPhone] = useState('');
     const [cardType, setCardType] = useState<'ID_CARD' | 'PASSPORT' | 'VISA'>('ID_CARD');
 
     const [selectedProvince, setSelectedProvince] = useState<Province | undefined>(undefined);
     const [selectedDistrict, setSelectedDistrict] = useState<District | undefined>(undefined);
     const [village, setVillage] = useState('');
     const [errorsStep4, setErrorsStep4] = useState<ErrorState>({
-        phone: false,
         cardID: false,
         cardType: false,
         fromDate: false,
@@ -171,11 +173,15 @@ const UpgradeToFreelancer = () => {
                     firstName={firstName}
                     lastName={lastName}
                     profileImg={profileImg}
+                    gender={gender}
+                    phone={phone}
                     setFirstName={setFirstName}
                     setLastName={setLastName}
                     setProfileImg={setProfileImg}
+                    setGender={setGender}
+                    setPhone={setPhone}
                     errors={aoserProfile}
-                />;
+                />
             case 1:
                 return <UpgradeToFreelancerStep1
 
@@ -226,8 +232,6 @@ const UpgradeToFreelancer = () => {
                     setCardID={setCardID}
                     fromDate={fromDate}
                     setFromDate={setFromDate}
-                    phone={phone}
-                    setPhone={setPhone}
                     errors={errorsStep4}
 
                     // address
@@ -284,6 +288,8 @@ const UpgradeToFreelancer = () => {
                 firstName: firstName.trim() === '',
                 lastName: lastName.trim() === '',
                 profileImg: !profileImg?.uri,
+                gender: !gender.trim(),
+                phone: !phone.trim(),
             };
             setAoserProfile(newErrors);
 
@@ -298,6 +304,8 @@ const UpgradeToFreelancer = () => {
                 userId,
                 firstName,
                 lastName,
+                gender,
+                phone,
             };
 
             // ---------------------------
@@ -416,6 +424,7 @@ const UpgradeToFreelancer = () => {
                 aboutMe: aboutMe.trim() === '',
                 skills: cleanedSkills.length === 0,
                 experiences: cleanedExperiences.length === 0,
+                // resumeImage: !resumeImageFile,
             };
 
             setErrorsStep2(newErrors);
@@ -490,7 +499,6 @@ const UpgradeToFreelancer = () => {
                 cardType: cardType === null,
                 cardID: cardID.trim() === '',
                 fromDate: fromDate === null,
-                phone: phone.trim() === '',
                 province: selectedProvince === undefined,
                 district: selectedDistrict === undefined,
                 village: village.trim() === '',
@@ -507,7 +515,6 @@ const UpgradeToFreelancer = () => {
                 cardType: cardType,
                 cardID: cardID,
                 fromDate: fromDate,
-                phone: phone,
                 // address: {
                 //     province: selectedProvince,
                 //     district: selectedDistrict,
@@ -625,6 +632,7 @@ const UpgradeToFreelancer = () => {
 
                 // Get all saved data
                 const allStepData = await getAllStepData();
+                // console.log("allStepData", allStepData);
 
 
 
@@ -684,8 +692,11 @@ const UpgradeToFreelancer = () => {
 
 
                 // console.log('✅ Files uploaded, constructing final data...');
+                // Extract data from reconstructed data
                 const firstName = reconstructedData['@aoser_profile']?.firstName || '';
                 const lastName = reconstructedData['@aoser_profile']?.lastName || '';
+                const gender = reconstructedData['@aoser_profile']?.gender || '';
+                const phone = reconstructedData['@aoser_profile']?.phone || '';
                 const userProfileImage = uploadResults['@aoser_profile']?.profileImg as string || '';
 
                 const finalData = {
@@ -728,7 +739,6 @@ const UpgradeToFreelancer = () => {
                     hourlyRate: reconstructedData['@freelancer_step3']?.hourlyRate || '',
 
                     // KYC Info
-                    phone: reconstructedData['@freelancer_step4']?.phone || '',
                     personalCardType: reconstructedData['@freelancer_step4']?.cardType,
                     personalCardID: reconstructedData['@freelancer_step4']?.cardID || '',
                     personalCardExpireDate: reconstructedData['@freelancer_step4']?.fromDate || '',
@@ -754,6 +764,8 @@ const UpgradeToFreelancer = () => {
                 };
 
 
+                console.log('✅ Final data:', finalData);
+                // setIsSubmitting(false);
 
                 // Submit to backend
                 createFreelancer(finalData, {
@@ -767,6 +779,8 @@ const UpgradeToFreelancer = () => {
                         const profileData = {
                             firstName: firstName.trim(),
                             lastName: lastName.trim(),
+                            gender: gender.trim(),
+                            phone: phone.trim(),
                             userProfileImage: userProfileImage,
                         };
 
@@ -797,6 +811,10 @@ const UpgradeToFreelancer = () => {
 
                         // Clean up temp files and storage
                         await cleanup();
+                        await queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+
+                        // Optional: Force an immediate refetch
+                        await queryClient.refetchQueries({ queryKey: ['myProfile'] });
                         // Navigate back
                         navigation.popTo('FreelancerRoleGate');
                         setIsSubmitting(false);
@@ -874,6 +892,7 @@ const UpgradeToFreelancer = () => {
 
                             <TouchableOpacity
                                 onPress={handleBack}
+                                    disabled={isSubmitting}
                                 className="bg-textSecondary mt-6 py-4 rounded-full items-center w-1/3"
                             >
                                 <Text className="text-white text-base font-semibold">{t('kyc.buttons.back')}</Text>

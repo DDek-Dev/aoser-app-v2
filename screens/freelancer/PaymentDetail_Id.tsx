@@ -17,7 +17,7 @@ type Props = {
 const PaymentDetail_Id = ({ route }: Props) => {
     const { t } = useTranslation();
     const { workId } = route.params;
-   
+
     const getBillDataMutation = useGetBillData(workId);
     const navigation = useNavigation();
 
@@ -82,7 +82,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
 
     const billData = getBillDataMutation.data;
 
-    //   console.log("billData: ", billData);
+    console.log("billData: ", billData);
     if (!billData || !billData.payment) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
@@ -112,8 +112,25 @@ const PaymentDetail_Id = ({ route }: Props) => {
         fromBankInformation,
         createdAt: paymentCreatedAt,
         payTo
-    } = payment;
+    } = payment as any;
 
+
+    if (!payment.createdBy || !payment.payTo) {
+        return (
+            <ScreenWrapper safeEdges={['bottom', 'top']}>
+                <Header_back
+                    text={t('protectedRoute.protectedRoute')}
+                    onPress={navigation.goBack}
+                    iconColor="#3B82F6"
+                />
+                <View className="flex-1 justify-center items-center">
+                    <Text className="text-text">
+                        {t('payment_success.completed')}
+                    </Text>
+                </View>
+            </ScreenWrapper>
+        );
+    }
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']}>
             <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
@@ -155,29 +172,29 @@ const PaymentDetail_Id = ({ route }: Props) => {
                     </View>
 
                     {/* Watermark Background - Line by Line Pattern */}
-                    
+
 
                     <View className="absolute inset-0 opacity-[0.1] overflow-hidden">
-                                    <View
-                                      style={{
-                                        transform: [{ rotate: '-30deg' }],
-                                        top: -100,
-                                        left: -100,
-                                        right: -100,
-                                        bottom: -100,
-                                        position: 'absolute',
-                                      }}
-                                    >
-                                      <Text
-                                        className="text-caption font-semibold text-textSecondary"
-                                        style={{ lineHeight: 25 }}
-                                      >
-                                        {[...Array(50)].map((_, i) => (
-                                          `${formatDate(payment.fromBankInformation.txtime)} • ${payment.invoiceId} • ${formatCurrency(payment.amount, payment.currency)} ${payment.currency} • AOSER • `
-                                        )).join('')}
-                                      </Text>
-                                    </View>
-                                  </View>
+                        <View
+                            style={{
+                                transform: [{ rotate: '-30deg' }],
+                                top: -100,
+                                left: -100,
+                                right: -100,
+                                bottom: -100,
+                                position: 'absolute',
+                            }}
+                        >
+                            <Text
+                                className="text-caption font-semibold text-textSecondary"
+                                style={{ lineHeight: 25 }}
+                            >
+                                {[...Array(50)].map((_, i) => (
+                                    `${formatDate(payment.fromBankInformation.txtime)} • ${payment.invoiceId} • ${formatCurrency(payment.amount, payment.currency)} ${payment.currency} • AOSER • `
+                                )).join('')}
+                            </Text>
+                        </View>
+                    </View>
 
                     {/* Header Section */}
                     <View className="bg-primary p-4">
@@ -246,7 +263,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
                             </View>
                         )}
 
-                     
+
 
                         {/* Footer */}
                         {/* <View className="items-center py-6">
@@ -262,6 +279,39 @@ const PaymentDetail_Id = ({ route }: Props) => {
                         </View> */}
 
 
+                    </View>
+
+                    <View className="mx-6 mb-6">
+                        <Text className="text-error text-body font-bold mb-2">
+                            {t('payment_success.notice_title')}
+                        </Text>
+
+
+                        <View className="space-y-3">
+                            {/* Point 1 */}
+                            <View className="flex-row items-start gap-2">
+                                <Text className="text-primary mt-1">•</Text>
+                                <Text className="text-caption text-textSecondary flex-1 leading-5">
+                                    {t('payment_success.important_info_point1')}
+                                </Text>
+                            </View>
+
+                            {/* Point 2 */}
+                            <View className="flex-row items-start gap-2">
+                                <Text className="text-primary mt-1">•</Text>
+                                <Text className="text-caption text-textSecondary flex-1 leading-5">
+                                    {t('payment_success.important_info_point2')}
+                                </Text>
+                            </View>
+
+                            {/* Point 3 */}
+                            <View className="flex-row items-start gap-2">
+                                <Text className="text-primary mt-1">•</Text>
+                                <Text className="text-caption text-textSecondary flex-1 leading-5">
+                                    {t('payment_success.important_info_point3')}
+                                </Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
 

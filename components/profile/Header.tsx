@@ -13,7 +13,7 @@ const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 type HeaderProps = {
   userId: string
   backgroundImage?: string;
-  profileImage?: string;
+  profileImage: string;
   name: string;
   job: string;
   rating: number;
@@ -41,6 +41,8 @@ export default function Header({
   const [showPopup, setShowPopup] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { t } = useTranslation()
+
+  // console.log("profileImage", profileImage);
   return (
     <View className="relative">
       <Image source={{ uri: isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}` }} className="w-full h-48" />
@@ -48,7 +50,7 @@ export default function Header({
       <View className="items-start px-4 -mt-10 relative z-0">
         {/* <Image source={{ uri: isReview? profileImage : IMAGES_BASE_URL + profileImage }} className="w-20 h-20 rounded-full border-4 border-white" /> */}
 
-        <Image
+        {/* <Image
           source={
             isReview
               ? profileImage
@@ -57,10 +59,38 @@ export default function Header({
                 : proIMG
           }
           className="w-20 h-20 rounded-full border-4 border-white"
+        /> */}
+
+        {/* <Image
+          source={
+            profileImage
+              ? profileImage.startsWith('file://') || profileImage.startsWith('content://')
+                ? { uri: profileImage } // ✅ Local file (from temp or device)
+                : { uri: IMAGES_BASE_URL + profileImage } // ✅ Remote file (from DB/server)
+              : proIMG // ✅ Default image when no profileImage
+          }
+          className="w-20 h-20 rounded-full border-4 border-white"
+        /> */}
+
+        <Image
+          source={
+            profileImage
+              ? {
+                uri:
+                  profileImage.startsWith('http') || profileImage.startsWith('file://') || profileImage.startsWith('content://')
+                    ? profileImage
+                    : IMAGES_BASE_URL + profileImage
+              }
+              : proIMG
+          }
+          className="w-20 h-20 rounded-full border-4 border-white"
+          defaultSource={proIMG} // ເພີ່ມ defaultSource ສຳລັບ iOS
+          onError={() => console.log("Failed to load profile image")}
         />
+
         {isme ? (
-          <ProfileStatusPopup workStatus={status}  isme />
-         
+          <ProfileStatusPopup workStatus={status} isme />
+
         ) : (
           <View className="absolute right-4 top-12  flex-row items-center gap-8">
             {status === 'ACTIVE' ? (
@@ -71,45 +101,14 @@ export default function Header({
               <View className="items-end">
                 {/* Busy Button */}
                 <Pressable
-                  onPress={() => setShowPopup(true)}
+                  onPress={() => navigation.navigate('Bookfreelancer', { userId })}
                   className="p-3 bg-red-100 rounded-full"
                 >
-                  <Text className="text-caption text-warning text-center">Make a Book</Text>
+                  <Text className="text-caption text-warning text-center">{t('freelancer_profile.make_a_book')}</Text>
                 </Pressable>
 
                 {/* Popup Box Positioned Below the Busy Button */}
-                {showPopup && (
-                  <>
-                    {/* Overlay to detect outside touches */}
-                    <TouchableWithoutFeedback onPress={() => setShowPopup(false)}>
-                      {/* <View className="absolute -top-12 -left-0 w-full h-full bg-black " /> */}
 
-                      {/* Actual popup box */}
-                      <View className="bg-primary rounded-2xl px-4 py-4 w-72 shadow-lg mt-2 z-2">
-                        <Text className="text-white text-sm font-semibold mb-2">
-                          {t('freelancer_profile.busy')}
-                        </Text>
-
-                        <View className="bg-blue-300 py-2 px-3 rounded-xl mb-3">
-                          <Text className="text-white text-center text-base">{busyUntil}</Text>
-                        </View>
-
-                        <Pressable
-                          onPress={() => {
-                            setShowPopup(false);
-                            navigation.navigate('Bookfreelancer', { userId });
-                            // Alert.alert('Booking', 'You have successfully booked this freelancer.');
-                          }}
-                          className="bg-blue-100 px-6 py-2 rounded-full self-end"
-                        >
-                          <Text className="text-blue-600 text-sm font-semibold">Book</Text>
-                        </Pressable>
-                      </View>
-                    </TouchableWithoutFeedback>
-
-
-                  </>
-                )}
               </View>
 
             )}

@@ -8,6 +8,7 @@ import {
   Platform,
 
   TextInput,
+  Pressable,
 
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -69,6 +70,9 @@ export default function PostWorkScreen() {
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
 
+  // date 
+  const [fromDateString, setFromDateString] = useState('');
+  const [toDateString, setToDateString] = useState('');
 
   const { t } = useTranslation();
   const [errors, setErrors] = useState({
@@ -76,7 +80,7 @@ export default function PostWorkScreen() {
     workDetail: false,
     budget: false,
     category: false,
-    dateInvalid: false,
+    // dateInvalid: false,
     // subcategories: false
   });
 
@@ -84,14 +88,64 @@ export default function PostWorkScreen() {
   const currentLanguage: Language = getCurrentLanguage();
 
 
-  const formatDateForDisplay = (date: Date | null): string => {
+  const formatDateForDisplay = (date: Date | null) => {
     if (!date) {
       return currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'mm/dd/yy';
     }
     return formatDate(date.toISOString(), currentLanguage);
   };
 
+  // Add time formatting function
+  const formatDateTimeForDisplay = (date: Date | null) => {
+    if (!date) {
+      return currentLanguage === 'la' ? 'ວ/ດ/ປ 00:00' : 'dd/mm/yy 00:00';
+    }
+    const dateStr = formatDate(date.toISOString(), currentLanguage);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${dateStr} ${hours}:${minutes}`;
+  };
 
+  // Update parseDateTime function
+  const parseDateTime = (dateTimeString: string): Date | null => {
+    if (!dateTimeString) return null;
+
+    // Split into date and time parts
+    const parts = dateTimeString.split(' ');
+    if (parts.length !== 2) return null;
+
+    const [dateStr, timeStr] = parts;
+
+    // Parse date (DD/MM/YYYY)
+    if (dateStr.length !== 10) return null;
+    const [day, month, year] = dateStr.split('/');
+
+    // Parse time (HH:MM)
+    if (timeStr.length !== 5) return null;
+    const [hours, minutes] = timeStr.split(':');
+
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(hours),
+      parseInt(minutes)
+    );
+
+    if (isNaN(date.getTime())) return null;
+    return date;
+  };
+
+  const parseDate = (dateString: string): Date | null => {
+    if (!dateString || dateString.length !== 10) return null;
+
+    const [day, month, year] = dateString.split('/');
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    // Validate the date
+    if (isNaN(date.getTime())) return null;
+    return date;
+  };
   // handle submit
   const handleSubmit = () => {
     const dateInvalid = hasDeadline && (
@@ -106,7 +160,7 @@ export default function PostWorkScreen() {
       budget: budget === 0 && budget === null,
       category: category.trim() === '',
       // subcategories: subcategories.length === 0,
-      dateInvalid,
+      // dateInvalid,
     };
     setErrors(newErrors);
 
@@ -168,9 +222,26 @@ export default function PostWorkScreen() {
             showsVerticalScrollIndicator={false}
             className='p-4'
           >
-            <View className='bg-blue-50 p-4 rounded-2xl mb-6'>
+            <View className='bg-blue-50 p-4 rounded-2xl mb-2'>
 
 
+              <View className='bg-blue-50 rounded-2xl '>
+
+                <SelectInput
+                  label={t('postWork.service_type')}
+                  value={category}
+                  initialSubcategories={subcategories}
+                  onSelect={(serviceTypeId, jobIds) => {
+                    setCategory(serviceTypeId);
+                    setSubcategories(jobIds);
+                  }}
+                  // required
+                  inputClassName={errors.category ? 'border-error' : 'border-border'}
+                  // isValidate={errors.category ? `${t('postWork.service_type_required')}` : ''}
+                  ref={categoryRef}
+                />
+
+              </View>
               <FormInput
                 label={t('postWork.work_title')}
                 placeholder={t('postWork.work_title_placeholder')}
@@ -182,19 +253,19 @@ export default function PostWorkScreen() {
 
               />
 
-              <Text className="text-caption text-text my-1 font-bold">{t('postWork.work_type')}</Text>
+              <Text className="text-body text-text my-1 font-bold mt-2">{t('postWork.work_type')}</Text>
               <View className="flex-row mb-4 space-x-4 gap-2">
                 {['ONLINE', 'OFFLINE'].map((type) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={type}
                     onPress={() => setWorkType(type as 'ONLINE' | 'OFFLINE')}
-                    className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary' : 'border-border'}`}
+                    className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary bg-primary' : 'border-border'}`}
                   >
                     <View className="flex-row items-center">
-                      {workType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
-                      <Text className="text-caption text-text capitalize ml-1">{type === "ONLINE" ? `${t('postWork.online')}` : `${t('postWork.offline')}`}</Text>
+                      {workType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                      <Text className={`${workType === type ? 'text-white' : 'text-text'} text-caption  capitalize ml-1`}>{type === "ONLINE" ? `${t('postWork.online')}` : `${t('postWork.offline')}`}</Text>
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
 
@@ -208,44 +279,28 @@ export default function PostWorkScreen() {
                 isValidate={`${errors.workDetail ? `${t('postWork.work_description_required')}` : ''}`}
               />
 
-              <FormInput label={t('postWork.sample_work')} placeholder={t('postWork.sample_work_placeholder')} inputClassName="border-border" />
+              {/* <FormInput label={t('postWork.sample_work')} placeholder={t('postWork.sample_work_placeholder')} inputClassName="border-border" /> */}
             </View>
 
 
-            <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
-
-              <SelectInput
-                label={t('postWork.service_type')}
-                value={category}
-                initialSubcategories={subcategories}
-                onSelect={(serviceTypeId, jobIds) => {
-                  setCategory(serviceTypeId);
-                  setSubcategories(jobIds);
-                }}
-                // required
-                inputClassName={errors.category ? 'border-error' : 'border-border'}
-                // isValidate={errors.category ? `${t('postWork.service_type_required')}` : ''}
-                ref={categoryRef}
-              />
-
-            </View>
 
 
-            <View className="bg-blue-50 p-4 rounded-2xl mb-4">
+
+            <View className="bg-blue-50 p-4 rounded-2xl mb-2">
               <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
               <View className="flex-row space-x-4 gap-2 mb-6">
                 {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
                   <TouchableOpacity
                     key={type}
                     onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
-                    className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'
+                    className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-primary' : 'border-border'
                       }`}
                   >
                     <View className="flex-row items-center gap-2">
 
-                      {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
+                      {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
 
-                      <Text className="text-caption text-text">
+                      <Text className={`${budgetType === type ? 'text-surface' : 'text-text '} text-caption`}>
                         {/* {type === 'FIXED_PRICE' ? `${t('postWork.fixed_price')}` : `${t('postWork.hourly')} `}
                         
                         */}
@@ -264,35 +319,40 @@ export default function PostWorkScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
-              <BudgetInput
-                label={t('postWork.budget')}
-                value={budget}
-                onChange={setBudget}
-                currency={budgetCurrency}
-                onCurrencyChange={setBudgetCurrency}
-                error={errors.budget}
-                isValidate={`${errors.budget ? `${t('postWork.budget_required')}` : ''}`}
-                required
 
-              />
+              {budgetType === 'OFFERING' ? (
+                <View className='flex-row mb-4'>
+                  <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                </View>
+              ) : (
+                <BudgetInput
+                  label={t('postWork.budget')}
+                  value={budget}
+                  onChange={setBudget}
+                  currency={budgetCurrency}
+                  onCurrencyChange={setBudgetCurrency}
+                  error={errors.budget}
+                  isValidate={`${errors.budget ? `${t('postWork.budget_required')}` : ''}`}
+                  required
+
+                />
+              )}
+
             </View>
-
-
-
-            <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
+            <View className='bg-blue-50 p-4 rounded-2xl mb-2'>
               <Text className="text-body mb-1 text-text font-bold">{t('postWork.deadline_requirement')}</Text>
               <View className="flex-row mb-4 space-x-4 gap-2">
                 {[true, false].map((option) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={option ? 'yes' : 'no'}
                     onPress={() => setHasDeadline(option)}
-                    className={`flex-1 border py-4 rounded-xl items-center ${hasDeadline === option ? 'border-primary' : 'border-gray-300'}`}
+                    className={`flex-1 border py-4 rounded-xl items-center ${hasDeadline === option ? 'bg-primary border-primary' : 'border-border'}`}
                   >
                     <View className="flex-row items-center">
-                      {hasDeadline === option && <Ionicons name="checkmark-circle" size={16} color="#2563EB" />}
-                      <Text className="text-sm ml-1">{option ? `${t('postWork.yes')}` : `${t('postWork.no')}`}</Text>
+                      {hasDeadline === option && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                      <Text className={`${hasDeadline === option ? 'text-surface' : 'text-text'} text-caption ml-1`}>{option ? `${t('postWork.yes')}` : `${t('postWork.no')}`}</Text>
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
 
@@ -300,16 +360,48 @@ export default function PostWorkScreen() {
               {/* 🔄 UPDATED: Date section with proper formatting */}
               {hasDeadline && (
                 <>
-                  <View className="flex-row justify-between items-center">
+                  <View className="flex-row justify-between items-end">
                     <View className="flex-1 mr-2">
-                      <FormInput
-                        label={currentLanguage === 'la' ? 'ຈາກວັນທີ' : 'From'}
+                      {/* <FormInput
+                        label={currentLanguage === 'la' ? 'ເລີ່ມ' : 'start'}
                         placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'mm/dd/yy'}
-                        value={formatDateForDisplay(fromDate)}
+                        // value={formatDateForDisplay(fromDate)}
+                        value={fromDateString || ''}
+
                         inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
                         ref={fromInputRef}
-                        editable={false}
-                        pointerEvents="none"
+                        // editable={false}
+                        // pointerEvents="none"
+                        isDate={true} // Enable date formatting
+                        onChangeText={(text) => {
+                          setFromDateString(text);
+                          // Only update the date state when we have a complete date
+                          if (text.length === 10) {
+                            const parsedDate = parseDate(text);
+                            if (parsedDate) {
+                              setFromDate(parsedDate);
+                            }
+                          }
+                        }}
+                      /> */}
+
+                      <FormInput
+                        label={currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'}
+                        placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ 00:00' : 'dd/mm/yy 00:00'}
+                        value={fromDateString || ''}
+                        // inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                        inputClassName={'border-border'}
+                        ref={fromInputRef}
+                        isDateTime={true}
+                        onChangeText={(text) => {
+                          setFromDateString(text);
+                          if (text.length === 17) { // DD/MM/YYYY HH:MM
+                            const parsedDate = parseDateTime(text);
+                            if (parsedDate) {
+                              setFromDate(parsedDate);
+                            }
+                          }
+                        }}
                       />
                     </View>
                     <TouchableOpacity
@@ -317,22 +409,56 @@ export default function PostWorkScreen() {
                         setTempFromDate(fromDate || new Date());
                         setShowFromPicker(true);
                       }}
-                      className="bg-blue-200 mt-1 flex justify-center items-center rounded-full p-4"
+                      className="bg-blue-200  flex justify-center items-center rounded-full p-4"
                     >
                       <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
                     </TouchableOpacity>
                   </View>
 
-                  <View className="flex-row justify-between mb-4 items-center">
+                  <View className="flex-row justify-between mb-2 items-end">
                     <View className="flex-1 mr-2">
-                      <FormInput
-                        label={currentLanguage === 'la' ? 'ຫາວັນທີ' : 'To'}
+                      {/* <FormInput
+                        label={currentLanguage === 'la' ? 'ຫາ' : 'To'}
                         placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'mm/dd/yy'}
-                        value={formatDateForDisplay(toDate)}
+                        // value={formatDateForDisplay(toDate)}
+                        value={toDateString || ''}
+
                         inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
                         ref={toInputRef}
-                        editable={false}
-                        pointerEvents="none"
+                        // editable={true}
+                        isDate={true} // Enable date formatting
+
+                        onChangeText={(text) => {
+                          // Parse the formatted date string and update state
+                          // You'll need to implement date parsing logic
+                          setToDateString(text);
+                          // Only update the date state when we have a complete date
+                          if (text.length === 10) {
+                            const parsedDate = parseDate(text);
+                            if (parsedDate) {
+                              setToDate(parsedDate);
+                            }
+                          }
+                        }}
+                      /> */}
+
+                      <FormInput
+                        label={currentLanguage === 'la' ? 'ຫາ' : 'To'}
+                        placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ 00:00' : 'dd/mm/yy 00:00'}
+                        value={toDateString || ''}
+                        // inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                        inputClassName={'border-border'}
+                        ref={toInputRef}
+                        isDateTime={true}
+                        onChangeText={(text) => {
+                          setToDateString(text);
+                          if (text.length === 17) {
+                            const parsedDate = parseDateTime(text);
+                            if (parsedDate) {
+                              setToDate(parsedDate);
+                            }
+                          }
+                        }}
                       />
                     </View>
                     <TouchableOpacity
@@ -340,33 +466,53 @@ export default function PostWorkScreen() {
                         setTempToDate(toDate || new Date());
                         setShowToPicker(true);
                       }}
-                      className="bg-blue-200 mt-2 flex justify-center items-center rounded-full p-4"
+                      className="bg-blue-200  flex justify-center items-center rounded-full p-4"
                     >
                       <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
                     </TouchableOpacity>
                   </View>
 
                   {/* 🔄 UPDATED: Error message with language support */}
-                  {errors.dateInvalid && (
+                  {/* {errors.dateInvalid && (
                     <Text className="text-error text-caption mb-2">
                       {!fromDate || !toDate
                         ? (currentLanguage === 'la' ? 'ກະລຸນາເລືອກວັນທີເລີ່ມຕົ້ນແລະສິ້ນສຸດ' : 'Please select both start and end dates')
-                        : (currentLanguage === 'la' ? 'ວັນທີສິ້ນສຸດຕ້ອງຫຼັງຈາກວັນທີເລີ່ມຕົ້ນ' : 'End date must be after start date')
+                        : (currentLanguage === 'la' ? 'ວັນທີສິ້ນສຸດຕ້ອງຢູ່ຫຼັງວັນທີເລີ່ມຕົ້ນ' : 'End date must be after start date')
                       }
                     </Text>
-                  )}
+                  )} */}
                 </>
               )}
 
               {/* Date Picker Modals */}
               {showFromPicker && (
+                // <DatePicker
+                //   visible={showFromPicker}
+                //   // date={fromDate || new Date()}
+                //   date={null}
+                //   tempDate={tempFromDate}
+                //   setTempDate={setTempFromDate}
+                //   setDate={(date: Date) => {
+                //     setFromDate(date); // This will trigger re-render with new formatted date
+                //     setFromDateString(formatDateForDisplay(date));
+                //   }}
+                //   onClose={() => {
+                //     setShowFromPicker(false);
+                //     setTimeout(() => fromInputRef.current?.focus(), 100);
+                //   }}
+
+
+                // />
+
                 <DatePicker
                   visible={showFromPicker}
-                  date={fromDate || new Date()}
+                  date={fromDate}
                   tempDate={tempFromDate}
                   setTempDate={setTempFromDate}
+                  mode="datetime"
                   setDate={(date: Date) => {
-                    setFromDate(date); // This will trigger re-render with new formatted date
+                    setFromDate(date);
+                    setFromDateString(formatDateTimeForDisplay(date));
                   }}
                   onClose={() => {
                     setShowFromPicker(false);
@@ -376,13 +522,32 @@ export default function PostWorkScreen() {
               )}
 
               {showToPicker && (
+                // <DatePicker
+                //   visible={showToPicker}
+                //   date={null}
+                //   tempDate={tempToDate}
+                //   setTempDate={setTempToDate}
+                //   setDate={(date: Date) => {
+                //     setToDate(date); // This will trigger re-render with new formatted date
+                //     setToDateString(formatDateForDisplay(date));
+                //   }}
+                //   onClose={() => {
+                //     setShowToPicker(false);
+                //     setTimeout(() => toInputRef.current?.focus(), 100);
+                //   }}
+
+                // />
+
+
                 <DatePicker
                   visible={showToPicker}
-                  date={toDate || new Date()}
+                  date={toDate}
                   tempDate={tempToDate}
                   setTempDate={setTempToDate}
+                  mode="datetime"
                   setDate={(date: Date) => {
-                    setToDate(date); // This will trigger re-render with new formatted date
+                    setToDate(date);
+                    setToDateString(formatDateTimeForDisplay(date));
                   }}
                   onClose={() => {
                     setShowToPicker(false);

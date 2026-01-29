@@ -1,6 +1,6 @@
 import { Freelancer, UserProfile } from "types/profile";
 import { useInfiniteQuery, useMutation, UseMutationResult, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CategoryOption, CreateReview, Job, Favorite, Review, GetFavorite, JobpopularData } from "types";
+import { CategoryOption, CreateReview, Job, Favorite, Review, GetFavorite, JobpopularData, ServiceType } from "types";
 import { useAuth } from "./useAuth";
 import { workerApi } from "api/workerApi";
 
@@ -19,14 +19,48 @@ export const useCreateFreelancer = (): UseMutationResult<UserProfile, Error, any
 };
 
 
+// export const useFreeLancers = () => {
+//   const { tokens } = useAuth();
+
+//   return useQuery({
+//     queryKey: ['freelancers'],
+//     queryFn: () => workerApi.getAllfreelancers(tokens?.accessToken || ''),
+//     enabled: !!tokens?.accessToken,
+//   });
+// };
+
 export const useFreeLancers = () => {
   const { tokens } = useAuth();
 
-  return useQuery({
-    queryKey: ['freelancers'],
+  return useQuery<UserProfile[]>({
+    queryKey: ['all-freelancers'],
     queryFn: () => workerApi.getAllfreelancers(tokens?.accessToken || ''),
-    enabled: !!tokens?.accessToken,
+    // Aggressive caching for search data
+    staleTime: 1000 * 60 * 5, // Fresh for 5 minutes
+    gcTime: 1000 * 60 * 15, // Cache for 15 minutes
+    refetchOnWindowFocus: false, // Don't refetch on focus (search is read-only)
+    refetchOnMount: false, // Use cache on mount
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+};
+
+/**
+ * Hook for searching freelancers with client-side filtering
+ * This version doesn't make API calls, it uses cached data from useFreeLancers
+ */
+export const useSearchFreelancers = (searchTerm: string) => {
+  const { data: allFreelancers, isLoading, error } = useFreeLancers();
+  const { data: serviceTypes } = useGetServiceTypes();
+
+  // This is just a convenience wrapper
+  // The actual filtering happens in the component for better control
+  return {
+    freelancers: allFreelancers || [],
+    serviceTypes: serviceTypes || [],
+    isLoading,
+    error,
+  };
 };
 
 export const useFreelancerById = (userId: string) => {
@@ -260,46 +294,56 @@ export const useJobInterestFreelancers = (userIds: string[]) => {
   });
 };
 
+
+/**
+ * Hook for fetching top freelancers
+ * Implements aggressive caching for static content
+ */
 export const useGetTopfreelancers = () => {
   const { tokens } = useAuth();
+
   return useQuery<Freelancer[]>({
     queryKey: ['top-freelancers'],
     queryFn: () => workerApi.getTopFreelancers(tokens?.accessToken || ''),
+    staleTime: 1000 * 60 * 5, // Fresh for 5 minutes
+    gcTime: 1000 * 60 * 15, // Cache for 15 minutes
+    refetchOnWindowFocus: true,
+    refetchOnMount: false, // Don't always refetch, use cache first
+    retry: 2,
   });
 };
 
-
-// get recommended freelancers
-// export const useRecommendedFreelancers = (queryParams: any) => {
-//       // const sort = `skip=0&serviceType=${queryParams}`
-
-//   const { tokens } = useAuth();
-//   return useQuery<Freelancer[]>({
-//     queryKey: ['recommended-freelancers'],
-//     queryFn: () => workerApi.getRecommandFreelancers(tokens?.accessToken || '' ,queryParams),
-//   });
-// };  
-
-export const useRecommendedFreelancers = (queryParams: any) => {
+/**
+ * Hook for fetching recommended freelancers with infinite scroll
+ * Implements automatic background refetching and cache management
+ */
+export const useRecommendedFreelancers = (serviceTypeId: string) => {
   const { tokens } = useAuth();
 
   return useInfiniteQuery<Freelancer[]>({
-    queryKey: ['recommended-freelancers', queryParams],
+    queryKey: ['recommended-freelancers', serviceTypeId],
     queryFn: ({ pageParam = 0 }) =>
       workerApi.getRecommandFreelancers(
         tokens?.accessToken || '',
-        queryParams,
-        pageParam as number,  // ✅ MUST include this - it's the skip value (0, 10, 20, etc.)
-        10          // This is the limit
+        serviceTypeId,
+        pageParam as number,
+        10
       ),
     getNextPageParam: (lastPage, allPages) => {
-      // If last page has data, return next page number
+      // Continue fetching if last page is full
       if (lastPage.length === 10) {
         return allPages.length * 10;
       }
       return undefined; // No more pages
     },
     initialPageParam: 0,
+    // Cache and refetch configuration
+    staleTime: 1000 * 60 * 2, // Data is fresh for 2 minutes
+    gcTime: 1000 * 60 * 10, // Cache persists for 10 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to app
+    refetchOnMount: 'always', // Always check for new data on mount
+    retry: 2, // Retry failed requests twice
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 };
 export const usePopularJobs = () => {
@@ -317,13 +361,46 @@ export const usePopularJobs = () => {
 
 
 // get my profile
+// export function useMyProfile() {
+//   const { tokens } = useAuth();
+//   return useQuery({
+//     queryKey: ['myProfile'],
+//     queryFn: () => workerApi.getMyProfile(tokens?.accessToken || ''),
+//     enabled: !!tokens,
+//   });
+// }
+
 export function useMyProfile() {
   const { tokens } = useAuth();
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: ['myProfile'],
     queryFn: () => workerApi.getMyProfile(tokens?.accessToken || ''),
     enabled: !!tokens,
+    // Add staleTime to control when data is considered stale
+    staleTime: 0, // Always consider data stale so it refetches on focus
+    // Optionally add cacheTime if you want to keep data in cache longer
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes (gcTime replaces cacheTime in React Query v5)
   });
+}
+
+// Export a hook to invalidate the profile cache
+export function useInvalidateProfile() {
+  const queryClient = useQueryClient();
+
+  return () => {
+    queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+  };
+}
+
+// Export a hook to manually refetch profile
+export function useRefreshProfile() {
+  const queryClient = useQueryClient();
+
+  return () => {
+    queryClient.refetchQueries({ queryKey: ['myProfile'] });
+  };
 }
 
 // update my profile
@@ -341,9 +418,30 @@ export function useGetServiceTypes() {
   return useQuery({
     queryKey: ['serviceTypes'],
     queryFn: () => workerApi.getServiceTypeApi(),
+    staleTime: 1000 * 60 * 30, // Fresh for 30 minutes (service types rarely change)
+    gcTime: 1000 * 60 * 60, // Cache for 1 hour
+    refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnMount: false, // Use cache on mount
+    retry: 3,
   });
 }
 
+
+/**
+ * Hook for fetching service types
+ * Implements long-term caching for rarely changing data
+ */
+// export const useGetServiceTypes = () => {
+//   return useQuery<ServiceType[]>({
+//     queryKey: ['serviceTypes'],
+//     queryFn: () => workerApi.getServiceTypeApi(),
+//     staleTime: 1000 * 60 * 30, // Fresh for 30 minutes (service types rarely change)
+//     gcTime: 1000 * 60 * 60, // Cache for 1 hour
+//     refetchOnWindowFocus: false, // Don't refetch on focus
+//     refetchOnMount: false, // Use cache on mount
+//     retry: 3,
+//   });
+// };
 export function useGetJobsByServiceType(serviceTypeId: string) {
   return useQuery({
     queryKey: ['jobs', serviceTypeId],

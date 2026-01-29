@@ -26,7 +26,7 @@ export default function ChatScreen() {
 
   const { data: chat, isLoading, refetch } = useChats()
   const { user, tokens, isLoadingAuth } = useAuth()
-const {t}= useTranslation();
+  const {t}= useTranslation();
   const currentUserId = user?._id;
 
 

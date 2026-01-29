@@ -15,7 +15,7 @@ type Props = {
     error?: boolean;
     required?: boolean;
     isValidate?: string;
-
+    classNamebuget?: string
 };
 
 
@@ -39,6 +39,7 @@ const BudgetInput: React.FC<Props> = ({
     error,
     required,
     isValidate,
+    classNamebuget
 
 }) => {
     const [displayValue, setDisplayValue] = useState('');
@@ -75,9 +76,8 @@ const BudgetInput: React.FC<Props> = ({
     };
 
 
-console.log("displayValue",displayValue)
     return (
-        <View className="mb-4">
+        <View className={`mb-4 ${classNamebuget}`}>
             <View className='flex-row gap-4'>
                 <Text className="text-body text-text font-bold mb-1 flex">
                     {label} {required && <Text className="text-error">*</Text>}
@@ -97,7 +97,7 @@ console.log("displayValue",displayValue)
                     keyboardType="numeric"
                     value={displayValue}
                     onChangeText={handleTextChange}
-                    placeholder={`e.g. 300,000`}
+                    placeholder={t('postWork.budget_placeholder')}
                     className="flex-1 text-text text-base px-4 py-3"
                     onFocus={() => setIsFocused(true)}
                     onBlur={handleBlur}

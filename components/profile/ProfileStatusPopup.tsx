@@ -106,8 +106,15 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
 
             <Pressable onPress={() => setShowPopup(true)} className="p-1 bg-blue-50 rounded-full w-[100px]">
                 <View className="p-3 bg-gray-200 rounded-full">
-                    <Text className="text-caption text-green-500 text-center">{status === 'ACTIVE' ? t('freelancer_profile.active') : t('freelancer_profile.busy')}</Text>
 
+                    {status === 'ACTIVE' ?
+                        <Text className="text-caption text-green-500 text-center">{t('freelancer_profile.active')}</Text>
+
+                        :
+                        <Text className="text-caption text-warning text-center">{t('freelancer_profile.busy')}</Text>
+
+
+                    }
                 </View>
             </Pressable>
 

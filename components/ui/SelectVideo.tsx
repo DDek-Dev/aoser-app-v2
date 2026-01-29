@@ -1,160 +1,221 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import { getInfoAsync } from 'expo-file-system/legacy';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { FileWithType } from 'types';
 import { useTranslation } from 'react-i18next';
-import { Toast } from 'react-native-alert-notification';
+import type { FileWithType } from 'types';
 
-type Props = {
+interface Props {
   video: string | null;
   label: string;
   required?: boolean;
   onChange: (file?: FileWithType) => void;
+}
+
+interface ModalState {
+  visible: boolean;
+  title: string;
+  message: string;
+}
+
+const CONSTRAINTS = {
+  MAX_SIZE_BYTES: 50 * 1024 * 1024, // 50MB
+  MAX_DURATION_MS: 60000, // 60 seconds
+  ALLOWED_FORMATS: ['mp4', 'mov', 'avi', 'm4v'] as const,
+  VIDEO_QUALITY: 0.7,
+} as const;
+
+const MIME_TYPE_MAP: Record<string, string> = {
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  avi: 'video/x-msvideo',
+  m4v: 'video/x-m4v',
 };
 
-const SelectVideo: React.FC<Props> = ({ video, label, required, onChange }) => {
+const SelectVideo: React.FC<Props> = ({ 
+  video, 
+  label, 
+  required = false, 
+  onChange 
+}) => {
+  const { t } = useTranslation();
   const playerRef = useRef<any>(null);
+  const [modalState, setModalState] = useState<ModalState>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
-  // Initialize player only when video is valid
   const player = useVideoPlayer(
-    video ? { uri: video } : null, // Use null instead of 'No found'
-    (player) => {
-      playerRef.current = player;
-      player.loop = true;
-      player.play();
-      player.muted = true;
+    video ? { uri: video } : null,
+    (playerInstance) => {
+      playerRef.current = playerInstance;
+      playerInstance.loop = true;
+      playerInstance.muted = true;
+      playerInstance.play();
     }
   );
-  const { t } = useTranslation();
-  // Clean up player when component unmounts or video changes
+
   useEffect(() => {
     return () => {
-      // Avoid calling native methods on potentially released player objects during unmount.
-      // Simply clear the JS reference so we don't attempt further calls.
       playerRef.current = null;
     };
   }, []);
 
-  // Handle video source changes
   useEffect(() => {
-    if (player && video) {
+    if (!player) return;
+
+    if (video) {
       try {
-        if (typeof player.replace === 'function') {
-          player.replace({ uri: video });
-        }
-        if (typeof player.play === 'function') {
-          player.play();
-        }
+        player.replace?.({ uri: video });
+        player.play?.();
       } catch (error) {
-        console.log('Error updating video source:', error);
+        console.error('Error updating video source:', error);
       }
-    } else if (player) {
-      // Pause and clear player if no video
+    } else {
       try {
-        if (typeof player.pause === 'function') player.pause();
+        player.pause?.();
       } catch (error) {
-        console.log('Error pausing player:', error);
+        console.error('Error pausing player:', error);
       }
     }
   }, [video, player]);
 
-  const handlePickVideo = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const showModal = (title: string, message: string) => {
+    setModalState({ visible: true, title, message });
+  };
 
-    // if (!permissionResult.granted) {
-    //  Alert.alert(t('selectVideo.permissionRequired'), t('selectVideo.permissionMessage'));
-    //   return;
-    // }
+  const hideModal = () => {
+    setModalState({ visible: false, title: '', message: '' });
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      allowsEditing: true,
-      quality: 0.7,
-      videoMaxDuration: 60,
-      allowsMultipleSelection: false,
-    });
+  const getFileExtension = (uri: string): string => {
+    const parts = uri.split('.');
+    return parts[parts.length - 1].toLowerCase();
+  };
 
-    if (!result.canceled && result.assets?.length) {
-      const asset = result.assets[0];
+  const getMimeType = (extension: string): string => {
+    return MIME_TYPE_MAP[extension] || 'video/mp4';
+  };
 
-      try {
-        // Get file info to check size
-        const fileInfo = await FileSystem.getInfoAsync(asset.uri);
-        if (!fileInfo.exists) {
-          throw new Error('File does not exist');
-        }
-
-        // Check file size
-        const maxSize = 50 * 1024 * 1024;
-        if (fileInfo.size && fileInfo.size > maxSize) {
-          Alert.alert(
-            t('selectVideo.fileTooLarge'),
-            t('selectVideo.fileTooLargeMessage'),
-            [{ text: t('selectVideo.ok') }]
-          );
-          return;
-        }
-
-        // Check duration
-        if (asset.duration && asset.duration > 60000) {
-          Alert.alert(
-            t('selectVideo.videoTooLong'),
-            t('selectVideo.videoTooLongMessage'),
-            [{ text: t('selectVideo.ok') }]
-          );
-          return;
-        }
-
-        // Extract file extension
-        const uriParts = asset.uri.split('.');
-        const fileExtension = uriParts[uriParts.length - 1].toLowerCase();
-
-        // Validate video format
-        const allowedTypes = ['mp4', 'mov', 'avi', 'm4v'];
-        if (!allowedTypes.includes(fileExtension)) {
-          Alert.alert(
-            t('selectVideo.invalidFormat'),
-            t('selectVideo.invalidFormatMessage'),
-            [{ text: t('selectVideo.ok') }]
-          );
-          return;
-        }
-
-        // Create a file name
-        const fileName = `video_${Date.now()}.${fileExtension}`;
-
-        // Determine MIME type
-        let mimeType = 'video/mp4';
-        if (fileExtension === 'mov') mimeType = 'video/quicktime';
-        else if (fileExtension === 'avi') mimeType = 'video/x-msvideo';
-        else if (fileExtension === 'm4v') mimeType = 'video/x-m4v';
-
-        const fileWithType: FileWithType = {
-          uri: asset.uri,
-          name: fileName,
-          type: mimeType,
-        };
-
-        console.log("Selected video file:", {
-          name: fileWithType.name,
-          type: fileWithType.type,
-          duration: asset.duration ? `${(asset.duration / 1000).toFixed(1)}s` : 'Unknown'
-        });
-
-        onChange(fileWithType);
-      } catch (error) {
-        console.log('Error processing video:', error);
-        Alert.alert(t('selectVideo.error'), t('selectVideo.errorMessage'));
-        onChange(undefined);
+  const validateFileSize = async (uri: string): Promise<boolean> => {
+    try {
+      const fileInfo = await getInfoAsync(uri);
+      
+      if (!fileInfo.exists) {
+        throw new Error('File does not exist');
       }
+
+      if (fileInfo.size && fileInfo.size > CONSTRAINTS.MAX_SIZE_BYTES) {
+        showModal(
+          t('selectVideo.fileTooLarge'),
+          t('selectVideo.fileTooLargeMessage')
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error validating file size:', error);
+      return false;
+    }
+  };
+
+  const validateDuration = (duration?: number): boolean => {
+    if (duration && duration > CONSTRAINTS.MAX_DURATION_MS) {
+      showModal(
+        t('selectVideo.videoTooLong'),
+        t('selectVideo.videoTooLongMessage')
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const validateFormat = (extension: string): boolean => {
+    if (!CONSTRAINTS.ALLOWED_FORMATS.includes(extension as any)) {
+      showModal(
+        t('selectVideo.invalidFormat'),
+        t('selectVideo.invalidFormatMessage')
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const handlePickVideo = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        showModal(
+          t('selectVideo.permissionRequired'),
+          t('selectVideo.permissionMessage')
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['videos'],
+        allowsEditing: true,
+        quality: CONSTRAINTS.VIDEO_QUALITY,
+        videoMaxDuration: CONSTRAINTS.MAX_DURATION_MS / 1000,
+        allowsMultipleSelection: false,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const fileExtension = getFileExtension(asset.uri);
+
+      // Validate format
+      if (!validateFormat(fileExtension)) {
+        return;
+      }
+
+      // Validate duration
+      // if (!validateDuration(asset.duration)) {
+      //   return;
+      // }
+
+      // Validate file size
+      if (!(await validateFileSize(asset.uri))) {
+        return;
+      }
+
+      const fileName = `video_${Date.now()}.${fileExtension}`;
+      const mimeType = getMimeType(fileExtension);
+
+      const fileWithType: FileWithType = {
+        uri: asset.uri,
+        name: fileName,
+        type: mimeType,
+      };
+
+      console.log('Selected video file:', {
+        name: fileWithType.name,
+        type: fileWithType.type,
+        duration: asset.duration 
+          ? `${(asset.duration / 1000).toFixed(1)}s` 
+          : 'Unknown',
+      });
+
+      onChange(fileWithType);
+    } catch (error) {
+      console.error('Error processing video:', error);
+      showModal(
+        t('selectVideo.error'),
+        t('selectVideo.errorMessage')
+      );
+      onChange(undefined);
     }
   };
 
   const handleRemoveVideo = () => {
-    // Clear JS reference to player to avoid calling into released native objects
     playerRef.current = null;
     onChange(undefined);
   };
@@ -168,16 +229,17 @@ const SelectVideo: React.FC<Props> = ({ video, label, required, onChange }) => {
       <View className="relative">
         {video ? (
           <>
-            {/* Only render VideoView if player is available and video is valid */}
             {player && (
               <VideoView
                 player={player}
-                style={{ width: '100%', height: 200, borderRadius: 12 }}
+                style={styles.videoView}
               />
             )}
             <TouchableOpacity
               onPress={handleRemoveVideo}
               className="absolute top-2 right-2 bg-primary p-1.5 rounded-full"
+              accessibilityLabel={t('selectVideo.removeVideo')}
+              accessibilityRole="button"
             >
               <Ionicons name="close" size={16} color="#fff" />
             </TouchableOpacity>
@@ -186,22 +248,121 @@ const SelectVideo: React.FC<Props> = ({ video, label, required, onChange }) => {
           <TouchableOpacity
             onPress={handlePickVideo}
             className="border border-dashed flex-col justify-center bg-blue-50 border-border rounded-xl p-4 items-center"
-            style={{ width: '100%', height: 200, borderRadius: 12 }}
+            style={styles.uploadButton}
+            accessibilityLabel={t('selectVideo.uploadPrompt')}
+            accessibilityRole="button"
           >
             <Ionicons name="videocam-outline" size={24} color="#9CA3AF" />
-
-            <View className='flex-row gap-2'>
-
-              <Ionicons name='cloud-upload-outline' size={32} color="#9CA3AF" />
-              <Text className="text-caption text-textSecondary mt-2">
+            <View className="flex-row gap-2 items-center mt-2">
+              <Ionicons name="cloud-upload-outline" size={32} color="#9CA3AF" />
+              <Text className="text-caption text-textSecondary">
                 {t('selectVideo.uploadPrompt')}
               </Text>
             </View>
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Custom Modal */}
+      <Modal
+        visible={modalState.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={hideModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{modalState.title}</Text>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <Text style={styles.modalMessage}>{modalState.message}</Text>
+            </View>
+            
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                onPress={hideModal}
+                style={styles.modalButton}
+                accessibilityLabel={t('selectVideo.ok')}
+                accessibilityRole="button"
+              >
+                <Text style={styles.modalButtonText}>
+                  {t('selectVideo.ok')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
+
+const styles = StyleSheet.create({
+  videoView: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  uploadButton: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalHeader: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+    alignItems: 'flex-end',
+  },
+  modalButton: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+});
 
 export default SelectVideo;

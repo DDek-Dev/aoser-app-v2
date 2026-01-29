@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   Image,
-  Animated,
   Pressable,
+  FlatList,
 } from 'react-native';
 import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,362 +15,338 @@ import { FreelancerStackParamList } from 'types/navigation';
 import { NoResults } from 'components/NoResults';
 import SortByBottomSheet, { getSortDisplayLabel } from 'components/filter/SortByBottomSheet';
 import { useFreeLancers, useGetServiceTypes } from 'hooks/useFreelancer';
-import LoadingScreen from 'screens/Loading/LoadingScreen';
 import { UserProfile } from 'types/profile';
 import { useTranslation } from 'react-i18next';
+import { SearchViewSkeleton } from 'skeletonScreens/ShimmerView';
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
-// IMPORTANT: Helper function for fuzzy string matching
+// Enhanced profile type with search metadata
+interface EnhancedProfile extends UserProfile {
+  serviceTypeName?: string;
+  jobTitles?: string[];
+  relevanceScore: number;
+}
+
+// Normalize string for fuzzy matching
 const normalizeString = (str: string): string => {
   if (!str) return '';
   return str
     .toLowerCase()
-    .replace(/\s+/g, '') // Remove all spaces
-    .replace(/[^a-z0-9]/g, ''); // Remove special characters
+    .trim()
+    .replace(/\s+/g, '') // Remove spaces
+    .replace(/[^a-z0-9]/g, ''); // Remove special chars
 };
 
-const hasStrictMatch = (item: EnhancedProfile, searchTerm: string): boolean => {
+// Calculate relevance score with weighted fields
+const calculateRelevanceScore = (
+  item: UserProfile,
+  searchTerm: string,
+  serviceTypeName?: string
+): number => {
+  if (!searchTerm) return 0;
+
+  const normalizedSearch = normalizeString(searchTerm);
+  let score = 0;
+
+  const checkField = (value: string | undefined, exactWeight: number, partialWeight: number) => {
+    if (!value) return;
+    const normalized = normalizeString(value);
+    if (normalized === normalizedSearch) {
+      score += exactWeight;
+    } else if (normalized.includes(normalizedSearch)) {
+      score += partialWeight;
+    } else if (normalizedSearch.includes(normalized) && normalized.length > 2) {
+      score += partialWeight * 0.6;
+    }
+  };
+
+  // Field weights (higher = more important)
+  checkField(item.jobTitle, 100, 50);
+  checkField(serviceTypeName, 90, 45); // Add serviceTypeName to scoring
+  checkField(item.firstName, 80, 40);
+  checkField(item.freelancerType, 70, 35);
+  checkField(item.businessType, 60, 30);
+  checkField(item.about, 50, 25);
+  checkField(item.customerExpect, 50, 25);
+  checkField(item.userCode, 30, 15);
+
+  // Location fields
+  if (item.address) {
+    checkField(item.address.province, 40, 20);
+    checkField(item.address.district, 40, 20);
+    checkField(item.address.country, 40, 20);
+  }
+
+  return score;
+};
+
+// Check if item matches search term
+const hasMatch = (
+  item: UserProfile,
+  searchTerm: string,
+  serviceTypeName?: string
+): boolean => {
   if (!searchTerm) return true;
 
-  const s = normalizeString(searchTerm);
-
+  const normalized = normalizeString(searchTerm);
   const fields = [
     item.jobTitle,
-    item.serviceTypeName,
     item.firstName,
     item.freelancerType,
     item.businessType,
     item.about,
     item.customerExpect,
     item.userCode,
-    ...(item.jobTitles || []),
     item.address?.province,
     item.address?.district,
     item.address?.country,
+    serviceTypeName, // Add serviceTypeName to search fields
   ];
 
-  return fields.some(field =>
-    field && normalizeString(field).includes(s)
-  );
+  return fields.some(field => field && normalizeString(field).includes(normalized));
 };
 
-// IMPORTANT: Enhanced profile type with merged data
-interface EnhancedProfile extends UserProfile {
-  serviceTypeName?: string;
-  jobTitles?: string[];
-  relevanceScore?: number;
-}
+// Sort filtered results
+const sortResults = (
+  results: EnhancedProfile[],
+  sortBy: string
+): EnhancedProfile[] => {
+  const sorted = [...results];
 
-// IMPORTANT: Calculate relevance score
-const calculateRelevanceScore = (item: EnhancedProfile, searchTerm: string): number => {
-  if (!searchTerm) return 0;
-  
-  const normalizedSearch = normalizeString(searchTerm);
-  let score = 0;
+  switch (sortBy) {
+    case 'all':
+      return sorted.sort((a, b) => {
+        if (Math.abs(b.relevanceScore - a.relevanceScore) > 5) {
+          return b.relevanceScore - a.relevanceScore;
+        }
+        return b.starRating - a.starRating;
+      });
 
-  // Job Title (weight: 10)
-  if (item.jobTitle) {
-    const normalized = normalizeString(item.jobTitle);
-    if (normalized === normalizedSearch) score += 100;
-    else if (normalized.includes(normalizedSearch)) score += 50;
-    else if (normalizedSearch.includes(normalized)) score += 30;
+    case 'distance_near_far':
+      return sorted.sort((a, b) => {
+        const distDiff = (a.distanceScore || 0) - (b.distanceScore || 0);
+        if (Math.abs(distDiff) > 0.1) return distDiff;
+        return b.relevanceScore - a.relevanceScore;
+      });
+
+    case 'distance_far_near':
+      return sorted.sort((a, b) => {
+        const distDiff = (b.distanceScore || 0) - (a.distanceScore || 0);
+        if (Math.abs(distDiff) > 0.1) return distDiff;
+        return b.relevanceScore - a.relevanceScore;
+      });
+
+    case 'price_low_high':
+      return sorted.sort((a, b) => {
+        const priceDiff = a.hourlyRate - b.hourlyRate;
+        if (Math.abs(priceDiff) > 1) return priceDiff;
+        return b.relevanceScore - a.relevanceScore;
+      });
+
+    case 'price_high_low':
+      return sorted.sort((a, b) => {
+        const priceDiff = b.hourlyRate - a.hourlyRate;
+        if (Math.abs(priceDiff) > 1) return priceDiff;
+        return b.relevanceScore - a.relevanceScore;
+      });
+
+    default:
+      return sorted.sort((a, b) => b.relevanceScore - a.relevanceScore);
   }
-
-  // Service Type Name (weight: 9)
-  if (item.serviceTypeName) {
-    const normalized = normalizeString(item.serviceTypeName);
-    if (normalized === normalizedSearch) score += 90;
-    else if (normalized.includes(normalizedSearch)) score += 45;
-    else if (normalizedSearch.includes(normalized)) score += 25;
-  }
-
-  // Job Titles from jobs array (weight: 9)
-  if (item.jobTitles && Array.isArray(item.jobTitles)) {
-    item.jobTitles.forEach(jobTitle => {
-      if (jobTitle) {
-        const normalized = normalizeString(jobTitle);
-        if (normalized === normalizedSearch) score += 90;
-        else if (normalized.includes(normalizedSearch)) score += 45;
-        else if (normalizedSearch.includes(normalized)) score += 25;
-      }
-    });
-  }
-
-  // First Name (weight: 8)
-  if (item.firstName) {
-    const normalized = normalizeString(item.firstName);
-    if (normalized === normalizedSearch) score += 80;
-    else if (normalized.includes(normalizedSearch)) score += 40;
-  }
-
-  // Freelancer Type (weight: 7)
-  if (item.freelancerType) {
-    const normalized = normalizeString(item.freelancerType);
-    if (normalized === normalizedSearch) score += 70;
-    else if (normalized.includes(normalizedSearch)) score += 35;
-  }
-
-  // Business Type (weight: 6)
-  if (item.businessType) {
-    const normalized = normalizeString(item.businessType);
-    if (normalized === normalizedSearch) score += 60;
-    else if (normalized.includes(normalizedSearch)) score += 30;
-  }
-
-  // About (weight: 5)
-  if (item.about) {
-    const normalized = normalizeString(item.about);
-    if (normalized.includes(normalizedSearch)) score += 25;
-  }
-
-  // Customer Expect (weight: 5)
-  if (item.customerExpect) {
-    const normalized = normalizeString(item.customerExpect);
-    if (normalized.includes(normalizedSearch)) score += 25;
-  }
-
-  // Location fields (weight: 4)
-  if (item.address) {
-    ['province', 'district', 'country'].forEach(field => {
-      const value = item.address.country || item.address.province || item.address.district;
-      if (value) {
-        const normalized = normalizeString(value);
-        if (normalized === normalizedSearch) score += 40;
-        else if (normalized.includes(normalizedSearch)) score += 20;
-      }
-    });
-  }
-
-  // User Code (weight: 3)
-  if (item.userCode) {
-    const normalized = normalizeString(item.userCode);
-    if (normalized === normalizedSearch) score += 30;
-    else if (normalized.includes(normalizedSearch)) score += 15;
-  }
-
-  return score;
 };
 
 export default function SearchView() {
   const route = useRoute();
+  const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
+  const { t } = useTranslation();
+
   const { query } = route.params as { query: string };
-  
-  // Fetch all data
-  const { data: freelancers, isLoading: freelancersLoading } = useFreeLancers();
-  const { data: serviceTypes, isLoading: serviceTypesLoading } = useGetServiceTypes();
-  // IMPORTANT: Add hook to fetch all jobs if you have it
-  // const { data: jobs, isLoading: jobsLoading } = useGetJobs();
-  
+
   const [searchText, setSearchText] = useState(query);
-  const [filteredResults, setFilteredResults] = useState<EnhancedProfile[]>([]);
   const [isSortVisible, setIsSortVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState('all');
 
-  const { t } = useTranslation();
-  const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList, 'SearchBar'>>();
+  const { data: freelancers, isLoading: freelancersLoading } = useFreeLancers();
+  const { data: serviceTypes, isLoading: serviceTypesLoading } = useGetServiceTypes();
 
-  // IMPORTANT: Merge freelancer data with service types and jobs
-  // This runs whenever data changes
-  const enhancedFreelancers = useMemo(() => {
-    if (!freelancers || !serviceTypes) return [];
+  // Create service type lookup map
+  const serviceTypeMap = useMemo(() => {
+    if (!serviceTypes) return new Map();
+    return new Map(serviceTypes.map(st => [st._id || st._id, st.name]));
+  }, [serviceTypes]);
 
-    // Create lookup maps for O(1) access
-    const serviceTypeMap = new Map(
-      serviceTypes.map(st => [st._id || st._id, st.name])
-    );
 
-    // OPTIONAL: If you have jobs data
-    // const jobMap = new Map(
-    //   jobs?.map(job => [job._id || job.id, job.title]) || []
-    // );
-
-    // Enhance each freelancer with related data
-    return freelancers.map(freelancer => {
-      const enhanced: EnhancedProfile = {
-        ...freelancer,
-        serviceTypeName: undefined,
-        jobTitles: [],
-      };
-
-      // Add service type name
-      if (freelancer.serviceType) {
-        const serviceTypeName = serviceTypeMap.get(freelancer.serviceType);
-        if (serviceTypeName) {
-          enhanced.serviceTypeName = serviceTypeName;
-        }
-      }
-
-      // Add job titles
-      if (freelancer.jobs && Array.isArray(freelancer.jobs)) {
-        // OPTION 1: If you don't have jobs data, skip this
-        // enhanced.jobTitles = [];
-        
-        // OPTION 2: If you have jobs data
-        // enhanced.jobTitles = freelancer.jobs
-        //   .map(jobId => jobMap.get(jobId))
-        //   .filter(Boolean);
-        
-        // OPTION 3: If jobs are already objects with title
-        // enhanced.jobTitles = freelancer.jobs
-        //   .map(job => job.title)
-        //   .filter(Boolean);
-      }
-
-      return enhanced;
-    });
-  }, [freelancers, serviceTypes]); // Re-run when data changes
-
-  // IMPORTANT: Filter and sort with relevance scoring
-  useEffect(() => {
-    if (!enhancedFreelancers || enhancedFreelancers.length === 0) return;
+  // Filter and score results
+  const filteredResults = useMemo(() => {
+    if (!freelancers) return [];
 
     const normalizedSearch = normalizeString(searchText);
 
-    
+    // Empty search with only whitespace
     if (searchText && !normalizedSearch) {
-  setFilteredResults([]); // show NoResults
-  return;
-}
-
-// ✅ Truly empty search
-if (!searchText) {
-  setFilteredResults(enhancedFreelancers);
-  return;
-}
-    // If search is empty, show all
-    if (!normalizedSearch) {
-      setFilteredResults(enhancedFreelancers);
-      return;
+      return [];
     }
 
-    // Calculate relevance scores and filter
-    const matchedItems = enhancedFreelancers
-     .filter(item => hasStrictMatch(item, searchText))
-      .map(item => ({
+    // Show all if truly empty
+    if (!searchText) {
+      return freelancers.map(item => ({
         ...item,
-        relevanceScore: calculateRelevanceScore(item, searchText),
+        serviceTypeName: serviceTypeMap.get(item.serviceType),
+        relevanceScore: 0,
+      }));
+    }
+ 
+    // Filter, score, and enhance
+    const matched = freelancers
+      .map(item => {
+        // Get serviceTypeName BEFORE filtering
+        const serviceTypeName = serviceTypeMap.get(item.serviceType);
+        return {
+          item,
+          serviceTypeName,
+        };
+      })
+      .filter(({ item, serviceTypeName }) => hasMatch(item, searchText, serviceTypeName))
+      .map(({ item, serviceTypeName }) => ({
+        ...item,
+        serviceTypeName,
+        relevanceScore: calculateRelevanceScore(item, searchText, serviceTypeName),
       }))
       .filter(item => item.relevanceScore > 0);
 
-    // Apply sorting
-    let sortedMatches = [...matchedItems];
 
-    switch (selectedSort) {
-      case 'all':
-        sortedMatches.sort((a, b) => {
-          if (b.relevanceScore !== a.relevanceScore) {
-            return b.relevanceScore - a.relevanceScore;
-          }
-          return b.starRating - a.starRating;
-        });
-        break;
+    return sortResults(matched, selectedSort);
+  }, [freelancers, searchText, selectedSort, serviceTypeMap]);
 
-      case 'distance_near_far':
-        sortedMatches.sort((a, b) => {
-          const distDiff = a.distanceScore - b.distanceScore;
-          if (Math.abs(distDiff) > 0.1) return distDiff;
-          return b.relevanceScore - a.relevanceScore;
-        });
-        break;
 
-      case 'distance_far_near':
-        sortedMatches.sort((a, b) => {
-          const distDiff = b.distanceScore - a.distanceScore;
-          if (Math.abs(distDiff) > 0.1) return distDiff;
-          return b.relevanceScore - a.relevanceScore;
-        });
-        break;
 
-      case 'price_low_high':
-        sortedMatches.sort((a, b) => {
-          const priceDiff = a.hourlyRate - b.hourlyRate;
-          if (Math.abs(priceDiff) > 1) return priceDiff;
-          return b.relevanceScore - a.relevanceScore;
-        });
-        break;
+  // Handle navigation to profile
+  const handleProfilePress = useCallback((userId: string) => {
+    navigation.navigate('FreelancerProfile', { userId });
+  }, [navigation]);
 
-      case 'price_high_low':
-        sortedMatches.sort((a, b) => {
-          const priceDiff = b.hourlyRate - a.hourlyRate;
-          if (Math.abs(priceDiff) > 1) return priceDiff;
-          return b.relevanceScore - a.relevanceScore;
-        });
-        break;
+  // Handle service type tag press
+  const handleServiceTypePress = useCallback((tagName: string) => {
+    setSearchText(tagName);
+    setSelectedSort('all');
+  }, []);
 
-      default:
-        sortedMatches.sort((a, b) => {
-          if (b.relevanceScore !== a.relevanceScore) {
-            return b.relevanceScore - a.relevanceScore;
-          }
-          return b.starRating - a.starRating;
-        });
-        break;
-    }
-
-    setFilteredResults(sortedMatches);
-  }, [searchText, selectedSort, enhancedFreelancers]);
-
-  const scrollY = useRef(new Animated.Value(0)).current;
-
-  // Show loading if any required data is loading
-  if (freelancersLoading || serviceTypesLoading || !freelancers || !serviceTypes) {
-    return <LoadingScreen />;
+  // Loading state
+  if (freelancersLoading || serviceTypesLoading) {
+    return <SearchViewSkeleton />;
   }
+
+  // Render freelancer card
+  const renderFreelancerCard = ({ item }: { item: EnhancedProfile }) => (
+    <Pressable onPress={() => handleProfilePress(item._id)}>
+      <View className="flex-row items-start mt-1 bg-white rounded-xl overflow-hidden border border-gray-200">
+        <Image
+          source={{ uri: BASE_IMAGE + item.bannerImage }}
+          className="w-[40%] h-44"
+          resizeMode="cover"
+        />
+        <View className="flex-1 p-3 space-y-1.5">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <FontAwesome name="star" size={14} color="#facc15" />
+              <Text className="ml-1 text-xs font-medium text-yellow-500">
+                {item.starRating?.toFixed(1) || '0.0'}
+              </Text>
+            </View>
+            <View className="bg-blue-50 px-2 py-1 flex-row items-center gap-1 rounded-full">
+              <Text className="text-xs font-semibold text-warning">
+                {item.hourlyRateCurrency}
+              </Text>
+              <Text className="text-xs font-semibold text-primary">
+                {item.hourlyRate}
+              </Text>
+              <Text className="text-xs text-primary">/{t('freelancer_profile.hour')}</Text>
+            </View>
+          </View>
+
+          <Text className="text-body font-semibold text-gray-800" numberOfLines={1}>
+            {item.jobTitle}
+          </Text>
+
+          {item.serviceTypeName && (
+            <View className="bg-gray-100 px-2 py-1 my-2 rounded-md self-start">
+              <Text className="text-cation text-gray-600" >{item.serviceTypeName}</Text>
+            </View>
+          )}
+
+          <Text className="text-cation text-gray-500" numberOfLines={2}>
+            {item.customerExpect}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
 
   return (
     <>
-      <View className="flex-1 bg-white rounded-t-3xl overflow-hidden pb-12">
-        {/* App Bar */}
-        <View className="bg-blue-600 pt-12 pb-4 z-20 rounded-2xl">
-          <View className="flex-row items-center px-4">
+      <View className="flex-1 bg-white">
+        {/* Header */}
+        <View className="bg-primary pt-12 pb-4 rounded-b-2xl shadow-sm">
+          <View className="flex-row items-center px-1 mb-1">
             <TouchableOpacity onPress={() => navigation.goBack()} className="p-1">
               <MaterialIcons name="chevron-left" size={32} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => navigation.navigate('SearchBar', { text: searchText, focus: true })}
-              className="w-full flex-1"
+              className="flex-1 ml-2"
             >
-              <View className="flex-row items-center bg-white rounded-full px-3 py-4 border border-gray-300">
-                <Text className="ml-2 text-black">{searchText}</Text>
+              <View className="flex-row items-center bg-white rounded-full px-4 py-3">
+                <MaterialIcons name="search" size={20} color="#666" />
+                <Text className="ml-2 text-gray-800 flex-1" numberOfLines={1}>
+                  {searchText}
+                </Text>
               </View>
             </TouchableOpacity>
           </View>
 
           {/* Service Type Tags */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-3">
-            {serviceTypes.map((tag, index) => (
-              <TouchableOpacity
-                key={tag._id || tag._id || index}
-                className="px-4 py-1 rounded-full ml-3"
-                style={{ borderColor: '#9ca3af', borderWidth: 1 }}
-                onPress={() => setSearchText(tag.name)}
-              >
-                <Text className="text-sm text-white">{tag.name}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {serviceTypes && serviceTypes.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 16 }}
+            >
+              {serviceTypes.map((tag, index) => (
+                <TouchableOpacity
+                  key={tag._id || tag._id || index}
+                  className="px-4 py-2 rounded-full mr-2 border border-white/30"
+                  onPress={() => handleServiceTypePress(tag.name)}
+                >
+                  <Text className="text-sm text-white">{tag.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
-        {/* Sticky Sort Bar */}
+        {/* Sort Bar */}
         <View
-          className="bg-white px-4 py-2 z-10"
+          className="bg-white px-4 py-3 border-b border-gray-100"
           style={{
-            elevation: 2,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 1,
-            shadowRadius: 1,
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 2,
           }}
         >
           <TouchableOpacity
             onPress={() => setIsSortVisible(true)}
-            className="flex-row items-center border w-full border-gray-200 rounded-full px-4 py-2"
+            className="flex-row items-center justify-between border border-gray-200 rounded-full px-4 py-2"
           >
-            <MaterialIcons name="sort" size={18} color="#666" />
-            <Text className="ml-2 text-sm text-gray-600">
-              {getSortDisplayLabel(selectedSort, t)}
-            </Text>
+            <View className="flex-row items-center">
+              <MaterialIcons name="sort" size={18} color="#666" />
+              <Text className="ml-2 text-sm text-gray-700">
+                {getSortDisplayLabel(selectedSort, t)}
+              </Text>
+            </View>
+            <MaterialIcons name="keyboard-arrow-down" size={20} color="#666" />
           </TouchableOpacity>
         </View>
 
@@ -381,76 +357,23 @@ if (!searchText) {
             subtitle={t('freelancer_profile.search_another_key')}
           />
         ) : (
-          <>
-            {/* Results count */}
-            {/* <View className="px-4 py-2">
-              <Text className="text-sm text-gray-600">
-                {filteredResults.length} {t('freelancer_profile.results_found') || 'results found'}
-              </Text>
-            </View> */}
-
-            <Animated.FlatList
-              data={filteredResults}
-              showsVerticalScrollIndicator={false}
-              keyExtractor={(item, index) => item._id || index.toString()}
-              onScroll={Animated.event(
-                [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                { useNativeDriver: true }
-              )}
-              scrollEventThrottle={16}
-              contentContainerStyle={{
-                paddingHorizontal: 16,
-                paddingBottom: 20,
-              }}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => navigation.navigate('FreelancerProfile', { userId: item._id })}
-                >
-                  <View className="flex-row items-start mt-4 bg-white rounded-2xl pr-2 mb-2 border border-gray-200">
-                    <Image
-                      source={{ uri: BASE_IMAGE + item.bannerImage }}
-                      className="w-[40%] h-44 rounded-xl mr-3"
-                      resizeMode="cover"
-                    />
-                    <View className="flex-1 space-y-1 py-4">
-                      <View className="flex-row items-center justify-between w-full">
-                        <View className="flex-row gap-2">
-                          <View className="flex-row items-center">
-                            <FontAwesome name="star" size={14} color="#facc15" />
-                            <Text className="ml-1 text-xs font-medium text-yellow-500">
-                              {item.starRating}
-                            </Text>
-                          </View>
-                        </View>
-                        <View className="bg-blue-100 px-2 py-1 flex-row items-center gap-1 rounded-full">
-                          <Text className="text-xs font-semibold text-warning">
-                            {item.hourlyRateCurrency}
-                          </Text>
-                          <Text className="text-xs font-semibold text-primary">
-                            {item.hourlyRate} / {t('freelancer_profile.hour')}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text className="text-sm font-semibold text-gray-800">
-                        {item.jobTitle}
-                      </Text>
-                      {/* OPTIONAL: Show service type badge */}
-                      {item.serviceTypeName && (
-                        <View className="bg-gray-100 px-2 py-1 rounded-md self-start">
-                          <Text className="text-xs text-gray-600">
-                            {item.serviceTypeName}
-                          </Text>
-                        </View>
-                      )}
-                      <Text className="text-xs text-gray-500" numberOfLines={5}>
-                        {item.customerExpect}
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
-              )}
-            />
-          </>
+          <FlatList
+            data={filteredResults}
+            renderItem={renderFreelancerCard}
+            keyExtractor={(item, index) => item._id || index.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 4,
+              paddingBottom: 64,
+            }}
+            ListHeaderComponent={
+              <View className="py-2">
+                <Text className="text-sm text-gray-600">
+                  {filteredResults.length} {t('freelancer_profile.results_found') || 'results'}
+                </Text>
+              </View>
+            }
+          />
         )}
       </View>
 
@@ -458,7 +381,7 @@ if (!searchText) {
         visible={isSortVisible}
         onClose={() => setIsSortVisible(false)}
         selected={selectedSort}
-        onSelect={(value) => setSelectedSort(value)}
+        onSelect={setSelectedSort}
       />
     </>
   );

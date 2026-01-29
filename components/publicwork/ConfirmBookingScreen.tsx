@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
+import { formatDate, getCurrentLanguage } from 'utils/dateFormatter';
 
 type ConfirmBookingRouteProp = RouteProp<FreelancerStackParamList, 'ConfirmBookingScreen'>;
 
@@ -27,6 +28,9 @@ const ConfirmBookingScreen = () => {
 
     console.log('localFormData', localFormData);
 
+
+
+  
     const handleConfirm = async () => {
         try {
             setIsLoading(true);
@@ -83,6 +87,7 @@ const ConfirmBookingScreen = () => {
         }
     };
 
+      ;
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']} >
 
@@ -92,6 +97,7 @@ const ConfirmBookingScreen = () => {
                 showsVerticalScrollIndicator={false}
             >
 
+        
                 <Text className="text-body text-text font-semibold mb-4">
                     {t('postWork.confirm.confirm_message')}
                 </Text>
@@ -124,10 +130,10 @@ const ConfirmBookingScreen = () => {
 
                 <TouchableOpacity
                     onPress={handleConfirm}
-                    className="bg-blue-600 mt-auto py-4 rounded-xl items-center"
+                    className="bg-primary mt-auto py-4 rounded-xl "
                 >
-                    {isLoading ? <Text className="text-white font-semibold text-base">{t('postWork.confirm.confirming')}</Text> :
-                        <Text className="text-white font-semibold text-base">{t('postWork.confirm.confirm_submit')}</Text>}
+                    {isLoading ? <Text className="text-white font-semibold text-base text-center">{t('postWork.confirm.confirming')}</Text> :
+                        <Text className="text-white font-semibold text-base text-center">{t('postWork.confirm.confirm_submit')}</Text>}
                 </TouchableOpacity>
             </ScrollView>
 

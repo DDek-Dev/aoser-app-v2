@@ -3,14 +3,28 @@
 import { Freelancer, UserProfile } from "types/profile";
 
 
-import { CreateReview,  ServiceType, SubService, Favorite, Review, GetFavorite, JobpopularData } from "types";
+import { CreateReview, ServiceType, SubService, Favorite, Review, GetFavorite, JobpopularData } from "types";
 import axios from "axios";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 
-export const workerApi = {
+const apiClient = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 15000, // 15 second timeout
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
+export const workerApi = {
+    /**
+      * Fetch recommended freelancers with pagination
+      * @param token - Authorization token
+      * @param serviceTypeId - Filter by service type (empty string for all)
+      * @param skip - Pagination offset
+      * @param limit - Number of items per page
+      */
     // get my profile
     getMyProfile: async (token: string): Promise<UserProfile> => {
         try {
@@ -64,28 +78,91 @@ export const workerApi = {
     },
     // get All freelancers
 
+    // getAllfreelancers: async (token: string): Promise<UserProfile[]> => {
+    //     try {
+
+    //         const response = await fetch(`${API_BASE_URL}/worker/freelancers`, {
+    //             method: 'GET',
+    //             headers: {
+    //                 'Authorization': `Aoser ${token}`, // I fixed "Aoser" -> "Bearer"
+    //             },
+    //         });
+
+    //         const data = await response.json();
+    //         if (!response.ok) {
+    //             throw new Error(data.message || 'Failed to fetch freelancers');
+    //         }
+
+    //         return data.data;
+    //     } catch (error) {
+    //         console.log('Error fetching freelancers:', error);
+    //         throw error;
+    //     }
+    // },
+
+
     getAllfreelancers: async (token: string): Promise<UserProfile[]> => {
         try {
-
-            const response = await fetch(`${API_BASE_URL}/worker/freelancers`, {
-                method: 'GET',
+            const response = await apiClient.get('/worker/freelancers', {
                 headers: {
-                    'Authorization': `Aoser ${token}`, // I fixed "Aoser" -> "Bearer"
+                    Authorization: `Aoser ${token}`,
                 },
             });
 
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || 'Failed to fetch freelancers');
-            }
-
-            return data.data;
+            return response.data.data || [];
         } catch (error) {
-            console.log('Error fetching freelancers:', error);
+            if (axios.isAxiosError(error)) {
+                console.log('Error fetching all freelancers:', {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data,
+                });
+            }
             throw error;
         }
     },
+    getAllFreelancersPaginated: async (token: string): Promise<UserProfile[]> => {
+        try {
+            const allFreelancers: UserProfile[] = [];
+            let skip = 0;
+            const limit = 100; // Large batch size
+            let hasMore = true;
 
+            while (hasMore) {
+                const response = await apiClient.get(
+                    `/worker/freelancers?skip=${skip}&limit=${limit}`,
+                    {
+                        headers: {
+                            Authorization: `Aoser ${token}`,
+                        },
+                    }
+                );
+
+                const freelancers = response.data.data || [];
+                allFreelancers.push(...freelancers);
+
+                // Check if there are more pages
+                hasMore = freelancers.length === limit;
+                skip += limit;
+
+                // Safety check to prevent infinite loops
+                if (skip > 10000) {
+                    console.warn('Reached maximum pagination limit');
+                    break;
+                }
+            }
+
+            return allFreelancers;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.log('Error fetching paginated freelancers:', {
+                    message: error.message,
+                    status: error.response?.status,
+                });
+            }
+            throw error;
+        }
+    },
 
     // create freelancer
     createFreelancer: async (data: UserProfile, token: string): Promise<UserProfile> => {
@@ -111,15 +188,23 @@ export const workerApi = {
     },
 
 
-    // Get all service types
-    getServiceTypeApi: async (): Promise<ServiceType[] | undefined> => {
-        const response = await axios.get(`${API_BASE_URL}/worker/service-types`, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-        // console.log(response.data.data.serviceType);
-        return response.data.data.serviceType;
+    /**
+       * Fetch all service types
+       * No authentication required for public data
+       */
+    getServiceTypeApi: async (): Promise<ServiceType[]> => {
+        try {
+            const response = await apiClient.get('/worker/service-types');
+            return response.data.data.serviceType || [];
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.log('Error fetching service types:', {
+                    message: error.message,
+                    status: error.response?.status,
+                });
+            }
+            throw error;
+        }
     },
 
     // Get jobs by service type ID
@@ -171,7 +256,7 @@ export const workerApi = {
 
         console.log("data to create: ", data);
         console.log("token API: ", API_BASE_URL);
- 
+
         const res = await axios.post(`${API_BASE_URL}/worker/favorite/`, data, {
             headers: {
                 'Content-Type': 'application/json',
@@ -182,30 +267,29 @@ export const workerApi = {
         return res.data.data;
     },
 
-  deleteFavorite: async (favoriteId: string, token: string) => {
-    try {
-    //   console.log("favoriteId to delete: ", favoriteId);
-      const res = await axios.delete(`${API_BASE_URL}/worker/favorite/${favoriteId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Aoser ${token}`,
-        },
-      });
+    deleteFavorite: async (favoriteId: string, token: string) => {
+        try {
+            //   console.log("favoriteId to delete: ", favoriteId);
+            const res = await axios.delete(`${API_BASE_URL}/worker/favorite/${favoriteId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
 
-    //   console.log ("DELETE response: ", res.status);
+            //   console.log ("DELETE response: ", res.status);
 
-      // DELETE requests typically return nothing - this is correct
-      return res.status; // or return res.status if you need it
-    } catch (error) {
-      console.log("Error deleting favorite: ", error);
-      throw error;
+            // DELETE requests typically return nothing - this is correct
+            return res.status; // or return res.status if you need it
+        } catch (error) {
+            console.log("Error deleting favorite: ", error);
+            throw error;
+        }
     }
-  }
-,
+    ,
 
     getAllFavorites: async (token: string): Promise<GetFavorite[]> => {
 
-    console.log("API_BASE_URL: ", API_BASE_URL);
 
         try {
             const response = await axios.get(`${API_BASE_URL}/worker/favorites`, {
@@ -215,64 +299,76 @@ export const workerApi = {
                 },
             });
 
-            console.log("API Response: ", response.data.data);
             return response.data.data || [];
         } catch (error) {
             console.log('Error fetching favorites:', error);
             throw error;
         }
     },
-
-    getTopFreelancers:async (token: string): Promise<Freelancer[]> => {
+    /**
+      * Fetch top freelancers
+      * @param token - Authorization token
+      */
+    getTopFreelancers: async (token: string): Promise<Freelancer[]> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/worker/top-freelancers`, {
+            const response = await apiClient.get('/worker/top-freelancers', {
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Aoser ${token}`,
+                    Authorization: `Aoser ${token}`,
                 },
             });
+
             return response.data.data || [];
         } catch (error) {
-            console.log('Error fetching top freelancers:', error);
+            if (axios.isAxiosError(error)) {
+                console.log('Error fetching top freelancers:', {
+                    message: error.message,
+                    status: error.response?.status,
+                });
+            }
             throw error;
         }
     },
+    getRecommandFreelancers: async (
+        token: string,
+        serviceTypeId: string,
+        skip: number = 0,
+        limit: number = 10
+    ): Promise<Freelancer[]> => {
+        try {
+            const params = new URLSearchParams({
+                skip: skip.toString(),
+                limit: limit.toString(),
+                sortBy: 'recommendStar',
+            });
 
-    getRecommandFreelancers: async (token: string, queryParams: string, skip: number = 0, limit: number = 10): Promise<Freelancer[]> => {
-    try {
-        const response = await axios.get(
-            `${API_BASE_URL}/worker/freelancers?skip=${skip}&limit=${limit}&serviceType=${queryParams}&sortBy=recommendStar`,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Aoser ${token}`,
-                },
+            // Only add serviceType if it's not empty
+            if (serviceTypeId && serviceTypeId.trim() !== '') {
+                params.append('serviceType', serviceTypeId);
             }
-        );
 
-        return response.data.data || [];
-    } catch (error) {
-        console.log('Error fetching recommend freelancers:', error);
-        throw error;
-    }
-},
-    // getRecommandFreelancers: async (token: string , queryParams: string): Promise<Freelancer[]> => {
-    //     try {
-    //         // const response = await axios.get(`${API_BASE_URL}/worker/recommend-freelancers`, {
-    //         const response = await axios.get(`${API_BASE_URL}/worker/freelancers?skip=0&serviceType=${queryParams}&sortBy=recommendStar`, {
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Aoser ${token}`,
-    //             },
-    //         });
+            const response = await apiClient.get(`/worker/freelancers?${params.toString()}`, {
+                headers: {
+                    Authorization: `Aoser ${token}`,
+                },
+            });
 
-    //         return response.data.data || [];
-    //     } catch (error) {
-    //         console.log('Error fetching recommand freelancers:', error);
-    //         throw error;
-    //     }
-    // },
-    getPopularJob:async (token: string): Promise<JobpopularData[]> => {
+            return response.data.data || [];
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.log('Error fetching recommended freelancers:', {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data,
+                });
+            } else {
+                console.log('Unexpected error:', error);
+            }
+            throw error;
+        }
+
+    },
+
+    getPopularJob: async (token: string): Promise<JobpopularData[]> => {
         try {
             const response = await axios.get(`${API_BASE_URL}/worker/popular-job`, {
                 headers: {
@@ -287,7 +383,7 @@ export const workerApi = {
         }
     },
 
-    getHiredFreelancers:async (token: string): Promise<Freelancer[]> => {
+    getHiredFreelancers: async (token: string): Promise<Freelancer[]> => {
         try {
             const response = await axios.get(`${API_BASE_URL}/worker/hired-freelancers`, {
                 headers: {

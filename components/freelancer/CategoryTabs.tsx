@@ -1,5 +1,5 @@
 import React, { useRef, useState, useMemo, useEffect, use } from 'react';
-import { FlatList, StyleProp, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { FlatList, Pressable, StyleProp, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useGetServiceTypes } from 'hooks/useFreelancer';
 import * as Icons from 'lucide-react-native';
@@ -118,15 +118,15 @@ export default function CategoryTabs({
     const isActive = activeCategory === item.name;
 
     return (
-      <TouchableOpacity
+      <Pressable
         onPress={() => onPressCategory(item, index)}
         style={{
           alignItems: 'center',
           justifyContent: 'center',
           width: 70,
           height: 70,
-          marginRight: 12,
-          marginBottom: 4,
+          marginRight: 6,
+          // marginBottom: 4,
           borderRadius: 16,
           // zIndex: 10,
           backgroundColor: isActive ? '#3b82f6' : '#fff',
@@ -155,7 +155,7 @@ export default function CategoryTabs({
         >
           {item.name =='All' ?  t('categoryTabs.all') : item.name } 
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 

@@ -130,7 +130,7 @@ export default function OtpRequestScreen({ navigation }: any) {
         textBody: `${t('otpScreen.registration_successful')}`,
       });
       // navigation.popToTop();
-      navigation.navigate('ProfileSetup');
+      navigation.replace('ProfileSetup');
 
     } catch (error) {
       Toast.show({

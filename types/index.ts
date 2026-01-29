@@ -33,7 +33,7 @@ export interface Job {
   bannerImage: string;
   category: string;
   deadLine?: string;
-  budgetType: "FIXED_PRICE" | "HOURLY";
+  budgetType: "FIXED_PRICE" | "HOURLY" | "OFFERING";
   hourlyRateCurrency: "LAK" | "USD";
   currency: "LAK" | "USD";
   startDate?: string;
@@ -58,7 +58,7 @@ export interface Job {
   myLike: Mylike[];
   applicant: UserProfile[];
   workApplicants: WorkApplicant[];
-
+ 
 }
 
 export type WorkById = {
@@ -97,7 +97,7 @@ export interface WorkApplicant {
   createdAt: string; // or Date if you want to use Date objects
   updatedAt: string; // or Date
   __v: number;
-  applicantProfile: UserProfile[]; // Replace 'any' with specific profile interface if known
+  applicantProfile: UserProfile; // Replace 'any' with specific profile interface if known
 }
 
 // For frontend display, you might want a simplified version

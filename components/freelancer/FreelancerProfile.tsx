@@ -161,6 +161,8 @@ export default function FreelancerProfile() {
         return;
       }
 
+      
+
       console.log('[Favorite] Deleting favorite with ID:', likeId);
 
       // Optimistic update - instant UI feedback
@@ -179,7 +181,7 @@ export default function FreelancerProfile() {
       } catch (error) {
         // Revert optimistic update on error
         setIsFavorite(true);
-        console.error('[Favorite] ❌ Error deleting:', error);
+        console.log('[Favorite] ❌ Error deleting:', error);
       }
     },
     [deleteFavorite, refetch]
@@ -192,36 +194,35 @@ export default function FreelancerProfile() {
    * Finds the correct like ID from the profile.likes array.
    */
   const handleFavoriteToggle = useCallback(() => {
-    // Clear existing debounce timer
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
+  // Clear existing debounce timer
+  if (debounceRef.current) {
+    clearTimeout(debounceRef.current);
+  }
+
+  // Debounce to prevent rapid clicks (spam protection)
+  debounceRef.current = setTimeout(() => {
+    // Find the like ID where the current user (createdBy) has liked this profile (likedItem)
+    const likeId = profile?.likes?.find(
+      like => like.createdBy === user?._id 
+    )?._id;
+
+    console.log('[Favorite] Toggle action:', { isFavorite, likeId });
+
+    if (isFavorite && likeId) {
+      // Unlike: we have the like ID from the server
+      handleDeleteFavorite(likeId);
+    } else if (!isFavorite) {
+      // Like: create new favorite
+      handleCreateFavorite();
     }
-
-    // Debounce to prevent rapid clicks (spam protection)
-    debounceRef.current = setTimeout(() => {
-      // Find the like ID where likedItem matches the current profile
-      const likeId = profile?.likes?.find(
-        like => like.likedItem === profile._id
-      )?._id;
-
-      console.log('[Favorite] Toggle action:', { isFavorite, likeId });
-
-      if (isFavorite && likeId) {
-        // Unlike: we have the like ID from the server
-        handleDeleteFavorite(likeId);
-      } else if (!isFavorite) {
-        // Like: create new favorite
-        handleCreateFavorite();
-      }
-    }, DEBOUNCE_DELAY);
-  }, [
-    isFavorite,
-    profile?._id,
-    profile?.likes,
-    handleCreateFavorite,
-    handleDeleteFavorite,
-  ]);
-
+  }, DEBOUNCE_DELAY);
+}, [
+  isFavorite,
+  profile?._id,
+  profile?.likes,
+  handleCreateFavorite,
+  handleDeleteFavorite,
+]);
   /**
    * Navigate to chat room with the freelancer
    */
@@ -430,7 +431,7 @@ export default function FreelancerProfile() {
         </View>
 
         {/* ===== SIMILAR FREELANCERS ===== */}
-        <FamiliarFreelancers title={t('freelancer_profile.similar_freelancers', 'Similar Freelancers')} />
+        <FamiliarFreelancers title={t('freelancer_profile.similar_Freelancer')} />
 
         {/* Bottom Spacing for Floating Buttons */}
         <View className="mb-32" />

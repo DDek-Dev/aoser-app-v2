@@ -1,10 +1,10 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import i18n from "i18n";
 
 export type Language = 'en' | 'la';
 
 export const formatRelativeTime = (dateString: string, language: Language = 'en'): string => {
-  if (!dateString) return language === 'en' ? 'Unknown date' : 'ບໍ່ຮູ້ວັນທີ';
+  if (!dateString) return language === 'en' ? 'No date' : 'ບໍ່ມີວັນທິ່';
   
   try {
     const date = new Date(dateString);
@@ -65,7 +65,7 @@ export const formatRelativeTime = (dateString: string, language: Language = 'en'
 };
 
 export const formatRelativeTimeWithTime = (dateString: string, language: Language = 'en'): string => {
-  if (!dateString) return language === 'en' ? 'Unknown date' : 'ບໍ່ຮູ້ວັນທີ';
+  if (!dateString) return language === 'en' ? 'No date' : 'ບໍ່ມີວັນທິ່';
   
   try {
     const date = new Date(dateString);
@@ -100,7 +100,7 @@ export const formatRelativeTimeWithTime = (dateString: string, language: Languag
 };
 
 export const formatDate = (dateString: string, language: Language = 'en'): string => {
-  if (!dateString) return language === 'en' ? 'Unknown date' : 'ບໍ່ຮູ້ວັນທີ';
+  if (!dateString) return language === 'en' ? 'No date' : 'ບໍ່ມີວັນທິ່';
   
   try {
     const date = new Date(dateString);
@@ -160,3 +160,17 @@ export const getCurrentLanguage = (): Language => {
 //   // For example: const language = useLanguageStore.getState().language;
 //   return 'en'; // default to English
 // };
+
+
+export   const formatDisplayDateTime = (isoString: string | null) => {
+
+    if (!isoString) return getCurrentLanguage() === 'en' ? 'Not specified' : 'ບໍ່ໄດ້ກໍານົດ';
+
+    const date = new Date(isoString);
+    const currentLanguage = getCurrentLanguage();
+    const dateStr = formatDate(isoString, currentLanguage);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+
+    return `${dateStr} ${currentLanguage === 'la' ? 'ເວລາ' : 'at'} ${hours}:${minutes}`;
+  };

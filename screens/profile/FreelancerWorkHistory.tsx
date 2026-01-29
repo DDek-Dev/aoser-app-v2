@@ -175,10 +175,13 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
     const currentLanguage = getCurrentLanguage();
 
     // Determine if image URL needs base path
-    const profileImageUri = item.createdBy.userProfileImage?.startsWith('http')
-        ? item.createdBy.userProfileImage
-        : `${IMAGES_BASE_URL}${item.createdBy.userProfileImage}`;
+    // const profileImageUri = item.createdBy.userProfileImage?.startsWith('http')
+    // ? item.createdBy.userProfileImage
+    // : `${IMAGES_BASE_URL}${item.createdBy.userProfileImage}`;
 
+    if (!item.createdBy) {
+        return null
+    }
     return (
         <Pressable
             onPress={() => onPress(item._id)}
@@ -193,7 +196,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
                     {/* Client Profile Image */}
                     <View className="relative">
                         <Image
-                            source={item.createdBy.userProfileImage ? {  uri: IMAGES_BASE_URL + item.createdBy.userProfileImage }: profileImage}
+                            source={item.createdBy.userProfileImage ? { uri: IMAGES_BASE_URL + item.createdBy.userProfileImage as any } : profileImage}
                             className="w-12 h-12 rounded-full  border border-border"
                         />
                     </View>
@@ -419,7 +422,7 @@ const FreelancerWorkHistory: React.FC = () => {
                     {/* Back Button */}
                     <TouchableOpacity
                         onPress={handleGoBack}
-                       
+
                         activeOpacity={0.7}
                         accessibilityRole="button"
                         accessibilityLabel="Go back"

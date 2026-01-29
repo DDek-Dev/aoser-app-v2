@@ -10,8 +10,6 @@ import ResumeImage from 'components/profile/ResumeImage';
 
 import LoadingScreen from 'screens/Loading/LoadingScreen';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import Header_back from 'components/ui/Header_back';
 import { useFreelancerById, useFreelancerReviews } from 'hooks/useFreelancer';
@@ -33,7 +31,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
   const { data: reviews, isLoading: isLoadingReviews } = useFreelancerReviews(profile?._id  as string);
  const {user } = useAuth();
     const {t}= useTranslation()
-  const insets = useSafeAreaInsets();
+
   const navigation = useNavigation();
   const opacity = useRef(new Animated.Value(0.3)).current;
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -99,7 +97,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
           <Header
             userId={profile._id || ''}
             backgroundImage={profile.bannerImage || ''}
-            profileImage={profile.userProfileImage}
+            profileImage={profile.userProfileImage || ''}
             name={profile.firstName + ' ' + profile.lastName}
             job={profile.jobTitle || ''}
             rating={profile.starRating || 0}

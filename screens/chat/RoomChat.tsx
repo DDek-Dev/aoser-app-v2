@@ -13,6 +13,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Pressable,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -81,6 +82,8 @@ const RoomChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [isFileSending, setIsFileSending] = useState(false);
+
+  const [showDurationModal, setShowDurationModal] = useState(false);
 
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [updateTo, setUpdateTo] = useState<Message | null>(null);
@@ -390,19 +393,27 @@ const RoomChat = () => {
   };
 
   const handleLocationSelection = () => {
-    // let user pick duration
-    Alert.alert(
-      t('chat.chatroom.shareLocation') || 'Share location',
-      t('chat.chatroom.chooseDuration') || 'How long should this location be shared?',
-      [
-        { text: '15 min', onPress: () => shareLocation(15) },
-        { text: '60 min', onPress: () => shareLocation(60) },
-        { text: '8 h', onPress: () => shareLocation(8 * 60) },
-        { text: '24 h', onPress: () => shareLocation(24 * 60) },
-        { text: t('common.cancel') || 'Cancel', style: 'cancel' },
-      ]
-    );
+    setShowDurationModal(true);
   };
+
+  const handleDurationSelect = (duration: number) => {
+    setShowDurationModal(false);
+    shareLocation(duration);
+  };
+  // const handleLocationSelection = () => {
+  //   // let user pick duration
+  //   Alert.alert(
+  //     t('chat.chatroom.shareLocation') || 'Share location',
+  //     t('chat.chatroom.chooseDuration') || 'How long should this location be shared?',
+  //     [
+  //       { text: '15 min', onPress: () => shareLocation(15) },
+  //       { text: '60 min', onPress: () => shareLocation(60) },
+  //       { text: '8 h', onPress: () => shareLocation(8 * 60) },
+  //       { text: '24 h', onPress: () => shareLocation(24 * 60) },
+  //       { text: t('common.cancel') || 'Cancel', style: 'cancel' },
+  //     ]
+  //   );
+  // };
 
   const shareLocation = async (durationMinutes: number) => {
     if (!chat?.conversation?._id) return;
@@ -424,7 +435,7 @@ const RoomChat = () => {
         tempId,
         conversation: chat.conversation._id,
         sender: user._id,
-        message: `Shared location (${durationMinutes} min)`,
+        message: `${t('chat.chatroom.shareLocation')} (${durationMinutes} ${t('common.min')})`,
         messageType: 'LOCATION',
         status: 'SENT',
         pending: true,
@@ -810,7 +821,7 @@ const RoomChat = () => {
 
             <Pressable className='flex-row items-center gap-2' onPress={() => navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })}>
 
-             
+
 
               <View className="">
                 <Text className="text-body text-text font-bold">
@@ -851,7 +862,6 @@ const RoomChat = () => {
             >
               <ChatListContainer
                 messages={messages}
-
                 onUpdateMessages={handleUpdateMessage}
                 onCopyMessage={handleCopyMessage}
                 onReplyToMessage={handleReplyToMessage}
@@ -877,6 +887,76 @@ const RoomChat = () => {
               />
             </Animated.View>
           </KeyboardAvoidingView>
+
+          {/* =====================
+          This is popup choose time for send location 
+          ========================= */}
+
+          <Modal
+            transparent={true}
+            visible={showDurationModal}
+            animationType="fade"
+            onRequestClose={() => setShowDurationModal(false)}
+          >
+            <Pressable
+              className="flex-1 bg-black/50 justify-center items-center"
+              onPress={() => setShowDurationModal(false)}
+            >
+              <Pressable
+                className="bg-surface rounded-xl p-5 w-[80%] max-w-[400px]"
+                onPress={(e) => e.stopPropagation()}
+              >
+                <Text className="text-subheading text-text mb-2 text-center">
+                  <Ionicons
+                    name="location-outline"
+                    size={24}
+                    color='#EF4444'
+                  />
+                  {t('chat.chatroom.shareLocation') || 'Share location'}
+                </Text>
+                <Text className="text-body text-textSecondary mb-5 text-center">
+                  {t('chat.chatroom.chooseDuration') || 'How long should this location be shared?'}
+                </Text>
+
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect(15)}
+                >
+                  <Text className="text-body text-text font-medium">15 {t('common.min')}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect(60)}
+                >
+                  <Text className="text-body text-text font-medium">60 {t('common.min')}</Text>
+                </TouchableOpacity>
+                {/* 
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect(8 * 60)}
+                >
+                  <Text className="text-body text-text font-medium">8 {t('common.hour')}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect(24 * 60)}
+                >
+                  <Text className="text-body text-text font-medium">24 {t('common.hour')}</Text>
+                </TouchableOpacity> */}
+
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-transparent border border-border items-center active:opacity-70"
+                  onPress={() => setShowDurationModal(false)}
+                >
+                  <Text className="text-body text-textSecondary ">
+                    {t('common.cancel') || 'Cancel'}
+                  </Text>
+                </TouchableOpacity>
+              </Pressable>
+            </Pressable>
+          </Modal>
 
           {/* File Options Menu */}
           <FileOptionsMenu
@@ -974,7 +1054,7 @@ const RoomChat = () => {
               </View>
             )}
             <View className="flex-row items-end">
-              <TouchableOpacity
+              <Pressable
                 onPress={handleShowOptions}
                 className={`mr-3 mb-2 w-10 h-10 rounded-full items-center justify-center border ${fileOptionsVisible ? 'bg-primary border-primary' : 'border-gray-300'
                   }`}
@@ -985,7 +1065,7 @@ const RoomChat = () => {
                 >
                   +
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
 
               <TextInput

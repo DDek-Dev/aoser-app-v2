@@ -644,13 +644,13 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
                         {/* Info Section */}
                         <View style={{ padding: 12 }}>
-                          <Text style={{
+                          {/* <Text style={{
                             color: isFromUser ? '#fff' : '#1f2937',
                             fontWeight: 'bold',
                             fontSize: 15
                           }}>
                             Current Location { (item as any).mapsUrl }
-                          </Text>
+                          </Text> */}
 
                           {((item as any).expiresAt) && (
                             <Text style={{
@@ -658,7 +658,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                               fontSize: 11,
                               marginTop: 2
                             }}>
-                              Live until {new Date((item as any).expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {t('chat.chatroom.live_until')} {new Date((item as any).expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </Text>
                           )}
 
@@ -676,7 +676,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                               fontWeight: '600',
                               fontSize: 13
                             }}>
-                              View on Map {(item as any).location?.latitude}
+                              {t('chat.chatroom.view_on_map')} {(item as any).location?.latitude}
                             </Text>
                             <Ionicons
                               name="chevron-forward"

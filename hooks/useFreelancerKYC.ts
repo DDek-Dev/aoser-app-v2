@@ -10,6 +10,8 @@ type AoserProfile = {
   firstName: string;
   lastName: string;
   profileImg: FileWithType | null;
+  gender: string;
+  phone: string;
 };
 
 

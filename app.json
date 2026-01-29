@@ -15,15 +15,16 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow Aceer to save QR codes to your photo library"
-      }
+        "NSPhotoLibraryUsageDescription": "Allow Aceer to save QR codes to your photo library",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.aoser.app"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/aoser_logo_and.png",
+        "foregroundImage": "./assets/aoser_logo_and2.png",
         "backgroundColor": "#ffffff"
       },
-
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.aoser.app",
@@ -53,4 +54,4 @@
       "expo-image-picker"
     ]
   }
-}  
+}

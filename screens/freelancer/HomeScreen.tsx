@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Animated,
   StyleSheet,
   Text,
   TouchableOpacity,
+  RefreshControl,
+  Pressable,
 } from 'react-native';
 
 import CategoryTabs from 'components/freelancer/CategoryTabs';
-import Advert from 'components/freelancer/Advert';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,7 +24,6 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState(0);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateXAnim = useRef(new Animated.Value(0)).current;
@@ -33,30 +33,27 @@ export default function HomeScreen() {
   const navigation = useNavigation<SearchBarNavigationProp>();
   const { t } = useTranslation();
 
-  // Fetch all freelancers once (no category filter in API call)
+  // Fetch freelancers with current category filter
   const {
     data,
     isLoading,
+    isFetching,
     fetchNextPage,
     hasNextPage,
-    isFetchingNextPage
-  } = useRecommendedFreelancers(''); // Always fetch all
+    isFetchingNextPage,
+    refetch,
+    isRefetching,
+  } = useRecommendedFreelancers(selectedCategoryId || '');
 
-  // Flatten all pages
+  // Flatten all pages efficiently
   const allFreelancers = useMemo(() => {
-    return data?.pages.flat() || [];
-  }, [data]);
+    return data?.pages.flatMap(page => page) || [];
+  }, [data?.pages]);
 
-  // Filter freelancers locally based on selected category
-  const filteredFreelancers = useMemo(() => {
-    if (!selectedCategoryId || selectedCategory === 'All') {
-      return allFreelancers;
-    }
-
-    return allFreelancers.filter(freelancer =>
-      freelancer.serviceType === selectedCategoryId
-    );
-  }, [allFreelancers, selectedCategoryId, selectedCategory]);
+  // Handle pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
   // Banner animations
   const bannerTextOpacity = scrollY.interpolate({
@@ -83,25 +80,12 @@ export default function HomeScreen() {
     extrapolate: 'clamp',
   });
 
-  const stickyTabsTranslateY = scrollY.interpolate({
-    inputRange: [0, 150, 151],
-    outputRange: [-100, -100, 0],
-    extrapolate: 'clamp',
-  });
-
-  const stickyTabsOpacity = scrollY.interpolate({
-    inputRange: [0, 200, 200],
-    outputRange: [0, 0, 1],
-    extrapolate: 'clamp',
-  });
-
-  const handleCategoryChange = (category: string, index: number, categoryId?: string) => {
-    setPrevIndex(selectedIndex);
+  const handleCategoryChange = useCallback((category: string, index: number, categoryId?: string) => {
     setSelectedIndex(index);
     setSelectedCategory(category);
     setSelectedCategoryId(categoryId || null);
 
-    // Trigger fade animation
+    // Trigger smooth fade animation
     const direction = index > selectedIndex ? 1 : -1;
 
     fadeAnim.setValue(0);
@@ -110,16 +94,16 @@ export default function HomeScreen() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 300,
+        duration: 200,
         useNativeDriver: true,
       }),
       Animated.timing(translateXAnim, {
         toValue: 0,
-        duration: 300,
+        duration: 200,
         useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, [selectedIndex, fadeAnim, translateXAnim]);
 
   return (
     <ScreenWrapper safeEdges={[]} style={{ flex: 1 }}>
@@ -136,44 +120,24 @@ export default function HomeScreen() {
         ]}
       >
         <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }] }}>
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.navigate('SearchBar', { text: '', focus: true })}
             className="flex-row items-center bg-surface rounded-full border border-gray-300 px-4 py-4 mt-3"
           >
             <Ionicons name="search-outline" size={20} color="#3B82F6" />
             <Text className="ml-2 text-base text-[#999]">{t('home.search_freelancer')}</Text>
-          </TouchableOpacity>
+          </Pressable>
         </Animated.View>
       </Animated.View>
 
-      {/* Sticky Category Tabs */}
-      <Animated.View
-        style={{
-          position: 'absolute',
-          top: 110,
-          left: 0,
-          right: 0,
-          backgroundColor: 'white',
-          paddingVertical: 8,
-          zIndex: 2,
-          elevation: 4,
-          shadowColor: '#3B82F6',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          transform: [{ translateY: stickyTabsTranslateY }],
-          opacity: stickyTabsOpacity,
-        }}
-        pointerEvents="box-none"
-      >
-        <View pointerEvents="auto">
-          <CategoryTabs
-            selectedCategory={selectedCategory}
-            selectedIndex={selectedIndex}
-            onCategoryChange={handleCategoryChange}
-          />
-        </View>
-      </Animated.View>
+      {/* Category Tabs */}
+      <View style={{ backgroundColor: 'white' }}>
+        <CategoryTabs
+          selectedCategory={selectedCategory}
+          selectedIndex={selectedIndex}
+          onCategoryChange={handleCategoryChange}
+        />
+      </View>
 
       <Animated.ScrollView
         scrollEventThrottle={16}
@@ -183,21 +147,17 @@ export default function HomeScreen() {
           { useNativeDriver: false }
         )}
         keyboardShouldPersistTaps="handled"
-      >
-        {/* Advert */}
-        <Animated.View style={{ opacity: bannerTextOpacity }}>
-          <Advert />
-        </Animated.View>
-
-        {/* Regular Category Tabs */}
-        <View style={{ backgroundColor: 'white', paddingVertical: 8 }}>
-          <CategoryTabs
-            selectedCategory={selectedCategory}
-            selectedIndex={selectedIndex}
-            onCategoryChange={handleCategoryChange}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={handleRefresh}
+            colors={['#3B82F6']}
+            tintColor="#3B82F6"
+            title={t('home.pull_to_refresh') || 'Pull to refresh...'}
+            titleColor="#666"
           />
-        </View>
-
+        }
+      >
         {/* Freelancers List */}
         <Animated.View
           style={{
@@ -207,18 +167,17 @@ export default function HomeScreen() {
             transform: [{ translateX: translateXAnim }],
           }}
         >
-          {selectedCategory === 'All' && (
-            <TopFreelancers />
-          )}
-
+          {selectedCategory === 'All' && <TopFreelancers />}
 
           <Freelancers
-            title={selectedCategory === 'All'
-              ? t('home.recommended_freelancers')
-              : `${selectedCategory} ${t('home.freelancers')}`
+            title={
+              selectedCategory === 'All'
+                ? t('home.recommended_freelancers')
+                : `${selectedCategory} ${t('home.freelancers')}`
             }
-            freelancers={filteredFreelancers}
+            freelancers={allFreelancers}
             isLoading={isLoading}
+            isFetching={isFetching}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             fetchNextPage={fetchNextPage}

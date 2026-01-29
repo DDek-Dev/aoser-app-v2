@@ -24,6 +24,7 @@ import BudgetInput from 'components/ui/BudgetInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useTranslation } from 'react-i18next';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 
 interface ProjectSelectionModalProps {
   visible: boolean;
@@ -81,7 +82,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
   const handleNext = () => {
     if (selectedProjects.length === 0) {
-      Alert.alert('No Selection', 'Please select at least one project to continue.');
+      console.log('No Selection', 'Please select at least one project to continue.');
       return;
     }
 
@@ -210,11 +211,11 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
       onProjectsSelect(selectedProjects, dataToSend);
 
       // Show success message
-      Alert.alert(
-        'Success',
-        `Successfully sent ${dataToSend.length} offering(s)`,
-        [{ text: 'OK' }]
-      );
+      // Alert.alert(
+      //   'Success',
+      //   `Successfully sent ${dataToSend.length} offering(s)`,
+      //   [{ text: 'OK' }]
+      // );
 
       // Reset state
       setSelectedProjects([]);
@@ -226,11 +227,12 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
     } catch (error) {
       console.error('Failed to handle send:', error);
-      Alert.alert(
-        'Error',
-        'Failed to send offerings. Please try again.',
-        [{ text: 'OK' }]
-      );
+
+       Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'Opps!',
+                textBody: 'Failed to send offerings. Please try again.',
+            })
     }
   };
 
@@ -548,7 +550,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
           {t('chat.offer.select_project')} ({selectedProjects.length})
         </Text>
 
-        {/* <TouchableOpacity
+        <TouchableOpacity
           onPress={handleNext}
           className={`px-6 py-2 rounded-lg ${selectedProjects.length > 0
             ? 'bg-primary'
@@ -562,7 +564,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
             }`}>
             {t('chat.offer.offer')}
           </Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={handleSend}
           className={`px-6 py-2 rounded-lg ${selectedProjects.length > 0

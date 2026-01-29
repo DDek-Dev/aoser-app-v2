@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -92,7 +92,7 @@ const ProfileScreen = () => {
   );
 
   const AuthenticatedProfile = () => (
-    <TouchableOpacity onPress={() => navigation.navigate('UserIdScreen', { userId: data as UserProfile })}>
+    <Pressable onPress={() => navigation.navigate('UserIdScreen', { userId: data as UserProfile })}>
       <View className="flex-row items-center">
         <Image
           source={{ uri: BASE_IMAGE + data?.userProfileImage }}
@@ -105,49 +105,49 @@ const ProfileScreen = () => {
           <Text className="text-caption text-text">{data?.user.email || "undefined"}</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const UnauthenticatedProfile = () => (
     <View className="flex-1">
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('SignIn')}
         className="bg-blue-50 px-8 py-4 rounded-lg mb-3"
-        activeOpacity={0.8}
+        // activeOpacity={0.8}
       >
         <Text className="text-warning font-semibold text-body  h-6 text-center">
           {t('profile.signin')}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('SignUp')}
-        activeOpacity={0.8}
+        // activeOpacity={0.8}
       >
         <Text className="text-primary font-semibold text-body text-center">
           {t('loginScreen.signup')} ?
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 
   const QuickActions = () => (
     <View className="flex-row gap-8">
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('FavoriteScreen')}
         className="flex-col items-center"
       >
         <Ionicons name="heart-outline" size={32} color="#3B82F6" />
         <Text className="text-caption text-textSecondary">{t('profile.favorites')}</Text>
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('HistoryScreen')}
         className="flex-col items-center"
       >
         <Ionicons name="time-outline" size={32} color="#3B82F6" />
         <Text className="text-caption text-textSecondary">{t('profile.history')}</Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 
@@ -155,7 +155,7 @@ const ProfileScreen = () => {
     <View className="mt-6 mx-4 space-y-4">
       {title && <Text className="text-sm font-semibold text-textSecondary">{title}</Text>}
       {items.map((item, idx) => (
-        <TouchableOpacity
+        <Pressable
           onPress={() => handleNavigate(item.route)}
           key={idx}
           className="flex-row justify-between items-center py-3"
@@ -165,14 +165,14 @@ const ProfileScreen = () => {
             <Text className="text-body text-text">{item.label}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-        </TouchableOpacity>
+        </Pressable>
       ))}
     </View>
   );
 
   const FreelancerSection = () => (
     <View className="mx-4 space-y-4">
-      <TouchableOpacity
+      <Pressable
         className="flex-row justify-between items-center py-3"
         onPress={() => navigation.navigate('FreelancerRoleGate')}
       >
@@ -185,7 +185,7 @@ const ProfileScreen = () => {
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 
@@ -225,7 +225,7 @@ const ProfileScreen = () => {
         {isAuthenticated && (
           <View className="mt-6 mx-4 px-4 space-y-4">
             <View className="bg-gray-300 h-[0.5px] w-full mb-4" />
-            <TouchableOpacity
+            <Pressable
               onPress={handleLogout}
               className="flex-row justify-between bg-surface border border-border rounded-full px-4 items-center py-3"
             >
@@ -233,11 +233,11 @@ const ProfileScreen = () => {
                 <Ionicons name="log-out-outline" size={18} color="#3B82F6" />
                 <Text className="text-body text-error">{t('profile.logout')}</Text>
               </View>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 
-
+        
         {/* Footer */}
         <View className="h-12 items-center justify-center mb-12 mt-4">
           <Text className="text-caption text-gray-400">

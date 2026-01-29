@@ -5,13 +5,14 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import InputNumber from 'components/ui/InputNumber';
 import FormInput from 'components/ui/Input';
 import dayjs from 'dayjs';
-import PhoneInput from 'components/ui/PhoneInput';
+
 import { useUpgradeToFreelancerStep4 } from 'hooks/useFreelancerKYC';
 import { District, Province, SelectedAddress } from 'types';
 import { useSelectAddress } from 'hooks/useSelectAddress';
 import { SkeletonLoader } from 'skeletonScreens/SelectAddressSkeleton';
 import Dropdown from 'components/filter/Dropdown';
 import { useTranslation } from 'react-i18next';
+import { getCurrentLanguage, Language } from 'utils/dateFormatter';
 
 
 type Props = {
@@ -21,8 +22,7 @@ type Props = {
   setCardID: React.Dispatch<React.SetStateAction<string>>;
   fromDate: Date | null;
   setFromDate: React.Dispatch<React.SetStateAction<Date | null>>;
-  phone: string;
-  setPhone: React.Dispatch<React.SetStateAction<string>>;
+
   errors?: Record<string, boolean>;
   province: Province | undefined;
   setProvince: React.Dispatch<React.SetStateAction<Province | undefined>>;
@@ -39,8 +39,7 @@ const UpgradeToFreelancerStep4 = ({
   setCardID,
   fromDate,
   setFromDate,
-  phone,
-  setPhone,
+
   errors,
   province: selectedProvince,
   setProvince: setSelectedProvince,
@@ -72,7 +71,7 @@ const UpgradeToFreelancerStep4 = ({
       setCardType(dataStep4.cardType);
       setCardID(dataStep4.cardID);
       setFromDate(new Date(dataStep4.fromDate));
-      setPhone(dataStep4.phone);
+      
       setAddressInfo({
         province: dataStep4.address?.province,
         district: dataStep4.address?.district,
@@ -89,6 +88,8 @@ const UpgradeToFreelancerStep4 = ({
 
   }, [dataStep4]);
 
+    const currentLanguage: Language = getCurrentLanguage();
+  
   const formatDate = (date: Date | null) => {
     return date ? dayjs(date).format('DD/MM/YYYY') : '';
   };
@@ -224,7 +225,7 @@ const UpgradeToFreelancerStep4 = ({
             <FormInput
               label={t('kyc.step4.expiryDate.label')}
               required
-              placeholder="DD/MM/YYYY"
+              placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'mm/dd/yy'}
               value={fromDateString || ''}
               inputClassName={errors?.fromDate ? 'border-error' : 'border-border'}
               ref={fromInputRef}
@@ -289,18 +290,9 @@ const UpgradeToFreelancerStep4 = ({
         )}
       </View>
 
-      <View className="my-4">
-        <PhoneInput
-          label={t('kyc.step4.phoneNumber.label')}
-          value={phone}
-          onChangeText={setPhone}
-          required
-          inputClassName={errors?.phone ? 'border-error' : 'border-border'}
-          isValidate={errors?.phone ? t('kyc.step4.phoneNumber.error') : ''}
-        />
-      </View>
+      
 
-      <Text className="text-subheading text-text mb-2">{t('kyc.step4.location.title')} </Text>
+      <Text className="text-body font-bold text-text mb-2">{t('kyc.step4.location.title')} </Text>
 
       <View className='bg-blue-50 px-4 py-4 rounded-xl'>
         <Dropdown

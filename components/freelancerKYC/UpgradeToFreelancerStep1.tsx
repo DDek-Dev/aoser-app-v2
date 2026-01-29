@@ -153,6 +153,8 @@ const UpgradeToFreelancerStep1 = (
                         setSubcategories(jobIds);
                     }}
                     required
+                    inputClassName={errors.freelancerType ? 'border-error' : 'border-border'}
+
                     isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
                 />
             </View>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, SectionList, Pressable } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, SectionList, Pressable, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotifications, useReadNotification } from 'hooks/useNotifications';
 import { Notifications } from 'types';
@@ -84,13 +84,14 @@ const NotificationsScreen = () => {
   const { data, isLoading, isError, error, refetch } = useNotifications();
   const { mutate: markAsRead } = useReadNotification();
   const [localNotifications, setLocalNotifications] = useState<Notifications[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
 
   React.useEffect(() => {
     if (data) setLocalNotifications(data as any);
   }, [data]);
 
-  const {t} = useTranslation();
+  const { t } = useTranslation();
 
   const handleNavigationByType = (notification: Notifications) => {
     // Navigate based on notification type
@@ -188,13 +189,27 @@ const NotificationsScreen = () => {
       },
     });
   };
+
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+
+      await refetch();
+    } catch (error) {
+      console.log('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetch]);
+
+  const sections = groupNotifications(localNotifications);
+
   if (isLoading || isError) return (
     <View className='w-full h-full mt-6'>
       <SkeletonNotification />
     </View>
   );
-
-  const sections = groupNotifications(localNotifications);
 
   return (
     <ScreenWrapper safeEdges={['top']}>
@@ -218,8 +233,16 @@ const NotificationsScreen = () => {
           )}
           contentContainerStyle={{ padding: 16 }}
           showsVerticalScrollIndicator={false}
-          onRefresh={refetch}
           refreshing={isLoading}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#3B82F6" // iOS spinner color
+              colors={['#3B82F6']} // Android spinner color
+            />
+          }
+
           ListEmptyComponent={<NotificationNoResult />}
         />
       </View>

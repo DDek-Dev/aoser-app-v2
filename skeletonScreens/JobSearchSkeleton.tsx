@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { CategoryTabSkeleton } from './CategoryTabSkeleton';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 const PulseView = ({ className }: { className: string }) => {
   const opacity = useSharedValue(1);
@@ -37,6 +38,7 @@ const PulseView = ({ className }: { className: string }) => {
 };
 
 const JobSearchSkeleton: React.FC = () => {
+  const {t} = useTranslation();
   return (
     <View className="flex-1 bg-background">
       <StatusBar barStyle="light-content" backgroundColor="#3B82F6" />
@@ -51,22 +53,22 @@ const JobSearchSkeleton: React.FC = () => {
           </View>
         </View>
 
-        <Text className="text-white text-3xl font-bold mb-2">Let's find best</Text>
-        <Text className="text-white text-3xl font-bold mb-4">Work</Text>
+        <Text className="text-white text-3xl font-bold mb-2">{t('works.lets_find_work')}{'\n'} {t('works.work')}</Text>
+        {/* <Text className="text-white text-3xl font-bold mb-4">Work</Text> */}
 
         {/* Search Bar Skeleton */}
         <View className="bg-white rounded-full px-4 py-4 flex-row items-center mb-4">
           {/* <PulseView className="w-5 h-5 bg-gray-300 rounded mr-3" />
           <PulseView className="w-24 h-4 bg-gray-300 rounded" /> */}
               <Ionicons name="search-outline" size={20} color="#333" />
-              <Text className="ml-2 text-gray-500">Search work...</Text>
+              <Text className="ml-2 text-gray-500">{t('works.search_work')}</Text>
 
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-6">
+      <ScrollView className="flex-1 px-1">
         {/* Category Tabs Skeleton */}
-        <View className="flex-row flex-wrap justify-between my-6">
+        <View className="flex-row flex-wrap justify-between my-6 px-2">
           {[1, 2, 3, 4, ].map((index: number) => (
             <CategoryTabSkeleton key={index} />
           ))}

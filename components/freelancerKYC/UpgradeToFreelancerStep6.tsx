@@ -102,11 +102,12 @@ const UpgradeToFreelancerStep6 = (
         </TouchableOpacity>
 
         <TouchableOpacity
+        disabled={true}
           onPress={() => handlePaymentMethodChange('PAYPAL')}
-          className={`flex-1 border rounded-xl py-3 items-center ${paymentMethod === 'PAYPAL' ? 'border-primary bg-blue-50' : 'border-border'
+          className={`flex-1 border bg-gray-300 rounded-xl py-3 items-center ${paymentMethod === 'PAYPAL' ? 'border-primary bg-blue-50' : 'border-border'
             }`}
         >
-          <Text className={`text-body ${paymentMethod === 'PAYPAL' ? 'text-primary' : 'text-text'}`}>
+          <Text className={`text-body ${paymentMethod === 'PAYPAL' ? 'text-primary' : 'text-gray-200'}`}>
             {t('kyc.step6.methods.PAYPAL')}
           </Text>
         </TouchableOpacity>

@@ -72,10 +72,10 @@ interface AllStepData {
 
 // OR if you're getting the directory at runtime:
 export const getTempDir = () => {
-    const docDir = FileSystem.documentDirectory;
-    console.log("📂 Document Directory:", docDir);
-    console.log("📂 Document Directory Type:", typeof docDir);
-    return `${docDir}temp_freelancer/`;
+  const docDir = FileSystem.documentDirectory;
+  console.log("📂 Document Directory:", docDir);
+  console.log("📂 Document Directory Type:", typeof docDir);
+  return `${docDir}temp_freelancer/`;
 };
 
 
@@ -85,76 +85,76 @@ export const getTempDir = () => {
 // ===================================
 
 export const ensureTempDir = async (): Promise<void> => {
-    try {
-        // Get the temp directory path
-        const tempDirPath = typeof TEMP_DIR === 'string' ? TEMP_DIR : getTempDir();
-        
-        console.log("📂 Checking temp directory:", tempDirPath);
-        console.log("📂 Temp directory type:", typeof tempDirPath);
-        
-        // Make sure it's a valid string
-        if (typeof tempDirPath !== 'string' || !tempDirPath) {
-            throw new Error(`Invalid TEMP_DIR: ${tempDirPath}`);
-        }
-        
-        const dirInfo = await FileSystem.getInfoAsync(tempDirPath);
-        if (!dirInfo.exists) {
-            console.log("📁 Creating temp directory:", tempDirPath);
-            await FileSystem.makeDirectoryAsync(tempDirPath, { intermediates: true });
-            console.log("✅ Temp directory created successfully");
-        } else {
-            console.log("✅ Temp directory already exists:", tempDirPath);
-        }
-    } catch (error) {
-        console.log("❌ Error ensuring temp directory:", error);
-        throw error;
+  try {
+    // Get the temp directory path
+    const tempDirPath = typeof TEMP_DIR === 'string' ? TEMP_DIR : getTempDir();
+
+    console.log("📂 Checking temp directory:", tempDirPath);
+    console.log("📂 Temp directory type:", typeof tempDirPath);
+
+    // Make sure it's a valid string
+    if (typeof tempDirPath !== 'string' || !tempDirPath) {
+      throw new Error(`Invalid TEMP_DIR: ${tempDirPath}`);
     }
+
+    const dirInfo = await FileSystem.getInfoAsync(tempDirPath);
+    if (!dirInfo.exists) {
+      console.log("📁 Creating temp directory:", tempDirPath);
+      await FileSystem.makeDirectoryAsync(tempDirPath, { intermediates: true });
+      console.log("✅ Temp directory created successfully");
+    } else {
+      console.log("✅ Temp directory already exists:", tempDirPath);
+    }
+  } catch (error) {
+    console.log("❌ Error ensuring temp directory:", error);
+    throw error;
+  }
 };
 
 export const saveFileToTemp = async (fileUri: string, fileName: string): Promise<string> => {
-    try {
-        // Ensure temp directory exists
-        console.log("test 1");
-        await ensureTempDir();
-        console.log("test 2");
-        
-        const tempPath = `${TEMP_DIR}${fileName}`;
-        
-        console.log("📋 Copy operation:");
-        console.log("   FROM:", fileUri);
-        console.log("   TO:", tempPath);
-        
-        // Check if source file exists (for file:// URIs)
-        if (fileUri.startsWith("file://")) {
-            const fileInfo = await FileSystem.getInfoAsync(fileUri);
-            console.log("📄 Source file info:", fileInfo);
-            
-            if (!fileInfo.exists) {
-                throw new Error(`Source file does not exist: ${fileUri}`);
-            }
-        }
-        
-        // Perform the copy
-        await FileSystem.copyAsync({
-            from: fileUri,
-            to: tempPath
-        });
-        
-        // Verify the copied file exists
-        const copiedFileInfo = await FileSystem.getInfoAsync(tempPath);
-        console.log("📄 Copied file info:", copiedFileInfo);
-        
-        if (!copiedFileInfo.exists) {
-            throw new Error(`Failed to copy file to: ${tempPath}`);
-        }
-        
-        console.log(`✅ File saved to temp: ${tempPath}`);
-        return tempPath;
-        
-    } catch (error) {
-        console.log("❌ Error in saveFileToTemp:", error);
-        throw error; // Re-throw to be caught by the caller
+  try {
+    // Ensure temp directory exists
+    console.log("test 1");
+    await ensureTempDir();
+    console.log("test 2");
+
+    const tempPath = `${TEMP_DIR}${fileName}`;
+
+    console.log("📋 Copy operation:");
+    console.log("   FROM:", fileUri);
+    console.log("   TO:", tempPath);
+
+    // Check if source file exists (for file:// URIs)
+    if (fileUri.startsWith("file://")) {
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      console.log("📄 Source file info:", fileInfo);
+
+      if (!fileInfo.exists) {
+        throw new Error(`Source file does not exist: ${fileUri}`);
+      }
     }
+
+    // Perform the copy
+    await FileSystem.copyAsync({
+      from: fileUri,
+      to: tempPath
+    });
+
+    // Verify the copied file exists
+    const copiedFileInfo = await FileSystem.getInfoAsync(tempPath);
+    console.log("📄 Copied file info:", copiedFileInfo);
+
+    if (!copiedFileInfo.exists) {
+      throw new Error(`Failed to copy file to: ${tempPath}`);
+    }
+
+    console.log(`✅ File saved to temp: ${tempPath}`);
+    return tempPath;
+
+  } catch (error) {
+    console.log("❌ Error in saveFileToTemp:", error);
+    throw error; // Re-throw to be caught by the caller
+  }
 };
 
 
@@ -318,9 +318,11 @@ export const uploadAllFiles = async (stepData: AllStepData): Promise<UploadResul
           file.uri,
           presignedUrls[index].contentType
         );
-
-        // Return the final URL (you might need to construct this based on your backend)
-        const uploadedUrl = presignedUrls[index].key; // or however your backend returns the final URL
+        let uploadedUrl = presignedUrls[index].key;
+        // Strip "uploads/" prefix if it exists
+        if (uploadedUrl.startsWith('uploads/')) {
+          uploadedUrl = uploadedUrl.replace('uploads/', '');
+        }
 
         return {
           key,
@@ -347,7 +349,7 @@ export const uploadAllFiles = async (stepData: AllStepData): Promise<UploadResul
 
 
     // Process results into a structured format
-     results.forEach(result => {
+    results.forEach(result => {
       if (result.success && result.url) {
         if (result.isArray && result.arrayKey) {
           // ✅ FIX: Initialize array if it doesn't exist
@@ -359,14 +361,14 @@ export const uploadAllFiles = async (stepData: AllStepData): Promise<UploadResul
           // Handle nested keys like "step1.profileImg"
           const keyParts = result.key.split('.');
           let current: any = uploadResults;
-          
+
           for (let i = 0; i < keyParts.length - 1; i++) {
             if (!current[keyParts[i]]) {
               current[keyParts[i]] = {};
             }
             current = current[keyParts[i]];
           }
-          
+
           current[keyParts[keyParts.length - 1]] = result.url;
         }
       }
@@ -406,6 +408,8 @@ export interface AoserProfileData {
   firstName: string;
   lastName: string;
   profileImg?: FileWithType | null;
+  gender: string;
+  phone: string;
   // profileImgPath?: string;
   // profileImgMeta?: FileMeta;
 }

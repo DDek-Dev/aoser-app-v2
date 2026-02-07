@@ -60,10 +60,10 @@ export const publiceWorkApi = {
 
     },
     updateWorkById: async (id: string, data: any, token: string): Promise<Job> => {
-      
+
 
         try {
-         
+
             const res = await axios.put(`${API_BASE_URL}/worker/work/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export const publiceWorkApi = {
     },
     // API - Add status parameter
     updateSubworkStatus: async (id: string, data: SubWorkDetail[], token: string): Promise<SubWorkDetail[]> => {
-        
+
         try {
             const res = await axios.put(
                 `${API_BASE_URL}/worker/freelancer-work/${id}`,
@@ -102,23 +102,23 @@ export const publiceWorkApi = {
             throw error;
         }
     },
-    acceptWork: async(id:string, data: any, token: string) => {
+    acceptWork: async (id: string, data: any, token: string) => {
         try {
             const res = await axios.put(
-                `${API_BASE_URL}/worker/freelancer-work-exception/${id}`,data,{
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Aoser ${token}`,
-                    },
-                })
-                
-                return res.data.data
+                `${API_BASE_URL}/worker/freelancer-work-exception/${id}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            })
+
+            return res.data.data
         } catch (error) {
             console.log("ERROR : ", error);
         }
     },
     submitWork: async (id: string, token: string): Promise<SubWorkDetail[]> => {
-        
+
         try {
             const res = await axios.put(
                 `${API_BASE_URL}/worker/freelancer-work-submit/${id}`,
@@ -131,7 +131,7 @@ export const publiceWorkApi = {
                 }
             );
 
-    
+
             return res.data.data;
 
         } catch (error) {
@@ -140,17 +140,17 @@ export const publiceWorkApi = {
         }
     },
 
-     completetWork: async(id:string, data: any, token: string) => {
+    completetWork: async (id: string, data: any, token: string) => {
         try {
             const res = await axios.put(
-                `${API_BASE_URL}/worker/work-confirm-complete/${id}`,data,{
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Aoser ${token}`,
-                    },
-                })
-                
-                return res.data.data
+                `${API_BASE_URL}/worker/work-confirm-complete/${id}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            })
+
+            return res.data.data
         } catch (error) {
             console.log("ERROR : ", error);
         }
@@ -209,25 +209,60 @@ export const publiceWorkApi = {
         });
         return res.data.data;
     },
-    getAllApplyWork: async ( token: string): Promise<WorkApplies[]> => {
-       
+    getAllApplyWork: async (token: string): Promise<WorkApplies[]> => {
+
         try {
-            
-            const res = await axios.get(`${API_BASE_URL}/worker/freelancer-work-applies`,  {
+
+            const res = await axios.get(`${API_BASE_URL}/worker/freelancer-work-applies`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
                 },
             });
-    
-  
-       
+
+
+
             return res.data.data;
         } catch (error) {
             console.log("ERROR : ", error);
             throw error;
         }
     },
+    getAllsingleCustomerWork: async (token: string, customerId: string, workStatus: string): Promise<Job[]> => {
+        try {
+            const res = await axios.get(
+                `${API_BASE_URL}/worker/freelancer-works/customerId/${customerId}?workStatus=${workStatus}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Aoser ${token}`,
+                    },
+                }
+            );
+            return res.data.data;
+        } catch (error) {
+            console.log("ERROR getAllsingleCustomerWork: ", error);
+            throw error;
+        }
 
- 
+    },
+    freeLRequestUpdateW: async (id: string, data: any, token: string): Promise<Job[]> => {
+
+        console.log("DATA: ", data);
+        console.log("IDIDIDI: ", id);
+        try {
+            const res = await axios.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, {updateData: data}, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+            return res.data.data.work;
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    }
+
+
 };

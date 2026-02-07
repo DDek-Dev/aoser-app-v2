@@ -15,7 +15,8 @@ type Props = {
     error?: boolean;
     required?: boolean;
     isValidate?: string;
-    classNamebuget?: string
+    classNamebuget?: string,
+    isChange?: boolean
 };
 
 
@@ -39,8 +40,8 @@ const BudgetInput: React.FC<Props> = ({
     error,
     required,
     isValidate,
-    classNamebuget
-
+    classNamebuget,
+    isChange
 }) => {
     const [displayValue, setDisplayValue] = useState('');
     const [isFocused, setIsFocused] = useState(false);
@@ -77,12 +78,16 @@ const BudgetInput: React.FC<Props> = ({
 
 
     return (
-        <View className={`mb-4 ${classNamebuget}`}>
+        <View className={` ${classNamebuget}`}>
             <View className='flex-row gap-4'>
                 <Text className="text-body text-text font-bold mb-1 flex">
                     {label} {required && <Text className="text-error">*</Text>}
                 </Text>
-                <Text className='text-caption text-textSecondary '>{t('kyc.step3.click_change_currency')}</Text>
+
+                {isChange? (
+
+                    <Text className='text-caption text-textSecondary '>{t('kyc.step3.click_change_currency')}</Text>
+                ): null}
             </View>
 
             <View className={`flex-row border rounded-xl items-center overflow-hidden ${error ? 'border-error' : 'border-border'

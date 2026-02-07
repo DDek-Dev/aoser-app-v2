@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { Job, Message } from 'types';
 interface SendMessagePayload {
   conversationId: string;
-  message: string;
+  message?: string;
   files?: string[] | string;
   // work can be a single work id or an array when needed
   work?: string | string[] | Job;
@@ -11,11 +11,19 @@ interface SendMessagePayload {
   tempId?: string;
   // optional projectUpdates metadata
   projectUpdates?: any[];
-  messageType: 'TEXT' | 'FILE' | 'LINK' | 'WORK' | 'LOCATION';
+  messageType?: 'TEXT' | 'FILE' | 'LINK' | 'WORK' | 'LOCATION' | "OFFERING_WORK";
+  offeringWorkId?: string;
   location?: { latitude: number; longitude: number };
   mapsUrl?: string;
   replyTo?: string;
   expiresAt?: number;
+}
+interface SendMessagePayloadOffering {
+  conversationId: string;
+  message: string;
+  files?: string[] | string;
+  offeringWorkId?: string | string[] ;
+  requestStatus: "PENDING" | "CONFIRM" | "REJECTED"
 }
 class SocketService {
   private socket: Socket | null = null;
@@ -113,6 +121,7 @@ class SocketService {
       return;
     }
 
+    console.log('Working in socketService --->', payload);
     try {
       console.log('[SocketService] Sending message:', payload);
       this.socket.emit('message:send', payload, (response: any) => {
@@ -124,7 +133,7 @@ class SocketService {
       if (ack) ack({ ok: false, error: 'emit_failed' });
     }
   }
-
+  
 
   onMessageReceived(callback: (message: Message) => void) {
     if (this.socket) {

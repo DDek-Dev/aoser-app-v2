@@ -36,9 +36,9 @@ import FileOptionsMenu from 'components/chat/FileOptionsMenu';
 import ChatListContainer from 'components/chat/ChatListContainer';
 import { chatApi } from 'api/chatApi';
 import ProjectSelectionModal from 'components/chat/ProjectSelectionModal';
-import { MediaFile, Message, WorkApplies, OptimisticMessage, Job } from 'types';
+import { MediaFile, Message, OptimisticMessage, Job, TabType } from 'types';
 import { useMessageActions } from 'hooks/useMessageActions';
-import { publicWorkKeys, useGetAllAppliedWork } from 'hooks/usePublicWork';
+import { publicWorkKeys, usegetAllMyWork, useGetAllsingleCustomerWork } from 'hooks/usePublicWork';
 import { useQueryClient } from '@tanstack/react-query';
 import { publiceWorkApi } from 'api/publicWork';
 // import ChatItemSkeleton from 'skeletonScreens/ChatItemSkeleton';
@@ -56,16 +56,10 @@ const RoomChat = () => {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const queryClient = useQueryClient();
   const { userId: partnerId } = route.params;
-  const { data: works, isLoading: appliIsLoading } = useGetAllAppliedWork();
   const { tokens, user, isLoadingAuth } = useAuth();
 
   const { data: chat, isLoading } = useChatRoom(partnerId);
-
-
-  if (!user?._id) {
-    return null;
-  }
-
+  // const { data: appliedWorks, isLoading: isLoadingApplied } = useGetAllAppliedWork();
 
   const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -84,6 +78,7 @@ const RoomChat = () => {
   const [isFileSending, setIsFileSending] = useState(false);
 
   const [showDurationModal, setShowDurationModal] = useState(false);
+  const [isOfferingProject, setIsOfferingProject] = useState(true);
 
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [updateTo, setUpdateTo] = useState<Message | null>(null);
@@ -116,10 +111,16 @@ const RoomChat = () => {
   // console.log('replto', replyTo)
 
 
+
+  if (!user?._id) {
+    return null;
+  }
+
+  // console.log('chat', JSON.stringify(chat, null, 2))
+
+
   // Load initial messages from API
   useEffect(() => {
-
-
 
     if (updateTo) {
       setMessage(updateTo.message)
@@ -482,62 +483,118 @@ const RoomChat = () => {
   };
 
 
-  // send project function
+  console.log('isOfferingProject FIRST---- ', isOfferingProject);
 
-  const sendProjectMessage = (selectedProjects: WorkApplies[]) => {
-    if (!chat?.conversation?._id) return;
-    selectedProjects.forEach((project, idx) => {
-      const workId = project.work;
-      const tempId = `temp_${Date.now()}_${idx}`;
+  const sendProjectMessage = (selectedProjects: Job[]) => {
+    if (!isOfferingProject) {
+      if (!chat?.conversation?._id) return;
+      selectedProjects.forEach((project, idx) => {
+        const workId = project;
+        const tempId = `temp_${Date.now()}_${idx}`;
+        console.log('WORK HANDLE SEND ', workId);
+        // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
+        queryClient.setQueryData(
+          publicWorkKeys.detail(workId),
+          project // You already have the full work object here!
+        );
 
-      // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
-      queryClient.setQueryData(
-        publicWorkKeys.detail(workId),
-        project.work // You already have the full work object here!
-      );
-
-      const optimisticMessage: OptimisticMessage = {
-        tempId,
-        conversation: chat.conversation._id,
-        sender: user._id,
-        message: '',
-        isUnSend: false,
-        work: workId,
-        messageType: 'WORK',
-        status: 'SENT',
-        pending: true,
-      };
-
-      setMessages(prev => [...prev, optimisticMessage as Message]);
-
-      SocketService.sendMessage(
-        {
-          conversationId: chat.conversation._id,
-          message: optimisticMessage.message,
+        const optimisticMessage: OptimisticMessage = {
+          tempId,
+          conversation: chat.conversation._id,
+          sender: user._id,
+          message: '',
+          isUnSend: false,
           work: workId,
           messageType: 'WORK',
-        },
-        (response) => {
-          if (response?.ok && response.message) {
-            setMessages(prev =>
-              prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
-            );
-          } else {
-            setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
+          status: 'SENT',
+          pending: true,
+        };
 
-            Toast.show({
-              type: ALERT_TYPE.DANGER,
-              title: t('chat.chatroom.error'),
-              textBody: `${t('chat.chatroom.failedToSendProject')} ${project.work?.workTitle || workId}`,
-            });
+        setMessages(prev => [...prev, optimisticMessage as Message]);
+
+        SocketService.sendMessage(
+          {
+            conversationId: chat.conversation._id,
+            message: optimisticMessage.message,
+            work: workId,
+            messageType: 'WORK',
+          },
+          (response) => {
+            if (response?.ok && response.message) {
+              setMessages(prev =>
+                prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
+              );
+            } else {
+              setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
+
+              Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: t('chat.chatroom.error'),
+                textBody: `${t('chat.chatroom.failedToSendProject')} ${project?.workTitle || workId}`,
+              });
+            }
           }
-        }
-      );
-    });
+        );
+      });
 
+    } else {
+      if (!chat?.conversation?._id) return;
+      selectedProjects.forEach((project, idx) => {
+        const workId = project;
+        console.log('WORK OFFERING SEND IDDD', workId._id);
+        const tempId = `temp_${Date.now()}_${idx}`;
+        console.log('WORK OFFERING SEND', JSON.stringify(workId, null, 2));
+        // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
+        queryClient.setQueryData(
+          publicWorkKeys.detail(workId),
+          project // You already have the full work object here!
+        );
 
+        const optimisticMessage: OptimisticMessage = {
+          tempId,
+          conversation: chat.conversation._id,
+          sender: user._id,
+          offeringWorkId: workId._id,
+          message: 'Offering work',
+          isUnSend: false,
+          work: workId,
+          messageType: 'OFFERING_WORK',
+          status: 'SENT',
+          pending: true,
+        };
+
+        setMessages(prev => [...prev, optimisticMessage as Message]);
+
+        SocketService.sendMessage(
+          {
+            conversationId: chat.conversation._id,
+            message: optimisticMessage.message,
+            offeringWorkId: workId._id,
+            messageType: 'OFFERING_WORK',
+          },
+          (response) => {
+            if (response?.ok && response.message) {
+              setMessages(prev =>
+                prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
+              );
+            } else {
+              console.log('response.message', response);
+              setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
+
+              Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: t('chat.chatroom.error'),
+                textBody: `${t('chat.chatroom.failedToSendProject')}`,
+              });
+            }
+          }
+        );
+      });
+    }
   };
 
+  console.log('isOfferingProject  LAST---- ', isOfferingProject);
+  // send project function
 
   // SEND MEDIA FUCNTION 
   const sendMediaMessage = async (mediaFiles: MediaFile[], textMessage: string) => {
@@ -1120,6 +1177,7 @@ const RoomChat = () => {
             onClose={handleCloseMediaPreview}
             onSend={sendMediaMessage}
             isSending={isFileSending}
+
           />
 
 
@@ -1127,11 +1185,16 @@ const RoomChat = () => {
           {/* Project Selection Modal */}
           <ProjectSelectionModal
             visible={showProjectSelection}
-            projects={works || []}
-            isLoading={appliIsLoading}
+            userProfileId={chat.userProfile._id}
             onClose={() => setShowProjectSelection(false)}
-            onProjectsSelect={sendProjectMessage}
+            onProjectsSelect={
+              sendProjectMessage
+
+            }
+            user={user}
+            isOffering={(value) => setIsOfferingProject(value)}
           />
+
         </View>
       </TouchableWithoutFeedback>
     </ScreenWrapper>

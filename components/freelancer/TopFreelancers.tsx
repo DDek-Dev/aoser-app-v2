@@ -6,9 +6,9 @@ import { FreelancerStackParamList } from 'types/navigation';
 import { useNavigation } from '@react-navigation/native';
 import { useGetTopfreelancers } from 'hooks/useFreelancer';
 import { useAuth } from 'hooks/useAuth';
-import VDOPromote from 'components/profile/VDOPromote';
+
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
-import { FlatList } from 'react-native-gesture-handler';
+
 import { TopFreelancerSkelenton } from 'skeletonScreens/TopFreelancerSkelenton';
 import { useTranslation } from 'react-i18next';
 

@@ -966,7 +966,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
             <Text className="text-surface text-caption font-medium">{t('workDetail.project_did_successfully')}</Text>
             {data?.createdBy._id === user._id && (
               <TouchableOpacity onPress={() => navigation.replace('Bookfreelancer', { userId: data?.assignedTo._id })}>
-                <Text className="text-warning font-bold text-body">{t('workDetail.rehire')}</Text>
+                <Text className="text-surface font-bold text-body">{t('workDetail.rehire')}</Text>
               </TouchableOpacity>
             )}
           </View>

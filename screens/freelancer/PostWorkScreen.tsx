@@ -362,28 +362,7 @@ export default function PostWorkScreen() {
                 <>
                   <View className="flex-row justify-between items-end">
                     <View className="flex-1 mr-2">
-                      {/* <FormInput
-                        label={currentLanguage === 'la' ? 'ເລີ່ມ' : 'start'}
-                        placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'mm/dd/yy'}
-                        // value={formatDateForDisplay(fromDate)}
-                        value={fromDateString || ''}
-
-                        inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                        ref={fromInputRef}
-                        // editable={false}
-                        // pointerEvents="none"
-                        isDate={true} // Enable date formatting
-                        onChangeText={(text) => {
-                          setFromDateString(text);
-                          // Only update the date state when we have a complete date
-                          if (text.length === 10) {
-                            const parsedDate = parseDate(text);
-                            if (parsedDate) {
-                              setFromDate(parsedDate);
-                            }
-                          }
-                        }}
-                      /> */}
+                      
 
                       <FormInput
                         label={currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'}
@@ -417,30 +396,7 @@ export default function PostWorkScreen() {
 
                   <View className="flex-row justify-between mb-2 items-end">
                     <View className="flex-1 mr-2">
-                      {/* <FormInput
-                        label={currentLanguage === 'la' ? 'ຫາ' : 'To'}
-                        placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'mm/dd/yy'}
-                        // value={formatDateForDisplay(toDate)}
-                        value={toDateString || ''}
-
-                        inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                        ref={toInputRef}
-                        // editable={true}
-                        isDate={true} // Enable date formatting
-
-                        onChangeText={(text) => {
-                          // Parse the formatted date string and update state
-                          // You'll need to implement date parsing logic
-                          setToDateString(text);
-                          // Only update the date state when we have a complete date
-                          if (text.length === 10) {
-                            const parsedDate = parseDate(text);
-                            if (parsedDate) {
-                              setToDate(parsedDate);
-                            }
-                          }
-                        }}
-                      /> */}
+                      
 
                       <FormInput
                         label={currentLanguage === 'la' ? 'ຫາ' : 'To'}
@@ -472,37 +428,13 @@ export default function PostWorkScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* 🔄 UPDATED: Error message with language support */}
-                  {/* {errors.dateInvalid && (
-                    <Text className="text-error text-caption mb-2">
-                      {!fromDate || !toDate
-                        ? (currentLanguage === 'la' ? 'ກະລຸນາເລືອກວັນທີເລີ່ມຕົ້ນແລະສິ້ນສຸດ' : 'Please select both start and end dates')
-                        : (currentLanguage === 'la' ? 'ວັນທີສິ້ນສຸດຕ້ອງຢູ່ຫຼັງວັນທີເລີ່ມຕົ້ນ' : 'End date must be after start date')
-                      }
-                    </Text>
-                  )} */}
+                
                 </>
               )}
 
               {/* Date Picker Modals */}
               {showFromPicker && (
-                // <DatePicker
-                //   visible={showFromPicker}
-                //   // date={fromDate || new Date()}
-                //   date={null}
-                //   tempDate={tempFromDate}
-                //   setTempDate={setTempFromDate}
-                //   setDate={(date: Date) => {
-                //     setFromDate(date); // This will trigger re-render with new formatted date
-                //     setFromDateString(formatDateForDisplay(date));
-                //   }}
-                //   onClose={() => {
-                //     setShowFromPicker(false);
-                //     setTimeout(() => fromInputRef.current?.focus(), 100);
-                //   }}
-
-
-                // />
+              
 
                 <DatePicker
                   visible={showFromPicker}

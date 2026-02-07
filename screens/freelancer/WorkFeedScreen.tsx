@@ -96,6 +96,7 @@ const WorkFeedScreen = () => {
 
     const IconComponent = getIcon(item?.serviceType?.icon);
 
+    // console.log('item.create by:', item.createdBy.address );
 
     return (
 
@@ -209,6 +210,25 @@ const WorkFeedScreen = () => {
               </Text>
             </View>
           </View>
+
+          {item.createdBy.address &&
+
+
+            <View className="flex-row mt-3 items-center">
+              {/* <Text>{t('workDetail.deadline')} : </Text> */}
+              <Text>{t('payment_success.address')}:  </Text>
+
+              <View className="flex-row gap-2 items-center">
+                <Ionicons name="location-outline" size={18} color="#F59E0B" />
+
+                <Text className="text-sm text-textSecondary">
+                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                  {item.createdBy.address.village}, {item.createdBy.address.district}, {item.createdBy.address.province}
+                </Text>
+              </View>
+            </View>
+          }
 
         </View>
 

@@ -144,7 +144,7 @@ export const formatTime = (date: Date, language: Language = 'en'): string => {
 };
 
 export const getCurrentLanguage = (): Language => {
-  return (i18n.language as Language) || 'en';
+  return (i18n.language as Language);
 };
 // export const getCurrentLanguage = async (): Promise<Language> => {
 //   try {

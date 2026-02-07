@@ -174,7 +174,35 @@ export const useGetAllAppliedWork = () => {
     enabled: !!tokens?.accessToken
   });
 }
+export const useGetAllsingleCustomerWork = (workStatus: string , customerId: string) => {
+  const { tokens } = useAuth();
 
+  return useQuery({
+    queryKey: ['singleCustomerWork' , customerId , workStatus],
+    queryFn: () => publiceWorkApi.getAllsingleCustomerWork(tokens?.accessToken || '' ,workStatus , customerId ),
+    enabled: !!tokens?.accessToken && !!customerId,
+  });
+}
+
+export const useFreeLRequestUpdateW = () => {
+  const { tokens } = useAuth();
+  return useMutation({
+    mutationFn: ({ id ,data}: { id: string; data: any}) => {
+      return publiceWorkApi.freeLRequestUpdateW(id, data , tokens?.accessToken || '');
+    },
+    onError: (error) => {
+      console.log("error in APIL = ", error);
+    },
+    onSuccess: () => {
+      // Toast.show({
+      //   type: ALERT_TYPE.SUCCESS,
+      //   title: t('editWork.toast.success'),
+      //   textBody: t('editWork.toast.text_success'),
+      // })
+      console.log("success");
+    }
+  });
+};
 
 export const useDeletePublicWork = () => {
   const queryClient = useQueryClient();

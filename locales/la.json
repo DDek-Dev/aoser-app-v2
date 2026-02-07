@@ -100,7 +100,7 @@
         "top_freelancers": "ຟຣີແລນຍອດຮິດ",
         "recommended_freelancers": "ຟຣີແລນທີ່ນິຍົມ",
         "nomore_freelancers": "ບໍ່ມີຟຣີແລນເຊີເພີ່ມອີກແລ້ວ",
-        "loading_more": "ກໍາລັງໂລດຕື່ມ",
+        "loading_more": "ກໍາລັງໂລດເພີ່ມ...",
         "freelancers": "ຟຣີແລນເຊີ",
         "fast_search": "ຕົວເລືອກ",
         "history_search": "ປະຫວັດການຊອກຫາ",
@@ -355,7 +355,7 @@
         "accept_question": "ຮັບບໍ",
         "project_paid_successfully": "ໂປຣເຈັກນີ້ໄດ້ຮັບການຊຳລະເງິນສຳເລັດແລ້ວ ເຮັດໃຫ້ສຳເລັດເພື່ອຮັບເງິນຂອງທ່ານ",
         "project_did_successfully": "ວຽກງານນີ້ສຳເລັດແລ້ວກະລຸນາໃຫ້ຄຳຕິຊົມ ຫຼື",
-        "rehire": "ຈ້າງຄືນໃໝ່?",
+        "rehire": "ໃຊ້ບໍລີການອິກ",
         "work_overview": "ພາບລວມ",
         "sub_work_list": "ລາຍການຍ່ອຍ",
         "interested_freelancers": "ຟຣີແລນເຊີທີ່ສົນໃຈ",
@@ -405,7 +405,8 @@
         "set_up_freelancer_role": "ຕັ້ງໂປຣໄຟລເປັນຟຣີແລນເຊີເພື່ອຮັບຂໍ້ສະເໜີວຽກ.",
         "start_freelancer_role": "ສະໝັກເປັນຕອນນີ້",
         "hire": "ຈ້າງ",
-        "hiring": "ກໍາລັງຈ້າງ..."
+        "hiring": "ກໍາລັງຈ້າງ...",
+        "nowork_available": "ຍັງບໍ່ມີໂຄງການ"
     },
     "editWork": {
         "title": "ອັບເດດວຽກ",
@@ -1254,7 +1255,7 @@
         "notice_title": "ໝາຍເຫດ",
         "important_info_point1": "ເອກະສານນີ້ເປັນພຽງໃບຢືນຢັນການຊໍາລະເງີນບໍ່ແມ່ນໃບກໍາກັບພາສີ",
         "important_info_point2": "Aoser ເຮັດໜ້າທີ່ເປັນແພຣດຟອມ ແລະ ເປັນຜູ້ອໍານວຍຄວາມສະດວກດ້ານການຊໍາລະເງີນເທົ່ານັ້ນ.",
-        "important_info_point3": "+ ບໍລີການດໍາເນີນການໂດຍຜູ້ໃຫ້ບໍລີການອິດສະຫຼະ"
+        "important_info_point3": "ບໍລີການດໍາເນີນການໂດຍຜູ້ໃຫ້ບໍລີການອິດສະຫຼະ"
     },
     "chat": {
         "chatroom": {
@@ -1319,7 +1320,15 @@
             "offer": "ສະເໜີ",
             "send": "ສົ່ງ",
             "review_select": "ກວດສອບໂຄງການທີ່ເລືອກ ແລະ ອັບເດດຈຳນວນເງີນ/ກຳນົດເວລາໃໝ່ຖ້າຈຳເປັນ:",
-            "send_offer": "ສົ່ງຂໍ້ສະເໜີ"
+            "send_offer": "ສົ່ງຂໍ້ສະເໜີ",
+            "mywork": "ໂຄງການຂ້ອຍ",
+            "customerWork": "ໂຄງການລູກຄ້າ",
+            "your_offering": "ຂໍ້ສະເໜີຂອງທ່ານ",
+            "deadline_required": "ກາລຸນາກຳນົດເວລາທີ່ຈະສົ່ງຂໍ້ສະເໜີ",
+            "invalid_deadline": "ຮູບແບບວັນສິ້ນສຸດບໍ່ຖືກຕ້ອງ",
+            "deadline_future": "ວັນສິ້ນສຸດຕ້ອງຢູ່ໃນອະນາຄົດ",
+            "Partially Completed": "ສຳເລັດບາງສ່ວນ",
+            "failed_message": "ສົ່ງຂໍ້ສະເໜີບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ."
         }
     },
     "selectVideo": {

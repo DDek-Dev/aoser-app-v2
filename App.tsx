@@ -15,39 +15,41 @@ import { AuthProvider } from 'contexts/AuthContext';
 
 import i18n from './i18n';
 import { I18nextProvider } from 'react-i18next';
+import { useEffect, useState } from 'react';
+import { initLanguage } from 'utils/authStorage';
 
 const queryClient = new QueryClient();
 
 export default function App() {
   // const [isCompleteOnboarding, setIsCompleteOnboarding] = useState(false);
   // const [isLoading, setIsLoading] = useState(true);
-  // const [isLanguageReady, setIsLanguageReady] = useState(false);
+  const [isLanguageReady, setIsLanguageReady] = useState(false);
   // const [hasSelectedLanguage, setHasSelectedLanguage] = useState(false);
-  // const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Initialize everything in one useEffect
-  // useEffect(() => {
-  //   const initializeApp = async () => {
-  //     try {
-  //       // 1. Initialize language first
-  //       await initLanguage(i18n);
-  //       setIsLanguageReady(true);
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // 1. Initialize language first
+        await initLanguage(i18n);
+        setIsLanguageReady(true);
 
-  //       // 2. Check onboarding status
-  //       const value = await AsyncStorage.getItem('onboarding_complete');
-  //       setIsCompleteOnboarding(value === 'true');
-  //     } catch (error) {
-  //       console.log('Error initializing app:', error);
-  //       // Set defaults on error
-  //       setIsCompleteOnboarding(false);
-  //       setIsLanguageReady(true); // Still set to true to show app
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
+        // 2. Check onboarding status
+        // const value = await AsyncStorage.getItem('onboarding_complete');
+        // setIsCompleteOnboarding(value === 'true');
+      } catch (error) {
+        console.log('Error initializing app:', error);
+        // Set defaults on error
+        // setIsCompleteOnboarding(false);
+        setIsLanguageReady(true); // Still set to true to show app
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  //   initializeApp();
-  // }, []);
+    initializeApp();
+  }, []);
 
 
   // useEffect(() => {

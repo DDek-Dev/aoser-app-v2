@@ -75,6 +75,8 @@ export type Applicant ={
   createdAt: string; // or Date if you want to use Date objects
   updatedAt: string; // or Date
 }
+
+export type TabType = 'mywork' | 'customerwork';
 export type Mylike = {
   _id: string,
   createdBy: string,
@@ -192,12 +194,28 @@ export type Message = {
   isUnSend: boolean;
   // projectUpdates?: ProjectUpdateData[];
   replyTo?: ReplyTo;
-  messageType: "TEXT" | "FILE" | "LINK" | "WORK"| "LOCATION";
+  messageType: "TEXT" | "FILE" | "LINK" | "WORK"| "LOCATION" | "OFFERING_WORK";
   status: "SENT"| "DELIVERED"| "READ";
   createdAt?: string;
   updatedAt?: string;
   userProfile?: UserProfile;
-} 
+  offeringWorkId?: string;
+}
+export type IOfferingWorkUpdate = {
+  workId: string;
+    requester: string;
+    requestStatus: "PENDING" | "CONFIRM" | "REJECTED";
+    reason: string;
+    updateData: {
+      deadLine: Date;
+      budgetType: string;
+      currency: string;
+      budget: number;
+      assignedTo: string;
+    };
+    confirmedAt: Date;
+}
+
 export interface OptimisticMessage extends Omit<Message, '_id' | 'createdAt'> {
   _id?: string;                   
   tempId?: string;              

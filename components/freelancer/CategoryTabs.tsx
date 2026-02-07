@@ -1,10 +1,9 @@
 import React, { useRef, useState, useMemo, useEffect, use } from 'react';
-import { FlatList, Pressable, StyleProp, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { FlatList, Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useGetServiceTypes } from 'hooks/useFreelancer';
 import * as Icons from 'lucide-react-native';
 import { CategoryTabSkeleton } from 'skeletonScreens/CategoryTabSkeleton';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { useTranslation } from 'react-i18next';
 
 type Props = {

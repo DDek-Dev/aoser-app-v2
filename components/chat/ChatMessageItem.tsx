@@ -19,6 +19,8 @@ import { useAuth } from 'hooks/useAuth';
 import soctketService from 'service/soctketService';
 import FullScreenMediaModal from './FullScreenMediaModal';
 import { useTranslation } from 'react-i18next';
+import ProjectOfferingMessage from './ProjectOfferingMessage';
+import { map } from 'assets';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
@@ -227,6 +229,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const [fullScreenMedia, setFullScreenMedia] = useState<MediaFile | null>(null);
 
   // const currentLanguage = getCurrentLanguage();
+
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -605,15 +608,10 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                           borderRadius: 16,
                           overflow: 'hidden',
                           backgroundColor: isFromUser ? '#3B82F6' : '#fff',
-                          width: 240, // Fixed width looks better for cards
                           borderWidth: isFromUser ? 0 : 1,
-                          borderColor: '#e5e7eb',
-                          shadowColor: "#000",
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.1,
-                          shadowRadius: 4,
-                          elevation: 3,
+                     
                         }}
+                        className='w-[18rem]'
                       >
                         {/* Map Preview Placeholder / Static Map */}
                         <View style={{
@@ -623,12 +621,21 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                           alignItems: 'center'
                         }}>
                           {/* If you have a Google Maps API key, replace this with an Image component using Static Maps API */}
-                          <Ionicons
+                          {/* <Ionicons
                             name="map"
                             size={40}
                             color={isFromUser ? 'rgba(255,255,255,0.6)' : '#9ca3af'}
+                          /> */}
+
+                          <Image
+                            source={map}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                            }}
+                            resizeMode="contain"
                           />
-                          <View style={{
+                          {/* <View style={{
                             position: 'absolute',
                             bottom: 10,
                             right: 10,
@@ -639,7 +646,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                             borderColor: '#fff'
                           }}>
                             <Ionicons name="location" size={14} color="#fff" />
-                          </View>
+                          </View> */}
                         </View>
 
                         {/* Info Section */}
@@ -652,7 +659,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                             Current Location { (item as any).mapsUrl }
                           </Text> */}
 
-                          {((item as any).expiresAt) && (
+                          {/* {((item as any).expiresAt) && (
                             <Text style={{
                               color: isFromUser ? 'rgba(255,255,255,0.8)' : '#6b7280',
                               fontSize: 11,
@@ -660,7 +667,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                             }}>
                               {t('chat.chatroom.live_until')} {new Date((item as any).expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </Text>
-                          )}
+                          )} */}
 
                           <View style={{
                             marginTop: 8,
@@ -695,6 +702,12 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                     {item.work && item.messageType === 'WORK' && (
                       <View className="mt-2">
                         <ProjectMessageItem projects={item} />
+                      </View>
+                    )}
+                    {item.messageType === 'OFFERING_WORK' && (
+
+                      <View className="mt-2">
+                        <ProjectOfferingMessage projects={item} />
                       </View>
                     )}
 

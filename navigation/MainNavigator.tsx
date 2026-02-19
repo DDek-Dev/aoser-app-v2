@@ -54,6 +54,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RecommendUser from 'screens/profile/Recommend_user';
 import { useTranslation } from 'react-i18next';
 import PaymentDetail_Id from 'screens/freelancer/PaymentDetail_Id';
+import CustomerProfile from 'screens/profile/CustomerProfile';
+import AppendOwnerWork from 'components/publicwork/AppendOwnerWork';
 
 
 
@@ -64,7 +66,7 @@ const RootStack = createNativeStackNavigator<FreelancerStackParamList>();
 function TabNavigator() {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { isAuthenticated } = useAuthContext();
- const { t } = useTranslation();
+  const { t } = useTranslation();
   return (
     <ScreenWrapper safeEdges={['bottom']} style={{ flex: 1, backgroundColor: '#000' }}>
       <View className="flex-1 relative">
@@ -83,7 +85,7 @@ function TabNavigator() {
           <Tab.Screen name="Works" component={WorkFeedScreen} />
 
           <Tab.Screen name="New work"
-           options={{ title: t('tab.newWork') }}
+            options={{ title: t('tab.newWork') }}
           >
             {() => (
               <ProtectedRoute
@@ -130,7 +132,7 @@ export default function MainNavigator() {
   console.log("TokenL: ", expoPushToken?.data);
   console.log(data);
 
- const { t } = useTranslation();
+  const { t } = useTranslation();
 
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const insets = useSafeAreaInsets();
@@ -176,7 +178,7 @@ export default function MainNavigator() {
         <RootStack.Screen
           name="ConfirmBookingScreen"
           component={ConfirmBookingScreen}
-          
+
         />
 
         <RootStack.Screen name="UpgradeToFreelancer" component={UpgradeToFreelancer} />
@@ -212,9 +214,10 @@ export default function MainNavigator() {
         </RootStack.Screen> */}
 
         <RootStack.Screen name="AuthFreelancerProfile" component={AuthFreelancerProfile} />
-
-
-
+        <RootStack.Screen name="CustomerProfile" component={CustomerProfile} options={{
+          headerShown: false,
+          animation: 'ios_from_right',
+        }} />
         <RootStack.Screen name="LanguageSelectScreen" component={LanguageSelectScreen} />
 
         <RootStack.Screen name="ChangePasswordScreen">
@@ -330,6 +333,7 @@ export default function MainNavigator() {
 
         <RootStack.Screen name="FreelancerWorkDetail" component={FreelancerWorkDetail} />
         <RootStack.Screen name="EditWorkById" component={EditWorkById} />
+        <RootStack.Screen name="AppendOwnerWork" component={AppendOwnerWork} />
 
         {/* <RootStack.Screen name="EditWorkById">
           {() => (

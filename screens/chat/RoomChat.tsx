@@ -36,7 +36,7 @@ import FileOptionsMenu from 'components/chat/FileOptionsMenu';
 import ChatListContainer from 'components/chat/ChatListContainer';
 import { chatApi } from 'api/chatApi';
 import ProjectSelectionModal from 'components/chat/ProjectSelectionModal';
-import { MediaFile, Message, OptimisticMessage, Job, TabType } from 'types';
+import { MediaFile, Message, OptimisticMessage, Job, TabType, ProjectUpdateData } from 'types';
 import { useMessageActions } from 'hooks/useMessageActions';
 import { publicWorkKeys, usegetAllMyWork, useGetAllsingleCustomerWork } from 'hooks/usePublicWork';
 import { useQueryClient } from '@tanstack/react-query';
@@ -78,10 +78,10 @@ const RoomChat = () => {
   const [isFileSending, setIsFileSending] = useState(false);
 
   const [showDurationModal, setShowDurationModal] = useState(false);
-  const [isOfferingProject, setIsOfferingProject] = useState(true);
 
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [updateTo, setUpdateTo] = useState<Message | null>(null);
+
   // Default upload size limits
   const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
   const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -162,7 +162,7 @@ const RoomChat = () => {
 
     const conversationId = chat.conversation._id;
 
-    console.log('chat.conversation._id', chat.conversation._id)
+
     try {
       // Connect socket
       SocketService.connect(SERVER_URL, tokens.accessToken, user?._id || null);
@@ -397,26 +397,13 @@ const RoomChat = () => {
     setShowDurationModal(true);
   };
 
-  const handleDurationSelect = (duration: number) => {
+  const handleDurationSelect = () => {
     setShowDurationModal(false);
-    shareLocation(duration);
+    shareLocation();
   };
-  // const handleLocationSelection = () => {
-  //   // let user pick duration
-  //   Alert.alert(
-  //     t('chat.chatroom.shareLocation') || 'Share location',
-  //     t('chat.chatroom.chooseDuration') || 'How long should this location be shared?',
-  //     [
-  //       { text: '15 min', onPress: () => shareLocation(15) },
-  //       { text: '60 min', onPress: () => shareLocation(60) },
-  //       { text: '8 h', onPress: () => shareLocation(8 * 60) },
-  //       { text: '24 h', onPress: () => shareLocation(24 * 60) },
-  //       { text: t('common.cancel') || 'Cancel', style: 'cancel' },
-  //     ]
-  //   );
-  // };
 
-  const shareLocation = async (durationMinutes: number) => {
+
+  const shareLocation = async () => {
     if (!chat?.conversation?._id) return;
 
     try {
@@ -428,7 +415,7 @@ const RoomChat = () => {
 
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
       const { latitude, longitude } = pos.coords;
-      const expiresAt = Date.now() + durationMinutes * 60_000;
+      const expiresAt = Date.now();
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
       const tempId = `temp_${Date.now()}`;
@@ -436,7 +423,7 @@ const RoomChat = () => {
         tempId,
         conversation: chat.conversation._id,
         sender: user._id,
-        message: `${t('chat.chatroom.shareLocation')} (${durationMinutes} ${t('common.min')})`,
+        message: ``,
         messageType: 'LOCATION',
         status: 'SENT',
         pending: true,
@@ -450,7 +437,6 @@ const RoomChat = () => {
         expiresAt,
       };
 
-      console.log("optimisticMessage", optimisticMessage);
 
       setMessages(prev => [...prev, optimisticMessage as Message]);
 
@@ -483,10 +469,12 @@ const RoomChat = () => {
   };
 
 
-  console.log('isOfferingProject FIRST---- ', isOfferingProject);
 
-  const sendProjectMessage = (selectedProjects: Job[]) => {
-    if (!isOfferingProject) {
+  const sendProjectMessage = (selectedProjects: Job[], updatedData?: ProjectUpdateData[]) => {
+
+    const isOffering = updatedData && updatedData.length > 0;
+    console.log('isOffering', isOffering);
+    if (!isOffering) {
       if (!chat?.conversation?._id) return;
       selectedProjects.forEach((project, idx) => {
         const workId = project;
@@ -539,25 +527,18 @@ const RoomChat = () => {
 
     } else {
       if (!chat?.conversation?._id) return;
-      selectedProjects.forEach((project, idx) => {
+      updatedData.forEach((project, idx) => {
         const workId = project;
-        console.log('WORK OFFERING SEND IDDD', workId._id);
+        console.log('WORK HANDLE SEND ;;;;;;', workId);
         const tempId = `temp_${Date.now()}_${idx}`;
-        console.log('WORK OFFERING SEND', JSON.stringify(workId, null, 2));
-        // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
-        queryClient.setQueryData(
-          publicWorkKeys.detail(workId),
-          project // You already have the full work object here!
-        );
-
+        console.log('WORK HANDLE SEND ', workId);
         const optimisticMessage: OptimisticMessage = {
           tempId,
           conversation: chat.conversation._id,
           sender: user._id,
-          offeringWorkId: workId._id,
-          message: 'Offering work',
+          offeringWorkId: workId.offeringWorkId as any,
+          message: '',
           isUnSend: false,
-          work: workId,
           messageType: 'OFFERING_WORK',
           status: 'SENT',
           pending: true,
@@ -569,7 +550,7 @@ const RoomChat = () => {
           {
             conversationId: chat.conversation._id,
             message: optimisticMessage.message,
-            offeringWorkId: workId._id,
+            offeringWorkId: workId.offeringWorkId,
             messageType: 'OFFERING_WORK',
           },
           (response) => {
@@ -578,7 +559,6 @@ const RoomChat = () => {
                 prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
               );
             } else {
-              console.log('response.message', response);
               setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
 
               Toast.show({
@@ -593,8 +573,6 @@ const RoomChat = () => {
     }
   };
 
-  console.log('isOfferingProject  LAST---- ', isOfferingProject);
-  // send project function
 
   // SEND MEDIA FUCNTION 
   const sendMediaMessage = async (mediaFiles: MediaFile[], textMessage: string) => {
@@ -604,6 +582,7 @@ const RoomChat = () => {
     const fileMeta = mediaFiles.map(f => ({
       name: f.name || `file_${Date.now()}`,
       type: f.mimeType || 'application/octet-stream',
+      size: f.size,
     }));
 
     // Validate sizes before requesting presigned URLs
@@ -612,7 +591,7 @@ const RoomChat = () => {
       .filter(({ f }) => {
         const isVideo = f.type === 'video' || f.mimeType?.startsWith('video/');
         const size = f.size || 0;
-        console.log('File blob size:', size);
+        // console.log('File blob size:', size);
         return isVideo ? size > MAX_VIDEO_SIZE : size > MAX_IMAGE_SIZE;
       });
 
@@ -658,9 +637,14 @@ const RoomChat = () => {
 
     // Upload each file to its presigned URL
     try {
-      await Promise.all(presigned.map((p, idx) =>
-        uploadFileToUrl(p.url, mediaFiles[idx].uri, p.contentType || fileMeta[idx].type)
-      ));
+      // Upload in small batches to reduce peak memory/network usage
+      const concurrency = 3;
+      for (let i = 0; i < presigned.length; i += concurrency) {
+        const batch = presigned.slice(i, i + concurrency);
+        await Promise.all(batch.map((p, idx) =>
+          uploadFileToUrl(p.url, mediaFiles[i + idx].uri, p.contentType || fileMeta[i + idx].type)
+        ));
+      }
       setIsFileSending(false);
     } catch (err) {
       console.log('File upload failed', err);
@@ -790,6 +774,8 @@ const RoomChat = () => {
     SocketService.sendTypingIndicator(chat.conversation._id, false);
   }
 
+
+
   const handleTyping = (text: string) => {
 
     setMessage(text);
@@ -838,26 +824,7 @@ const RoomChat = () => {
     return 'image' as const;
   };
 
-  const allMedia = messages.flatMap(msg =>
-    (msg.files || []).map((f: any, idx: number) => {
-      if (typeof f === 'string') {
-        const uri = f;
-        const type = inferTypeFromUri(uri);
-        return {
-          id: uri || `${msg._id || 'msg'}_${idx}`,
-          uri,
-          type,
-          name: uri.split('/').pop() || 'file',
-        } as MediaFile;
-      }
-      // If backend already sent an object, ensure type is present or inferred
-      const obj = f as MediaFile;
-      if (!obj.type) {
-        obj.type = inferTypeFromUri(obj.uri, obj.mimeType);
-      }
-      return obj as MediaFile;
-    }) || []
-  );
+
 
   if (isLoadingAuth || !user?._id || isLoading || !chat) {
     return <MessagelistSkeleton />;
@@ -876,7 +843,15 @@ const RoomChat = () => {
               <MaterialIcons name="chevron-left" size={32} color="#2b82F6" />
             </TouchableOpacity>
 
-            <Pressable className='flex-row items-center gap-2' onPress={() => navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })}>
+            <Pressable className='flex-row items-center gap-2'
+              disabled={chat.userProfile.businessType === 'AOSER_ADMIN'}
+              onPress={() => {
+                if (chat.userProfile.businessType === 'CUSTOMER') {
+                  navigation.navigate('CustomerProfile', { userId: chat.userProfile._id })
+                } else if ((chat.userProfile.businessType === 'FREELANCER')) {
+                  navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })
+                }
+              }}>
 
 
 
@@ -971,23 +946,23 @@ const RoomChat = () => {
                   />
                   {t('chat.chatroom.shareLocation') || 'Share location'}
                 </Text>
-                <Text className="text-body text-textSecondary mb-5 text-center">
+                {/* <Text className="text-body text-textSecondary mb-5 text-center">
                   {t('chat.chatroom.chooseDuration') || 'How long should this location be shared?'}
-                </Text>
+                </Text> */}
 
                 <TouchableOpacity
-                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
-                  onPress={() => handleDurationSelect(15)}
+                  className="p-4 mt-4 rounded-lg bg-primary mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect()}
                 >
-                  <Text className="text-body text-text font-medium">15 {t('common.min')}</Text>
+                  <Text className="text-body text-surface font-medium">{t('chat.chatroom.send')}</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
                   onPress={() => handleDurationSelect(60)}
                 >
                   <Text className="text-body text-text font-medium">60 {t('common.min')}</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
                 {/* 
                 <TouchableOpacity
                   className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
@@ -1025,9 +1000,6 @@ const RoomChat = () => {
             onLocationSelection={handleLocationSelection}
             onClose={() => setFileOptionsVisible(false)}
           />
-
-
-
           {/* Chat Input */}
           <View
             className="px-4 py-4 bg-surface border-t border-border"
@@ -1187,12 +1159,9 @@ const RoomChat = () => {
             visible={showProjectSelection}
             userProfileId={chat.userProfile._id}
             onClose={() => setShowProjectSelection(false)}
-            onProjectsSelect={
-              sendProjectMessage
-
-            }
+            onProjectsSelect={sendProjectMessage}
             user={user}
-            isOffering={(value) => setIsOfferingProject(value)}
+
           />
 
         </View>

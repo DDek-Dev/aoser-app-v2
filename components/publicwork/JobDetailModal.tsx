@@ -60,7 +60,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
   // Single animation value for both show/hide and position adjustment
   const footerAnim = useRef(new Animated.Value(200)).current;
 
-  const snapPoints = useMemo(() => ['70%', '100%'], []);
+  const snapPoints = useMemo(() => ['100%'], []);
 
   // Calculate base positions
   const basePosition70 = 564
@@ -379,7 +379,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
               <Text className="text-sm text-textSecondary">{t('workDetail.deadline')}</Text>
             </View>
             <Text className="text-sm font-semibold text-text">
-              {formatDate(jobDeadline, currentLanguage)}
+              { formatDate(jobDeadline, currentLanguage)}
             </Text>
           </View>
 

@@ -17,11 +17,11 @@ export default function ResumeImage({ resumeImage }: Props) {
 
   // Use screen width to maintain aspect ratio
   const screenWidth = Dimensions.get('window').width;
-  const imageWidth = screenWidth * 0.9; // 90% width
+  const imageWidth = screenWidth ; // 90% width
   const aspectRatio = 0.707; // Approx. A4 paper (1 / √2 ≈ 0.707)
   if (!resumeImage) return null;
   return (
-    <View className="px-4">
+    <View className="">
       <View className="space-y-3">
         <View className='flex-row items-center gap-3 mt-8'>
           <View className='h-[1px] bg-primary flex-1' />
@@ -39,7 +39,7 @@ export default function ResumeImage({ resumeImage }: Props) {
             style={{
               width: imageWidth,
               height: imageWidth / aspectRatio,
-              borderRadius: 12,
+              
               marginTop: 16,
               marginBottom: 16,
             }}

@@ -32,7 +32,6 @@ interface ProjectSelectionModalProps {
   onClose: () => void;
   onProjectsSelect: (selectedProjects: Job[], updatedData: ProjectUpdateData[]) => void;
   user: UserProfile
-  isOffering?: (value: boolean) => void;
 }
 interface ProjectUpdateData {
   projectId: string;
@@ -47,7 +46,6 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
   userProfileId,
   onClose,
   onProjectsSelect,
-  isOffering,
   user
 }) => {
   // State declarations
@@ -78,7 +76,8 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
 
   const [selectedTab, setSelectedTab] = useState<TabType>('customerwork');
-  const { data: customerWorkData, isLoading: customerLoading, refetch: customerRefetch } = useGetAllsingleCustomerWork(userProfileId || '', 'PUBLIC,ASSIGNED_WORKER');
+  const { data: customerWorkData, isLoading: customerLoading, refetch: customerRefetch } = useGetAllsingleCustomerWork(userProfileId || '', 'PUBLISHED,ASSIGNED_WORKER');
+
   const { data: myWorks, isLoading: isLoadingMy, refetch } = usegetAllMyWork();
   const freeLRequestUpdateWMutation = useFreeLRequestUpdateW();
   // Helper function to format datetime for display
@@ -348,7 +347,6 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
   // Updated handleSend with enhanced validation
   const handleSend = async () => {
     try {
-      isOffering?.(false);
       // Prepare data for backend
       const dataToSend = prepareDataForBackend();
       // Call the parent callback with data
@@ -373,7 +371,6 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
   };
 
   const handleSendOffer = async () => {
-    isOffering?.(true);
     try {
       // Validate all project data
       const isValid = validateProjectData();
@@ -385,8 +382,6 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
       // Prepare data for backend
       const dataToSend = prepareDataForBackend();
-
-      console.log("new dealine :", dataToSend);
 
       // Additional check: ensure all required data is present
       const hasInvalidData = dataToSend.some(
@@ -424,7 +419,6 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
             budget: projectData.newBudget
           };
 
-          console.log(`Sending project ${index + 1}:`, updateData);
 
           // Call the API for this project (one at a time)
           const result: any = await freeLRequestUpdateWMutation.mutateAsync({
@@ -458,7 +452,6 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
         console.log('Failed projects:', failedProjects);
       }
 
-      
       // Call the parent callback with data
       onProjectsSelect(selectedProjects, dataToSend);
     
@@ -497,27 +490,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
       });
     }
   };
-  // Helper function to parse DD/MM/YYYY to Date
-  const parseInputDate = (dateString: string): Date | null => {
-    if (!dateString || dateString.length !== 10) return null;
-
-    const [day, month, year] = dateString.split('/').map(Number);
-
-    if (!day || !month || !year || month < 1 || month > 12 || day < 1 || day > 31) {
-      return null;
-    }
-
-    const date = new Date(year, month - 1, day);
-
-    // Validate the date is real (e.g., not Feb 31)
-    if (date.getDate() !== day || date.getMonth() !== month - 1) {
-      return null;
-    }
-
-    return date;
-  };
-
-
+  
   // Initialize date string when project update changes
   useEffect(() => {
     const newDateStrings: Record<string, string> = {};
@@ -1041,7 +1014,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
           <View className='flex-row gap-2'>
 
-            {selectedTab === 'customerwork' && (
+            {selectedTab === 'customerwork' && user.businessType === 'FREELANCER' && (
 
               <TouchableOpacity
                 onPress={handleNext}

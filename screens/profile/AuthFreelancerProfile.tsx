@@ -28,7 +28,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
   const { data: profile, isLoading } = useFreelancerById(routeParams.userId);
 
 
-  const { data: reviews, isLoading: isLoadingReviews } = useFreelancerReviews(profile?._id  as string);
+  const { data: reviews, isLoading: isLoadingReviews } = useFreelancerReviews(profile?._id ? profile._id : '');
  const {user } = useAuth();
     const {t}= useTranslation()
 
@@ -102,7 +102,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
             job={profile.jobTitle || ''}
             rating={profile.starRating || 0}
             status={profile.workerStatus || ''}
-            // busyUntil={profile.workerStatus}
+           
             ishidden={true}
             isme={isOwnProfile}
           />
@@ -112,10 +112,12 @@ export default function AuthFreelancerProfile({ route }: Props) {
             rewards={profile.totalDoingWork}
 
           />
-          <VDOPromote video={profile.videoPromote} />
+          <VDOPromote video={profile.videoPromote} context="profile" />
 
           <TabbedProfileSection profile={profile} stylepadd="" />
+          {profile.resumeImage &&
           <ResumeImage resumeImage={profile.resumeImage} />
+          }
           <WhatExpect profile={profile} />
           <View className="h-[1px] bg-gray-200 mt-4" />
           <View className='mb-24'>

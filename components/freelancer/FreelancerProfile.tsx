@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, Share, Text, TouchableOpacity, View, ActivityIndicator, Platform } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { Animated, Share, Text, TouchableOpacity, View, ActivityIndicator, Platform } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,6 +79,8 @@ export default function FreelancerProfile() {
   // Refs
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const isFirstLoad = useRef(true);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const isFocused = useIsFocused();
 
   // Derived state
   const isOwnProfile = user?._id === profile?._id;
@@ -382,12 +385,16 @@ export default function FreelancerProfile() {
             </View>
           )}
         </View>
-      <ScrollView
+      <Animated.ScrollView
         className="bg-white flex-1"
         showsVerticalScrollIndicator={false}
         // stickyHeaderIndices={[0]}
         bounces={true} // iOS bounce effect
         scrollEventThrottle={16} // Smooth scrolling
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
       >
         {/* ===== STICKY HEADER ===== */}
 
@@ -414,7 +421,8 @@ export default function FreelancerProfile() {
         />
 
         {/* ===== VIDEO PROMOTION ===== */}
-        {profile.videoPromote && <VDOPromote video={profile.videoPromote} />}
+   
+        {profile.videoPromote && <VDOPromote video={profile.videoPromote} context="profile" scrollY={scrollY} isScreenFocused={isFocused} />}
 
         {/* ===== TABBED PROFILE SECTION ===== */}
         <TabbedProfileSection profile={profile} stylepadd="" />
@@ -431,11 +439,11 @@ export default function FreelancerProfile() {
         </View>
 
         {/* ===== SIMILAR FREELANCERS ===== */}
-        <FamiliarFreelancers title={t('freelancer_profile.similar_Freelancer')} />
+        <FamiliarFreelancers title={t('freelancer_profile.similar_Freelancer')} scrollY={scrollY} />
 
         {/* Bottom Spacing for Floating Buttons */}
         <View className="mb-32" />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* ===== FLOATING ACTION BUTTONS ===== */}
       {/* {!isOwnProfile && (

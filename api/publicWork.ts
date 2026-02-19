@@ -80,6 +80,26 @@ export const publiceWorkApi = {
             throw error;
         }
     },
+    appendOwnerWork: async (id: string, data: any, token: string): Promise<Job> => {
+        console.log(" in append API : ", id, data);
+        try {
+
+            const res = await axios.post(`${API_BASE_URL}/worker/work-appending/${id}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+
+            console.log("RES UPdate in append API : ", res.data);
+
+            return res.data.data.work;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
     // API - Add status parameter
     updateSubworkStatus: async (id: string, data: SubWorkDetail[], token: string): Promise<SubWorkDetail[]> => {
 
@@ -173,6 +193,12 @@ export const publiceWorkApi = {
             jobs: data.jobs || [],
             exampleWork: undefined,
             assignedTo: undefined,
+            address: {
+                country: data?.address?.country || "Laos",
+                province: data?.address?.province || null,
+                district: data?.address?.district || null,
+                village: data?.address?.village || null,
+            }
         };
 
         // Remove undefined values to avoid sending empty fields
@@ -248,16 +274,15 @@ export const publiceWorkApi = {
     },
     freeLRequestUpdateW: async (id: string, data: any, token: string): Promise<Job[]> => {
 
-        console.log("DATA: ", data);
-        console.log("IDIDIDI: ", id);
         try {
-            const res = await axios.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, {updateData: data}, {
+            const res = await axios.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, { updateData: data }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
                 },
             });
-            return res.data.data.work;
+            console.log("RES UPdate in Update API : ", res.data.data);
+            return res.data.data;
         } catch (error) {
             console.log("ERROR : ", error);
             throw error;

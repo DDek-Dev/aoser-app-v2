@@ -4,6 +4,7 @@ export type Address = {
   country: string;
   province: string;
   district: string;
+  village: string;
   latitude: number;
   longitude: number;
 };
@@ -77,7 +78,7 @@ export interface UserProfile {
   profileImage: string;
  
   email: string;
-  businessType: "CUSTOMER" | "FREELANCER" | "TRANSPORT" | "ACCOMMODATION" | "COMPANY" | "SHOP";
+  businessType: "CUSTOMER" | "FREELANCER" | "TRANSPORT" | "ACCOMMODATION" | "COMPANY" | "SHOP" | "AOSER_ADMIN";
   phone: string;
   personalCardType: "ID_CARD" | "PASSPORT" | "VISA";
   personalCardID: string;

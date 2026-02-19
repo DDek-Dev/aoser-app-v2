@@ -235,9 +235,9 @@
     "public_work": "Public work",
     "posting_public_work": "You are posting a public work",
     "next": "Next",
-    "work_title": "Work Title",
+    "work_title": "What service are you looking for?",
     "work_title_placeholder": "I'm looking for...",
-    "work_title_required": "Work Title is required",
+    "work_title_required": "Please enter the service.",
     "work_type": "Work Type",
     "online": "Online",
     "offline": "Offline",
@@ -344,6 +344,14 @@
     "no_freelancer_fimiliar": "No freelancer found",
     "no_freelancer_fimiliar_dec": ""
   },
+  "customerProfile": {
+    "contactInfo": "Contact Information",
+    "locationInfo": "Location",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "address": "Address",
+    "title": "Customer Profile"
+  },
   "workDetail": {
     "work_detail": "Work detail",
     "kind_of_work": "Kind of work",
@@ -379,6 +387,7 @@
     "example_work": "Example Work",
     "categories": "Categories",
     "deadline": "Deadline",
+    "no_date": "No date",
     "progress": "Progress",
     "step_by_step": "Step-by-step tasks to complete this work",
     "add_sub_task": "Add sub task...",
@@ -415,6 +424,8 @@
     "loadingText": "Loading work details...",
     "errorText": "Failed to load work details",
     "retryButton": "Retry",
+    "originalWork": "Original Work",
+    "appendNewWork": "Add More Work",
     "workTitle": {
       "label": "Work Title",
       "placeholder": "I'm looking for...",
@@ -461,9 +472,14 @@
     "toast": {
       "success": "Success!",
       "text_success": "Your work has been updated successfully.",
+      "append_success": "Please wait for receiving your new work from freelancer.",
       "error": "Opps!",
       "text_error": "Something went wrong. Please try again."
     }
+  },
+  "appendownerwork": {
+    "title": "Add work",
+    "description": "Add more work to your project and keep your freelancer updated."
   },
   "sortBy": {
     "title": "Sort by",
@@ -607,7 +623,9 @@
     "cancel": "Cancel",
     "yes": "Yes",
     "mim": "min",
-    "hour": "hour"
+    "hour": "hour",
+    "confirm": "Confirm",
+    "to": "to"
   },
   "askQuestion": {
     "title": "Ask a Question",
@@ -1277,7 +1295,7 @@
       "failedToSendFiles": "Failed to send files",
       "failedToSendProject": "Failed to send project",
       "fileTooLarge": "File too large",
-      "fileTooLargeMessage": "The following files exceed the allowed size limits and cannot be uploaded:\n\n{fileList}\n\nPlease compress or trim them and try again. Default limits: images {imageLimit}MB, videos {videoLimit}MB.",
+      "fileTooLargeMessage": "The following files exceed the allowed size limits and cannot be uploaded:\\n\\n{fileList}\\n\\nPlease compress or trim them and try again. Default limits: images {imageLimit}MB, videos {videoLimit}MB.",
       "send": "Send",
       "image": "image",
       "video": "video",
@@ -1314,7 +1332,7 @@
     },
     "chatContainer": {
       "Delete_Messages": "Delete Messages",
-      "are_you_sure": "Are you sure you want 1to delete {{selectedMessages.size}} message {{selectedMessages.size > 1 ? 's' : ''}} ?",
+      "are_you_sure": "Are you sure you want to delete {{selectedMessages.size}} message{{selectedMessages.size > 1 ? 's' : ''}}?",
       "delete": "Delete"
     },
     "offer": {
@@ -1327,11 +1345,42 @@
       "customerWork": "Customer Works",
       "your_offering": "Your Offering",
       "deadline_required": "Deadline is required",
-      "invalid_deadline":"Invalid deadline format",
-      "deadline_future":"Deadline must be in the future",
+      "invalid_deadline": "Invalid deadline format",
+      "deadline_future": "Deadline must be in the future",
       "Partially Completed": "Partially Completed",
-      "failed_message":"Failed to send offerings. Please try again."
-
+      "failed_message": "Failed to send offerings. Please try again.",
+      "accept_confirmation": "Accept Offering",
+      "accept_message": "By accepting, the following changes will take effect immediately:",
+      "budget_update": "The budget will be updated from",
+      "deadline_update": "The deadline will be updated to",
+      "hire_freelancer": "The freelancer will be automatically hired and the work will start immediately.",
+      "accept_warning": "This action is permanent and cannot be undone",
+      "reject_confirmation": "Decline Offering",
+      "reject_message": "Are you sure you want to decline this offering?",
+      "reject_info1": "The offering will be declined and the freelancer will be notified.",
+      "reject_info2": "Your original work details (budget and deadline) will remain unchanged.",
+      "reject_info3": "You can still negotiate or request a new offering from the freelancer.",
+      "reject_warning": "The freelancer may submit a revised offering later",
+      "accept": "Accept",
+      "reject": "Decline",
+      "new_offering": "New Work Offering",
+      "original_terms": "Original Terms",
+      "new_terms": "Proposed Terms",
+      "deadline": "Deadline",
+      "new_budget": "New Budget",
+      "new_deadline": "New Deadline",
+      "budget_update_label": "Budget Update",
+      "deadline_extended": "Deadline Extended",
+      "auto_hire": "Auto-Hire",
+      "auto_hire_description": "The freelancer will be hired immediately and work begins",
+      "freelancer_notified": "Freelancer Notified",
+      "freelancer_notified_description": "They will be informed that you declined their offering",
+      "original_terms_kept": "Original Terms Kept",
+      "original_terms_kept_description": "Your work details remain unchanged",
+      "can_negotiate": "Can Negotiate",
+      "can_negotiate_description": "You can still discuss and negotiate with the freelancer",
+      "comfirm_offering": "Confirm Offering",
+      "reject_offering": "Reject Offering"
     }
   },
   "selectVideo": {

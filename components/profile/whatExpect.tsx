@@ -9,17 +9,18 @@ type TabContentProps = {
 
 export default function WhatExpect({ profile }: TabContentProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Split text into lines and check if it's longer than 5 lines
-  const lines = profile.customerExpect;
-  const shouldShowReadMore = lines.length > 200;
   const {t} = useTranslation();
+  
+  // Check if text is longer than 200 characters
+  const text = profile.customerExpect || '';
+  const shouldShowReadMore = text.length > 200;
+
   // Get displayed text based on expansion state
   const getDisplayedText = () => {
     if (!shouldShowReadMore || isExpanded) {
-      return profile.customerExpect;
+      return text;
     }
-    return lines.slice(0, 200);
+    return text.slice(0, 200);
   };
 
   const toggleExpansion = () => {

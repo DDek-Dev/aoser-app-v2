@@ -1,4 +1,5 @@
 import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -35,45 +36,75 @@ export const uploadFileToUrl = async (url: string, fileUri: string, contentType:
   try {
     console.log('Starting upload:', { url: url.split('?')[0], contentType });
     
-    // Read the file as a blob
-    const fileBlob = await fetch(fileUri).then(r => {
-      if (!r.ok) {
-        throw new Error(`Failed to read file: ${r.status}`);
+    // Use expo-file-system to stream upload to avoid loading large files into memory
+    // especially for large videos which can crash the JS engine when using fetch(...).blob()
+    try {
+      const isVideo = contentType.startsWith('video/');
+      const timeoutMs = isVideo ? 300000 : 60000; // 5 minutes for video, 1 minute for images
+
+      const uploadPromise = FileSystem.uploadAsync(url, fileUri, {
+        httpMethod: 'PUT',
+        headers: {
+          'Content-Type': contentType,
+        },
+        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      });
+
+      // Timeout wrapper
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Upload timeout')), timeoutMs);
+      });
+
+      const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
+
+      console.log('expo-file-system upload result status:', result.status);
+
+      if (!result || typeof result.status === 'undefined' || result.status < 200 || result.status >= 300) {
+        throw new Error(`Upload failed with status ${result?.status}`);
       }
-      return r.blob();
-    });
 
-    console.log('File blob size:', fileBlob.size, 'bytes');
+      console.log('Upload completed successfully (FileSystem)');
+      return result;
+    } catch (fsErr) {
+      console.log('FileSystem upload failed, falling back to fetch upload:', fsErr);
 
-    const isVideo = contentType.startsWith('video/');
-    const timeoutMs = isVideo ? 300000 : 60000; // 5 minutes for video, 1 minute for images
+      // Fallback: try the fetch approach (may OOM for very large files on some devices)
+      const fileBlob = await fetch(fileUri).then(r => {
+        if (!r.ok) {
+          throw new Error(`Failed to read file: ${r.status}`);
+        }
+        return r.blob();
+      });
 
-    // Create upload promise (don't await it yet!)
-    const uploadPromise = fetch(url, {
-      method: 'PUT',
-      body: fileBlob,
-      headers: {
-        'Content-Type': contentType,
-      },
-    });
+      console.log('File blob size:', fileBlob.size, 'bytes');
 
-    // Create timeout promise
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Upload timeout')), timeoutMs);
-    });
+      const isVideo = contentType.startsWith('video/');
+      const timeoutMs = isVideo ? 300000 : 60000; // 5 minutes for video, 1 minute for images
 
-    // Race them properly
-    const response = await Promise.race([uploadPromise, timeoutPromise]) as Response;
+      const uploadPromise = fetch(url, {
+        method: 'PUT',
+        body: fileBlob,
+        headers: {
+          'Content-Type': contentType,
+        },
+      });
 
-    console.log("UPLOAD RESPONSE STATUS:", response.status);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Upload timeout')), timeoutMs);
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
+      const response = await Promise.race([uploadPromise, timeoutPromise]) as Response;
+
+      console.log("UPLOAD RESPONSE STATUS:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
+      }
+
+      console.log('Upload completed successfully (fetch fallback)');
+      return response;
     }
-
-    console.log('Upload completed successfully');
-    return response;
     
   } catch (error) {
     console.log('Upload error:', error);

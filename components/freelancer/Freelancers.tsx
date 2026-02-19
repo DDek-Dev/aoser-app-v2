@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -133,7 +133,7 @@ export default function Freelancers({
             className="w-[49.5%] bg-white rounded-lg mb-1 border border-border overflow-hidden"
           >
             {item.videoPromote !== null ? (
-              <VDOPromote_free_profile video={item.videoPromote} />
+              <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
             ) : (
               <Image
                 source={{ uri: IMAGE_BASE + item.bannerImage }}
@@ -150,11 +150,11 @@ export default function Freelancers({
                     {item.starRating}
                   </Text>
                 </View>
-                <View className="bg-blue-50 px-2 py-1 rounded-full flex-row items-center">
+
+                <View className='p-1 bg-blue-50 rounded-full flex-row'>
                   <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
-                  <Text className="text-caption font-semibold text-primary ml-1">
-                    {item.hourlyRate} /hour
-                  </Text>
+                  <Text className="text-caption font-semibold text-primary ml-2">{item.hourlyRate}</Text>
+                  <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text>
                 </View>
               </View>
 
@@ -162,9 +162,27 @@ export default function Freelancers({
                 {item.jobTitle}
               </Text>
 
-              <Text className="text-caption text-textSecondary" numberOfLines={2}>
-                {item.customerExpect}
-              </Text>
+              {/* <Text className="text-caption text-textSecondary" numberOfLines={2}>
+                {item.address.country}, {item.address.city} 
+              </Text> */}
+              {item.address &&
+
+
+                <View className="flex-row items-end">
+                  {/* <Text>{t('workDetail.deadline')} : </Text> */}
+                  {/* <Text>{t('payment_success.address')}:  </Text> */}
+                  <Ionicons name="location-outline" size={18} color="#6B7280" />
+                  
+                  <View className="">
+
+                    <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                      {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                      {item.address.village}, {item.address.district}, {item.address.province}
+                    </Text>
+                  </View>
+                </View>
+              }
             </View>
           </Pressable>
         ))}

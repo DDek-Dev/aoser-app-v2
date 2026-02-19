@@ -43,7 +43,7 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   const {user} = useAuth();
   if(!user) return null;
 
-  console.log('user: ', user);
+
   const unreadCount = useUnreadChatCount(user?._id || '');
 
   console.log('Unread count: ', unreadCount);

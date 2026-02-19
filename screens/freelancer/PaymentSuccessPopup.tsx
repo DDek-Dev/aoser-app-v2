@@ -190,6 +190,13 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
           >
             {/* Receipt Card */}
             <View className="bg-white rounded-3xl overflow-hidden">
+              <View className="absolute inset-0 opacity-[0.1]  ">
+                <Image
+                  source={aoserlogo_no_bg_blue}
+                  className="w-full h-full"
+                  resizeMode="contain"
+                />
+              </View>
               {/* Watermark Background - Line by Line Pattern */}
               <View className="absolute inset-0 opacity-[0.1] overflow-hidden">
                 <View
@@ -236,14 +243,12 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
 
                 {/* Status Badge */}
                 <View
-                  className={`px-4 py-2 rounded-full mt-2 ${
-                    status === 'PAYMENT_COMPLETED' ? 'bg-green-100' : 'bg-yellow-100'
-                  }`}
+                  className={`px-4 py-2 rounded-full mt-2 ${status === 'PAYMENT_COMPLETED' ? 'bg-green-100' : 'bg-yellow-100'
+                    }`}
                 >
                   <Text
-                    className={`text-body font-semibold ${
-                      status === 'PAYMENT_COMPLETED' ? 'text-green-700' : 'text-yellow-700'
-                    }`}
+                    className={`text-body font-semibold ${status === 'PAYMENT_COMPLETED' ? 'text-green-700' : 'text-yellow-700'
+                      }`}
                   >
                     {status === 'PAYMENT_COMPLETED'
                       ? t('payment_success.completed')

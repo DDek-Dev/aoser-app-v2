@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
-import { formatDate, getCurrentLanguage } from 'utils/dateFormatter';
+
 
 type ConfirmBookingRouteProp = RouteProp<FreelancerStackParamList, 'ConfirmBookingScreen'>;
 
@@ -63,6 +63,12 @@ const ConfirmBookingScreen = () => {
                 budgetType: 'FIXED_PRICE',
                 serviceType: '',
                 jobs: [],
+                address: {
+                    country: "Laos",
+                    province: '',
+                    district: '',
+                    village: '',
+                }
             });
 
 

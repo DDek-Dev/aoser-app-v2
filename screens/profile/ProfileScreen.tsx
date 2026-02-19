@@ -25,7 +25,7 @@ const ProfileScreen = () => {
     { label: t('profile.edit_profile'), icon: 'person-outline', route: 'EditAoserProfile' },
     { label: t('profile.language'), icon: 'globe-outline', route: "LanguageSelectScreen" },
     { label: t('profile.change_password'), icon: 'lock-closed-outline', route: 'ChangePasswordScreen' },
-    { label: t('profile.help_support'), icon: 'help-circle-outline', route: { 'RoomChat': { userId: '686250a8a971bfa8a145e85e' } } },
+    { label: t('profile.help_support'), icon: 'help-circle-outline', route: { name: 'RoomChat', params: { userId: '6853c25573b87254cf4c510a' } } },
   ];
 
   const policy = [
@@ -92,7 +92,8 @@ const ProfileScreen = () => {
   );
 
   const AuthenticatedProfile = () => (
-    <Pressable onPress={() => navigation.navigate('UserIdScreen', { userId: data as UserProfile })}>
+    // <Pressable onPress={() => navigation.navigate('UserIdScreen', { userId: data as UserProfile })}>
+    <Pressable onPress={() => navigation.navigate('CustomerProfile', { userId: data?._id  as string })}>
       <View className="flex-row items-center">
         <Image
           source={{ uri: BASE_IMAGE + data?.userProfileImage }}

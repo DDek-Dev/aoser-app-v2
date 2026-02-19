@@ -22,7 +22,7 @@ import { NoResults } from 'components/NoResults';
 import JobDetailBottomSheet from 'components/publicwork/JobDetailModal';
 import { FreelancerStackParamList, TabParamList } from 'types/navigation';
 import { Job } from 'types';
-import { formatDate, formatDisplayDateTime, formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
+import {  formatDisplayDateTime, formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
 import JobSearchSkeleton from 'skeletonScreens/JobSearchSkeleton';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useAuth } from 'hooks/useAuth';
@@ -88,7 +88,7 @@ const WorkFeedScreen = () => {
   };
 
 
-
+// console.log ("data", JSON.stringify(dat, null, 2));
 
   // Memoized JobItem component
   const JobItem = React.memo(({ item, onPress }: { item: Job; onPress: (job: Job) => void }) => {
@@ -96,7 +96,7 @@ const WorkFeedScreen = () => {
 
     const IconComponent = getIcon(item?.serviceType?.icon);
 
-    // console.log('item.create by:', item.createdBy.address );
+    // console.log('item.create by:', JSON.stringify(item , null, 2));
 
     return (
 
@@ -211,7 +211,7 @@ const WorkFeedScreen = () => {
             </View>
           </View>
 
-          {item.createdBy.address &&
+          {item.address &&
 
 
             <View className="flex-row mt-3 items-center">
@@ -224,7 +224,7 @@ const WorkFeedScreen = () => {
                 <Text className="text-sm text-textSecondary">
                   {/* {formatDate(item.deadLine as string, currentLanguage)} */}
 
-                  {item.createdBy.address.village}, {item.createdBy.address.district}, {item.createdBy.address.province}
+                  {item.address.village}, {item.address.district}, {item.address.province}
                 </Text>
               </View>
             </View>

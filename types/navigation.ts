@@ -22,13 +22,13 @@ export type FreelancerStackParamList = {
 
   // profile setting
   AoserProfileSetting: undefined;
-
-
+  
   // start freelancer role 
+  
   UpgradeToFreelancer: undefined;
-
   // freelancer profile 
-
+  CustomerProfile: { userId: string };
+  
   FreelancerRoleGate: undefined;
   AuthFreelancerProfile: { userId: string };
   AuthFreelancerSetting: undefined;
@@ -52,6 +52,7 @@ export type FreelancerStackParamList = {
   // Freelancer work detail 
   FreelancerWorkDetail: { workId: string };
   EditWorkById: { workId: string };
+  AppendOwnerWork: { workId: string };
 
   // Payment
   PaymentScreen: { workId: string , budget: number ,currency: string , terminalid: string, invoiceType:string, workCode?: string};

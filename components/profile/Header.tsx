@@ -38,14 +38,19 @@ export default function Header({
   , isReview
 }: HeaderProps) {
 
-  const [showPopup, setShowPopup] = useState(false);
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { t } = useTranslation()
 
   // console.log("profileImage", profileImage);
   return (
     <View className="relative">
-      <Image source={{ uri: isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}` }} className="w-full h-48" />
+
+      <Pressable
+        onPress={() => navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + backgroundImage })}
+        className="self-center w-full h-48"
+      >
+        <Image source={{ uri: isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}` }} className="w-full h-48" />
+      </Pressable>
 
       <View className="items-start px-4 -mt-10 relative z-0">
         {/* <Image source={{ uri: isReview? profileImage : IMAGES_BASE_URL + profileImage }} className="w-20 h-20 rounded-full border-4 border-white" /> */}
@@ -72,21 +77,27 @@ export default function Header({
           className="w-20 h-20 rounded-full border-4 border-white"
         /> */}
 
-        <Image
-          source={
-            profileImage
-              ? {
-                uri:
-                  profileImage.startsWith('http') || profileImage.startsWith('file://') || profileImage.startsWith('content://')
-                    ? profileImage
-                    : IMAGES_BASE_URL + profileImage
-              }
-              : proIMG
-          }
-          className="w-20 h-20 rounded-full border-4 border-white"
-          defaultSource={proIMG} // ເພີ່ມ defaultSource ສຳລັບ iOS
-          onError={() => console.log("Failed to load profile image")}
-        />
+
+        <Pressable
+          onPress={() => navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + profileImage })}
+
+        >
+          <Image
+            source={
+              profileImage
+                ? {
+                  uri:
+                    profileImage.startsWith('http') || profileImage.startsWith('file://') || profileImage.startsWith('content://')
+                      ? profileImage
+                      : IMAGES_BASE_URL + profileImage
+                }
+                : proIMG
+            }
+            className="w-20 h-20 rounded-full border-4 border-white"
+            defaultSource={proIMG} // ເພີ່ມ defaultSource ສຳລັບ iOS
+            onError={() => console.log("Failed to load profile image")}
+          />
+        </Pressable>
 
         {isme ? (
           <ProfileStatusPopup workStatus={status} isme />

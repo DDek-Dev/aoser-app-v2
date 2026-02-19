@@ -120,7 +120,7 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
 
         <View >
 
-            <View ref={containerRef} className="mt-6 px-4 ">
+            <View ref={containerRef} className="mt-6 px-1 ">
                 <View className="flex-row justify-between items-center mb-2">
                     <Text className="text-body font-bold mb-2">{title}</Text>
                 </View>
@@ -132,10 +132,10 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
                             onPress={() => handleNavigate(item._id)}
 
                             key={`${item._id}-${index}`}
-                            className="w-[48%] bg-white rounded-2xl mb-3 border border-border overflow-hidden"
+                            className="w-[49.5%] bg-white rounded-xl mb-1 border border-border overflow-hidden"
                         >
                             {item.videoPromote !== null ? (
-                                <VDOPromote_free_profile video={item.videoPromote} />
+                                <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
                             ) : (
                                 <Image
                                     source={{ uri: IMAGE_BASE + item.bannerImage }}

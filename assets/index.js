@@ -20,7 +20,7 @@ export { default as profileImage } from './profile_image.png';
 export { default as pal } from './pal.png';
 export { default as remote } from './remote.mp4';
 export { default as splash } from './splash.png';
-
+export {default as map } from './map.png';
 
 //  AOSER LOGO
 

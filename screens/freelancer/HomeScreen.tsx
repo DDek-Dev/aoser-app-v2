@@ -4,7 +4,7 @@ import {
   Animated,
   StyleSheet,
   Text,
-  TouchableOpacity,
+
   RefreshControl,
   Pressable,
 } from 'react-native';
@@ -167,7 +167,7 @@ export default function HomeScreen() {
             transform: [{ translateX: translateXAnim }],
           }}
         >
-          {selectedCategory === 'All' && <TopFreelancers />}
+          {selectedCategory === 'All' && <TopFreelancers scrollY={scrollY} />}
 
           <Freelancers
             title={

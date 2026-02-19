@@ -73,6 +73,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const statusOptions: SubWorkStatus[] = ['TODO', 'DOING', 'DONE', 'DELAY', 'FAILED'];
   const data = workData?.work;
 
+  console.log("Data", JSON.stringify(data?.appendWorks, null, 2));
   // ============= EFFECTS =============
   // Refetch work data when screen comes into focus
   useFocusEffect(
@@ -152,7 +153,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const shouldShowAddButton = () => {
     if (!data || !user) return false;
 
-    const isCustomer = data?.createdBy._id === user?._id;
+    const isCustomer = data?.createdBy?._id === user?._id;
     const isFreelancer = data?.assignedTo?._id === user?._id;
 
     const hiddenStatuses = ['AWAITING_COMPLETED', 'COMPLETED', 'DELAY'];
@@ -591,110 +592,146 @@ export default function FreelancerWorkDetail({ route }: Props) {
   };
 
   const renderWorkOverview = () => (
-    <View className="bg-surface rounded-2xl p-4 shadow-sm">
-      <View className='flex-row items-center justify-end mb-4'>
-        <View className="ml-2 bg-blue-100 w-32 px-3 py-2 rounded-full">
-          <Text className="text-secondary text-caption text-center font-medium">{data?.kindOfWork}</Text>
+
+    <>
+      <View className="bg-surface rounded-2xl p-4 shadow-sm">
+        <View className='flex-row items-center justify-end mb-4'>
+          <View className="ml-2 bg-blue-100 w-32 px-3 py-2 rounded-full">
+            <Text className="text-secondary text-caption text-center font-medium">{data?.kindOfWork}</Text>
+          </View>
         </View>
-      </View>
-      <View className="flex-row items-center mb-2">
-        <Text className="text-subheading text-primary font-semibold">{data?.workTitle}</Text>
-      </View>
-      <Text className="text-body text-textSecondary mb-1 font-bold ">{t('workDetail.description')}</Text>
-      <Text className="text-body text-textSecondary mb-2 p-4 bg-background rounded-2xl">{data?.description}</Text>
+        <View className="flex-row items-center mb-2">
+          <Text className="text-subheading text-text font-semibold">{data?.workTitle}</Text>
+        </View>
+        <Text className="text-body text-textSecondary mb-1 font-bold ">{t('workDetail.description')}</Text>
+        <Text className="text-body text-textSecondary mb-2 p-4 bg-background rounded-2xl">{data?.description}</Text>
 
-      <ExampleWorkDisplay exampleWork={data?.exampleWork || []} />
+        <ExampleWorkDisplay exampleWork={data?.exampleWork || []} />
 
-      <Text className="text-body text-textSecondary font-bold mt-3 mb-2">{t('workDetail.categories')}</Text>
-      <View className="bg-gray-100 w-[100px] px-3 py-1 rounded-full mb-4">
-        <Text className="text-primary text-caption  text-center">{data?.serviceType?.name}</Text>
-      </View>
+        <Text className="text-body text-textSecondary font-bold mt-3 mb-2">{t('workDetail.categories')}</Text>
+        <View className="bg-gray-100 w-[100px] px-3 py-1 rounded-full mb-4">
+          <Text className="text-primary text-caption  text-center">{data?.serviceType?.name}</Text>
+        </View>
 
-      {ispriceEdit ? (
-        <View className='flex-row items-center gap-4'>
-          <View className="bg-blue-50 flex-1 p-4 rounded-2xl mb-4">
-            <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
-            <View className="flex-row space-x-4 gap-2 mb-6">
-              {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
-                  className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'}`}
-                >
-                  <View className="flex-row items-center gap-2">
-                    {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
-                    <Text className="text-caption text-text">
-                      {type === 'FIXED_PRICE'
-                        ? `${t('postWork.fixed_price')}`
-                        : type === 'HOURLY'
-                          ? `${t('postWork.hourly')}`
-                          : `${t('postWork.offering')}`
-                      }
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+        {ispriceEdit ? (
+          <View className='flex-row items-center gap-4'>
+            <View className="bg-blue-50 flex-1 p-4 rounded-2xl mb-4">
+              <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
+              <View className="flex-row space-x-4 gap-2 mb-6">
+                {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
+                    className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'}`}
+                  >
+                    <View className="flex-row items-center gap-2">
+                      {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
+                      <Text className="text-caption text-text">
+                        {type === 'FIXED_PRICE'
+                          ? `${t('postWork.fixed_price')}`
+                          : type === 'HOURLY'
+                            ? `${t('postWork.hourly')}`
+                            : `${t('postWork.offering')}`
+                        }
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {budgetType === 'OFFERING' ? (
+                <View className='flex-row mb-4'>
+                  <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                </View>
+              ) : (
+                <BudgetInput
+                  label={t('postWork.budget')}
+                  value={budget}
+                  onChange={setBudget}
+                  currency={budgetCurrency}
+                  onCurrencyChange={setBudgetCurrency}
+                  error={errors.budget}
+                  classNamebuget="flex-1"
+                />
+              )}
+
+              <View className='flex-col gap-2 mt-3'>
+                <Pressable onPress={() => priceUpdate()} className='bg-primary rounded-2xl p-4'>
+                  <Text className='text-surface text-center'>
+                    {t('editWork.updateButton')}
+                  </Text>
+                </Pressable>
+                <Pressable onPress={() => {
+                  setIspriceEdit(false)
+                  setBudget(data?.budget)
+                }} className='bg-background rounded-2xl p-4'>
+                  <Text className='text-error text-center'>
+                    {t('workDetail.cancel')}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-
-            {budgetType === 'OFFERING' ? (
-              <View className='flex-row mb-4'>
+          </View>
+        ) : (
+          <View className="flex-row items-center mb-2 gap-2">
+            {data?.budgetType === 'OFFERING' ? (
+              <View className='flex-row '>
                 <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
               </View>
             ) : (
-              <BudgetInput
-                label={t('postWork.budget')}
-                value={budget}
-                onChange={setBudget}
-                currency={budgetCurrency}
-                onCurrencyChange={setBudgetCurrency}
-                error={errors.budget}
-                classNamebuget="flex-1"
-              />
+              <View className='flex-row '>
+                <Text className="text-lg text-warning font-bold mr-2">{data?.currency}</Text>
+                <Text className="text-lg text-success font-bold mr-2">{new Intl.NumberFormat().format(data?.budget)}</Text>
+              </View>
             )}
 
-            <View className='flex-col gap-2'>
-              <Pressable onPress={() => priceUpdate()} className='bg-primary rounded-2xl p-4'>
-                <Text className='text-surface text-center'>
-                  {t('editWork.updateButton')}
-                </Text>
+            {data?.workStatus === 'PUBLISHED' && user?._id === data?.createdBy?._id && (
+              <Pressable onPress={() => setIspriceEdit(true)} className='bg-background rounded-full p-2'>
+                <Ionicons name="create-outline" size={24} color="#3B82F6" />
               </Pressable>
-              <Pressable onPress={() => {
-                setIspriceEdit(false)
-                setBudget(data?.budget)
-              }} className='bg-background rounded-2xl p-4'>
-                <Text className='text-error text-center'>
-                  {t('workDetail.cancel')}
-                </Text>
-              </Pressable>
+            )}
+          </View>
+        )}
+
+        <View className="flex-row items-center gap-2 mt-2">
+          <Ionicons name="time-outline" size={16} color="#6B7280" />
+          <Text className="text-caption text-textSecondary">{t('postWork.from')}: {formatRelativeTime(data?.startDate as string, language)}</Text>
+        </View>
+        <View className="flex-row items-center gap-2 mt-2">
+          <Ionicons name="time-outline" size={16} color="#6B7280" />
+          <Text className="text-caption text-textSecondary">{t('postWork.to')}: {formatRelativeTime(data?.deadLine as string, language)}</Text>
+        </View>
+      </View>
+
+      {/* appendWorks */}
+
+      {data?.appendWorks.map((appendWork, index) => {
+
+        <View className="mt-4" key={index}>
+          <Text className="text-subheading text-primary font-semibold mb-2">{t('workDetail.appendWorks')}</Text>
+
+          <View className='bg-blue-50 p-4'>
+            <View className="flex-row items-center mb-2 gap-2">
+              
+                <View className='flex-row '>
+                  <Text className="text-lg text-warning font-bold mr-2">{appendWork?.currency}</Text>
+                  <Text className="text-lg text-success font-bold mr-2">{new Intl.NumberFormat().format(appendWork?.budget)}</Text>
+                </View>
+            </View>
+            <View className="flex-row items-center gap-2 mt-2">
+              <Ionicons name="time-outline" size={16} color="#6B7280" />
+              <Text className="text-caption text-textSecondary">{t('postWork.to')}: {formatRelativeTime(appendWork?.deadLine as string, language)}</Text>
             </View>
           </View>
-        </View>
-      ) : (
-        <View className="flex-row items-center mb-2 gap-2">
-          {data.budgetType === 'OFFERING' ? (
-            <View className='flex-row '>
-              <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
-            </View>
-          ) : (
-            <View className='flex-row '>
-              <Text className="text-lg text-warning font-bold mr-2">{data.currency}</Text>
-              <Text className="text-lg text-success font-bold mr-2">{new Intl.NumberFormat().format(data?.budget)}</Text>
-            </View>
-          )}
 
-          {data.workStatus === 'PUBLISHED' && user?._id === data?.createdBy?._id && (
-            <Pressable onPress={() => setIspriceEdit(true)} className='bg-background rounded-full p-2'>
-              <Ionicons name="create-outline" size={24} color="#3B82F6" />
-            </Pressable>
-          )}
+
         </View>
+      }
+
+
       )}
 
-      <View className="flex-row items-center gap-2 mt-2">
-        <Ionicons name="time-outline" size={16} color="#6B7280" />
-        <Text className="text-caption text-textSecondary">Deadline: {formatRelativeTime(data?.deadLine as string, language)}</Text>
-      </View>
-    </View>
+    </>
   );
 
   const renderSubWorkList = () => (
@@ -728,7 +765,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     className="flex-1 text-body text-text border-b border-primary"
                   />
                 ) : (
-                  data.workStatus === 'DOING' && data.createdBy._id !== user._id ? (
+                  data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id ? (
                     <TouchableOpacity
                       onPress={() => toggleExpand(idx)}
                       onLongPress={() => handleSectionTitleLongPress(idx, section.sectionTitle)}
@@ -771,7 +808,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                           />
                         ) : (
                           <View className="flex-row items-center justify-between py-3 px-3 bg-gray-50 rounded-lg">
-                            {data.workStatus === 'DOING' && data.createdBy._id !== user._id ? (
+                            {data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id ? (
                               <>
                                 <TouchableOpacity
                                   onLongPress={() => handleSubTaskTitleLongPress(idx, subTaskIndex, subTask.title)}
@@ -834,7 +871,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     );
                   })}
 
-                  {data.workStatus === "DOING" && data.createdBy._id !== user._id && (
+                  {data?.workStatus === "DOING" && data?.createdBy?._id !== user?._id && (
                     <View className="flex-row mt-2 items-center justify-between border border-border px-3 py-1 rounded-full bg-gray-50">
                       <View className="flex-row items-center flex-1">
                         <Ionicons name="arrow-forward" size={16} color="#3B7280" />
@@ -879,7 +916,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         {/* Header */}
         <View className='bg-primary px-4 pt-12 pb-4 flex-row items-center justify-between'>
-          {data.workStatus === "PUBLISHED" || data.workStatus === "PRIVATE" ? (
+          {data?.workStatus === "PUBLISHED" || data?.workStatus === "PRIVATE" ? (
             <View className="flex-row items-center">
               <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
                 <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
@@ -891,18 +928,18 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </View>
           ) : (
             <>
-              {data.createdBy._id === user._id ? (
+              {data?.createdBy?._id === user?._id ? (
                 <View className="flex-row items-center">
                   <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                   </TouchableOpacity>
                   <Image
-                    source={{ uri: data.assignedTo?.userProfileImage ? IMAGE_BASE_URL + data.assignedTo.userProfileImage : profileImage }}
+                    source={{ uri: data?.assignedTo?.userProfileImage ? IMAGE_BASE_URL + data?.assignedTo?.userProfileImage : profileImage }}
                     className="w-10 h-10 rounded-full mr-3"
                   />
                   <View>
-                    <Text className="text-white font-semibold text-base">{data.assignedTo?.firstName}</Text>
-                    <Text className="text-white text-caption opacity-80">{data.assignedTo?.lastName}</Text>
+                    <Text className="text-white font-semibold text-base">{data?.assignedTo?.firstName}</Text>
+                    <Text className="text-white text-caption opacity-80">{data?.assignedTo?.lastName}</Text>
                   </View>
                 </View>
               ) : (
@@ -911,42 +948,42 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                   </TouchableOpacity>
                   <Image
-                    source={{ uri: data.createdBy?.userProfileImage ? IMAGE_BASE_URL + data.createdBy.userProfileImage : profileImage }}
+                    source={{ uri: data?.createdBy?.userProfileImage ? IMAGE_BASE_URL + data?.createdBy?.userProfileImage : profileImage }}
                     className="w-10 h-10 rounded-full mr-3"
                   />
                   <View>
-                    <Text className="text-white font-semibold text-base">{data.createdBy?.firstName}</Text>
-                    <Text className="text-white text-caption opacity-80">{data.createdBy?.lastName}</Text>
+                    <Text className="text-white font-semibold text-base">{data?.createdBy?.firstName}</Text>
+                    <Text className="text-white text-caption opacity-80">{data?.createdBy?.lastName}</Text>
                   </View>
                 </View>
               )}
             </>
           )}
 
-          {data.createdBy._id === user._id &&
-            (data.workStatus === "PUBLISHED" ||
-              data.workStatus === "PRIVATE" ||
-              data.workStatus === "ASSIGNED_WORKER") && (
-              <Pressable onPress={() => navigation.navigate('EditWorkById', { workId: data._id })} className='p-3'>
+          {data?.createdBy?._id === user?._id &&
+            (data?.workStatus === "PUBLISHED" ||
+              data?.workStatus === "PRIVATE" ||
+              data?.workStatus === "ASSIGNED_WORKER") && (
+              <Pressable onPress={() => navigation.navigate('EditWorkById', { workId: data?._id })} className='p-3'>
                 <Text className="text-surface font-semibold text-base">{t('workDetail.edit')}</Text>
               </Pressable>
             )}
 
-          {data.createdBy._id !== user._id && data.budgetType === "FIXED_PRICE" && data.workStatus === "ASSIGNED_WORKER" && (
-            <Pressable onPress={() => navigation.navigate('EditWorkById', { workId: data._id })} className='p-3'>
+          {/* {data?.createdBy?._id !== user?._id && data?.budgetType === "FIXED_PRICE" && data?.workStatus === "ASSIGNED_WORKER" && (
+            <Pressable onPress={() => navigation.navigate('EditWorkById', { workId: data?._id })} className='p-3'>
               <Text className="text-surface font-semibold text-base">{t('workDetail.offer')}</Text>
             </Pressable>
-          )}
+          )} */}
 
-          {data.workStatus === "DOING" && (
-            <Pressable onPress={() => navigation.navigate('EditWorkById', { workId: data._id })} className='p-3'>
+          {data?.workStatus === "DOING" && data?.kindOfWork === "ONLINE" && (
+            <Pressable onPress={() => navigation.navigate('AppendOwnerWork', { workId: data?._id })} className='p-3'>
               <Text className="text-surface font-semibold text-base">{t('workDetail.add_work')}</Text>
             </Pressable>
           )}
         </View>
 
         {/* Status Banners */}
-        {data?.workStatus === 'ASSIGNED_WORKER' && data.createdBy._id !== user._id && (
+        {data?.workStatus === 'ASSIGNED_WORKER' && data?.createdBy?._id !== user?._id && (
           <View className="bg-warning/10 px-4 py-2 flex-row items-center justify-between h-12">
             <Text className="text-warning text-caption font-medium">{t('workDetail.accept_unlock_payment')}</Text>
             <TouchableOpacity onPress={() => handleAcceptWork()}>
@@ -955,7 +992,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
           </View>
         )}
 
-        {data?.workStatus === 'DOING' && data.createdBy._id !== user._id && (
+        {data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id && (
           <View className="bg-border px-4 py-2 flex-row items-center justify-between h-auto">
             <Text className="text-success text-caption font-medium">{t('workDetail.project_paid_successfully')}</Text>
           </View>
@@ -964,15 +1001,15 @@ export default function FreelancerWorkDetail({ route }: Props) {
         {data?.workStatus === 'COMPLETED' && (
           <View className="bg-success px-4 py-2 flex-row items-center justify-between h-12">
             <Text className="text-surface text-caption font-medium">{t('workDetail.project_did_successfully')}</Text>
-            {data?.createdBy._id === user._id && (
-              <TouchableOpacity onPress={() => navigation.replace('Bookfreelancer', { userId: data?.assignedTo._id })}>
+            {data?.createdBy?._id === user?._id && (
+              <TouchableOpacity onPress={() => navigation.replace('Bookfreelancer', { userId: data?.assignedTo?._id })}>
                 <Text className="text-surface font-bold text-body">{t('workDetail.rehire')}</Text>
               </TouchableOpacity>
             )}
           </View>
         )}
 
-        {/* Tabs */}
+        {/* Tabs - Memoize to prevent re-renders */}
         <View className="flex-row justify-evenly px-4 mt-4 border-b border-border">
           <TouchableOpacity className={`pb-2 p-4 ${activeTab === 'overview' ? 'border-b-2 border-primary' : ''}`} onPress={() => setActiveTab('overview')}>
             <Text className={`text-body ${activeTab === 'overview' ? 'text-primary font-semibold' : 'text-textSecondary'}`}>{t('workDetail.work_overview')}</Text>
@@ -1009,41 +1046,41 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
         {/* Bottom Action Bar */}
         <View className="flex-row justify-evenly items-center px-6 py-4 border-t border-border bg-white">
-          {data.createdBy._id === user._id && data.workStatus !== 'PUBLISHED' && data.assignedTo && (
-            <TouchableOpacity className="bg-blue-100 p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data.assignedTo._id })}>
+          {data?.createdBy?._id === user?._id && data?.workStatus !== 'PUBLISHED' && data?.assignedTo && (
+            <TouchableOpacity className="bg-blue-100 p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.assignedTo?._id })}>
               <Ionicons name="chatbubble-ellipses-outline" size={24} color="#3B82F6" />
             </TouchableOpacity>
           )}
 
-          {data.createdBy._id === user._id && (
+          {data?.createdBy?._id === user?._id && (
 
             <TouchableOpacity
-              onPress={() => navigation.navigate('PaymentDetail_Id', { workId: data._id })}
+              onPress={() => navigation.navigate('PaymentDetail_Id', { workId: data?._id })}
               className="bg-border p-4 rounded-full flex-row items-center justify-center">
               <Ionicons name="newspaper-outline" size={16} color="#6B7280" />
             </TouchableOpacity>
           )}
 
-          {data.createdBy._id !== user._id && (
-            <TouchableOpacity className="bg-blue-100 p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data.createdBy._id })}>
+          {data?.createdBy?._id !== user?._id && (
+            <TouchableOpacity className="bg-blue-100 p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id })}>
               <Ionicons name="chatbubble-ellipses-outline" size={24} color="#3B82F6" />
             </TouchableOpacity>
           )}
 
           {/* Action Buttons Based on Work Status */}
-          {data?.workStatus === 'PUBLISHED' && data.createdBy._id === user?._id && (
+          {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id === user?._id && (
             <TouchableOpacity onPress={() => handleJobPress()} className="bg-primary py-4 px-16 rounded-full flex-row items-center justify-center">
               <Text className="text-surface text-base font-semibold items-center">{t('workDetail.interested_freelancers')}</Text>
             </TouchableOpacity>
           )}
 
-          {data?.workStatus === 'PRIVATE' && data.createdBy._id === user?._id && (
+          {data?.workStatus === 'PRIVATE' && data?.createdBy?._id === user?._id && (
             <TouchableOpacity className="bg-border py-4 px-16 rounded-full flex-row items-center justify-center">
               <Text className="text-primary text-base font-semibold items-center">{t('workDetail.private')}</Text>
             </TouchableOpacity>
           )}
 
-          {data?.workStatus === 'ASSIGNED_WORKER' && data.createdBy._id !== user?._id && (
+          {data?.workStatus === 'ASSIGNED_WORKER' && data?.createdBy?._id !== user?._id && (
             <TouchableOpacity
               className={`py-4 px-16 rounded-full flex-row items-center justify-center ${acceptState === 'accepted' ? 'bg-green-600' : 'bg-primary'}`}
               onPress={handleAcceptWork}
@@ -1055,21 +1092,21 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </TouchableOpacity>
           )}
 
-          {data?.workStatus === 'ASSIGNED_WORKER' && data.createdBy._id === user?._id && (
+          {data?.workStatus === 'ASSIGNED_WORKER' && data?.createdBy?._id === user?._id && (
             <View className="bg-border py-4 px-16 rounded-full flex-row items-center justify-center">
               <Text className="text-primary text-base font-semibold items-center">{t('workDetail.pending_for_accept')}</Text>
             </View>
           )}
 
-          {data?.workStatus === 'ASSIGNED_AWAIT_PAYMENT' && data.createdBy._id === user?._id && (
+          {data?.workStatus === 'ASSIGNED_AWAIT_PAYMENT' && data?.createdBy?._id === user?._id && (
             <TouchableOpacity
               className="py-4 px-16 rounded-full flex-row items-center justify-center bg-primary"
               onPress={() => {
                 navigation.replace('PaymentScreen', {
-                  workId: data._id,
-                  budget: data.budget,
-                  currency: data.currency,
-                  terminalid: data.workCode,
+                  workId: data?._id,
+                  budget: data?.budget,
+                  currency: data?.currency,
+                  terminalid: data?.workCode,
                   workCode: data?.workCode,
                   invoiceType: "WORK"
                 });
@@ -1079,19 +1116,19 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </TouchableOpacity>
           )}
 
-          {data?.workStatus === 'ASSIGNED_AWAIT_PAYMENT' && data.createdBy._id !== user?._id && (
+          {data?.workStatus === 'ASSIGNED_AWAIT_PAYMENT' && data?.createdBy?._id !== user?._id && (
             <View className="bg-border py-4 px-16 rounded-full flex-row items-center justify-center">
               <Text className="text-primary text-base font-semibold items-center">{t('workDetail.waiting_for_start')}</Text>
             </View>
           )}
 
-          {data?.workStatus === 'DOING' && data.createdBy._id === user?._id && (
+          {data?.workStatus === 'DOING' && data?.createdBy?._id === user?._id && (
             <View className="bg-primary/50 py-4 px-16 rounded-full flex-row items-center justify-center">
               <Text className="text-surface text-base font-semibold items-center">{t('workDetail.doing')}</Text>
             </View>
           )}
 
-          {data?.workStatus === 'DOING' && data.createdBy._id !== user?._id && (
+          {data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id && (
             <TouchableOpacity
               className={`py-3 px-16 rounded-full z-10 ${submitState === 'submitted' ? 'bg-green-600' : submitState === 'submitting' ? 'bg-primary/50' : 'bg-primary'}`}
               onPress={handleSubmitWork}
@@ -1103,25 +1140,25 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </TouchableOpacity>
           )}
 
-          {data?.workStatus === 'AWAITING_COMPLETED' && data.createdBy._id === user?._id && (
+          {data?.workStatus === 'AWAITING_COMPLETED' && data?.createdBy?._id === user?._id && (
             <TouchableOpacity className="bg-primary py-3 px-16 rounded-full" onPress={handleConfirmWork}>
               <Text className="text-surface text-base font-semibold">{t('workDetail.confirm')}</Text>
             </TouchableOpacity>
           )}
 
-          {data?.workStatus === 'AWAITING_COMPLETED' && data.createdBy._id !== user?._id && (
+          {data?.workStatus === 'AWAITING_COMPLETED' && data?.createdBy?._id !== user?._id && (
             <View className="bg-warning/50 py-3 px-16 rounded-full">
               <Text className="text-surface text-base font-semibold">{t('workDetail.pending_for_confirm')}</Text>
             </View>
           )}
 
-          {data?.workStatus === 'COMPLETED' && data.createdBy._id !== user?._id && (
+          {data?.workStatus === 'COMPLETED' && data?.createdBy?._id !== user?._id && (
             <View className="bg-primary/50 py-4 px-16 rounded-full flex-row items-center justify-center">
               <Ionicons name='checkmark-circle' size={24} color='white' />
             </View>
           )}
 
-          {data?.workStatus === 'COMPLETED' && data.createdBy._id === user?._id && !isReview && (
+          {data?.workStatus === 'COMPLETED' && data?.createdBy?._id === user?._id && !isReview && (
             <TouchableOpacity className="bg-success py-3 px-16 rounded-full z-10" onPress={() => setShowReviewModal(true)}>
               <Text className="text-surface text-base font-semibold">{t('workDetail.make_review')}</Text>
             </TouchableOpacity>

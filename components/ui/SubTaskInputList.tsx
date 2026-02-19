@@ -93,17 +93,17 @@ const {t} = useTranslation();
 
       <ScrollView keyboardShouldPersistTaps="handled">
         {subWorkDetails.map((section, sectionIndex) => (
-          <View key={sectionIndex} className="mb-6 p-3 bg-white rounded-xl border border-border">
+          <View key={sectionIndex} className="mb-6 p-3 bg-white rounded-2xl border border-border">
             {/* Section Header */}
             <View className="flex-row items-center mb-3">
               <TextInput
                 value={section.sectionTitle}
                 onChangeText={(text) => handleUpdateSectionTitle(sectionIndex, text)}
                 placeholder="Section title"
-                placeholderTextColor={'#6B7280'}
-                placeholderClassName='text-cation text-textSecondary'
+                placeholderTextColor="#6B7280"
+                placeholderClassName='text-caption text-textSecondary'
 
-                className="flex-1 text-body  font-semibold border-b border-border pb-2"
+                className="flex-1 text-body  font-semibold border-b text-text border-border pb-2"
               />
               <TouchableOpacity
                 onPress={() => handleDeleteSection(sectionIndex)}
@@ -121,10 +121,10 @@ const {t} = useTranslation();
                   value={task.title}
                   onChangeText={(text) => handleUpdateSubTask(sectionIndex, taskIndex, text)}
                   placeholder="Subtasks title"
-                  placeholderTextColor={'#6B7280'}
-                  placeholderClassName='text-cation text-textSecondary'
+                   placeholderTextColor="#6B7280"
+                  placeholderClassName='text-caption text-textSecondary'
 
-                  className="flex-1 ml-2 border-b border-border pb-1 text-body"
+                  className="flex-1 ml-2 border-b border-border text-text pb-1 text-body"
                   ref={(ref) => {
                     if (ref) {
                       subTaskInputRefs.current[`${sectionIndex}-${taskIndex}`] = ref;

@@ -61,10 +61,15 @@ export default function EditWorkById({ route }: Props) {
     const [showToPicker, setShowToPicker] = useState(false);
 
 
-
-    // date 
+    // time strings for start/end
     const [fromDateString, setFromDateString] = useState('');
+    const [fromTimeString, setFromTimeString] = useState('');
     const [toDateString, setToDateString] = useState('');
+    const [toTimeString, setToTimeString] = useState('');
+
+
+
+    // (moved above) date/time strings
 
     const [errors, setErrors] = useState({
         nameOfWork: false,
@@ -102,12 +107,16 @@ export default function EditWorkById({ route }: Props) {
             setCategory(data.serviceType._id);
 
             if (data.startDate) {
-                // setFromDate(new Date(data.startDate));
-                setFromDateString(formatDate(data.startDate, currentLanguage));
+                const start = new Date(data.startDate);
+                setFromDate(start);
+                setFromDateString(formatDate(start.toISOString(), currentLanguage));
+                setFromTimeString(formatTimeForDisplay(start));
             }
             if (data.deadLine) {
-                // setToDate(new Date(data.deadLine));
-                setToDateString(formatDate(data.deadLine, currentLanguage));
+                const end = new Date(data.deadLine);
+                setToDate(end);
+                setToDateString(formatDate(end.toISOString(), currentLanguage));
+                setToTimeString(formatTimeForDisplay(end));
                 setHasDeadline(true);
             } else {
                 setHasDeadline(false);
@@ -177,6 +186,51 @@ export default function EditWorkById({ route }: Props) {
         // Validate the date
         if (isNaN(date.getTime())) return null;
         return date;
+    };
+    
+    // Parse time string (HH:MM)
+    const parseTime = (timeString: string): { hours: number; minutes: number } | null => {
+        if (!timeString || timeString.length < 3) return null;
+
+        const parts = timeString.split(':');
+        if (parts.length !== 2) return null;
+
+        const hours = parseInt(parts[0]);
+        const minutes = parseInt(parts[1]);
+
+        if (isNaN(hours) || isNaN(minutes)) return null;
+        if (hours < 0 || hours > 23) return null;
+        if (minutes < 0 || minutes > 59) return null;
+
+        return { hours, minutes };
+    };
+
+    const combineDateAndTime = (dateString: string, timeString: string): Date | null => {
+        const parsedDate = parseDate(dateString);
+        if (!parsedDate) return null;
+
+        const parsedTime = parseTime(timeString);
+        if (!parsedTime) return parsedDate;
+
+        parsedDate.setHours(parsedTime.hours, parsedTime.minutes, 0, 0);
+        return parsedDate;
+    };
+
+    const updateFromDate = (dateStr: string, timeStr: string) => {
+        const combined = combineDateAndTime(dateStr, timeStr);
+        setFromDate(combined);
+    };
+
+    const updateToDate = (dateStr: string, timeStr: string) => {
+        const combined = combineDateAndTime(dateStr, timeStr);
+        setToDate(combined);
+    };
+
+    const formatTimeForDisplay = (date: Date | null): string => {
+        if (!date) return '';
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
     };
     const handleSubmit = useCallback(async () => {
         const currentState = formStateRef.current;
@@ -263,14 +317,15 @@ export default function EditWorkById({ route }: Props) {
             <ScreenWrapper safeEdges={['top', 'bottom']} style={{ backgroundColor: 'white' }}>
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className='rounded-lg'>
                     <View className='px-4 flex-row justify-between items-center mb-4'>
+                        <TouchableOpacity onPress={() => navigation.goBack()} className='mr-3'>
+                            <Ionicons name="chevron-back" size={24} color="#3B82F6" />
+                        </TouchableOpacity>
+
                         <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">
-                            <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
-                                <Ionicons name="chevron-back" size={24} color="#3B82F6" />
-                            </TouchableOpacity>
                             <View className="flex-1">
-                                <Text className="font-semibold text-primary text-subheading">{t('editWork.title')}</Text>
+                                <Text className="font-semibold text-primary text-heading">{t('editWork.title')}</Text>
                                 <Text className="text-primary text-body">{t('editWork.subtitle')}</Text>
-                            </View>
+                            </View> 
                         </View>
 
                         <TouchableOpacity
@@ -418,77 +473,88 @@ export default function EditWorkById({ route }: Props) {
 
                             {hasDeadline && (
                                 <>
-                                    <View className="flex-row justify-between items-center">
-                                        <View className="flex-1 mr-2">
-                                            <FormInput
-                                                label={t('editWork.deadline.from')}
-                                                placeholder={t('editWork.deadline.fromPlaceholder')}
-                                                // value={formatDateForDisplay(fromDate)}
-                                                value={fromDateString || ''}
+                                    <View className="mb-2">
+                                        <View className="flex-row items-end gap-2">
+                                            <View className="flex-1">
+                                                <FormInput
+                                                    label={t('editWork.deadline.from')}
+                                                    placeholder={t('editWork.deadline.fromPlaceholder')}
+                                                    value={fromDateString}
+                                                    inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                                                    ref={fromInputRef}
+                                                    isDate={true}
+                                                    onChangeText={(text) => {
+                                                        setFromDateString(text);
+                                                        updateFromDate(text, fromTimeString);
+                                                    }}
+                                                />
+                                            </View>
 
-                                                inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                                                ref={fromInputRef}
-                                                // editable={false}
-                                                // pointerEvents="none"
-                                                isDate={true} // Enable date formatting
-                                                onChangeText={(text) => {
-                                                    setFromDateString(text);
-                                                    // Only update the date state when we have a complete date
-                                                    if (text.length === 10) {
-                                                        const parsedDate = parseDate(text);
-                                                        if (parsedDate) {
-                                                            setFromDate(parsedDate);
-                                                        }
-                                                    }
+                                            <View className="w-24">
+                                                <FormInput
+                                                    placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                                                    value={fromTimeString}
+                                                    inputClassName={'border-border'}
+                                                    isTime={true}
+                                                    onChangeText={(text) => {
+                                                        setFromTimeString(text);
+                                                        updateFromDate(fromDateString, text);
+                                                    }}
+                                                />
+                                            </View>
+
+                                            <TouchableOpacity
+                                                onPress={() => {
+                                                    setTempFromDate(fromDate || new Date());
+                                                    setShowFromPicker(true);
                                                 }}
-                                            />
+                                                className="bg-blue-200 flex justify-center items-center rounded-full p-4"
+                                            >
+                                                <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
+                                            </TouchableOpacity>
                                         </View>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                setTempFromDate(fromDate || new Date());
-                                                setShowFromPicker(true);
-                                            }}
-                                            className="bg-blue-200 mt-1 flex justify-center items-center rounded-full p-4"
-                                        >
-                                            <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                                        </TouchableOpacity>
                                     </View>
 
-                                    <View className="flex-row justify-between mb-4 items-center">
-                                        <View className="flex-1 mr-2">
-                                            <FormInput
-                                                label={t('editWork.deadline.to')}
-                                                placeholder={t('editWork.deadline.toPlaceholder')}
-                                                // value={formatDateForDisplay(toDate)}
-                                                value={toDateString || ''}
+                                    <View className="mb-4">
+                                        <View className="flex-row items-end gap-2">
+                                            <View className="flex-1">
+                                                <FormInput
+                                                    label={t('editWork.deadline.to')}
+                                                    placeholder={t('editWork.deadline.toPlaceholder')}
+                                                    value={toDateString}
+                                                    inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                                                    ref={toInputRef}
+                                                    isDate={true}
+                                                    onChangeText={(text) => {
+                                                        setToDateString(text);
+                                                        updateToDate(text, toTimeString);
+                                                    }}
+                                                />
+                                            </View>
 
-                                                inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                                                ref={toInputRef}
-                                                isDate={true} // Enable date formatting
+                                            <View className="w-24">
+                                                <FormInput
+                                                    placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                                                    value={toTimeString}
+                                                    inputClassName={'border-border'}
+                                                    isTime={true}
+                                                    onChangeText={(text) => {
+                                                        setToTimeString(text);
+                                                        updateToDate(toDateString, text);
+                                                    }}
+                                                />
+                                            </View>
 
-                                                onChangeText={(text) => {
-                                                    // Parse the formatted date string and update state
-                                                    // You'll need to implement date parsing logic
-                                                    setToDateString(text);
-                                                    // Only update the date state when we have a complete date
-                                                    if (text.length === 10) {
-                                                        const parsedDate = parseDate(text);
-                                                        if (parsedDate) {
-                                                            setToDate(parsedDate);
-                                                        }
-                                                    }
+                                            <TouchableOpacity
+                                                onPress={() => {
+                                                    setTempToDate(toDate || new Date());
+                                                    setShowToPicker(true);
                                                 }}
-                                            />
+                                                className="bg-blue-200 flex justify-center items-center rounded-full p-4 "
+                                            >
+                                                <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
+                                            </TouchableOpacity>
                                         </View>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                setTempToDate(toDate || new Date());
-                                                setShowToPicker(true);
-                                            }}
-                                            className="bg-blue-200 mt-2 flex justify-center items-center rounded-full p-4"
-                                        >
-                                            <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                                        </TouchableOpacity>
                                     </View>
 
                                     {errors.dateInvalid && (
@@ -509,9 +575,11 @@ export default function EditWorkById({ route }: Props) {
                                     date={fromDate || new Date()}
                                     tempDate={tempFromDate}
                                     setTempDate={setTempFromDate}
+                                    mode="datetime"
                                     setDate={(date: Date) => {
                                         setFromDate(date);
-                                        setFromDateString(formatDateForDisplay(date));
+                                        setFromDateString(formatDate(date.toISOString(), currentLanguage));
+                                        setFromTimeString(formatTimeForDisplay(date));
                                         console.log('From date selected:', formatDateForDisplay(date));
                                     }}
                                     onClose={() => {
@@ -527,9 +595,11 @@ export default function EditWorkById({ route }: Props) {
                                     date={toDate || new Date()}
                                     tempDate={tempToDate}
                                     setTempDate={setTempToDate}
+                                    mode="datetime"
                                     setDate={(date: Date) => {
                                         setToDate(date);
-                                        setToDateString(formatDateForDisplay(date));
+                                        setToDateString(formatDate(date.toISOString(), currentLanguage));
+                                        setToTimeString(formatTimeForDisplay(date));
                                         console.log('To date selected:', formatDateForDisplay(date));
                                     }}
                                     onClose={() => {

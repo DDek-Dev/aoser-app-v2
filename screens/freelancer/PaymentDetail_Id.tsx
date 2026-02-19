@@ -163,11 +163,11 @@ const PaymentDetail_Id = ({ route }: Props) => {
                 {/* Main Card */}
                 <View className="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
                     {/* Watermark Background (logo) */}
-                    <View className="absolute inset-0 opacity-[0.05] overflow-hidden">
+                    <View className="absolute inset-0 opacity-[0.1]  ">
                         <Image
                             source={aoserlogo_no_bg_blue}
                             className="w-full h-full"
-                            resizeMode="cover"
+                            resizeMode="contain"
                         />
                     </View>
 

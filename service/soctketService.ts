@@ -1,6 +1,6 @@
 // services/socketService.ts
 import { io, Socket } from 'socket.io-client';
-import { Job, Message } from 'types';
+import { Job, Message, NewOfferData } from 'types';
 interface SendMessagePayload {
   conversationId: string;
   message?: string;
@@ -103,7 +103,6 @@ class SocketService {
 
   joinConversation(conversationId: string) {
     if (this.socket && this.socket.connected) {
-      console.log('Joining conversation:', conversationId);
       this.socket.emit('conversation:join', conversationId);
     } else {
       console.warn('Cannot join conversation: socket not connected');
@@ -121,11 +120,10 @@ class SocketService {
       return;
     }
 
-    console.log('Working in socketService --->', payload);
     try {
       console.log('[SocketService] Sending message:', payload);
       this.socket.emit('message:send', payload, (response: any) => {
-        console.log('[SocketService] message:send ack:', response);
+        console.log('[SocketService] message:send ack:', JSON.stringify(response, null, 2));
         if (ack) ack(response);
       });
     } catch (e) {
@@ -198,7 +196,19 @@ class SocketService {
       this.socket.emit('message:update', messageId, message);
     }
   }
-  
+  // Inside your SocketService class
+updateOfferingWork(data: NewOfferData) {
+    if (this.socket) {
+        // Must match the backend listener string exactly
+        this.socket.emit('message:update:offeringWork', data, (response: any) => {
+            if (response.ok) {
+                console.log("Success in socket:", response.message);
+            } else {
+                console.log("Error from backend:", response.error);
+            }
+        });
+    }
+}
   deletChatroom(conversationId:string) {
     if (this.socket) {
       this.socket.emit('conversation:deleteChatRoomAndConversations', conversationId);

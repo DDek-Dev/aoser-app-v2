@@ -33,14 +33,16 @@ export default function Reviews({ reviews }: ReviewsProps) {
     setVisibleCount(prev => prev + 5);
   };
 
+  // Guard against undefined reviews
+  const safeReviews = reviews || [];
 
   console.log('reviews', JSON.stringify);
 
-  const visibleReviews = reviews.slice(0, visibleCount);
-  const showSeeMore = reviews.length > visibleCount;
+  const visibleReviews = safeReviews.slice(0, visibleCount);
+  const showSeeMore = safeReviews.length > visibleCount;
 
-  const avgRating = reviews.length
-    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+  const avgRating = safeReviews.length
+    ? (safeReviews.reduce((sum, review) => sum + review.rating, 0) / safeReviews.length).toFixed(1)
     : '0.0';
 
   
@@ -68,7 +70,7 @@ export default function Reviews({ reviews }: ReviewsProps) {
         <Text className="text-base font-semibold text-gray-800">
           {t('freelancer_profile.review.customer_reviews')}
         </Text>
-        <Text className="text-xs text-blue-600">{reviews.length} {t('freelancer_profile.review.review')}</Text>
+        <Text className="text-xs text-blue-600">{safeReviews.length} {t('freelancer_profile.review.review')}</Text>
       </View>
 
       <View className="flex-row gap-4 items-center mb-6">
@@ -81,7 +83,7 @@ export default function Reviews({ reviews }: ReviewsProps) {
         </View>
       </View>
 
-      {visibleReviews.length > 0 ? (
+      {safeReviews.length > 0 ? (
         <>
           {visibleReviews.map((review) => {
             const reviewerInfo = getReviewerInfo(review);

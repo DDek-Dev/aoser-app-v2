@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 
-import { UserProfile } from "./profile";
+import { Address, UserProfile } from "./profile";
 
 
 
@@ -53,21 +53,23 @@ export interface Job {
   createdAt: string;
   updatedAt: string;
   workCode: string;
-  invoiceType:["WORK", "USER_RECOMMEND_STAR"]
+  invoiceType: ["WORK", "USER_RECOMMEND_STAR"]
   budget_type: string;
   myLike: Mylike[];
   applicant: UserProfile[];
   workApplicants: WorkApplicant[];
- 
+  address: Address;
+  appendWorks: AppendWork[];
+
 }
 
 export type WorkById = {
-  work:Job;
+  work: Job;
   applicant: Applicant[];
   totalApplicant: number
 }
 
-export type Applicant ={
+export type Applicant = {
   _id: string;
   work: string;
   applicant: UserProfile;
@@ -157,6 +159,12 @@ export type BookingFormData = {
   budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
   serviceType: string;
   jobs?: string[];
+  address:{
+    country: string;
+    province: string;
+    district: string;
+    village: string;
+  }
 };
 export type CategoryOption = {
   name: string;
@@ -165,7 +173,21 @@ export type CategoryOption = {
 };
 
 
-
+export type AppendWork ={
+  id:string;
+  createBy: string;
+  workId: string;
+  subWorkDetails: SubWorkDetail[];
+  currency: 'LAK' | 'USD';
+  budget: number;
+  budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
+  deadLine?: string;
+  comfirmStatus:boolean;
+  systemPercent: number;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
 
 // types/chat.ts
 export type Chat = {
@@ -187,41 +209,47 @@ export type Message = {
   message: string;
   conversation: string;
   sender: string;
- 
+
   files?: string[];
   // projects?: string[] | WorkApplicant[];
   work?: Job;
   isUnSend: boolean;
   // projectUpdates?: ProjectUpdateData[];
   replyTo?: ReplyTo;
-  messageType: "TEXT" | "FILE" | "LINK" | "WORK"| "LOCATION" | "OFFERING_WORK";
-  status: "SENT"| "DELIVERED"| "READ";
+  messageType: "TEXT" | "FILE" | "LINK" | "WORK" | "LOCATION" | "OFFERING_WORK";
+  status: "SENT" | "DELIVERED" | "READ";
   createdAt?: string;
   updatedAt?: string;
   userProfile?: UserProfile;
-  offeringWorkId?: string;
+  offeringWorkId?: IOfferingWorkUpdate | string;
 }
 export type IOfferingWorkUpdate = {
-  workId: string;
-    requester: string;
-    requestStatus: "PENDING" | "CONFIRM" | "REJECTED";
-    reason: string;
-    updateData: {
-      deadLine: Date;
-      budgetType: string;
-      currency: string;
-      budget: number;
-      assignedTo: string;
-    };
-    confirmedAt: Date;
+  _id: string;
+  workId: Job;
+  requester: string;
+  requestStatus: "PENDING" | "CONFIRM" | "REJECTED";
+  reason: string;
+  updateData: {
+    deadLine: string;
+    budgetType: string;
+    currency: string;
+    budget: number;
+    assignedTo: string;
+  };
+  confirmedAt: Date;
 }
 
+export interface NewOfferData {
+    conversationId: string,
+    offeringWorkId: string
+    requestStatus: "PENDING" | "CONFIRM" | "REJECTED"
+}
 export interface OptimisticMessage extends Omit<Message, '_id' | 'createdAt'> {
-  _id?: string;                   
-  tempId?: string;              
-  createdAt?: string;             
-  pending?: boolean;   
-  replyTo?: any;        
+  _id?: string;
+  tempId?: string;
+  createdAt?: string;
+  pending?: boolean;
+  replyTo?: any;
 }
 
 export type ChatRoom = {
@@ -239,12 +267,12 @@ export type ReplyTo = {
   sender: string;
   files?: string[];
   work?: Job;
-  messageType: "TEXT" | "FILE" | "LINK" | "WORK"| "LOCATION";
+  messageType: "TEXT" | "FILE" | "LINK" | "WORK" | "LOCATION";
   status: "SENT" | "DELIVERED" | "READ";
   createdAt?: string;
   updatedAt?: string;
- deletedUserIds?: string[]
- isUnsend?: boolean
+  deletedUserIds?: string[]
+  isUnsend?: boolean
 }
 export type Conversation = {
   participants: [
@@ -267,11 +295,16 @@ export interface MediaFile {
 }
 
 export interface ProjectUpdateData {
-  projectId: string;
-  newBudget?: string;
-  newDeadline?: string;
-}
+  // offeringWorkId: string;
+  // newBudget?: number;
+  // newDeadline?: string;
 
+  projectId: string;
+  newBudget: number;
+  newDeadline: string;
+  currency: string; // Add currency field
+  offeringWorkId?: string;
+}
 
 
 // address slector type 
@@ -409,7 +442,7 @@ export type Review = {
 // create Favorite 
 export type Favorite = {
   likedItem: string;
-  likedItemType: 'Work' | 'UserProfile' ;
+  likedItemType: 'Work' | 'UserProfile';
 };
 
 export type GetFavorite = {
@@ -477,7 +510,7 @@ export interface Notifications {
 }
 
 
-export type UreadNotification ={
-  isViewed:boolean;
+export type UreadNotification = {
+  isViewed: boolean;
   notificationUnreadCount: number;
 }

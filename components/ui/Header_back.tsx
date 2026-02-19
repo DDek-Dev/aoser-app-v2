@@ -1,6 +1,5 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons'
-import React from 'react'
-import { Text, View, ViewStyle } from 'react-native'
+import { Text, View } from 'react-native'
 
 // Define the icon libraries type
 type IconLibrary = 'MaterialIcons' | 'Ionicons'

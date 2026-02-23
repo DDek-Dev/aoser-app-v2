@@ -9,7 +9,7 @@ export interface Payment {
   paymentMethod: string;
   bankName: string;
   paymentForType: "Work" | "UserProfile";
-  invoiceType: "WORK" | "USER_RECOMEND__STAR";
+  invoiceType: "WORK" | "USER_RECOMEND__STAR" |"APPEND_WORK";
   uuid:string;
   desc: string;
   payTo: string;
@@ -40,7 +40,7 @@ export type PaymentCallback ={
   createBy: UserProfile;
   payTo: UserProfile;
   paymentForType: "Work" | "UserProfile";
-  invoiceType: "WORK" | "USER_RECOMEND__STAR";
+  invoiceType: "WORK" | "USER_RECOMEND__STAR" |"APPEND_WORK";
   invoiceid: string;
   uuid: string;
   amount: number;

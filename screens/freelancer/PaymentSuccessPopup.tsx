@@ -203,8 +203,8 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                   style={{
                     transform: [{ rotate: '-30deg' }],
                     top: -100,
-                    left: -100,
-                    right: -100,
+                    left: -200,
+                    right: -200,
                     bottom: -100,
                     position: 'absolute',
                   }}
@@ -214,7 +214,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                     style={{ lineHeight: 25 }}
                   >
                     {[...Array(50)].map((_, i) => (
-                      `${fromBankInformation?.txtime || formatDate(createdAt)} • ${invoiceid} • ${formatCurrency(amount, currency)} ${currency} • AOSER • ${terminalid} • ${fromBankInformation?.service || 'Payment'}`
+                      `${fromBankInformation?.txtime || formatDate(createdAt)} • ${invoiceid} • ${formatCurrency(amount, currency)} ${currency} • AOSER • ${terminalid} • ${fromBankInformation?.service || 'Payment'} • ${invoiceid} `
                     )).join('')}
                   </Text>
                 </View>
@@ -311,7 +311,9 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                       {t('payment_success.payment_type')}
                     </Text>
                     <Text className="text-gray-800 font-semibold text-sm">
-                      {invoiceType}
+                      { invoiceType === 'WORK' && t('tab.works') }
+                      { invoiceType === 'APPEND_WORK' && t('editWork.appendNewWork') }
+                      { invoiceType === 'USER_RECOMMEND_STAR' && t('profile.buyStar.stars_plural') }
                     </Text>
                   </View>
 

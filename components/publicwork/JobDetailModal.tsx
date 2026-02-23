@@ -22,7 +22,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 
 import { Job, Favorite } from 'types';
-import { formatDate, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDate, formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
 import { useCreateFavorite, useDeleteFavorite, useMyProfile } from 'hooks/useFreelancer';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'hooks/useAuth';
@@ -379,7 +379,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
               <Text className="text-sm text-textSecondary">{t('workDetail.deadline')}</Text>
             </View>
             <Text className="text-sm font-semibold text-text">
-              { formatDate(jobDeadline, currentLanguage)}
+              { formatDisplayDateTime(jobDeadline)}
             </Text>
           </View>
 

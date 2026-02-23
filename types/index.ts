@@ -174,20 +174,21 @@ export type CategoryOption = {
 
 
 export type AppendWork ={
-  id:string;
-  createBy: string;
+  _id:string;
+  createdBy: string;
   workId: string;
   subWorkDetails: SubWorkDetail[];
   currency: 'LAK' | 'USD';
   budget: number;
   budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
   deadLine?: string;
-  comfirmStatus:boolean;
+  status: "PENDING" | "CONFIRMED" | "PAYMENT_COMPLETED" | "REJECTED";
   systemPercent: number;
   createdAt: string;
   updatedAt: string;
   __v: number;
 }
+
 
 // types/chat.ts
 export type Chat = {

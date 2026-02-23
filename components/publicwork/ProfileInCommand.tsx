@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Dimensions,
   BackHandler,
+  Pressable,
 } from 'react-native';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
 import {  useMyProfile } from 'hooks/useFreelancer';
@@ -44,38 +45,38 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
   const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL
   const { t } = useTranslation();
   const handleApply = async () => {
-
-    // if (!data?._id) {
-    //   Toast.show({
-    //     type: ALERT_TYPE.DANGER,
-    //     title: 'Error',
-    //     textBody: "You need to login first",
-    //   })
-    //   return
-    // }
-
-
     try {
       setIsApplyLoading(true);
+
+      // Apply for the work
       const result = await applyWorkMutation.mutateAsync({
         workId: jobId
       });
-      console.log('result: ', result);
-      Toast.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: 'Success',
-        textBody: "You have successfully applied for this work",
-      })
-      setIsApplyLoading(false);
+      console.log('✓ Apply result: ', result);
 
-      
-      onClose();
+      // Refetch the job data to show updated applicants list
       await refetch();
 
-    } catch (error) {
-      setIsApplyLoading(false);
-      console.log('error: ', error);
+      // Close the modal first
+      onClose();
 
+      // Show success message after closing
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('common.success') || 'Success',
+        textBody: t('profile_in_command.apply_success') || "You have successfully applied for this work",
+      });
+
+      setIsApplyLoading(false);
+    } catch (error: any) {
+      setIsApplyLoading(false);
+      console.log('✗ Error applying for work:', error);
+
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('common.failed') || 'Failed',
+        textBody: error?.message || t('profile_in_command.apply_failed') || "Failed to apply for this work. Please try again.",
+      });
     }
   }
 
@@ -172,14 +173,14 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
         </View>
 
         <View className="flex-row justify-between mt-6 px-2">
-          <TouchableOpacity
+          <Pressable
             onPress={onClose}
-            className="border-2 border-yellow-500 rounded-full px-12 py-2"
+            className="border border-warning rounded-full px-12 py-2"
           >
-            <Text className="text-yellow-500 font-semibold">{t('profile_in_command.cancel')}</Text>
-          </TouchableOpacity>
+            <Text className="text-warning font-semibold">{t('profile_in_command.cancel')}</Text>
+          </Pressable>
 
-          <TouchableOpacity
+          <Pressable
             onPress={handleApply}
             className="bg-blue-600 rounded-full px-24 py-2"
           >
@@ -189,7 +190,7 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
               <Text className="text-white font-semibold">{t('profile_in_command.apply')}</Text>
             )}
 
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </Animated.View>

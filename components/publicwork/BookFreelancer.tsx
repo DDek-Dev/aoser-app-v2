@@ -217,6 +217,12 @@ const BookFreelancer = ({ route }: Props) => {
       budgetType,
       serviceType: category,
       jobs: subcategories,
+      address:{
+        province: '',
+        district: '',
+        village: '',
+        country: '',
+      }
     };
 
     navigation.navigate('ConfirmBookingScreen', { formData });

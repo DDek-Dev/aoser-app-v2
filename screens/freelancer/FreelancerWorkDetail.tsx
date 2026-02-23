@@ -8,11 +8,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import ReviewModal from 'components/freelancer/ReviewModal';
 import { ScrollView } from 'react-native-gesture-handler';
-import { useAcceptWork, useCompleteWork, usePublicWorkById, useSubmitWork, useUpdateSubworkStatus, useUpdateWorkById } from 'hooks/usePublicWork';
+import { useAcceptAppendWork, useAcceptWork, useCompleteWork, usePublicWorkById, useSubmitWork, useUpdateAppendWorkById, useUpdateSubworkStatus, useUpdateWorkById } from 'hooks/usePublicWork';
 import LoadingScreen from 'screens/Loading/LoadingScreen';
-import { SubWorkDetail, SubTask, ExampleWork, CreateReview } from 'types';
+import { SubWorkDetail, SubTask, ExampleWork, } from 'types';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
-import { formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
 import { useAuth } from 'hooks/useAuth';
 import InterestedFreelancer from './InterestedFreelancer';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +60,20 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const [editingSubTaskKey, setEditingSubTaskKey] = useState<string | null>(null);
   const [editedSectionTitle, setEditedSectionTitle] = useState('');
   const [editedSubTaskTitle, setEditedSubTaskTitle] = useState('');
+  
+  // AppendWork editing state - maps appendWorkId to local edits
+  const [appendWorkEdits, setAppendWorkEdits] = useState<{
+    [appendWorkId: string]: {
+      subWorkItems: SubWorkDetail[];
+      newSectionTitle: string;
+      newSubTitles: { [key: string]: string };
+      editingSectionId: number | null;
+      editingSubTaskKey: string | null;
+      editedSectionTitle: string;
+      editedSubTaskTitle: string;
+    }
+  }>({});
+  const [expandedAppendItems, setExpandedAppendItems] = useState<{ [key: string]: boolean }>({});
 
   // API hooks
   const { data: workData, isLoading, refetch } = usePublicWorkById(params.workId);
@@ -68,12 +82,13 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const acceptWork = useAcceptWork();
   const completetWork = useCompleteWork();
   const updateWorkById = useUpdateWorkById();
-
+  const updateAppendWorkById = useUpdateAppendWorkById();
+  const acceptAppendWork = useAcceptAppendWork()
   // Constants
   const statusOptions: SubWorkStatus[] = ['TODO', 'DOING', 'DONE', 'DELAY', 'FAILED'];
   const data = workData?.work;
 
-  console.log("Data", JSON.stringify(data?.appendWorks, null, 2));
+
   // ============= EFFECTS =============
   // Refetch work data when screen comes into focus
   useFocusEffect(
@@ -127,6 +142,85 @@ export default function FreelancerWorkDetail({ route }: Props) {
   // ============= HELPER FUNCTIONS =============
   const toggleExpand = (sectionId: number) => {
     setExpandedItems(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  // Helper: Initialize appendWork edit state on first edit
+  const initializeAppendWorkEdit = (appendWorkId: string, initialData: SubWorkDetail[]) => {
+    if (!appendWorkEdits[appendWorkId]) {
+      setAppendWorkEdits(prev => ({
+        ...prev,
+        [appendWorkId]: {
+          subWorkItems: initialData,
+          newSectionTitle: '',
+          newSubTitles: {} as { [key: string]: string },
+          editingSectionId: null,
+          editingSubTaskKey: null,
+          editedSectionTitle: '',
+          editedSubTaskTitle: ''
+        }
+      }));
+    }
+  };
+
+  // Helper: Get edit state for an appendWork with safe fallback
+  const getAppendWorkEdit = (appendWorkId: string, initialData: SubWorkDetail[]) => {
+    // If not initialized yet, initialize synchronously to avoid undefined
+    if (!appendWorkEdits[appendWorkId]) {
+      const defaultEdit: {
+        subWorkItems: SubWorkDetail[];
+        newSectionTitle: string;
+        newSubTitles: { [key: string]: string };
+        editingSectionId: number | null;
+        editingSubTaskKey: string | null;
+        editedSectionTitle: string;
+        editedSubTaskTitle: string;
+      } = {
+        subWorkItems: initialData,
+        newSectionTitle: '',
+        newSubTitles: {},
+        editingSectionId: null,
+        editingSubTaskKey: null,
+        editedSectionTitle: '',
+        editedSubTaskTitle: ''
+      };
+      // Queue initialization but return default immediately
+      initializeAppendWorkEdit(appendWorkId, initialData);
+      return defaultEdit;
+    }
+    return appendWorkEdits[appendWorkId];
+  };
+
+  // Helper: Update appendWork edit state with safe initialization
+  const updateAppendWorkEdit = (appendWorkId: string, updates: any) => {
+    setAppendWorkEdits(prev => {
+      // Ensure the appendWorkId exists before updating
+      if (!prev[appendWorkId]) {
+        return {
+          ...prev,
+          [appendWorkId]: {
+            subWorkItems: [],
+            newSectionTitle: '',
+            newSubTitles: {},
+            editingSectionId: null,
+            editingSubTaskKey: null,
+            editedSectionTitle: '',
+            editedSubTaskTitle: '',
+            ...updates
+          }
+        };
+      }
+      return {
+        ...prev,
+        [appendWorkId]: {
+          ...prev[appendWorkId],
+          ...updates
+        }
+      };
+    });
+  };
+
+  const toggleExpandAppendItem = (key: string) => {
+    setExpandedAppendItems(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const stripIds = (data: SubWorkDetail[]) => {
@@ -229,7 +323,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
   };
 
   const addSubTask = async (sectionId: number) => {
-    const title = newSubTitles[sectionId];
+    const title = newSubTitles[String(sectionId)];
     if (!title?.trim()) return;
 
     const newSubTask: SubTask = {
@@ -247,7 +341,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     );
 
     setSubWorkItems(updatedSubWorkItems);
-    setNewSubTitles(prev => ({ ...prev, [sectionId]: '' }));
+    setNewSubTitles(prev => ({ ...prev, [String(sectionId)]: '' }));
 
     try {
       await updateStatusMutation.mutateAsync({
@@ -270,6 +364,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     setEditingSubTaskKey(key);
     setEditedSubTaskTitle(currentTitle);
   };
+
 
   const handleSectionEditBlur = async (sectionId: number) => {
     if (!editedSectionTitle.trim()) {
@@ -395,6 +490,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     }
   }
 
+
   const priceUpdate = async () => {
     const newErrors = {
       budget: budget === 0,
@@ -422,7 +518,186 @@ export default function FreelancerWorkDetail({ route }: Props) {
       console.log('Failed to update work:', error);
     }
   }
+  const handleAcceptAppendWork = async (workId: string, status: string) => {
+    try {
+      const formData = {
+        status: status,
+        workId: params.workId
+      };
 
+      console.log("Form data for accepting append work: ", formData);
+
+      if (!workId) {
+        console.log('Missing workId parameter');
+        return;
+      }
+      console.log("Form data for accepting append work: ", formData);
+      await acceptAppendWork.mutateAsync({
+        id: workId,
+        data: formData
+      });
+      await refetch();
+
+    } catch (error) {
+      console.log('Failed to update work:', error);
+    }
+  }
+
+  // ==================== APPENDWORK SECTION EDITING ====================
+  
+  const handleAppendWorkAddSection = async (appendWorkId: string) => {
+    const edit = getAppendWorkEdit(appendWorkId, []);
+    if (!edit.newSectionTitle.trim()) return;
+
+    const newSection: SubWorkDetail = {
+      sectionTitle: edit.newSectionTitle.trim(),
+      subTask: []
+    };
+
+    const updatedSubWorkItems = [...edit.subWorkItems, newSection];
+    updateAppendWorkEdit(appendWorkId, {
+      subWorkItems: updatedSubWorkItems,
+      newSectionTitle: ''
+    });
+
+    try {
+      await updateAppendWorkById.mutateAsync({
+        id: appendWorkId,
+        data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+      });
+      await refetch();
+    } catch (error) {
+      console.log('Failed to add section to append work:', error);
+    }
+  };
+
+  const handleAppendWorkAddSubTask = async (appendWorkId: string, sectionId: number) => {
+    const edit = getAppendWorkEdit(appendWorkId, []);
+    const title = edit.newSubTitles[String(sectionId)] as string;
+    if (!title?.trim()) return;
+
+    const newSubTask: SubTask = {
+      title: title.trim(),
+      subWorkStatus: 'TODO',
+    };
+
+    const updatedSubWorkItems = edit.subWorkItems.map((section, idx) =>
+      idx === sectionId
+        ? {
+          ...section,
+          subTask: [...section.subTask, newSubTask]
+        }
+        : section
+    );
+
+    updateAppendWorkEdit(appendWorkId, {
+      subWorkItems: updatedSubWorkItems,
+      newSubTitles: { ...edit.newSubTitles, [String(sectionId)]: '' }
+    });
+
+    try {
+      await updateAppendWorkById.mutateAsync({
+        id: appendWorkId,
+        data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+      });
+      await refetch();
+    } catch (error) {
+      console.log('Failed to add subtask to append work:', error);
+    }
+  };
+
+  const handleAppendWorkSectionTitleLongPress = (appendWorkId: string, sectionId: number, currentTitle: string) => {
+    const edit = getAppendWorkEdit(appendWorkId, []);
+    updateAppendWorkEdit(appendWorkId, {
+      editingSectionId: sectionId,
+      editedSectionTitle: currentTitle
+    });
+  };
+
+  const handleAppendWorkSubTaskTitleLongPress = (appendWorkId: string, sectionId: number, subTaskIndex: number, currentTitle: string) => {
+    const key = `${sectionId}-${subTaskIndex}`;
+    const edit = getAppendWorkEdit(appendWorkId, []);
+    updateAppendWorkEdit(appendWorkId, {
+      editingSubTaskKey: key,
+      editedSubTaskTitle: currentTitle
+    });
+  };
+
+  const handleAppendWorkSectionEditBlur = async (appendWorkId: string, sectionId: number) => {
+    const edit = getAppendWorkEdit(appendWorkId, []);
+
+    if (!edit.editedSectionTitle.trim()) {
+      Alert.alert(`${t('workDetail.delete_section')}`, `${t('workDetail.delete_section_confirm')}`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: `${t('workDetail.delete')}`,
+          style: 'destructive',
+          onPress: () => {
+            const updated = edit.subWorkItems.filter((section, idx) => idx !== sectionId);
+            updateAppendWorkEdit(appendWorkId, { subWorkItems: updated });
+          }
+        }
+      ]);
+    } else {
+      const updatedSubWorkItems = edit.subWorkItems.map((section, idx) =>
+        idx === sectionId
+          ? { ...section, sectionTitle: edit.editedSectionTitle.trim() }
+          : section
+      );
+
+      updateAppendWorkEdit(appendWorkId, { subWorkItems: updatedSubWorkItems });
+
+      try {
+        await updateAppendWorkById.mutateAsync({
+          id: appendWorkId,
+          data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+        });
+        await refetch();
+      } catch (error) {
+        console.log('Failed to update append work section title:', error);
+      }
+    }
+    updateAppendWorkEdit(appendWorkId, {
+      editingSectionId: null,
+      editedSectionTitle: ''
+    });
+  };
+
+  const handleAppendWorkSubTaskEditBlur = async (appendWorkId: string, sectionId: number, subTaskIndex: number) => {
+    const edit = getAppendWorkEdit(appendWorkId, []);
+
+    const updatedSubWorkItems = edit.subWorkItems.map((section, idx) =>
+      idx === sectionId
+        ? {
+          ...section,
+          subTask: !edit.editedSubTaskTitle.trim()
+            ? section.subTask.filter((_, index) => index !== subTaskIndex)
+            : section.subTask.map((task, index) =>
+              index === subTaskIndex
+                ? { ...task, title: edit.editedSubTaskTitle.trim() }
+                : task
+            )
+        }
+        : section
+    );
+
+    updateAppendWorkEdit(appendWorkId, { subWorkItems: updatedSubWorkItems });
+
+    try {
+      await updateAppendWorkById.mutateAsync({
+        id: appendWorkId,
+        data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+      });
+      await refetch();
+    } catch (error) {
+      console.log('Failed to update append work subtask:', error);
+    }
+
+    updateAppendWorkEdit(appendWorkId, {
+      editingSubTaskKey: null,
+      editedSubTaskTitle: ''
+    });
+  };
   const handleSubmitWork = async () => {
     setSubmitState('submitting');
     try {
@@ -590,18 +865,18 @@ export default function FreelancerWorkDetail({ route }: Props) {
       </>
     );
   };
-
+  console.log("Work detail data: ", data.appendWorks);
   const renderWorkOverview = () => (
 
     <>
-      <View className="bg-surface rounded-2xl p-4 shadow-sm">
+      {/* <View className="bg-surface rounded-2xl p-4 shadow-sm">
         <View className='flex-row items-center justify-end mb-4'>
           <View className="ml-2 bg-blue-100 w-32 px-3 py-2 rounded-full">
             <Text className="text-secondary text-caption text-center font-medium">{data?.kindOfWork}</Text>
           </View>
         </View>
         <View className="flex-row items-center mb-2">
-          <Text className="text-subheading text-text font-semibold">{data?.workTitle}</Text>
+          <Text className="text-body text-text font-bold">{data?.workTitle}</Text>
         </View>
         <Text className="text-body text-textSecondary mb-1 font-bold ">{t('workDetail.description')}</Text>
         <Text className="text-body text-textSecondary mb-2 p-4 bg-background rounded-2xl">{data?.description}</Text>
@@ -701,35 +976,615 @@ export default function FreelancerWorkDetail({ route }: Props) {
           <Ionicons name="time-outline" size={16} color="#6B7280" />
           <Text className="text-caption text-textSecondary">{t('postWork.to')}: {formatRelativeTime(data?.deadLine as string, language)}</Text>
         </View>
-      </View>
+      </View> */}
 
-      {/* appendWorks */}
+      <View className="bg-surface rounded-3xl overflow-hidden shadow-sm border border-border">
+        {/* Header Section with gradient accent */}
+        <View className="bg-gradient-to-r from-primary  px-3 py-4">
+          <View className="">
+            <View className="flex-row items-center justify-between border-b border-primary/20 pb-3 mb-3">
+              <View className="flex-row items-center gap-2">
+                <View className="w-2 h-2 rounded-full bg-primary" />
+                <Text className="text-warning text-body">
+                  {data?.serviceType?.name}
+                </Text>
+              </View>
 
-      {data?.appendWorks.map((appendWork, index) => {
-
-        <View className="mt-4" key={index}>
-          <Text className="text-subheading text-primary font-semibold mb-2">{t('workDetail.appendWorks')}</Text>
-
-          <View className='bg-blue-50 p-4'>
-            <View className="flex-row items-center mb-2 gap-2">
-              
-                <View className='flex-row '>
-                  <Text className="text-lg text-warning font-bold mr-2">{appendWork?.currency}</Text>
-                  <Text className="text-lg text-success font-bold mr-2">{new Intl.NumberFormat().format(appendWork?.budget)}</Text>
-                </View>
+              <View className="bg-primary backdrop-blur px-4 py-2 rounded-full">
+                <Text className="text-white text-caption font-semibold">
+                  {data?.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
+                </Text>
+              </View>
             </View>
-            <View className="flex-row items-center gap-2 mt-2">
-              <Ionicons name="time-outline" size={16} color="#6B7280" />
-              <Text className="text-caption text-textSecondary">{t('postWork.to')}: {formatRelativeTime(appendWork?.deadLine as string, language)}</Text>
+            <Text className="text-textSecondary font-bold text-body px-3 mb-1">
+              {data?.workTitle}
+            </Text>
+          </View>
+        </View>
+
+        {/* Content Section */}
+        <View className="p-2">
+
+          {/* Description Card */}
+          <View className="mb-4">
+            <View className="flex-row items-center gap-2 mb-2">
+              <View className="w-1 h-5 bg-primary rounded-full" />
+              <Text className="text-body text-text font-bold">
+                {t('workDetail.description')}
+              </Text>
+            </View>
+            <View className="bg-background rounded-2xl p-4 ">
+              <Text className="text-body text-text leading-6">
+                {data?.description}
+              </Text>
             </View>
           </View>
 
+          {/* Example Work */}
+          <ExampleWorkDisplay exampleWork={data?.exampleWork || []} />
+
+          {/* Budget Section */}
+          {ispriceEdit ? (
+            <View className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-5 mb-4 border border-blue-200">
+              <View className="flex-row items-center gap-2 mb-4">
+                <View className="w-8 h-8 bg-primary rounded-2xl items-center justify-center">
+                  <Ionicons name="cash-outline" size={20} color="#fff" />
+                </View>
+                <Text className="text-body text-text font-bold">
+                  {t('postWork.budget_type')}
+                </Text>
+              </View>
+
+              {/* Budget Type Selector */}
+              <View className="flex-row gap-2 mb-4">
+                {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
+                  <TouchableOpacity
+                    key={type}
+                    onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
+                    className={`flex-1 rounded-2xl py-3 items-center border ${budgetType === type
+                      ? 'bg-primary border-primary'
+                      : 'bg-white border-border'
+                      }`}
+                  >
+                    <View className="flex-row items-center gap-2">
+                      {budgetType === type && (
+                        <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                      )}
+                      <Text className={`text-caption font-semibold ${budgetType === type ? 'text-white' : 'text-textSecondary'
+                        }`}>
+                        {type === 'FIXED_PRICE'
+                          ? t('postWork.fixed_price')
+                          : type === 'HOURLY'
+                            ? t('postWork.hourly')
+                            : t('postWork.offering')}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {budgetType === 'OFFERING' ? (
+                <View className="bg-white rounded-2xl p-5 mb-4">
+                  <Text className="text-primary font-bold text-lg text-center">
+                    {t('workDetail.offering_price')}
+                  </Text>
+                </View>
+              ) : (
+                <View className="mb-4">
+                  <BudgetInput
+                    label={t('postWork.budget')}
+                    value={budget}
+                    onChange={setBudget}
+                    currency={budgetCurrency}
+                    onCurrencyChange={setBudgetCurrency}
+                    error={errors.budget}
+                    classNamebuget="flex-1"
+                  />
+                </View>
+              )}
+
+              {/* Action Buttons */}
+              <View className="flex-row gap-3">
+                <Pressable
+                  onPress={() => {
+                    setIspriceEdit(false);
+                    setBudget(data?.budget);
+                  }}
+                  className="flex-1 bg-white border-2 border-error rounded-2xl py-3 items-center active:bg-error/5"
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="close-circle-outline" size={20} color="#EF4444" />
+                    <Text className="text-error font-bold text-body">
+                      {t('workDetail.cancel')}
+                    </Text>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  onPress={priceUpdate}
+                  className="flex-1 bg-primary rounded-2xl py-3 items-center active:bg-primary/90 shadow-sm"
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                    <Text className="text-white font-bold text-body">
+                      {t('editWork.updateButton')}
+                    </Text>
+                  </View>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View className="bg-gradient-to-r from-yellow-50 to-green-50 rounded-3xl p-5 mb-4 border border-yellow-200">
+              <View className="flex-row items-center justify-between mb-3">
+                <View className="flex-row items-center gap-2">
+                  <View className="w-10 h-10 bg-white rounded-2xl items-center justify-center shadow-sm">
+                    <Ionicons name="cash" size={20} color="#F59E0B" />
+                  </View>
+                  <View>
+                    <Text className="text-caption text-text font-medium mb-0.5">
+                      {t('postWork.budget_type')}
+                    </Text>
+                    {data?.budgetType === 'OFFERING' ? (
+                      <Text className="text-primary font-bold text-lg">
+                        {t('workDetail.offering_price')}
+                      </Text>
+                    ) : (
+                      <View className="flex-row items-baseline gap-1">
+                        <Text className="text-warning font-bold text-xl">
+                          {data?.currency}
+                        </Text>
+                        <Text className="text-success font-bold text-2xl">
+                          {new Intl.NumberFormat().format(data?.budget)}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {data?.workStatus === 'PUBLISHED' && user?._id === data?.createdBy?._id && (
+                  <Pressable
+                    onPress={() => setIspriceEdit(true)}
+                    className="bg-white rounded-full p-3 shadow-sm active:bg-blue-50"
+                  >
+                    <Ionicons name="create-outline" size={20} color="#3B82F6" />
+                  </Pressable>
+                )}
+              </View>
+
+              {/* Budget type badge */}
+              <View className="bg-white/60 backdrop-blur px-3 py-1.5 rounded-full self-start">
+                <Text className="text-primary text-caption font-semibold">
+                  {data?.budgetType === 'FIXED_PRICE'
+                    ? t('postWork.fixed_price')
+                    : data?.budgetType === 'HOURLY'
+                      ? t('postWork.hourly')
+                      : t('postWork.offering')}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Timeline Section */}
+          <View className="bg-background rounded-3xl p-4">
+            <View className="flex-row items-center gap-2 mb-4">
+
+              <Text className="text-body text-text font-bold">
+                {t('postWork.deadline_requirement')}
+              </Text>
+            </View>
+
+            {/* Start Date */}
+            <View className="flex-row items-center mb-3">
+              <View className="w-8 h-8 rounded-full bg-success/10 items-center justify-center mr-3">
+                <Ionicons name="play-circle" size={16} color="#10B981" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-caption text-textSecondary mb-0.5">
+                  {t('postWork.from')}
+                </Text>
+                <Text className="text-body text-text ">
+                  {formatDisplayDateTime(data?.startDate as string)}
+                </Text>
+              </View>
+            </View>
+
+            {/* End Date */}
+            <View className="flex-row items-center">
+              <View className="w-8 h-8 rounded-full bg-error/10 items-center justify-center mr-3">
+                <Ionicons name="flag" size={16} color="#EF4444" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-caption text-textSecondary mb-0.5">
+                  {t('postWork.to')}
+                </Text>
+                <Text className="text-body text-text">
+                  {formatDisplayDateTime(data?.deadLine as string)}
+                </Text>
+              </View>
+            </View>
+            {/* Divider */}
+            <View className="h-px bg-border my-2 ml-4" />
+
+            {data.address &&
+
+
+              <View className="flex-row mt-3 items-center">
+
+
+                <View className="flex-row items-center">
+                  <View className="w-8 h-8 rounded-full bg-error/10 items-center justify-center mr-3">
+                    <Ionicons name="location-outline" size={16} color="#F59E0B" />
+                  </View>
+
+                  <View className="flex-1">
+                    <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text>
+
+                    <Text className="text-body text-text ">
+                      {data.address.village}, {data.address.district}, {data.address.province}
+
+                    </Text>
+                  </View>
+
+
+                </View>
+              </View>
+            }
+          </View>
 
         </View>
-      }
+      </View>
 
+      {/*---------------------------- appendWorks --------------------- */}
 
+      {data.appendWorks.length > 0 && (
+
+        <>
+
+          <Text className="px-2 text-subheading text-text font-semibold mt-4">
+            {t('workDetail.newAppendWork')}
+          </Text>
+          <View className='border border-border mt-4 w-full' />
+        </>
       )}
+
+      {data.appendWorks.map((appendWork, index) => (
+        <View className="mt-4" key={index}>
+
+          <View className="bg-gradient-to-br bg-surface rounded-3xl overflow-hidden border border-border shadow-sm">
+            {/* Header with status badge */}
+            <View className=" px-4 py-3 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2">
+                <Text className='text-textSecondary'>|</Text>
+                {/* <Text className="text-warning text-body">
+                  {data?.serviceType?.name}
+                </Text> */}
+
+                {appendWork.status === 'PENDING' && user?._id !== appendWork?.createdBy && (
+                  <Text className="text-primary text-body">
+                    {t('workDetail.newAppendWork')}
+                  </Text>
+                )}
+                {appendWork.status === 'CONFIRMED' && user?._id !== appendWork?.createdBy && (
+                  <Text className="text-primary  text-body">
+                    {t('postWork.status.awaiting_payment')}
+                  </Text>
+                )}
+
+                {/* for cusromer */}
+                {appendWork.status === 'PENDING' && user?._id === appendWork?.createdBy && (
+                  <Text className="text-primary  text-body">
+                    {t('workDetail.pending_for_accept')}
+                  </Text>
+                )}
+                {appendWork.status === 'CONFIRMED' && user?._id === appendWork?.createdBy && (
+                  <Text className="text-primary text-body">
+                    {t('workDetail.accepted')} {t('workDetail.please_payment')}
+                  </Text>
+                )}
+                {appendWork.status === 'PAYMENT_COMPLETED' && user?._id === appendWork?.createdBy && (
+
+                  <View className='flex-row gap-2 items-center'>
+ 
+                    <Text className="text-success text-body">
+                      {t('payment_success.title')}
+                    </Text>
+
+                    <Pressable onPress={() => navigation.navigate('PaymentDetail_Id', { workId: appendWork?._id })}
+
+                     className='bg-border py-2 px-4 rounded-full flex-row items-center gap-2'>
+                      <Text>{t('payment_success.bill')}: </Text>
+                      <Ionicons name="newspaper-outline" size={16} color="#6B7280" />
+
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+              <View className="bg-primary px-3 py-1 rounded-full">
+                <Text className="text-white text-caption font-medium">
+                  #{index + 1}
+                </Text>
+              </View>
+            </View>
+
+            {/* Content */}
+            <View className="p-4">
+              {/* Budget Section */}
+              <View className="bg-white rounded-2xl p-4 mb-2 border border-blue-100">
+                <Text className="text-caption text-textSecondary mb-2 uppercase tracking-wider font-bold">
+                  {t('postWork.budget_type')}
+                </Text>
+                <View className="flex-row items-center gap-2">
+                  <View className="bg-warning/10 px-2 py-1 rounded-lg">
+                    <Text className="text-warning font-bold text-body">
+                      {appendWork?.currency}
+                    </Text>
+                  </View>
+                  <Text className="text-success font-bold text-xl">
+                    {new Intl.NumberFormat().format(appendWork?.budget)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Deadline Section */}
+              <View className="bg-white rounded-2xl p-4 mb-3 border border-border ">
+                <Text className="text-body text-text mb-2 uppercase tracking-wider font-bold">
+                  {t('postWork.to')}
+                </Text>
+                <View className="flex-row items-center gap-2">
+                  <View className="w-8 h-8 rounded-full bg-primary/10 items-center justify-center">
+                    <Ionicons name="time-outline" size={16} color="#3B82F6" />
+                  </View>
+                  <Text className="text-text  text-body">
+                    {formatDisplayDateTime(appendWork?.deadLine as string)}
+                  </Text>
+                </View>
+              </View>
+              <View className='flex-row justify-between'>
+                <Text className='text-text  text-body font-bold mb-2'>{t('workDetail.sub_work_list')}</Text>
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-body text-textSecondary font-semibold mb-2">{t('workDetail.progress')}</Text>
+                  <Text className="text-xl font-bold text-textSecondary mb-1">{Number(data?.totalDonePercent).toFixed(0)}%</Text>
+                </View>
+              </View>
+              <View >
+
+                {(() => {
+                  // Initialize edit state for this appendWork if needed
+                  const edit = getAppendWorkEdit(appendWork._id, appendWork.subWorkDetails);
+                  const isFreelancer = data?.createdBy?._id !== user?._id;
+                  const isCustomer = data?.createdBy?._id === user?._id;
+                  
+                  // Role-based editing permissions:
+                  // Customer (createdBy) can edit when status is PENDING
+                  // Freelancer (assignedTo) can edit when status is PAYMENT_COMPLETED
+                  const canEdit = (isCustomer && appendWork.status === 'PENDING') || 
+                                  (isFreelancer && appendWork.status === 'PAYMENT_COMPLETED');
+
+                  return edit.subWorkItems.map((section, idx) => {
+                    const expandKey = `${appendWork._id}-${idx}`;
+                    const isExpanded = expandedAppendItems[expandKey];
+                    const allSubTasksDone = section.subTask.length > 0 &&
+                      section.subTask.every(task => task.subWorkStatus === 'DONE');
+
+                    return (
+                      <View key={idx} className="mb-3 bg-surface border border-border px-2 py-2 rounded-2xl">
+                        <View className="flex-row items-center py-3">
+                          <View className="w-8 h-8 rounded-full justify-center items-center mr-3"
+                            style={{ backgroundColor: allSubTasksDone ? '#10B981' : '#E5E7EB' }}>
+                            <Text className="text-white text-caption ">{idx + 1}</Text>
+                          </View>
+
+                          {edit.editingSectionId === idx ? (
+                            <RNTextInput
+                              value={edit.editedSectionTitle}
+                              onChangeText={(text) => updateAppendWorkEdit(appendWork._id, { editedSectionTitle: text })}
+                              onBlur={() => handleAppendWorkSectionEditBlur(appendWork._id, idx)}
+                              autoFocus
+                              className="flex-1 text-body text-text border-b border-primary"
+                            />
+                          ) : (
+                            canEdit ? (
+                              <TouchableOpacity
+                                onPress={() => toggleExpandAppendItem(expandKey)}
+                                onLongPress={() => handleAppendWorkSectionTitleLongPress(appendWork._id, idx, section.sectionTitle)}
+                                className="flex-1"
+                              >
+                                <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
+                              </TouchableOpacity>
+                            ) : (
+                              <View className="flex-1">
+                                <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
+                              </View>
+                            )
+                          )}
+
+                          <Ionicons
+                            name={isExpanded ? "chevron-up" : "chevron-down"}
+                            size={20}
+                            color="#6B7280"
+                            onPress={() => toggleExpandAppendItem(expandKey)}
+                          />
+                        </View>
+
+                        {isExpanded && (
+                          <View className="ml-1 mt-2">
+                            {section.subTask.map((subTask, subTaskIndex) => {
+                              const statusKey = `${idx}-${subTaskIndex}`;
+                              const currentStatus = subTask.subWorkStatus;
+                              const statusColors = getStatusBadgeColor(currentStatus);
+
+                              return (
+                                <View key={statusKey} className="flex-row items-center justify-between mb-3 p-2 bg-gray-50 rounded-lg">
+                                  {edit.editingSubTaskKey === statusKey ? (
+                                    <RNTextInput
+                                      value={edit.editedSubTaskTitle}
+                                      onChangeText={(text) => updateAppendWorkEdit(appendWork._id, { editedSubTaskTitle: text })}
+                                      onBlur={() => handleAppendWorkSubTaskEditBlur(appendWork._id, idx, subTaskIndex)}
+                                      autoFocus
+                                      className="flex-1 text-body text-text border-b border-primary"
+                                    />
+                                  ) : (
+                                    <TouchableOpacity
+                                      onLongPress={() => canEdit && handleAppendWorkSubTaskTitleLongPress(appendWork._id, idx, subTaskIndex, subTask.title)}
+                                      className="flex-1"
+                                    >
+                                      <Text className="text-body text-text">{subTask.title}</Text>
+                                    </TouchableOpacity>
+                                  )}
+                                  <View style={{ backgroundColor: statusColors.bg }} className="px-2 py-1 rounded ml-2">
+                                    <Text style={{ color: statusColors.text }} className="text-caption font-bold">
+                                      {currentStatus}
+                                    </Text>
+                                  </View>
+                                </View>
+                              );
+                            })}
+
+                            {canEdit && (
+                              <View className="flex-row mt-2 items-center justify-between border border-border px-3 py-1 rounded-full bg-gray-50">
+                                <TextInput
+                                  placeholder="Add new subtask..."
+                                  value={edit.newSubTitles[String(idx)] || ''}
+                                  onChangeText={(text) => updateAppendWorkEdit(appendWork._id, {
+                                    newSubTitles: { ...edit.newSubTitles, [String(idx)]: text }
+                                  })}
+                                  className="flex-1 text-body text-text"
+                                />
+                                <TouchableOpacity onPress={() => handleAppendWorkAddSubTask(appendWork._id, idx)}>
+                                  <Text className="text-primary font-medium">Add +</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  });
+                })()}
+              </View>
+
+              {(() => {
+                const edit = getAppendWorkEdit(appendWork._id, appendWork.subWorkDetails);
+                const isCustomer = data?.createdBy?._id === user?._id;
+                const canAddSection = isCustomer && appendWork.status === 'PENDING';
+
+                return canAddSection ? (
+                  <View className="mt-4 px-3 py-2 bg-gray-50 border border-border rounded-full flex-row items-center justify-between">
+                    <TextInput
+                      placeholder="Add new section..."
+                      value={edit.newSectionTitle}
+                      onChangeText={(text) => updateAppendWorkEdit(appendWork._id, { newSectionTitle: text })}
+                      className="flex-1 text-body text-text"
+                    />
+                    <TouchableOpacity onPress={() => handleAppendWorkAddSection(appendWork._id)}>
+                      <Text className="text-primary font-medium">Add +</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null;
+              })()}
+
+              {appendWork.status === 'PENDING' && user?._id !== appendWork?.createdBy && (
+
+                <View className="flex-row gap-3 mt-3">
+                  {/* Action Buttons */}
+                  {/* Reject Button */}
+                  <Pressable
+                    className="w-32 bg-white border border-error rounded-2xl py-3 items-center justify-center active:bg-error/5"
+                    onPress={() => {
+                      // Handle reject
+                      handleAcceptAppendWork(appendWork?._id, 'REJECTED');
+                      console.log('Reject appendWork:', appendWork);
+                    }}
+                  >
+                    <View className="flex-row items-center gap-2">
+                      <Ionicons name="close-circle-outline" size={20} color="#EF4444" />
+                      <Text className="text-error font-bold text-body">
+                        {t('chat.offer.reject')}
+                      </Text>
+                    </View>
+                  </Pressable>
+
+                  {/* Confirm Button */}
+                  <Pressable
+                    className="flex-1 bg-primary rounded-2xl py-3 items-center justify-center  shadow-sm"
+                    onPress={() => {
+                      // Handle confirm
+                      handleAcceptAppendWork(appendWork?._id, "CONFIRMED");
+
+                    }}
+                  >
+                    <View className="flex-row items-center gap-2">
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+                      <Text className="text-white font-bold text-body">
+                        {t('chat.offer.accept')}
+
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              )
+              }
+
+
+              {appendWork.status === 'CONFIRMED' && user?._id === appendWork?.createdBy && (
+
+                <View className="flex-row gap-3 mt-3">
+
+                  {/* <Pressable
+                    className="flex-1  bg-warning rounded-2xl py-3 items-center justify-center "
+                    onPress={() => {
+                      // Handle reject
+                      console.log('Reject appendWork:', appendWork);
+                    }}
+                  >
+                    <View className="flex-row items-center gap-2">
+                      <Ionicons name="close-circle-outline" size={20} color="#FFF" />
+                      <Text className="text-surface font-bold text-body">
+                        {t('workDetail.cancel')}
+                      </Text>
+                    </View>
+                  </Pressable> */}
+
+
+                  <Pressable
+                    className="flex-1 bg-primary rounded-2xl mt-2 py-3 items-center justify-center shadow-sm"
+                    onPress={() => {
+                      navigation.navigate('PaymentScreen', {
+                        workId: appendWork?._id,
+                        budget: appendWork?.budget,
+                        currency: appendWork?.currency,
+                        terminalid: data?.workCode,
+                        workCode: data?.workCode,
+                        invoiceType: "APPEND_WORK",
+                      });
+                    }}
+                  >
+                    <View className="flex-row items-center gap-2">
+                      {/* <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" /> */}
+                      <Text className="text-white font-bold text-body">
+                        {t('workDetail.make_payment')}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              )}
+
+            </View>
+
+          </View>
+
+
+
+
+
+
+
+        </View>
+      ))}
+
+
+
+
 
     </>
   );
@@ -877,8 +1732,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
                         <Ionicons name="arrow-forward" size={16} color="#3B7280" />
                         <TextInput
                           placeholder="Add sub task..."
-                          value={newSubTitles[idx] || ''}
-                          onChangeText={(text) => setNewSubTitles(prev => ({ ...prev, [idx]: text }))}
+                          value={newSubTitles[String(idx)] || ''}
+                          onChangeText={(text) => setNewSubTitles(prev => ({ ...prev, [String(idx)]: text }))}
                           className="ml-2 flex-1 text-body text-text"
                         />
                       </View>
@@ -975,7 +1830,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </Pressable>
           )} */}
 
-          {data?.workStatus === "DOING" && data?.kindOfWork === "ONLINE" && (
+          {data?.createdBy?._id === user?._id && data?.workStatus === "DOING" && data?.kindOfWork === "OFFLINE" && (
             <Pressable onPress={() => navigation.navigate('AppendOwnerWork', { workId: data?._id })} className='p-3'>
               <Text className="text-surface font-semibold text-base">{t('workDetail.add_work')}</Text>
             </Pressable>
@@ -1038,7 +1893,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
               />
             }
           >
-            <View className="px-4 py-4">
+            <View className="px-2 py-4">
               {activeTab === 'overview' ? renderWorkOverview() : renderSubWorkList()}
             </View>
           </ScrollView>

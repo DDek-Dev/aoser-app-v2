@@ -608,10 +608,10 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                           borderRadius: 16,
                           overflow: 'hidden',
                           backgroundColor: isFromUser ? '#3B82F6' : '#fff',
-                          borderWidth: isFromUser ? 0 : 1,
+                          // borderWidth: isFromUser ? 0 : 1,
                      
                         }}
-                        className='w-[18rem]'
+                        className='w-[18rem] border border-border'
                       >
                         {/* Map Preview Placeholder / Static Map */}
                         <View style={{

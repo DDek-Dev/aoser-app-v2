@@ -82,7 +82,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
 
     const billData = getBillDataMutation.data;
 
-    console.log("billData: ", billData);
+    // console.log("billData: ", JSON.stringify(billData, null, 2));
     if (!billData || !billData.payment) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
@@ -115,7 +115,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     } = payment as any;
 
 
-    if (!payment.createdBy || !payment.payTo) {
+    if (!payment.createdBy) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
                 <Header_back
@@ -180,7 +180,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
                                 transform: [{ rotate: '-30deg' }],
                                 top: -100,
                                 left: -100,
-                                right: -100,
+                                right: -200,
                                 bottom: -100,
                                 position: 'absolute',
                             }}
@@ -189,7 +189,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
                                 className="text-caption font-semibold text-textSecondary"
                                 style={{ lineHeight: 25 }}
                             >
-                                {[...Array(50)].map((_, i) => (
+                                {[...Array(80)].map((_, i) => (
                                     `${formatDate(payment.fromBankInformation.txtime)} • ${payment.invoiceId} • ${formatCurrency(payment.amount, payment.currency)} ${payment.currency} • AOSER • `
                                 )).join('')}
                             </Text>
@@ -227,15 +227,24 @@ const PaymentDetail_Id = ({ route }: Props) => {
                             <Text className="text-text">{t('payment_success.name_of_customer')}</Text>
                             <Text className="text-gray-900 font-semibold">{createdBy.firstName} {createdBy.lastName}</Text>
                         </View>
+
                         <View className="flex-row justify-between py-3 border-b border-border">
                             <Text className="text-text">{t('payment_success.name_of_freelancer')}</Text>
-                            <Text className="text-gray-900 font-semibold">{payTo.firstName} {payTo.lastName}</Text>
+                            {payTo && (
+                                <Text className="text-gray-900 font-semibold">{payTo.firstName} {payTo.lastName}</Text>
+                            )}
                         </View>
+
 
                         {/* Payment Type */}
                         <View className="flex-row justify-between py-3 border-b border-border">
                             <Text className="text-text">{t('payment_success.payment_type')}</Text>
-                            <Text className="text-gray-900 font-semibold">{invoiceType}</Text>
+                            <Text className="text-text font-semibold text-body">
+                                {invoiceType === 'WORK' && t('tab.works')}
+                                {invoiceType === 'APPEND_WORK' && t('editWork.appendNewWork')}
+                                {invoiceType === 'USER_RECOMMEND_STAR' && t('profile.buyStar.stars_plural')}
+                            </Text>
+                            {/* <Text className="text-gray-900 font-semibold">{invoiceType}</Text> */}
                         </View>
 
                         {/* Payment Method */}

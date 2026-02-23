@@ -85,47 +85,7 @@ export default function ProfileOn_Interested({ job, handleUserProfileNavigation,
   return (
     <>
 
-      {/* {job.workApplicants.map((applicant) => (
-        applicant.applicantProfile.map((item) => (
-
-          <View key={item._id} className="border border-gray-200 rounded-lg  mt-6">
-            <Pressable onPress={() => handleProfilePress(item._id)} className='p-4'>
-              <View className="flex-row items-center gap-4">
-                <Image
-                  source={
-                    item?.userProfileImage
-                      ? { uri: `${IMAGE_BASE}${item.userProfileImage}` }
-                      : profileImage
-                  }
-                  className="w-12 h-12 rounded-full"
-                />
-                <Text>{item.firstName} {item.lastName} </Text>
-              </View>
-            </Pressable>
-            <TabbedProfileSection profile={item as any} stylepadd={'px-4'} />
-            <View className="w-full h-[1px] bg-gray-200" />
-
-            <View className='px-4'>
-              {job.createdBy._id === user?._id && (
-                <Pressable
-                  onPress={() => handleHire(job._id)}
-                  className={`px-4 py-3 rounded-full mt-4 ${updateWorkById.isPending ? 'bg-gray-400' : 'bg-primary'}`}
-                  disabled={updateWorkById.isPending}
-                >
-                  <Text className="text-white text-center">
-                    {updateWorkById.isPending ?  `${t('workDetail.hiring')}` : `${t('workDetail.hire')}`}
-                  </Text>
-                </Pressable>
-
-              )}
-              <Text className="text-gray-400 text-caption py-2 px-4 ">{formatRelativeTime(applicant.updatedAt as string, currentLanguage)}</Text>
-            </View>
-          </View>
-
-        ))
-
-      ))} */}
-
+     
 
       {job.workApplicants.map((applicant) => (
         <View key={applicant.applicantProfile._id} className="border border-gray-200 rounded-lg mt-6">

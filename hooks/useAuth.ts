@@ -13,9 +13,7 @@ import {
 } from '../utils/apiClient';
 import { OTPVerifyData } from '../types/auth';
 
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { FreelancerStackParamList } from 'types/navigation';
+import { navigate, replace } from 'navigation/RootNavigation';
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
@@ -54,7 +52,6 @@ export const useAuth = () => {
     staleTime: Infinity, // Tokens don't become stale
   });
 
-  const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
 
   // Login mutation
   const loginMutation = useMutation({
@@ -106,9 +103,9 @@ export const useAuth = () => {
       queryClient.setQueryData(AUTH_KEYS.user, data.data.userProfile);
       const isUserProfileSetup = data.data.userProfile.gender && data.data.userProfile.firstName && data.data.userProfile.lastName && data.data.userProfile.phone && data.data.userProfile.address;
       if (isUserProfileSetup) {
-        navigation.replace('MainTabs');
+        replace('MainTabs');
       } else {
-        navigation.navigate('ProfileSetup');
+        navigate('ProfileSetup');
       }
 
       // navigation.goBack();
@@ -210,13 +207,13 @@ export const useAuth = () => {
       // await AsyncStorage.multiRemove(['onboarding_complete', 'selected_language']);
       await AsyncStorage.multiRemove(['authTokens', 'authUser', 'user']);
 
-      navigation.navigate('MainTabs');
+      navigate('MainTabs');
 
     },
     onSuccess: () => {
       console.log("Logout successful, look is authenticated:", isAuthenticated);
       queryClient.clear();
-      navigation.navigate('MainTabs');
+      navigate('MainTabs');
 
     },
   });

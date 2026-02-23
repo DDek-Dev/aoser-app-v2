@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import './global.css';
 // import OnboardingNavigator from 'navigation/OnboardingNavigator';
 import MainNavigator from 'navigation/MainNavigator';
+import { navigationRef } from 'navigation/RootNavigation';
 import './i18n'; // This imports and initializes i18n
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
@@ -83,7 +84,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nextProvider i18n={i18n}>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <AuthProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <KeyboardProvider>

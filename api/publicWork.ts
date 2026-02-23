@@ -1,6 +1,6 @@
 // api/publiceWorkApi.ts
 import axios from 'axios';
-import { BookingFormData, Job, SubWorkDetail, WorkApplies, WorkById } from 'types';
+import { AppendWork, BookingFormData, Job, SubWorkDetail, WorkApplies, WorkById } from 'types';
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -80,6 +80,27 @@ export const publiceWorkApi = {
             throw error;
         }
     },
+    updateAppendWorkById: async (id: string, data: any, token: string): Promise<Job> => {
+
+
+        try {
+
+            const res = await axios.put(`${API_BASE_URL}/worker/work/${id}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+
+            console.log("RES UPdate in Update API : ", res.data);
+
+            return res.data.data.work;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
     appendOwnerWork: async (id: string, data: any, token: string): Promise<Job> => {
         console.log(" in append API : ", id, data);
         try {
@@ -92,6 +113,27 @@ export const publiceWorkApi = {
             });
 
             console.log("RES UPdate in append API : ", res.data);
+
+            return res.data.data.work;
+
+        } catch (error) {
+            console.log("ERROR : ", error);
+            throw error;
+        }
+    },
+
+    acceptAppendWork: async (id: string, data: any, token: string): Promise<AppendWork> => {
+      
+        try {
+
+            const res = await axios.put(`${API_BASE_URL}/worker/freelancer-except-append-work/${id}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+
+            console.log("RES UPdate in Update API : ", res.data);
 
             return res.data.data.work;
 

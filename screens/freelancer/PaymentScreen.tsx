@@ -83,6 +83,8 @@ const { t } = useTranslation();
      
       } as Payment;
 
+      console.log('Generating QR with data:', formData);
+
       try {
         setIsLoading(true);
         const result = await mutateAsync({ data: formData });
@@ -206,9 +208,7 @@ const { t } = useTranslation();
   }, [invoiceId]);
 
   console.log("Work id in Payment Screen:", workId);
-  const Popup = () => {
-    setShowSuccessPopup(true);
-  }
+
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']}>
       <Header_back text={t('payment.title')} iconColor='#3B82F6' onPress={() => navigation.goBack()} />
@@ -239,8 +239,19 @@ const { t } = useTranslation();
                     className="w-24 h-24 mb-2"
                     resizeMode="contain"
                   />
-                  <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForWork')}</Text>
 
+                  {invoiceType === "WORK" && (
+                    
+                  <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForWork')}</Text>
+                  )}
+                  {invoiceType === "APPEND_WORK" && (
+
+                  <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForAppendWork')}</Text>
+                  )}
+                  {invoiceType === "USER_RECOMEND__STAR" && (
+                    
+                  <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForStar')}</Text>
+                  )}
 
                 </View>
 

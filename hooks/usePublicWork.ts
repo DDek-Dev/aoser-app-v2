@@ -92,6 +92,33 @@ export const useUpdateWorkById = () => {
     }
   });
 }
+export const useUpdateAppendWorkById = () => {
+  const {t} = useTranslation();
+  const { tokens } = useAuth();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => { // Change Job[] to any
+      return publiceWorkApi.updateAppendWorkById(id, data, tokens?.accessToken || '');
+    },
+
+    // Add onSuccess and onError handlers for better UX
+    onSuccess: () => {
+      // You can add success actions here
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('editWork.toast.success'),
+        textBody: t('editWork.toast.text_success'),
+      })
+    },
+    onError: (error) => {
+      console.log('Update error:', error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+       title: t('editWork.toast.error'),
+        textBody: t('editWork.toast.text_error'),
+      })
+    }
+  });
+}
 export const useAppendOwnerWork = () => {
   const {t} = useTranslation();
   const { tokens } = useAuth();
@@ -107,6 +134,33 @@ export const useAppendOwnerWork = () => {
         type: ALERT_TYPE.SUCCESS,
         title: t('editWork.toast.success'),
         textBody: t('editWork.toast.append_success'),
+      })
+    },
+    onError: (error) => {
+      console.log('Update error:', error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+       title: t('editWork.toast.error'),
+        textBody: t('editWork.toast.text_error'),
+      })
+    }
+  });
+}
+export const useAcceptAppendWork = () => {
+  const {t} = useTranslation();
+  const { tokens } = useAuth();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => { // Change Job[] to any
+      return publiceWorkApi.acceptAppendWork(id, data, tokens?.accessToken || '');
+    },
+
+    // Add onSuccess and onError handlers for better UX
+    onSuccess: () => {
+      // You can add success actions here
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('editWork.toast.success'),
+        textBody: t('editWork.toast.text_success'),
       })
     },
     onError: (error) => {

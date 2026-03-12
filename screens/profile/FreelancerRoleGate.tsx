@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,7 +13,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 const FreelancerRoleGate = () => {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const { data, refetch } = useMyProfile();
+  const { data, refetch, isLoading } = useMyProfile();
 
 
    // Refetch profile data when screen comes into focus
@@ -29,10 +29,27 @@ const FreelancerRoleGate = () => {
     }
   }, [data, navigation]);
   const { t } = useTranslation();
+
+  const isPendingRegistration =
+    (data?.businessType === 'CUSTOMER' || data?.businessType === 'FREELANCER') &&
+    data?.registrationStatus === 'PENDING';
+  const isRejectedRegistration =
+    (data?.businessType === 'CUSTOMER' || data?.businessType === 'FREELANCER') &&
+    data?.registrationStatus === 'REJECTED';
+  const canStartRegistration =
+    data?.businessType === 'CUSTOMER' && data?.registrationStatus === "";
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-background justify-center items-center">
+        <ActivityIndicator size="large" color="#3B82F6" />
+      </SafeAreaView>
+    );
+  }
   return (
     <SafeAreaView className="flex-1 bg-background justify-center px-6">
 
-      {data?.businessType === 'CUSTOMER' && data?.registrationStatus === 'PENDING' && (
+      {isPendingRegistration && (
 
         <View className="flex-1 items-center justify-center px-6">
           {/* Animated Status Icon */}
@@ -79,7 +96,7 @@ const FreelancerRoleGate = () => {
       </TouchableOpacity> */}
 
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.popToTop()}
               className="bg-primary flex-row gap-2 justify-center border border-border py-4 px-6 rounded-xl items-center"
             >
               <MaterialIcons name="chevron-left" size={24} color="#FFFFFF" />
@@ -99,7 +116,7 @@ const FreelancerRoleGate = () => {
 
 
 
-      {data?.businessType === 'CUSTOMER' && data?.registrationStatus === 'REJECTED' && (
+      {isRejectedRegistration && (
         <View className="flex-1 items-center justify-center px-6">
           {/* Error Icon */}
           <View className="bg-error/10 w-32 h-32 rounded-full items-center justify-center mb-6">
@@ -169,7 +186,7 @@ const FreelancerRoleGate = () => {
       </TouchableOpacity> */}
 
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={() => navigation.popToTop()}
               className="py-3 items-center"
             >
               <Text className="text-textSecondary text-body">
@@ -180,7 +197,7 @@ const FreelancerRoleGate = () => {
         </View>
       )}
 
-      {data?.businessType === 'CUSTOMER' && data?.registrationStatus === "" && (
+      {canStartRegistration && (
         <View className="flex-1 items-center justify-center px-6">
           {/* Hero Image with Gradient Background */}
           <View className="mb-8">
@@ -260,7 +277,7 @@ const FreelancerRoleGate = () => {
 
           {/* Back Button */}
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.popToTop()}
             className="py-3"
           >
             <Text className="text-textSecondary text-body">
@@ -270,6 +287,22 @@ const FreelancerRoleGate = () => {
         </View>
       )}
 
+      {!isPendingRegistration && !isRejectedRegistration && !canStartRegistration && (
+        <View className="flex-1 items-center justify-center px-6">
+          <Text className="text-body text-textSecondary text-center mb-6">
+            {t('freelancerRoleGate.pendingSubtitle')}
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            className="bg-primary flex-row gap-2 justify-center border border-border py-4 px-6 rounded-xl items-center"
+          >
+            <MaterialIcons name="chevron-left" size={24} color="#FFFFFF" />
+            <Text className="text-surface text-body font-semibold">
+              {t('freelancerRoleGate.backToHomeButton')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
     </SafeAreaView>
   );

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Image, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -42,7 +42,7 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
     // Flatten all pages into a single array
     const allFreelancers = data?.pages.flat();
 
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     // Listen to scroll position and trigger load more
     useEffect(() => {
         if (!scrollY || !containerRef.current) return;
@@ -103,12 +103,12 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
 
     const handleNavigate = (item_id: string) => {
         if (isAuthenticated && user?._id === item_id) {
-            console.log("user in logged in" , item_id)
+            console.log("user in logged in", item_id)
 
             navigation.replace('AuthFreelancerProfile', { userId: item_id })
 
         } else {
-            console.log("user not logged in" , item_id)
+            console.log("user not logged in", item_id)
 
             navigation.replace('FreelancerProfile', { userId: item_id })
 
@@ -164,9 +164,24 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
                                     {item.jobTitle}
                                 </Text>
 
-                                <Text className="text-caption text-textSecondary" numberOfLines={2}>
-                                    {item.customerExpect}
-                                </Text>
+                                {item.address &&
+
+
+                                    <View className="flex-row items-end">
+                                        {/* <Text>{t('workDetail.deadline')} : </Text> */}
+                                        {/* <Text>{t('payment_success.address')}:  </Text> */}
+                                        <Ionicons name="location-outline" size={18} color="#6B7280" />
+
+                                        <View className="">
+
+                                            <Text className="text-[12px] text-textSecondary" numberOfLines={1}>
+                                                {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                                                {item.address.village}, {item.address.district}, {item.address.province}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                }
                             </View>
                         </Pressable>
                     ))}

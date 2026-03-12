@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getInfoAsync } from 'expo-file-system/legacy';
@@ -33,6 +33,8 @@ const MIME_TYPE_MAP: Record<string, string> = {
   avi: 'video/x-msvideo',
   m4v: 'video/x-m4v',
 };
+const PREVIEW_DURATION_MS = 5000;
+const loadedVideoUriCache = new Set<string>();
 
 const SelectVideo: React.FC<Props> = ({ 
   video, 
@@ -42,6 +44,8 @@ const SelectVideo: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const playerRef = useRef<any>(null);
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState(() => !!video && !loadedVideoUriCache.has(video));
   const [modalState, setModalState] = useState<ModalState>({
     visible: false,
     title: '',
@@ -49,17 +53,30 @@ const SelectVideo: React.FC<Props> = ({
   });
 
   const player = useVideoPlayer(
-    video ? { uri: video } : null,
+    video ? { uri: video, useCaching: true as const } : null,
     (playerInstance) => {
       playerRef.current = playerInstance;
-      playerInstance.loop = true;
+      playerInstance.loop = false;
       playerInstance.muted = true;
-      playerInstance.play();
+      playerInstance.keepScreenOnWhilePlaying = false;
     }
   );
 
   useEffect(() => {
+    setIsVideoLoading(!!video && !loadedVideoUriCache.has(video));
+  }, [video]);
+
+  const markVideoLoaded = () => {
+    if (video) loadedVideoUriCache.add(video);
+    setIsVideoLoading(false);
+  };
+
+  useEffect(() => {
     return () => {
+      if (previewTimeoutRef.current) {
+        clearTimeout(previewTimeoutRef.current);
+        previewTimeoutRef.current = null;
+      }
       playerRef.current = null;
     };
   }, []);
@@ -67,18 +84,29 @@ const SelectVideo: React.FC<Props> = ({
   useEffect(() => {
     if (!player) return;
 
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current);
+      previewTimeoutRef.current = null;
+    }
+
     if (video) {
       try {
-        player.replace?.({ uri: video });
+        player.replace?.({ uri: video, useCaching: true });
+        // Show a short preview, then pause so the screen can sleep normally.
+        player.currentTime = 0;
         player.play?.();
+        previewTimeoutRef.current = setTimeout(() => {
+          try { player.pause?.(); } catch (error) {}
+          previewTimeoutRef.current = null;
+        }, PREVIEW_DURATION_MS);
       } catch (error) {
-        console.error('Error updating video source:', error);
+        console.log('Error updating video source:', error);
       }
     } else {
       try {
         player.pause?.();
       } catch (error) {
-        console.error('Error pausing player:', error);
+        console.log('Error pausing player:', error);
       }
     }
   }, [video, player]);
@@ -118,7 +146,7 @@ const SelectVideo: React.FC<Props> = ({
 
       return true;
     } catch (error) {
-      console.error('Error validating file size:', error);
+      console.log('Error validating file size:', error);
       return false;
     }
   };
@@ -206,7 +234,7 @@ const SelectVideo: React.FC<Props> = ({
 
       onChange(fileWithType);
     } catch (error) {
-      console.error('Error processing video:', error);
+      console.log('Error processing video:', error);
       showModal(
         t('selectVideo.error'),
         t('selectVideo.errorMessage')
@@ -216,6 +244,11 @@ const SelectVideo: React.FC<Props> = ({
   };
 
   const handleRemoveVideo = () => {
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current);
+      previewTimeoutRef.current = null;
+    }
+    try { playerRef.current?.pause?.(); } catch (error) {}
     playerRef.current = null;
     onChange(undefined);
   };
@@ -233,7 +266,13 @@ const SelectVideo: React.FC<Props> = ({
               <VideoView
                 player={player}
                 style={styles.videoView}
+                onFirstFrameRender={markVideoLoaded}
               />
+            )}
+            {isVideoLoading && (
+              <View style={styles.videoLoadingOverlay}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              </View>
             )}
             <TouchableOpacity
               onPress={handleRemoveVideo}
@@ -303,6 +342,13 @@ const styles = StyleSheet.create({
   videoView: {
     width: '100%',
     height: 200,
+    borderRadius: 12,
+  },
+  videoLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 12,
   },
   uploadButton: {

@@ -21,8 +21,6 @@ import Hire_Chat_Button from './Hire_Chat_Button';
 import WhatExpected from 'components/profile/whatExpect';
 import VDOPromote from 'components/profile/VDOPromote';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
-import ResumeImage from 'components/profile/ResumeImage';
-import FloatingProfileButtons from 'components/profile/FloatingProfileButtons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 
@@ -32,29 +30,14 @@ import { Favorite } from 'types';
 import { useAuth } from 'hooks/useAuth';
 import FamiliarFreelancers from './FamiliarFreelancer';
 import { useTranslation } from 'react-i18next';
+import FreelancerSkeleton from 'screens/freelancer/FreelancerSkeleton';
 
 // Constants
 const DEBOUNCE_DELAY = 100;
 const REFETCH_DELAY = 300; // Delay before refetching to ensure backend updates
 
-/**
- * FreelancerProfile Component
- * 
- * Displays a freelancer's complete profile with:
- * - Profile header with banner and avatar
- * - Favorite/like functionality
- * - Statistics and reviews
- * - Video promotion
- * - Resume and work expectations
- * - Similar freelancers recommendations
- * 
- * Features:
- * - Optimistic UI updates for likes
- * - Debounced favorite toggle to prevent spam
- * - Loading and error states
- * - Share functionality (iOS & Android compatible)
- * - Navigation to chat
- */
+
+
 export default function FreelancerProfile() {
   // Navigation & Route
   const route = useRoute<RouteProp<FreelancerStackParamList, 'FreelancerProfile'>>();
@@ -148,7 +131,7 @@ export default function FreelancerProfile() {
     } catch (error) {
       // Revert optimistic update on error
       setIsFavorite(false);
-      console.error('[Favorite] ❌ Error creating:', error);
+      console.log('[Favorite] ❌ Error creating:', error);
     }
   }, [profile?._id, createFavorite, refetch]);
 
@@ -275,7 +258,7 @@ export default function FreelancerProfile() {
         console.log('[Share] Dismissed by user');
       }
     } catch (error) {
-      console.error('[Share] ❌ Error:', error);
+      console.log('[Share] ❌ Error:', error);
     }
   }, [userId, t]);
 
@@ -285,12 +268,7 @@ export default function FreelancerProfile() {
   if (isLoadingProfile || isLoadingReviews) {
     return (
       <ScreenWrapper safeEdges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
-        <View className="flex-1 justify-center items-center bg-white">
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text className="text-gray-600 mt-4">
-            {t('freelancer_profile.loading')}
-          </Text>
-        </View>
+         <FreelancerSkeleton/>
       </ScreenWrapper>
     );
   }
@@ -348,6 +326,7 @@ export default function FreelancerProfile() {
       </ScreenWrapper>
     );
   }
+
 
   // =================================================================
   // MAIN RENDER - Profile Content
@@ -427,8 +406,7 @@ export default function FreelancerProfile() {
         {/* ===== TABBED PROFILE SECTION ===== */}
         <TabbedProfileSection profile={profile} stylepadd="" />
 
-        {/* ===== RESUME IMAGE ===== */}
-        {profile.resumeImage && <ResumeImage resumeImage={profile.resumeImage} />}
+        
 
         {/* ===== WHAT TO EXPECT ===== */}
         <WhatExpected profile={profile} />

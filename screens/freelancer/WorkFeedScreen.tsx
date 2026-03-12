@@ -47,7 +47,9 @@ const WorkFeedScreen = () => {
   const [displayedJobs, setDisplayedJobs] = useState<Job[]>([]);
   const [visibleJobsCount, setVisibleJobsCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  // const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
   const [jobDetailVisible, setJobDetailVisible] = useState(false);
   const [shouldRestorePopup, setShouldRestorePopup] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -65,11 +67,13 @@ const WorkFeedScreen = () => {
 
 
   // API hook with optimized cache settings
-  const { data, isLoading, error, refetch, isFetching } = usePublicWork({
+  const { data:jobs, isLoading, error, refetch, isFetching } = usePublicWork({
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   });
+  const selectedJob = jobs?.find(j => j._id === selectedJobId) ?? null;
+
   const convertToPascalCase = (str: string): string => {
     return str
       .replace(/[-_]/g, ' ')
@@ -96,7 +100,6 @@ const WorkFeedScreen = () => {
 
     const IconComponent = getIcon(item?.serviceType?.icon);
 
-    // console.log('item.create by:', JSON.stringify(item , null, 2));
 
     return (
 
@@ -175,15 +178,16 @@ const WorkFeedScreen = () => {
 
             <View className="flex-row items-center">
               <Text>{t('postWork.budget')} : </Text>
+              <Text className="font-bold text-body text-warning ml-2">{item.currency} </Text>
               <Text className="font-bold text-body text-primary">
                 {new Intl.NumberFormat().format(item.budget)}
               </Text>
-              <Text className="font-bold text-body text-warning ml-2">{item.currency} </Text>
             </View>
 
           )}
 
 
+          {item.startDate !==undefined  && 
 
           <View className="flex-row mt-3 items-center">
             <Text>{currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'} : </Text>
@@ -196,6 +200,9 @@ const WorkFeedScreen = () => {
               </Text>
             </View>
           </View>
+          }
+
+          {item.deadLine !==undefined  && 
           <View className="flex-row mt-3 items-center">
             {/* <Text>{t('workDetail.deadline')} : </Text> */}
             <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
@@ -210,9 +217,10 @@ const WorkFeedScreen = () => {
               </Text>
             </View>
           </View>
+          
+          }
 
-          {item.address &&
-
+          {item.address.village !=='' && item.address.district !=='' && item.address.province !== '' &&
 
             <View className="flex-row mt-3 items-center">
               {/* <Text>{t('workDetail.deadline')} : </Text> */}
@@ -278,12 +286,12 @@ const WorkFeedScreen = () => {
 
   // Initialize jobs data
   useEffect(() => {
-    if (data && Array.isArray(data)) {
-      setOriginalJobs(data);
-      setDisplayedJobs(data);
+    if (jobs && Array.isArray(jobs)) {
+      setOriginalJobs(jobs);
+      setDisplayedJobs(jobs);
       setVisibleJobsCount(ITEMS_PER_PAGE);
     }
-  }, [data]);
+  }, [jobs]);
 
   // Entry animation
   useEffect(() => {
@@ -344,7 +352,7 @@ const WorkFeedScreen = () => {
     try {
       await refetch();
     } catch (err) {
-      console.error('Refresh error:', err);
+      console.log('Refresh error:', err);
     } finally {
       setRefreshing(false);
     }
@@ -383,9 +391,10 @@ const WorkFeedScreen = () => {
 
   // Job press handlers
   const handleJobPress = useCallback((job: Job) => {
-    setSelectedJob(job);
+    // setSelectedJob(job);
+    setSelectedJobId(job._id);
     setJobDetailVisible(true);
-    setShouldRestorePopup(false);
+  
   }, []);
 
   const handleWorkPress = useCallback((job: Job) => {
@@ -394,14 +403,14 @@ const WorkFeedScreen = () => {
 
   const handleUserProfileNavigation = useCallback((userId: string) => {
     setJobDetailVisible(false);
-    setShouldRestorePopup(true);
+
     navigations.navigate('FreelancerProfile', { userId });
   }, [navigations]);
 
   const handleCloseJobDetail = useCallback(() => {
     setJobDetailVisible(false);
-    setSelectedJob(null);
-    setShouldRestorePopup(false);
+    setSelectedJobId(null);
+;
   }, []);
 
   // Get visible jobs
@@ -444,7 +453,7 @@ const WorkFeedScreen = () => {
   }
 
   // Empty state
-  if (!data || !Array.isArray(data) || data.length === 0) {
+  if ( !Array.isArray(jobs) || jobs.length === 0) {
     return (
       <ScreenWrapper>
         <View className="flex-1 justify-center items-center p-4">
@@ -626,7 +635,8 @@ const WorkFeedScreen = () => {
               )}
             </>
           ) : (
-            <NoResults />
+            activeCategory === 'All'? <ActivityIndicator/> : <NoResults />
+           
           )}
         </View>
       </Animated.ScrollView>
@@ -636,7 +646,7 @@ const WorkFeedScreen = () => {
         onClose={handleCloseJobDetail}
         job={selectedJob}
         refetch={refetch}
-        onUserPress={handleUserProfileNavigation}
+        // onUserPress={handleUserProfileNavigation}
       />
     </>
   );

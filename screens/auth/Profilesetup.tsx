@@ -75,9 +75,9 @@ const ProfileSetup = () => {
         lastName: false,
         phone: false,
         profileImage: false,
-        province: false,
-        district: false,
-        village: false,
+        // province: false,
+        // district: false,
+        // village: false,
     });
 
     // API hooks
@@ -125,7 +125,7 @@ const ProfileSetup = () => {
         };
 
         setErrors(newErrors);
-        return !newErrors.gender && !newErrors.firstName && !newErrors.lastName && !newErrors.phone && !newErrors.profileImage && !newErrors.province && !newErrors.district && !newErrors.village;
+        return !newErrors.gender && !newErrors.firstName && !newErrors.lastName && !newErrors.phone && !newErrors.profileImage 
     };
 
 
@@ -178,14 +178,7 @@ const ProfileSetup = () => {
 
     if (error || !addressData || addressData.length === 0) {
         return (
-            <View>
-                <Text className="text-subheading text-text mb-4">{t('kyc.step4.loading.title')}</Text>
-                <View className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <Text className="text-body text-red-600">
-                        {t('kyc.step4.error')}
-                    </Text>
-                </View>
-            </View>
+            <LoadingScreen />
         );
     }
 
@@ -250,15 +243,15 @@ const ProfileSetup = () => {
                 lastName: lastName.trim(),
                 phone: phone.trim(),
                 userProfileImage: finalProfileImage,
-                address: {
-                    province: selectedProvince?.province_la,
-                    district: selectedDistrict?.district_la,
-                    village: village
-                }
+                // address: {
+                //     province: selectedProvince?.province_la,
+                //     district: selectedDistrict?.district_la,
+                //     village: village
+                // }
 
             };
 
-            console.log('Updating profile with data:', JSON.stringify(profileData, null, 2));
+            // console.log('Updating profile with data:', JSON.stringify(profileData, null, 2));
 
             updateProfile(profileData, {
                 onSuccess: () => {
@@ -314,10 +307,10 @@ const ProfileSetup = () => {
         try {
             const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!permission.granted) {
-                Alert.alert(
-                    t('editProfile.permission_required'),
-                    t('editProfile.permission_message')
-                );
+                // Alert.alert(
+                //     t('editProfile.permission_required'),
+                //     t('editProfile.permission_message')
+                // );
                 return;
             }
 
@@ -356,10 +349,10 @@ const ProfileSetup = () => {
             }
         } catch (error) {
             console.log('Image picker error:', error);
-            Alert.alert(
-                t('editProfile.error'),
-                t('editProfile.pick_image_error')
-            );
+            // Alert.alert(
+            //     t('editProfile.error'),
+            //     t('editProfile.pick_image_error')
+            // );
         }
     };
 
@@ -368,10 +361,10 @@ const ProfileSetup = () => {
         try {
             const permission = await ImagePicker.requestCameraPermissionsAsync();
             if (!permission.granted) {
-                Alert.alert(
-                    t('editProfile.camera_permission_required'),
-                    t('editProfile.camera_permission_message')
-                );
+                // Alert.alert(
+                //     t('editProfile.camera_permission_required'),
+                //     t('editProfile.camera_permission_message')
+                // );
                 return;
             }
 
@@ -409,10 +402,10 @@ const ProfileSetup = () => {
             }
         } catch (error) {
             console.log('Camera error:', error);
-            Alert.alert(
-                t('editProfile.error'),
-                t('editProfile.camera_error')
-            );
+            // Alert.alert(
+            //     t('editProfile.error'),
+            //     t('editProfile.camera_error')
+            // );
         }
     };
 
@@ -796,7 +789,7 @@ const ProfileSetup = () => {
 
 
 
-                        <Text className="text-body text-text mb-2">{t('kyc.step4.location.title')} </Text>
+                        {/* <Text className="text-body text-text mb-2">{t('kyc.step4.location.title')} </Text>
 
                         <View className='bg-blue-50 px-4 py-4 rounded-xl'>
                             <Dropdown
@@ -818,8 +811,7 @@ const ProfileSetup = () => {
                                 options={districtOptions}
                                 onSelect={handleDistrictSelect}
                                 disabled={!selectedProvince}
-                            // error={errors?.district}
-                            // errorMessage="District is required"
+                        
                             />
 
                             <View className="mb-4">
@@ -850,7 +842,7 @@ const ProfileSetup = () => {
                             </View>
 
 
-                        </View>
+                        </View> */}
                     </View>
                 </ScrollView>
 

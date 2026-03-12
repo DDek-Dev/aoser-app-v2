@@ -1,8 +1,8 @@
 
 
-import { BookingFormData, Job, SubWorkDetail, WorkApplicant, WorkById } from "types";
+import { BookingFormData, Job, SubWorkDetail, WorkById } from "types";
 // hooks/usePublicWork.ts
-import { useQuery, useMutation, useQueryClient, UseMutationResult } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { publiceWorkApi } from "api/publicWork";
 import { useAuth } from "./useAuth";
 import { ALERT_TYPE, Toast } from "react-native-alert-notification";
@@ -103,11 +103,12 @@ export const useUpdateAppendWorkById = () => {
     // Add onSuccess and onError handlers for better UX
     onSuccess: () => {
       // You can add success actions here
-      Toast.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: t('editWork.toast.success'),
-        textBody: t('editWork.toast.text_success'),
-      })
+      // Toast.show({
+      //   type: ALERT_TYPE.SUCCESS,
+      //   title: t('editWork.toast.success'),
+      //   textBody: t('editWork.toast.text_success'),
+      // })
+      console.log(t('editWork.toast.success'))
     },
     onError: (error) => {
       console.log('Update error:', error);

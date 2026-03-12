@@ -42,6 +42,7 @@ export const useFreeLancers = () => {
     refetchOnMount: false, // Use cache on mount
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    
   });
 };
 
@@ -64,22 +65,16 @@ export const useSearchFreelancers = (searchTerm: string) => {
 };
 
 export const useFreelancerById = (userId: string) => {
-  const { tokens } = useAuth();
 
   return useQuery<Freelancer | null>({
     queryKey: ['freelancer', userId],
     queryFn: async () => {
       if (!userId) return null;
-      
-      if (!tokens?.accessToken) {
-        throw new Error('No access token available');
-      }
-      
       const response = await axios.get(`${API_BASE_URL}/worker/freelancer/${userId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Aoser ${tokens.accessToken}`,
-        },
+        // headers: {
+        //   'Content-Type': 'application/json',
+        //   'Authorization': `Aoser ${tokens.accessToken}`,
+        // },
       });
 
       if (Array.isArray(response.data.data)) {
@@ -87,7 +82,7 @@ export const useFreelancerById = (userId: string) => {
       }
       return response.data.data || null;
     },
-    enabled: !!userId && !!tokens?.accessToken,
+    enabled: !!userId,
   });
 };
 
@@ -310,6 +305,7 @@ export const useGetTopfreelancers = () => {
     refetchOnWindowFocus: true,
     refetchOnMount: false, // Don't always refetch, use cache first
     retry: 2,
+    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -344,6 +340,7 @@ export const useRecommendedFreelancers = (serviceTypeId: string) => {
     refetchOnMount: 'always', // Always check for new data on mount
     retry: 2, // Retry failed requests twice
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    placeholderData: (previousData) => previousData,
   });
 };
 export const usePopularJobs = () => {
@@ -377,6 +374,20 @@ export function useMyProfile() {
   return useQuery({
     queryKey: ['myProfile'],
     queryFn: () => workerApi.getMyProfile(tokens?.accessToken || ''),
+    enabled: !!tokens,
+    // Add staleTime to control when data is considered stale
+    staleTime: 0, // Always consider data stale so it refetches on focus
+    // Optionally add cacheTime if you want to keep data in cache longer
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes (gcTime replaces cacheTime in React Query v5)
+  });
+}
+
+export function useAdminID() {
+  const { tokens } = useAuth();
+
+  return useQuery({
+    queryKey: ['adminId'],
+    queryFn: () => workerApi.getAdminId(tokens?.accessToken || ''),
     enabled: !!tokens,
     // Add staleTime to control when data is considered stale
     staleTime: 0, // Always consider data stale so it refetches on focus
@@ -451,11 +462,11 @@ export function useGetJobsByServiceType(serviceTypeId: string) {
 }
 
 export function useFreelancerReviews(freelancerId: string) {
-  const { tokens } = useAuth();
+  
 
   return useQuery<Review[]>({
     queryKey: ['reviews', freelancerId],
-    queryFn: () => workerApi.getReviews(freelancerId, tokens?.accessToken || ''),
+    queryFn: () => workerApi.getReviews(freelancerId),
     enabled: !!freelancerId,
     initialData: [],
 

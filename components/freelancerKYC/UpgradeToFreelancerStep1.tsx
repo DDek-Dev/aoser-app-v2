@@ -110,25 +110,6 @@ const UpgradeToFreelancerStep1 = (
                 isValidate={`${errors.jobTitle ? t('kyc.step1.jobTitle.required') : ''}`}
             />
 
-
-            <SelectImage
-                image={bannerImageFile?.uri || null}
-                label={t('kyc.step1.bannerImage.label')}
-                onChange={handleImageChange}
-                required
-                inputClassName={errors.bannerImageFile ? 'border-error' : 'border-border'}
-                isValidate={`${errors.bannerImageFile ? t('kyc.step1.bannerImage.required') : ''}`}
-            />
-
-            <SelectVideo
-                video={promoVideoFile?.uri || null}
-                label={t('kyc.step1.promoVideo.label')}
-                // required
-                onChange={handleVideoChange}
-            />
-            {/* Freelancer Type */}
-
-
             <SelectFreelancerType
                 label={t('kyc.step1.freelancerType.label')}
                 value={freelancerType}
@@ -158,9 +139,22 @@ const UpgradeToFreelancerStep1 = (
                     isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
                 />
             </View>
+            <SelectImage
+                image={bannerImageFile?.uri || null}
+                label={t('kyc.step1.bannerImage.label')}
+                onChange={handleImageChange}
+                required
+                inputClassName={errors.bannerImageFile ? 'border-error' : 'border-border'}
+                isValidate={`${errors.bannerImageFile ? t('kyc.step1.bannerImage.required') : ''}`}
+            />
 
+            <SelectVideo
+                video={promoVideoFile?.uri || null}
+                label={t('kyc.step1.promoVideo.label')}
+                // required
+                onChange={handleVideoChange}
+            />
 
-            {/* <ServiceTypeList /> */}
 
         </View>
 

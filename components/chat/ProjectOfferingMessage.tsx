@@ -124,17 +124,13 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     <Text className="text-gray-500 text-caption" numberOfLines={2}>
                         {workData.workId?.description}
                     </Text>
-                </TouchableOpacity>
 
-                {/* Comparison Section */}
-                <View className="px-4 py-4">
-                    {/* Original Terms */}
-                    <View className="mb-3">
+                    <View className="my-2">
                         <Text className="text-caption font-semibold text-gray-400 uppercase mb-2 tracking-wide">
                             {t('chat.offer.original_terms') || 'Original Terms'}
                         </Text>
-                        <View className="flex-row items-center justify-between bg-gray-50 rounded-xl p-3">
-                            <View className="flex-row items-center flex-1">
+                        <View className=" bg-gray-50 rounded-xl p-3">
+                            <View className="flex-row items-center flex-1 mb-2">
                                 <View className="bg-gray-200 rounded-lg p-2 mr-3">
                                     <Ionicons name="wallet-outline" size={18} color="#6B7280" />
                                 </View>
@@ -158,21 +154,27 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                             </View>
                         </View>
                     </View>
+                </TouchableOpacity>
+
+                {/* Comparison Section */}
+                <View className="px-4 py-4">
+                    {/* Original Terms */}
+
 
                     {/* Arrow Indicator */}
-                    <View className="items-center my-2">
+                    <View className="items-center my-1">
                         <View className="bg-blue-100 rounded-full p-2">
                             <Ionicons name="arrow-down" size={16} color="#3B82F6" />
                         </View>
                     </View>
 
                     {/* New Offering */}
-                    <View className="mb-4">
+                    <View className="mb-2">
                         <Text className="text-caption font-semibold text-primary uppercase mb-2 tracking-wide">
                             {t('chat.offer.new_terms') || ' Proposed Terms'}
                         </Text>
-                        <View className="flex-row gap-3 items-center justify-between bg-blue-50 rounded-xl p-3 border-2 border-blue-200">
-                            <View className="flex-row items-center flex-1">
+                        <View className=" bg-blue-50 rounded-xl p-3 border-2 border-blue-200">
+                            <View className="flex-row items-center flex-1 mb-2">
                                 <View className="bg-blue-500 rounded-lg p-2 mr-3">
                                     <Ionicons name="wallet" size={18} color="white" />
                                 </View>
@@ -227,20 +229,20 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                 </View>
                             )}
 
-                            {/* Show rejected message */}
-                            {(workData.requestStatus === "REJECTED" || isRejected) && (
-                                <View className="flex-row gap-2">
-                                    <Text className='text-warning'>{t('chat.offer.reject_offering')}</Text>
-                                </View>
-                            )}
-
-                            {/* Show confirmed message */}
-                            {(workData.requestStatus === "CONFIRM" || isAccepted) && (
-                                <View className="flex-row gap-2">
-                                    <Text className='text-secondary'>{t('chat.offer.comfirm_offering')}</Text>
-                                </View>
-                            )}
                         </>
+                    )}
+                    {/* Show rejected message */}
+                    {(workData.requestStatus === "REJECTED" || isRejected) && (
+                        <View className="flex-row gap-2">
+                            <Text className='text-warning'>{t('chat.offer.reject_offering')}</Text>
+                        </View>
+                    )}
+
+                    {/* Show confirmed message */}
+                    {(workData.requestStatus === "CONFIRM" || isAccepted) && (
+                        <View className="flex-row gap-2">
+                            <Text className='text-secondary'>{t('chat.offer.comfirm_offering')}</Text>
+                        </View>
                     )}
                 </View>
             </View>

@@ -72,7 +72,7 @@ export default function SignUpScreen() {
       .required(t('signUpScreen.email_required')),
     password: yup
       .string()
-      .min(4, t('signUpScreen.password_min'))
+      .min(6, t('signUpScreen.password_min'))
       .required(t('signUpScreen.password_required')),
     rePassword: yup
       .string()

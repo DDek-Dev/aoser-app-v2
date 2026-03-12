@@ -1,15 +1,16 @@
 import { View, Text, Image, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useAuth } from 'hooks/useAuth';
-import { useMyProfile } from 'hooks/useFreelancer';
+import { useAdminID, useMyProfile } from 'hooks/useFreelancer';
 import { UserProfile } from 'types/profile';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import LogoutModal from 'components/ui/LogoutModal';
 import Constants from 'expo-constants';
+import { ref } from 'yup';
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -17,16 +18,17 @@ const ProfileScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { loading, logout, isAuthenticated } = useAuth();
-  const { data, isLoading, isError } = useMyProfile();
+  const { data, isLoading, isError, refetch } = useMyProfile();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { data: adminID, isLoading: adminIdLoading } = useAdminID();
 
   // Configuration arrays
-  const settings = [
-    { label: t('profile.edit_profile'), icon: 'person-outline', route: 'EditAoserProfile' },
-    { label: t('profile.language'), icon: 'globe-outline', route: "LanguageSelectScreen" },
-    { label: t('profile.change_password'), icon: 'lock-closed-outline', route: 'ChangePasswordScreen' },
-    { label: t('profile.help_support'), icon: 'help-circle-outline', route: { name: 'RoomChat', params: { userId: '6853c25573b87254cf4c510a' } } },
-  ];
+const settings = useMemo(() => [
+  { label: t('profile.edit_profile'), icon: 'person-outline', route: 'EditAoserProfile' },
+  { label: t('profile.language'), icon: 'globe-outline', route: "LanguageSelectScreen" },
+  { label: t('profile.change_password'), icon: 'lock-closed-outline', route: 'ChangePasswordScreen' },
+  { label: t('profile.help_support'), icon: 'help-circle-outline', route: { name: 'RoomChat', params: { userId: adminID } } },
+], [adminID, t]);
 
   const policy = [
     { label: t('profile.privacy_policy'), icon: 'document-text-outline', route: 'PrivacyPolicyScreen' },
@@ -43,6 +45,13 @@ const ProfileScreen = () => {
       routes: [{ name: 'MainTabs' }],
     });
   };
+
+  useFocusEffect(
+    useCallback(() => {
+     
+      refetch();
+    }, [])
+  );
 
   const handleNavigate = (route: any) => {
     try {
@@ -93,7 +102,7 @@ const ProfileScreen = () => {
 
   const AuthenticatedProfile = () => (
     // <Pressable onPress={() => navigation.navigate('UserIdScreen', { userId: data as UserProfile })}>
-    <Pressable onPress={() => navigation.navigate('CustomerProfile', { userId: data?._id  as string })}>
+    <Pressable onPress={() => navigation.navigate('CustomerProfile', { userId: data?._id as string })}>
       <View className="flex-row items-center">
         <Image
           source={{ uri: BASE_IMAGE + data?.userProfileImage }}
@@ -114,7 +123,7 @@ const ProfileScreen = () => {
       <Pressable
         onPress={() => navigation.navigate('SignIn')}
         className="bg-blue-50 px-8 py-4 rounded-lg mb-3"
-        // activeOpacity={0.8}
+      // activeOpacity={0.8}
       >
         <Text className="text-warning font-semibold text-body  h-6 text-center">
           {t('profile.signin')}
@@ -123,7 +132,7 @@ const ProfileScreen = () => {
 
       <Pressable
         onPress={() => navigation.navigate('SignUp')}
-        // activeOpacity={0.8}
+      // activeOpacity={0.8}
       >
         <Text className="text-primary font-semibold text-body text-center">
           {t('loginScreen.signup')} ?
@@ -198,7 +207,7 @@ const ProfileScreen = () => {
       <View className="px-4 my-8 flex-row justify-between items-center">
         <View className="flex-1 mr-4">
           {isAuthenticated ? (
-            isLoading || !data || isError ? (
+            isLoading || !data || adminIdLoading|| isError ? (
               <ProfileLoadingSkeleton />
             ) : (
               <AuthenticatedProfile />
@@ -210,13 +219,13 @@ const ProfileScreen = () => {
         <QuickActions />
       </View>
 
-      <ScrollView
+      <View
         className="flex-1"
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
+        // showsHorizontalScrollIndicator={false}
+        // showsVerticalScrollIndicator={false}
       >
         {/* Main Content Card */}
-        <View className="bg-blue-50 mx-4 mt-8 p-4 rounded-2xl py-6">
+        <View className="bg-blue-50 mx-4 mt-4 p-4 rounded-2xl py-6">
           <FreelancerSection />
           <MenuSection title={t('profile.account_settings')} items={settings} />
           <MenuSection title={t('profile.conditions_policies')} items={policy} />
@@ -238,14 +247,14 @@ const ProfileScreen = () => {
           </View>
         )}
 
-        
+
         {/* Footer */}
         <View className="h-12 items-center justify-center mb-12 mt-4">
           <Text className="text-caption text-gray-400">
             {t('profile.application_version')}: v{Constants.expoConfig?.version}
           </Text>
         </View>
-      </ScrollView>
+      </View>
 
       <LogoutModal
         visible={showLogoutModal}

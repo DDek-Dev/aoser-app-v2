@@ -6,7 +6,8 @@ import {
   InteractionManager,
   TouchableWithoutFeedback,
   BackHandler,
-  StyleSheet
+  StyleSheet,
+  Pressable
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useTranslation } from 'react-i18next';
 import { WorkById } from 'types';
 import ProfileOn_InterestedMyView from 'components/profile/ProfileOn_InterestedMyView';
+import ProfileInCommand from 'components/publicwork/ProfileInCommand';
 
 interface InterestedFreelancerProps {
   visible: boolean;
@@ -22,9 +24,10 @@ interface InterestedFreelancerProps {
   user?: any;
   refetch: () => void;
   onUserPress: (userId: string) => void;
+  isFreelancer: boolean;
 }
 
-const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: InterestedFreelancerProps) => {
+const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress, isFreelancer }: InterestedFreelancerProps) => {
   const { t } = useTranslation();
   const job = jobs;
   const insets = useSafeAreaInsets();
@@ -33,8 +36,9 @@ const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: 
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const footerAnim = useRef(new Animated.Value(200)).current;
+  const [showProfile, setShowProfile] = useState(false);
 
-  const snapPoints = useMemo(() => ['70%', '100%'], []);
+  const snapPoints = useMemo(() => ['100%'], []);
 
   const basePosition70 = 564;
   const basePosition100 = 164;
@@ -65,6 +69,11 @@ const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: 
   // Handle Android back button
   useEffect(() => {
     const onBackPress = () => {
+      if (showProfile) {
+        setShowProfile(false);
+        return true;
+      }
+
       if (currentIndex >= 0) {
         bottomSheetModalRef.current?.dismiss();
         return true;
@@ -74,7 +83,7 @@ const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: 
 
     const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => backHandler.remove();
-  }, [currentIndex]);
+  }, [currentIndex, showProfile]);
 
   const handleSheetChanges = (index: number) => {
     setCurrentIndex(index);
@@ -96,6 +105,7 @@ const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: 
   };
 
   const handleDismiss = () => {
+    setShowProfile(false);
     setCurrentIndex(-1);
     Animated.timing(footerAnim, {
       toValue: 100,
@@ -123,7 +133,9 @@ const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: 
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
       onDismiss={handleDismiss}
-      enablePanDownToClose={true}
+      enablePanDownToClose={!showProfile}
+      enableContentPanningGesture={!showProfile}
+      enableHandlePanningGesture={!showProfile}
       backgroundStyle={styles.modalBackground}
       handleIndicatorStyle={styles.handleIndicator}
       topInset={insets.top}
@@ -135,13 +147,13 @@ const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: 
       )}
     >
       <BottomSheetScrollView
-        className="flex-1 px-4 bg-surface"
+        className="flex-1 px-1 bg-surface relative"
         showsVerticalScrollIndicator={false}
         bounces={true}
         contentContainerStyle={{ paddingBottom: 200 }}
       >
         <View className='bg-gray-200 w-full h-[1px] mb-4' />
-        
+
         <Text className='text-body font-bold text-text mb-4'>
           {t('works.interestedFreelancers.title')}
         </Text>
@@ -188,9 +200,31 @@ const InterestedFreelancer = ({ visible, onClose, jobs, refetch, onUserPress }: 
             handleUserProfileNavigation={onUserPress}
             onClose={handleDismiss}
             refetch={refetch}
+            isFreelancer={isFreelancer}
           />
         )}
+       
+
       </BottomSheetScrollView>
+        {isFreelancer && (
+          <Pressable
+            onPress={() => setShowProfile(true)}
+            // Added -translate-x-1/2 to shift it back to the true center
+            className="bg-primary p-6 absolute bottom-[10rem] left-1/2 -translate-x-1/2 rounded-full shadow-md -rotate-45"
+            style={styles.blueShadow}
+          >
+            <Ionicons name="send" size={24} color="white" />
+          </Pressable>
+
+        )}
+      {showProfile && (
+        <ProfileInCommand
+          jobId={jobs.work._id}
+          visible={showProfile}
+          onClose={() => setShowProfile(false)}
+          refetch={refetch}
+        />
+      )}
     </BottomSheetModal>
   );
 };
@@ -208,6 +242,13 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     backgroundColor: '#0000006f',
+  },
+  blueShadow: {
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
   },
 });
 

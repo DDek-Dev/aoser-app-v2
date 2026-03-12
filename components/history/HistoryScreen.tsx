@@ -11,6 +11,8 @@ import { usegetAllMyWork, useGetHiredFreelancers } from 'hooks/usePublicWork';
 import JobListItem from 'skeletonScreens/JobListItem';
 import { HistoryNoResult } from './HistoryNoResult';
 import { useTranslation } from 'react-i18next';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FreelancerStackParamList } from 'types/navigation';
 
 
 // const TABS = ['Public works', 'Freelancer', 'Accommodation', 'Driver', 'Company'] as const;
@@ -20,7 +22,9 @@ const TAB_KEYS = ['public_works', 'freelancer'];
 
 // Main component
 const HistoryScreen = () => {
-  const navigation = useNavigation();
+      const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
+    
+  
   const [selectedTab, setSelectedTab] = useState('public_works');
   const { t } = useTranslation();
   // Hooks
@@ -56,8 +60,8 @@ const HistoryScreen = () => {
       <View className="flex-1 bg-background">
         {/* Header */}
         <Header_back
-          text={t('history.history')}
-          onPress={() => navigation.goBack()}
+          text={t('profile.history')}
+          onPress={() => navigation.popToTop()}
           iconColor="#3B82F6"
           backgroundColor="bg-surface"
         />
@@ -89,7 +93,7 @@ const HistoryScreen = () => {
 
         {/* Content */}
         <ScrollView
-          className="bg-white flex-1 px-4 pt-6"
+          className="bg-white flex-1 px-2 "
           showsVerticalScrollIndicator={false}
         >
           {renderTabContent()}

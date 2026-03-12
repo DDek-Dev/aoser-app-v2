@@ -1,4 +1,4 @@
-import { View, StyleSheet, Pressable, Modal, SafeAreaView, Dimensions, Animated, AppState, AppStateStatus } from 'react-native';
+import { View, StyleSheet, Pressable, Modal, Dimensions, AppState, AppStateStatus } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useState, useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,53 +14,64 @@ type Props = {
 }
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
+const HOME_PREVIEW_DURATION_MS = 7000;
+const VISIBILITY_CHECK_INTERVAL_MS = 120;
+const ACTIVATE_VISIBILITY_RATIO = 0.25;
+const DEACTIVATE_VISIBILITY_RATIO = 0.1;
+const loadedVideoUriCache = new Set<string>();
 
 export default function VDOPromote({ video, isReview, context = 'home', scrollY, isScreenFocused = true }: Props) {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAppActive, setIsAppActive] = useState(appState.current === 'active');
   
-  const videoS = video
-    ? { uri: isReview ? video : `${IMAGES_BASE_URL}${video}` }
-    : null;
-
+  const videoUri = video ? (isReview ? video : `${IMAGES_BASE_URL}${video}`) : null;
+  const videoS = videoUri ? { uri: videoUri, useCaching: true as const } : null;
   const [showFullScreen, setShowFullScreen] = useState(false);
-  const videoRefHome = useRef<VideoView>(null);
   const [isVisible, setIsVisible] = useState(true);
-  const layoutRef = useRef<{ top: number; height: number } | null>(null);
   const containerRef = useRef<any>(null);
   const scrollListener = useRef<any>(null);
   const rafRef = useRef<number | null>(null);
+  const previewLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const measureThrottleRef = useRef(0);
+  const isVisibleRef = useRef(true);
 
-  if (!videoS) return null;
-
-  // Inline player with looping enabled
-  const inlinePlayer = useVideoPlayer(videoS, (p) => {
+  // Single shared player (inline + fullscreen) to avoid double decoder allocation.
+  const player = useVideoPlayer(videoS, (p) => {
     p.muted = true;
-    p.loop = true;
-    try { p.play(); } catch (e) {}
-  });
-
-  // Fullscreen player with looping enabled
-  const fullPlayer = useVideoPlayer(videoS, (p) => {
-    p.muted = false;
-    p.loop = true;
+    p.loop = false;
+    p.keepScreenOnWhilePlaying = false;
+    p.bufferOptions = {
+      preferredForwardBufferDuration: 10,
+      waitsToMinimizeStalling: true,
+      minBufferForPlayback: 1,
+      prioritizeTimeOverSizeThreshold: true,
+    };
   });
 
   const [muted, setMuted] = useState(true);
   const prevMutedRef = useRef<boolean>(muted);
-  const [isLoadingInline, setIsLoadingInline] = useState(true);
-  const [isLoadingFullscreen, setIsLoadingFullscreen] = useState(false);
+  const [isLoadingInline, setIsLoadingInline] = useState(() => !!videoUri && !loadedVideoUriCache.has(videoUri));
+  const [isLoadingFullscreen, setIsLoadingFullscreen] = useState(() => !!videoUri && !loadedVideoUriCache.has(videoUri));
 
-  // Sync muted state and track loading
+  useEffect(() => {
+    const shouldShowLoading = !!videoUri && !loadedVideoUriCache.has(videoUri);
+    setIsLoadingInline(shouldShowLoading);
+    setIsLoadingFullscreen(shouldShowLoading);
+  }, [videoUri]);
+
+  const markVideoLoaded = () => {
+    if (videoUri) loadedVideoUriCache.add(videoUri);
+    setIsLoadingInline(false);
+    setIsLoadingFullscreen(false);
+  };
+
+  // Sync muted state only.
   useEffect(() => {
     try {
       // @ts-ignore
-      if (inlinePlayer) inlinePlayer.muted = muted;
-      // Set loading to false after a short delay (video should be buffered by then)
-      const timer = setTimeout(() => setIsLoadingInline(false), 500);
-      return () => clearTimeout(timer);
+      if (player) player.muted = muted;
     } catch (e) {}
-  }, [muted, inlinePlayer]);
+  }, [muted, player]);
 
   // AppState listener
   useEffect(() => {
@@ -68,63 +79,63 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
       appState.current = nextAppState;
       const nowActive = nextAppState === 'active';
       setIsAppActive(nowActive);
-
-      try {
-        if (!nowActive) {
-          try { inlinePlayer.pause(); } catch (e) {}
-        } else {
-          if (isVisible && isScreenFocused) {
-            try { inlinePlayer.play(); } catch (e) {}
-          }
-        }
-      } catch (e) {}
+      if (!nowActive) {
+        try { player.pause(); } catch (e) {}
+      }
     };
 
     const sub = AppState.addEventListener ? AppState.addEventListener('change', handle) : undefined;
     return () => { if (sub && typeof sub.remove === 'function') sub.remove(); };
-  }, [inlinePlayer, isVisible, isScreenFocused]);
+  }, [player]);
   
-  // Visibility detection for profile context using measure() for accuracy
+  const updateVisibilityState = (ratio: number) => {
+    const previous = isVisibleRef.current;
+    const next = previous
+      ? ratio >= DEACTIVATE_VISIBILITY_RATIO
+      : ratio >= ACTIVATE_VISIBILITY_RATIO;
+
+    if (previous !== next) {
+      isVisibleRef.current = next;
+      setIsVisible(next);
+    }
+  };
+
+  // Visibility detection for profile context using measure() with throttling and hysteresis.
   useEffect(() => {
     if (!scrollY || !containerRef.current) return;
 
     const add = (scrollY as any).addListener;
     if (typeof add !== 'function') return;
 
-    scrollListener.current = (scrollY as any).addListener(({ value }: { value: number }) => {
-      // Use requestAnimationFrame throttling to check visibility
+    scrollListener.current = (scrollY as any).addListener(() => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      
+
       rafRef.current = requestAnimationFrame(() => {
         if (!containerRef.current) return;
-        
+
+        const now = Date.now();
+        if (now - measureThrottleRef.current < VISIBILITY_CHECK_INTERVAL_MS) return;
+        measureThrottleRef.current = now;
+
         try {
-          // Measure in window coordinates for accuracy
           containerRef.current.measure((fx: number, fy: number, width: number, height: number, pageX: number, pageY: number) => {
             const winH = Dimensions.get('window').height;
-            
-            // Check if video container intersects viewport
-            const isInViewport = pageY + height > 0 && pageY < winH;
-            
-            if (!isInViewport) {
-              if (isVisible) setIsVisible(false);
+
+            if (pageY + height <= 0 || pageY >= winH) {
+              updateVisibilityState(0);
               return;
             }
-            
-            // Calculate visible ratio (threshold lowered to 15% for quicker response)
+
             const visibleTop = Math.max(0, pageY);
             const visibleBottom = Math.min(winH, pageY + height);
             const visibleHeight = Math.max(0, visibleBottom - visibleTop);
             const ratio = height > 0 ? visibleHeight / height : 0;
-            
-            const shouldBeVisible = ratio >= 0.15; // Lower threshold = responds quicker
-            if (shouldBeVisible !== isVisible) setIsVisible(shouldBeVisible);
+            updateVisibilityState(ratio);
           });
         } catch (e) {}
       });
     });
 
-    // Initial check using measure()
     try {
       const winH = Dimensions.get('window').height;
       if (containerRef.current) {
@@ -133,71 +144,101 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
           const visibleBottom = Math.min(winH, pageY + height);
           const visibleHeight = Math.max(0, visibleBottom - visibleTop);
           const ratio = height > 0 ? visibleHeight / height : 0;
-          setIsVisible(ratio >= 0.15);
+          updateVisibilityState(ratio);
         });
       }
     } catch (e) {}
 
-    return () => { 
-      try { 
+    return () => {
+      try {
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        if (scrollListener.current && typeof (scrollY as any).removeListener === 'function') 
-          (scrollY as any).removeListener(scrollListener.current); 
-      } catch (e) {} 
+        if (scrollListener.current && typeof (scrollY as any).removeListener === 'function')
+          (scrollY as any).removeListener(scrollListener.current);
+      } catch (e) {}
     };
-  }, [scrollY, isVisible]);
+  }, [scrollY]);
 
-  // Play/pause based on visibility - immediate stop when not visible
+  // Play/pause based on visibility. Home context restarts every 7 seconds.
   useEffect(() => {
-    if (!inlinePlayer || showFullScreen) return;
+    if (!player || showFullScreen || !videoS) return;
+
+    if (previewLoopRef.current) {
+      clearInterval(previewLoopRef.current);
+      previewLoopRef.current = null;
+    }
     
     if (isVisible && isScreenFocused && isAppActive) {
-      try { inlinePlayer.play(); } catch (e) {}
+      if (context === 'home') {
+        try { player.replay(); } catch (e) {}
+
+        previewLoopRef.current = setInterval(() => {
+          try { player.replay(); } catch (e) {}
+        }, HOME_PREVIEW_DURATION_MS);
+      } else {
+        try { player.play(); } catch (e) {}
+      }
     } else {
-      // Stop immediately when not visible, not focused, or app backgrounded
-      try { inlinePlayer.pause(); } catch (e) {}
+      try { player.pause(); } catch (e) {}
     }
-  }, [isVisible, isScreenFocused, isAppActive, inlinePlayer, showFullScreen]);
+  }, [isVisible, isScreenFocused, isAppActive, player, showFullScreen, context, videoS]);
+
+  // Ensure native decoder resources are released when component unmounts.
+  useEffect(() => {
+    return () => {
+      if (previewLoopRef.current) {
+        clearInterval(previewLoopRef.current);
+        previewLoopRef.current = null;
+      }
+      try { player.pause(); } catch (e) {}
+      try { (player as any)?.release?.(); } catch (e) {}
+    };
+  }, [player]);
 
   const containerStyle = context === 'home' ? styles.homeContainer : styles.profileContainer;
   const videoViewStyle = context === 'home' ? styles.homeVideo : styles.profileVideo;
 
-  // ✅ Optimized fullscreen opening - instant transition
+  // Optimized fullscreen opening - instant transition
   const openFullScreen = () => {
     try {
+      if (previewLoopRef.current) {
+        clearInterval(previewLoopRef.current);
+        previewLoopRef.current = null;
+      }
+
       // Save current state
       prevMutedRef.current = muted;
       
-      // Pause inline immediately
-      try { inlinePlayer.pause(); } catch {}
+      // Pause player immediately
+      try { player.pause(); } catch {}
       
       // Get current playback position
       let currentPosition = 0;
       try { 
         // @ts-ignore
-        currentPosition = inlinePlayer?.currentTime ?? 0; 
+        currentPosition = player?.currentTime ?? 0; 
       } catch (e) {}
       
       // Open modal instantly
       setShowFullScreen(true);
       
-      // Start fullscreen player immediately
+      // Start fullscreen immediately
       try {
         // @ts-ignore
-        fullPlayer.currentTime = currentPosition;
+        player.loop = true;
         // @ts-ignore
-        fullPlayer.muted = false;
-        fullPlayer.play();
+        player.currentTime = currentPosition;
+        // @ts-ignore
+        player.muted = false;
+        player.play();
       } catch (e) {
-        console.error('Error starting fullscreen video:', e);
+        console.log('Error starting fullscreen video:', e);
       }
       
-      // Show brief loading indicator only if needed
-      setIsLoadingFullscreen(true);
-      setTimeout(() => setIsLoadingFullscreen(false), 300);
+      const shouldShowLoading = !!videoUri && !loadedVideoUriCache.has(videoUri);
+      setIsLoadingFullscreen(shouldShowLoading);
       
     } catch (err) {
-      console.error('openFullScreen error', err);
+      console.log('openFullScreen error', err);
       setShowFullScreen(true);
       setIsLoadingFullscreen(false);
     }
@@ -209,11 +250,11 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
       let currentPosition = 0;
       try {
         // @ts-ignore
-        currentPosition = fullPlayer?.currentTime ?? 0;
+        currentPosition = player?.currentTime ?? 0;
       } catch (e) {}
       
-      // Pause fullscreen player
-      try { fullPlayer.pause(); } catch {}
+      // Pause player
+      try { player.pause(); } catch {}
       
       // Close modal
       setShowFullScreen(false);
@@ -221,44 +262,50 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
       
       // Restore inline player state
       try { 
+        // @ts-ignore
+        player.loop = false;
         setMuted(prevMutedRef.current);
         // @ts-ignore
-        inlinePlayer.currentTime = currentPosition;
+        player.currentTime = currentPosition;
       } catch (e) {}
       
       // Resume inline playback if visible
       if (isVisible && isScreenFocused && isAppActive) {
-        try { inlinePlayer.play(); } catch {}
+        try { player.play(); } catch {}
       }
+
+      setIsLoadingFullscreen(false);
     } catch (err) {
-      console.error('closeFullScreen error', err);
+      console.log('closeFullScreen error', err);
       setShowFullScreen(false);
     }
   };
+
+  if (!videoS) return null;
 
   return (
     <>
       {context === 'profile' ? (
         <View 
           ref={containerRef} 
-          style={containerStyle} 
-          onLayout={(e) => {
-            const { y, height } = e.nativeEvent.layout;
-            layoutRef.current = { top: y, height };
-          }}
+          style={containerStyle}
         >
           {!showFullScreen && (
             <>
-              {isLoadingInline && <VideoSkeleton />}
-              {!isLoadingInline && (
-                <VideoView
-                  style={videoViewStyle}
-                  player={inlinePlayer}
-                  fullscreenOptions={{ enable: false }}
-                  allowsPictureInPicture={false}
-                  nativeControls={false}
-                  contentFit="cover"
-                />
+              <VideoView
+                style={videoViewStyle}
+                player={player}
+                fullscreenOptions={{ enable: false }}
+                allowsPictureInPicture={false}
+                nativeControls={false}
+                contentFit="cover"
+                onFirstFrameRender={markVideoLoaded}
+              />
+
+              {isLoadingInline && (
+                <View style={styles.skeletonOverlay}>
+                  <VideoSkeleton />
+                </View>
               )}
 
               {/* Transparent overlay to capture taps for fullscreen */}
@@ -287,20 +334,23 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
       ) : (
         <View 
           ref={containerRef} 
-          style={containerStyle} 
-          onLayout={(e) => {
-            const { y, height } = e.nativeEvent.layout;
-            layoutRef.current = { top: y, height };
-          }}
+          style={containerStyle}
         >
           <VideoView
             style={videoViewStyle}
-            player={inlinePlayer}
+            player={player}
             fullscreenOptions={{ enable: false }}
             allowsPictureInPicture={false}
             nativeControls={false}
             contentFit="cover"
+            onFirstFrameRender={markVideoLoaded}
           />
+
+          {isLoadingInline && (
+            <View style={styles.skeletonOverlay}>
+              <VideoSkeleton />
+            </View>
+          )}
         </View>
       )}
 
@@ -326,11 +376,12 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
             
             <VideoView
               style={styles.fullScreenVideo}
-              player={fullPlayer}
+              player={player}
               fullscreenOptions={{ enable: false }}
               allowsPictureInPicture={true}
               nativeControls={true}
               contentFit="contain"
+              onFirstFrameRender={markVideoLoaded}
             />
           </ScreenWrapper>
         </Modal>
@@ -401,5 +452,9 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 20,
+  },
+  skeletonOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 5,
   },
 });

@@ -2,7 +2,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPresignedUrls, uploadFileToUrl, PresignedUrlResponse } from '../api/uploadUtils';
-import { District, FileWithType, Province } from '../types';
+import { FileWithType } from '../types';
 import { SetStateAction } from 'react';
 
 // const TEMP_DIR = `${FileSystem.documentDirectory}temp_freelancer/`;
@@ -410,6 +410,14 @@ export interface AoserProfileData {
   profileImg?: FileWithType | null;
   gender: string;
   phone: string;
+  address?: {
+    country: string;
+    province: string;
+    district: string;
+    village: string;
+    latitude: number;
+    longitude: number;
+  };
   // profileImgPath?: string;
   // profileImgMeta?: FileMeta;
 }
@@ -455,14 +463,6 @@ export interface Step4Data {
   cardType: SetStateAction<"ID_CARD" | "PASSPORT" | "VISA">;
   cardID: string;
   fromDate: Date;
-  phone: string;
-  address: {
-    province: Province | undefined;
-    district: District | undefined;
-    village: string;
-    longitude?: number;
-    latitude?: number;
-  };
 };
 export interface Step5Data {
   selfieWithCardPath?: string;
@@ -473,6 +473,7 @@ export interface Step5Data {
 
 export interface Step6Data {
   paymentMethod: 'LAOS_BANK' | 'PAYPAL';
+  bankName: string;
   accountName: string;
   bankNumber?: string;
   paypalInfo?: string;

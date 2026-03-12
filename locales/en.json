@@ -6,8 +6,8 @@
   },
   "tab": {
     "home": "Home",
-    "works": "Works",
-    "newWork": "New Work",
+    "works": "Jobs",
+    "newWork": "Post Job",
     "notifications": "Notifications",
     "profile": "Profile"
   },
@@ -17,9 +17,9 @@
     "description": "Please select your preferred language for using the Aoser application."
   },
   "protectedRoute": {
-    "authentication_require": "Authentication Required",
+    "authentication_require": "Sign in required",
     "description": "Please sign in to access this feature",
-    "googleLogin": "Login with Google",
+    "googleLogin": "Continue with Google",
     "signIn": "Sign In",
     "newhere": "New Here?",
     "singup_to_start": "Sign up to get started",
@@ -33,17 +33,17 @@
     "email": "Email",
     "password": "Password",
     "forgot_password": "Forgot Password",
-    "login_with_google": "Login with Google",
+    "login_with_google": "Continue with Google",
     "noaccount": "Don't have an account?",
-    "signup": "Sign Up",
-    "or": "Or",
+    "signup": "Sign up",
+    "or": "or",
     "email_password_error": "Email or Password is incorrect",
     "signning_In": "Sign in...",
     "email_exist": "Email already exist, please try login."
   },
   "signUpScreen": {
-    "sign_up": "Sign Up",
-    "gender": "Gender",
+    "sign_up": "Sign up",
+    "gender": "Select gender",
     "selectGender": "Select Gender",
     "male": "Male",
     "female": "Female",
@@ -54,10 +54,10 @@
     "password": "Password",
     "confirm_password": "Confirm Password",
     "forgot_password": "Forgot Password",
-    "login_with_google": "Login with Google",
+    "login_with_google": "Continue with Google",
     "haveAccount": "Have an account?",
-    "signIn": "Sign In",
-    "or": "Or",
+    "signIn": "Sign in",
+    "or": "or",
     "email_password_error": "Email or Password is incorrect",
     "signning_In": "Sign in...",
     "gender_required": "Gender is required",
@@ -104,19 +104,20 @@
     "freelancers": "Freelancer",
     "fast_search": "Fast Search",
     "history_search": "History of Search",
-    "clear_all": "Clear All"
+    "clear_all": "Clear All",
+    "see_all": "See all"
   },
   "profile": {
     "profile": "Profile",
     "signin": "Sign In",
     "favorites": "Favorites",
-    "history": "History",
+    "history": "Activity",
     "account_settings": "Account Settings",
     "logout": "Log Out",
     "logout_confirmation": "Are you sure you want to logout?",
     "cancel": "Cancel",
-    "freelancer": "Freelancer",
-    "see_freelancer_profile": "Your freelance details",
+    "freelancer": "Become a freelancer",
+    "see_freelancer_profile": "Freelancer Profile",
     "accommodation": "Accommodation",
     "driver": "Driver",
     "company": "Company",
@@ -127,7 +128,7 @@
     "help_support": "Help & Support",
     "ask_question": "Ask a Question",
     "how_aoser_work": "How Aoser Works",
-    "conditions_policies": "Conditions & Policies",
+    "conditions_policies": "Terms & Policies",
     "privacy_policy": "Privacy Policy",
     "application_version": "Version",
     "freelancer_profile": "Freelancer Profile",
@@ -136,8 +137,8 @@
       "subtitle": "Track all your completed projects",
       "projects_count": "Projects",
       "new_hire": "New Hire",
-      "re_hire": "Re-hire",
-      "service_type": "Service Type",
+      "re_hire": "Request again",
+      "service_type": "Select Service",
       "deadline_label": "Deadline",
       "total_budget": "Total Budget",
       "check_details": "Check Details",
@@ -160,35 +161,35 @@
     },
     "freelancerSetting": {
       "title": "Settings",
-      "recommend_section_label": "Let's our help recommend you",
-      "buy_star": "Buy recommend star",
-      "account_setting_label": "Account setting",
+      "recommend_section_label": "Boost your profile",
+      "buy_star": "Boost star",
+      "account_setting_label": "Account Setting",
       "edit_profile": "Edit Profile",
-      "edit_freelancer_data_label": "Edit freelancer data",
-      "job_section": "Job section",
-      "about_section": "About section",
-      "offer_section": "Offer section"
+      "edit_freelancer_data_label": "Freelancer Profile",
+      "job_section": "Professional Profile",
+      "about_section": "About Me",
+      "offer_section": "Service Rates"
     },
     "buyStar": {
       "title": "Buy recommend star",
       "banner_title": "Boost Your Profile",
       "banner_subtitle": "Get recommended to more clients",
-      "banner_description": "Stars help your profile appear higher in search results and recommendations. More stars = more visibility!",
+      "banner_description": "More stars = more visibility",
       "price_per_star": "1 Star = {{price}}",
-      "select_package_label": "Select a package",
+      "select_package_label": "Choose a package",
       "popular_badge": "POPULAR",
       "stars_plural": "Stars",
       "star_singular": "Star",
-      "custom_amount_label": "Or enter custom amount",
-      "number_of_stars": "Number of stars",
-      "enter_amount_placeholder": "Enter amount",
+      "custom_amount_label": "Or enter custom stars",
+      "number_of_stars": "Number of Stars",
+      "enter_amount_placeholder": "Enter number Stars",
       "total_label": "Total",
-      "order_summary": "Order Summary",
+      "order_summary": "Summary",
       "stars_label": "Stars",
-      "price_per_star_label": "Price per star",
-      "benefits_title": "Benefits of Stars",
+      "price_per_star_label": "Price per Stars",
+      "benefits_title": "Stars Benefits",
       "benefit_ranking": "Higher ranking in search results",
-      "benefit_visibility": "More profile visibility",
+      "benefit_visibility": "Increase profile visibility",
       "benefit_reach": "Reach more potential clients",
       "benefit_standout": "Stand out from competition",
       "buy_button_text": "Buy {{stars}} Star{{plural}} - {{price}}",
@@ -196,18 +197,23 @@
       "package_accessibility": "Package: {{stars}} stars for {{price}}",
       "custom_input_accessibility": "Enter custom number of stars",
       "buy_button_enabled": "Purchase {{stars}} stars for {{price}}"
+    },
+    "resume_portfolio": {
+      "no_portfolio": "No portfolio uploaded yet.",
+      "no_resume": "No resume uploaded yet.",
+      "resume": "Resume"
     }
   },
   "works": {
     "lets_find_work": " Let's find best",
-    "work": "Work",
-    "start_public_work": "Start your public work",
-    "post_to_apply": "Publish your job to the public and connect with qualified freelancers.",
-    "start_post": "Add work",
-    "post_on": "Post on",
+    "work": "Jobs",
+    "start_public_work": "Post your job",
+    "post_to_apply": "Publish your job and connect with freelancers. \n",
+    "start_post": "Post job",
+    "post_on": "Posted on",
     "result_found": "",
     "more": "More",
-    "search_work": "Search work...",
+    "search_work": "Search jobs...",
     "error": {
       "some_wrong": "Oops! Something went wrong",
       "couldnot_load": "We couldn't load the jobs right now",
@@ -232,27 +238,27 @@
     }
   },
   "postWork": {
-    "public_work": "Public work",
-    "posting_public_work": "You are posting a public work",
+    "public_work": "Post a Job",
+    "posting_public_work": "your job will be visible to everyone on Aoser.",
     "next": "Next",
-    "work_title": "What service are you looking for?",
+    "work_title": "What service do you need?",
     "work_title_placeholder": "I'm looking for...",
     "work_title_required": "Please enter the service.",
-    "work_type": "Work Type",
+    "work_type": "Service Mode",
     "online": "Online",
-    "offline": "Offline",
-    "work_description": "Work Description",
-    "work_description_placeholder": "Explain the requirements...",
-    "work_description_required": "Work description is required",
+    "offline": "On-site",
+    "work_description": "Job details",
+    "work_description_placeholder": "Describe your request...",
+    "work_description_required": "Job details is required",
     "sample_work": "Sample Work (Optional)",
     "sample_work_placeholder": "Paste link or reference",
-    "service_type": "Service Type",
+    "service_type": "Select Service",
     "service_type_required": "Service type is required",
     "budget_type": "Service fee",
     "fixed_price": "Fixed Price",
     "hourly": "Hourly",
     "budget": "Budget",
-    "budget_placeholder": "...Specify the price",
+    "budget_placeholder": "Enter your price",
     "offering": "Offering",
     "budget_required": "Budget is required",
     "deadline_requirement": "Desired date",
@@ -261,27 +267,44 @@
     "from": "start",
     "to": "To",
     "time_:": "at",
-    "book_freelancer": "Book Freelancer",
+    "book_freelancer": "Serivce Request",
     "date_placeholder": "mm/dd/yy",
     "select_both_dates": "Please select both start and end dates",
     "end_date_after_start": "End date must be after start date",
-    "select_jobs": "Select Jobs",
+    "select_jobs": "Select Service",
     "confirm": {
-      "confirm": "Confirm",
-      "confirm_message": "Please confirm your work details before submission.",
-      "complete_job_details": "Complete Job Details",
-      "system_review_description": "To help freelancers understand your request clearly, please make sure your job details are complete and attractive.",
+      "confirm": "Confirm request",
+      "confirm_message": "Please confirm your request detail before submitting.",
+      "complete_job_details": "Complete request Details",
+      "system_review_description": "To help freelancers understand your request clearly, make sure your details are complete and accurate.",
       "important_notice": "Important Notice",
-      "important_notice_description": "Every job must follow Aoser’s hiring policy. Any posts that contain prohibited content, misleading information, or tasks unrelated to hiring a freelancer may be removed automatically by the system.",
-      "ensure_clear_post": "Make sure your job request is allowed, clear, and safe for our platform.",
+      "important_notice_description": "Any request that contain prohibited content, misleading information, or task unrelated to freelancers maybe removed automatically by the system.",
+      "ensure_clear_post": "Make sure your request is clear, appropriate, and safe for our platform.",
       "confirming": "Confirming...",
       "confirm_submit": "Confirm & Submit",
       "error": "Error!",
       "success": "Success!",
-      "work_created_successfully": "Your public work has been created successfully."
+      "work_created_successfully": "Your public work has been created successfully.",
+      "work_send_successfully": "Your request has been sent to the freelancer successfully."
     },
-    "sub_work_details": "Subtask list",
-    "add_sections": "Add sections with multiple subtasks. Each section represents a major part of your project.",
+    "public_confirm": {
+      "confirm": "Review & Post Job",
+      "confirm_message": "Please review your Job details before posting",
+      "complete_job_details": "Complete Job Details",
+      "system_review_description": "To help freelancers understand your job clearly, make sure your job details are complete and accurate.",
+      "important_notice": "Important Notice",
+      "important_notice_description1": "- Every Job must follow Aoser's platform policy.",
+      "important_notice_description2": "- Post that contaon prohited content, misleading information or inaproprite rask may be removed automatically bt the system.",
+      "ensure_clear_post": "Make sure your Job is clear, appropriate, and safe for our platform.",
+      "confirming": "Confirming...",
+      "confirm_submit": "Submit job",
+      "error": "Error!",
+      "success": "Success!",
+      "work_created_successfully": "Your job has been posted successfully.",
+      "work_send_successfully": "Your request has been sent to the freelancer successfully."
+    },
+    "sub_work_details": "Task details",
+    "add_sections": "Add addition tasks or details for serice.",
     "freelancer_no_found": "No freelancer found",
     "status": {
       "published": "Published",
@@ -314,14 +337,14 @@
     "busy": "Inactive",
     "reviews": "reviews",
     "busyUntil": "Busy until",
-    "hire": "Hire",
+    "hire": "Request service",
     "hour": "hour",
     "make_a_book": "Make a Book",
-    "whatExpect": "What you can expext from me?",
+    "whatExpect": "What customer can expect",
     "infoStats": {
-      "work_completed": "Work Completed",
-      "total_work": "Total Work",
-      "doing": "Doing"
+      "work_completed": "Jobs Completed",
+      "total_work": "Total Jobs",
+      "doing": "In Progress"
     },
     "tabbedProfile": {
       "experience": "Experience",
@@ -330,7 +353,7 @@
       "aboutme": "About me"
     },
     "review": {
-      "customer_reviews": "Customer Reviews",
+      "customer_reviews": "Reviews",
       "review": "reviews",
       "from": "From",
       "seemore": "See more",
@@ -338,7 +361,7 @@
       "unknown_user": "Unknown User",
       "unknown_date": "No date"
     },
-    "similar_Freelancer": "Similar Freelancer",
+    "similar_Freelancer": "Similar freelacners",
     "no_freelancer_found": "No freelancer found",
     "search_another_key": "Try searching with different keywords or check your spelling.",
     "no_freelancer_fimiliar": "No freelancer found",
@@ -346,7 +369,7 @@
   },
   "customerProfile": {
     "contactInfo": "Contact Information",
-    "locationInfo": "Location",
+    "locationInfo": "Service Location",
     "fullName": "Full Name",
     "phone": "Phone Number",
     "address": "Address",
@@ -378,22 +401,22 @@
     "submit_work": "Submit",
     "submitting": "Submitting...",
     "submitted": "Submitted ✓",
-        "please_payment": "Please pay the service fee",
+    "please_payment": "Please pay the service fee",
     "try_again": "Try Again",
     "confirm": "Comfirm",
     "pending_for_confirm": "Pending for comfirm",
     "make_review": "Make an Review",
-    "rehire_button": "Re-Hire",
+    "rehire_button": "Request again",
     "description": "Description",
     "example_work": "Example Work",
-     "newAppendWork": "New Work Offer",
+    "newAppendWork": "New Work Offer",
     "categories": "Categories",
     "deadline": "Deadline",
     "no_date": "No date",
     "progress": "Progress",
     "step_by_step": "Step-by-step tasks to complete this work",
     "add_sub_task": "Add sub task...",
-    "add_new_section": "Add new section...",
+    "add_new_section": "Add task...",
     "add_plus": "Add +",
     "delete_section": "Delete Section",
     "delete_section_confirm": "Are you sure you want to delete this section?",
@@ -412,12 +435,21 @@
     "textBody_of_success": "Please wait for aprove.",
     "textBody_of_error": "Please Try Again Later.",
     "textBody_of_accept_success": "Accept Success",
-    "become_freelancer_role": "Become a Freelancer on Aoser",
-    "set_up_freelancer_role": "Set up your freelancer profile and receive job offers.",
+    "become_freelancer_role": "Become a Freelancer",
+    "set_up_freelancer_role": "Set up your freelancer profile and receive job.",
     "start_freelancer_role": "Start Freelancer Role.",
     "hire": "Hire",
     "hiring": "Hiring...",
-    "nowork_available": "No work available"
+    "nowork_available": "No work available",
+    "none_subWork": {
+      "title": "No subtasks yet",
+      "description": "Add subtasks to streamline your workflow."
+    },
+    "confirm_work": {
+      "message_comfirm": "Are you sure you want to confirm this work? Once confirmed, you will not be able to edit it.",
+      "message_cancel": "Are you sure you want to cancel this confirmation?",
+      "message_send": "Are you ready to submit your work for review?"
+    }
   },
   "editWork": {
     "title": "Update work",
@@ -434,9 +466,9 @@
       "error": "Work Title is required"
     },
     "workType": {
-      "label": "Work Type",
+      "label": "Service Mode",
       "online": "Online",
-      "offline": "Offline"
+      "offline": "On-site"
     },
     "workDescription": {
       "label": "More details",
@@ -449,7 +481,7 @@
     },
     "serviceType": {
       "label": "Service Type",
-      "error": "Service type is required"
+      "error": "Select Service is required"
     },
     "budgetType": {
       "label": "Service fee",
@@ -493,7 +525,7 @@
   },
   "favorites": {
     "favorites": "Favorites",
-    "public_works": "Public works",
+    "public_works": "Posted Job",
     "freelancer": "Freelancer",
     "accommodation": "Accommodation",
     "driver": "Driver",
@@ -513,9 +545,8 @@
     }
   },
   "history": {
-    "history": "History",
-    "public_works": "Public works",
-    "freelancer": "Freelancer",
+    "public_works": "Posted Job",
+    "freelancer": "Freelancers",
     "accommodation": "Accommodation",
     "driver": "Driver",
     "company": "Company",
@@ -535,10 +566,10 @@
     "profile_photo_help": "Your profile photo helps others recognize you.",
     "profile_image_required": "Profile image is required",
     "first_name": "First Name",
-    "first_name_placeholder": "e.g. John",
+    "first_name_placeholder": "eg. John",
     "first_name_required": "First name is required",
     "last_name": "Last Name",
-    "last_name_placeholder": "e.g. Doe",
+    "last_name_placeholder": "eg. Doe",
     "last_name_required": "Last name is required",
     "cancel": "Cancel",
     "update": "Update",
@@ -637,7 +668,7 @@
     "emailLabel": "Your Email",
     "emailPlaceholder": "Enter your email",
     "categoryLabel": "Choose Category",
-    "questionLabel": "Describe your question or issue",
+    "questionLabel": "Tell Customer About Yourself",
     "questionPlaceholder": "Describe your question or issue in detail...",
     "attachFile": "Attach image/video file to explain better (optional)",
     "submitButton": "Send My Question",
@@ -658,238 +689,150 @@
   },
   "privacyPolicy": {
     "title": "AOSER Policies",
-    "intro": "These policies take effect immediately upon your registration as a member or user of AOSER.",
-    "section1": {
-      "title": "Security & Privacy Policy",
-      "description": "AOSER places the highest priority on the security of user data and is committed to strictly protecting personal information in accordance with international standards.",
-      "dataCollection": {
-        "title": "Data Collection and Use",
-        "items": [
-          "Only essential data will be collected: name, phone number, email, photos, location, and identity verification documents",
-          "Data will be used solely for service-related purposes: identity verification, bookings, coordination, and invoicing"
+    "intro": "These policies shall take effect immediately upon your registration as a member or user of Aoser.",
+    "sections": [
+      {
+        "title": "Section 1: Security & Privacy Policy",
+        "paragraphs": [
+          "Aoser places the highest priority on the security of user data and is committed to strictly protecting personal information in accordance with international standards.",
+          "1. Scope of this policy",
+          "- This policy applies to the collection, use, disclosure, and protection of personal data from Service Users (Customers) and Service Providers (Freelancers).",
+          "2. Data collection and use",
+          "- Only essential data will be collected, such as name, phone number, email, photos, location, and identity verification documents.",
+          "- Data will be used solely for service-related purposes: identity verification, bookings, coordination, and invoicing.",
+          "3. Data protection",
+          "- Data encryption is applied to all transactions.",
+          "- Information is stored on secure servers with backup systems in place.",
+          "- Strict internal access controls are enforced.",
+          "- Two-factor authentication (2FA) is required for critical accounts.",
+          "4. Data sharing and disclosure",
+          "- Aoser will not disclose user data to third parties unless explicit consent is given, required by law/government agencies, or necessary for user safety and security.",
+          "5. User rights",
+          "- Users can request access, correction, or account deletion at any time.",
+          "- Users have the right to file complaints regarding personal data breaches."
         ]
       },
-      "dataProtection": {
-        "title": "Data Protection",
-        "items": [
-          "Data encryption is applied to all transactions",
-          "Information is stored on secure servers with backup systems",
-          "Strict internal access controls are enforced",
-          "Two-factor authentication (2FA) is required for critical accounts"
+      {
+        "title": "Section 2: Platform Usage Policy",
+        "paragraphs": [
+          "This policy outlines the rules and standards for using the Aoser platform for both customers and service providers to ensure safety, transparency, and professionalism.",
+          "1. Customers - Requirements",
+          "- Must register with accurate, verifiable information (e.g., real name, active phone number).",
+          "- Illegal use such as human trafficking, gambling, or sexual services is strictly prohibited.",
+          "- Fake orders or fraud to exploit service providers is prohibited.",
+          "Customers - Violations",
+          "- Aoser reserves the right to suspend or terminate accounts without prior notice.",
+          "- Repeated violations may result in referral to legal authorities.",
+          "2. Service Providers (Freelancers) - Requirements",
+          "- Must verify identity with documents (Passport, ID card, license, rental contract, etc.).",
+          "- Must provide accurate service (real photos/videos, pricing, hours).",
+          "- Illegal or immoral services are strictly prohibited.",
+          "Service Providers - Violations",
+          "- More than 3 poor-quality service reports may lead to temporary suspension.",
+          "- Fraud (e.g., bait-and-switch or fake service) will result in permanent account termination."
         ]
       },
-      "userRights": {
-        "title": "Your Rights",
-        "items": [
-          "Request access, correction, or account deletion at any time",
-          "File complaints regarding personal data breaches",
-          "Contact us at: support@aoser.app"
+      {
+        "title": "Section 3: Payment & Payout Policy",
+        "paragraphs": [
+          "Aoser is committed to ensuring secure, transparent, and efficient financial transactions for both users and providers.",
+          "1. Payment methods",
+          "- QR Code",
+          "- Mobile Banking",
+          "- Credit/Debit Cards",
+          "- Supported E-Wallets (domestic)",
+          "2. Provider payout conditions",
+          "- Payment is released after the service is completed and confirmed by the customer.",
+          "- Funds are transferred within 1-2 business days to the provider's registered bank account.",
+          "3. Platform fee",
+          "- Freelancer: 10% of total service fee.",
+          "- Fees are automatically deducted before disbursing payments to providers.",
+          "4. Receipts",
+          "- An e-Receipt is issued to customers automatically after each transaction.",
+          "- Providers can download income reports via the dashboard."
+        ]
+      },
+      {
+        "title": "Section 4: Quality Assurance & Rating Policy",
+        "paragraphs": [
+          "Aoser promotes transparent review and rating systems to ensure service quality and build user trust.",
+          "1. Rating system",
+          "- Customers can rate services from 1 to 5 stars after completion.",
+          "- Reviews must be respectful and constructive.",
+          "- Ratings influence the provider's visibility on the platform.",
+          "2. \"Top Rated\" ranking",
+          "- Providers with an average rating of 3.5 stars and above will be listed as \"Top Rated.\"",
+          "- Benefits include homepage visibility, priority recommendations, and access to promotional campaigns.",
+          "3. Low-quality service handling",
+          "- 3+ complaints for poor service or rude behavior will result in a temporary suspension.",
+          "- Verified complaints may lead to permanent account termination or reduced visibility.",
+          "4. Internal quality monitoring",
+          "- Aoser's audit team conducts random monthly checks focusing on posted data/image accuracy, location cleanliness/safety, and provider politeness/punctuality."
+        ]
+      },
+      {
+        "title": "Section 5: Cancellation & Refund Policy",
+        "paragraphs": [
+          "Aoser implements a fair and flexible cancellation/refund policy to protect both customers and providers while minimizing conflicts.",
+          "1. Customer cancellations",
+          "- Before provider begins: 100% full refund.",
+          "- After partial completion: 50% refund.",
+          "- After full completion: no refund (unless service was faulty; refund may be partial).",
+          "- Refunds are processed within 3-7 business days via the original payment method.",
+          "2. Provider cancellations",
+          "- If a provider cancels without valid reason: customer receives a 100% refund.",
+          "- Provider credibility score will be reduced and may face temporary suspension.",
+          "3. Service not as advertised",
+          "- Complaints must be submitted within 48 hours.",
+          "- Aoser will investigate and may issue full refunds for misrepresentation or partial refunds for valid damages.",
+          "4. Exceptions",
+          "- Aoser reserves the right to deny refunds in cases of no-shows without notice, partial service use followed by cancellation, or fraudulent refund claims."
+        ]
+      },
+      {
+        "title": "Section 6: Support & Dispute Resolution Policy",
+        "paragraphs": [
+          "Aoser is committed to transparent operations and fair problem-solving for all parties involved.",
+          "1. Contact support (24/7)",
+          "- In-app chat",
+          "- Email: aoserasia9@gmail.com",
+          "- Telephone (Laos): 020 985 10 959",
+          "2. Response times",
+          "- General inquiries: within 24 hours.",
+          "- Urgent issues (e.g., fraud): within 1-12 hours.",
+          "- Complaint resolution: within 5 business days.",
+          "3. Complaint process",
+          "- User files complaint via app/email.",
+          "- Investigation team gathers evidence (photos, chats, etc.).",
+          "- Aoser acts as a mediator between parties.",
+          "- Solutions may include partial/full refunds, credibility penalties, or account suspensions.",
+          "4. Legal dispute resolution",
+          "- If mediation fails, users may escalate to relevant legal authorities.",
+          "- Aoser will fully cooperate in providing documentation and evidence."
+        ]
+      },
+      {
+        "title": "Section 7: Terms of Use & Legal Disclaimer",
+        "paragraphs": [
+          "By registering to use Aoser, all customers and providers agree to the following terms and conditions.",
+          "1. User rights and restrictions",
+          "- Users may access the platform to book or offer services as per defined categories.",
+          "- Prohibited uses include illegal/immoral activities and actions that harm Aoser or other users (fake accounts, misleading content, inappropriate material).",
+          "2. Aoser liability limitation",
+          "- Aoser acts solely as a platform to connect clients with providers.",
+          "- Aoser is not liable for actions or errors by users unless directly caused by platform failure.",
+          "- All issues must follow the internal complaint process before pursuing legal action.",
+          "Note: If payment is made outside the Aoser platform, Aoser will not be liable for any disputes or damages.",
+          "3. Intellectual property",
+          "- All trademarks, logos, content, and images on Aoser are property of the company.",
+          "- Users must not violate third-party copyrights. Violators are solely responsible.",
+          "4. Policy amendments",
+          "- Aoser reserves the right to amend policies without prior notice.",
+          "- Users should regularly review terms to ensure compliance with the latest version."
         ]
       }
-    },
-    "section2": {
-      "title": "Platform Usage Policy",
-      "customers": {
-        "title": "For Customers",
-        "requirements": {
-          "title": "Requirements:",
-          "items": [
-            "Must register with accurate, verifiable information",
-            "Illegal use such as human trafficking, gambling, or sexual services is strictly prohibited",
-            "Fake orders or fraud to exploit service providers is prohibited"
-          ]
-        },
-        "violations": {
-          "title": "Violations:",
-          "items": [
-            "AOSER reserves the right to suspend or terminate accounts without prior notice",
-            "Repeated violations may result in referral to legal authorities"
-          ]
-        }
-      },
-      "providers": {
-        "title": "For Service Providers",
-        "requirements": {
-          "title": "Requirements:",
-          "items": [
-            "Must verify identity with documents (Passport, ID card, license, rental contract)",
-            "Must provide accurate service/property details (real photos/videos, pricing, hours)",
-            "Illegal or immoral services are strictly prohibited"
-          ]
-        },
-        "violations": {
-          "title": "Violations:",
-          "items": [
-            "More than 3 poor-quality service reports may lead to temporary suspension",
-            "Fraud (bait-and-switch or fake service) will result in permanent account termination"
-          ]
-        }
-      }
-    },
-    "section3": {
-      "title": "Payment & Payout Policy",
-      "paymentMethods": {
-        "title": "Payment Methods",
-        "items": [
-          "QR Code",
-          "Mobile Banking",
-          "Credit/Debit Cards",
-          "Supported E-Wallets (domestic)"
-        ]
-      },
-      "payoutConditions": {
-        "title": "Provider Payout Conditions",
-        "items": [
-          "Payment is released after service completion and customer confirmation",
-          "Funds are transferred within 1–2 business days to registered bank account"
-        ]
-      },
-      "platformFees": {
-        "title": "Platform Fees",
-        "table": {
-          "freelancer": {
-            "service": "Freelancer",
-            "fee": "11–15% of total service fee"
-          },
-          "booking": {
-            "service": "Accommodation Bookings",
-            "fee": "10% per night"
-          },
-          "rental": {
-            "service": "Rental/Real Estate & Personal Property",
-            "fee": "5–10%, depending on service type"
-          }
-        },
-        "note": "* Fees are automatically deducted before disbursing payments to providers"
-      }
-    },
-    "section4": {
-      "title": "Quality Assurance & Rating Policy",
-      "ratingSystem": {
-        "title": "Rating System",
-        "items": [
-          "Customers can rate services from 1 to 5 stars after completion",
-          "Reviews must be respectful and constructive",
-          "Ratings influence the provider's visibility on the platform"
-        ]
-      },
-      "topRated": {
-        "title": "Top Rated Benefits",
-        "description": "Providers with an average rating of 3.5 stars and above will be listed as \"Top Rated\" with benefits:",
-        "items": [
-          "Homepage visibility",
-          "Priority recommendations",
-          "Access to promotional campaigns"
-        ]
-      },
-      "qualityMonitoring": {
-        "title": "Quality Monitoring",
-        "items": [
-          "3+ complaints for poor service result in temporary suspension",
-          "Random monthly checks for accuracy, cleanliness, and provider behavior"
-        ]
-      }
-    },
-    "section5": {
-      "title": "Cancellation & Refund Policy",
-      "customerCancellations": {
-        "title": "Customer Cancellations",
-        "table": {
-          "beforeStart": {
-            "time": "Before provider begins",
-            "refund": "✅ 100% full refund"
-          },
-          "partialCompletion": {
-            "time": "After partial completion",
-            "refund": "⚠ 50% refund"
-          },
-          "fullCompletion": {
-            "time": "After full completion",
-            "refund": "❌ No refund (unless faulty)"
-          }
-        },
-        "note": "* Refunds are processed within 3–7 business days via original payment method"
-      },
-      "providerCancellations": {
-        "title": "Provider Cancellations",
-        "items": [
-          "Customer receives 100% refund if provider cancels without valid reason",
-          "Provider's credibility score will be reduced and may face temporary suspension"
-        ]
-      },
-      "serviceNotAsAdvertised": {
-        "title": "Service Not as Advertised",
-        "items": [
-          "Complaints must be submitted within 48 hours",
-          "Full refunds for misrepresentation, partial refunds for valid damages"
-        ]
-      }
-    },
-    "section6": {
-      "title": "Support & Dispute Resolution",
-      "contactSupport": {
-        "title": "Contact Support (24/7)",
-        "items": [
-          "In-app chat",
-          "Email: support@aoser.app",
-          "Telephone (Laos): xx-xxxx-xxxx"
-        ]
-      },
-      "responseTimes": {
-        "title": "Response Times",
-        "items": [
-          "General inquiries: within 24 hours",
-          "Urgent issues (fraud): within 1–12 hours",
-          "Complaint resolution: within 5 business days"
-        ]
-      }
-    },
-    "section7": {
-      "title": "Growth & Transparency Policy",
-      "platformExpansion": {
-        "title": "Platform Expansion",
-        "items": [
-          "Aiming to expand from Laos to ASEAN within 2–5 years",
-          "Building local partnerships to support freelancers, hospitality, and rental services",
-          "Prioritizing local employment and in-country development teams"
-        ]
-      },
-      "transparencyCommitment": {
-        "title": "Transparency Commitment",
-        "items": [
-          "Quarterly performance reports will be published",
-          "System updates every 3 months with security and UX/UI testing",
-          "User feedback used to inform future improvements"
-        ]
-      }
-    },
-    "section8": {
-      "title": "Terms of Use & Legal Disclaimer",
-      "prohibitedUses": {
-        "title": "Prohibited Uses",
-        "items": [
-          "Illegal or immoral activities",
-          "Fake accounts or misleading content",
-          "Posting inappropriate material"
-        ]
-      },
-      "liabilityLimitation": {
-        "title": "Liability Limitation",
-        "items": [
-          "AOSER acts solely as a platform to connect clients with providers",
-          "Not liable for actions or errors by users unless directly caused by platform failure",
-          "If payment is made outside the AOSER platform, AOSER will not be liable for any disputes or damages"
-        ]
-      },
-      "policyAmendments": {
-        "title": "Policy Amendments",
-        "items": [
-          "AOSER reserves the right to amend policies without prior notice",
-          "Users should regularly review terms to ensure compliance with the latest version"
-        ]
-      }
-    },
-    "footer": "Last updated: July 2025\nBy using AOSER, you agree to these policies and terms of service."
+    ],
+    "footer": "Policy Version: E1"
   },
   "reviewModal": {
     "title": "Write a Review",
@@ -961,7 +904,7 @@
   },
   "freelancerRoleGate": {
     "becomeFreelancerTitle": "Become a Freelancer",
-    "becomeFreelancerSubtitle": "You are not a freelancer yet. Upgrade your role to offer services and get hired with free.",
+    "becomeFreelancerSubtitle": "You are not a freelancer yet. Upgrade your account to offer services and start receiving clients.",
     "getStartedButton": "Get Started",
     "pendingTitle": "Application Under Review",
     "pendingSubtitle": "Your freelancer application is being reviewed by our team. We'll notify you once it's approved.",
@@ -987,20 +930,20 @@
   "kyc": {
     "steps": {
       "profile": "Profile",
-      "basicInfo": "Basic Info",
+      "basicInfo": "Basic Infomation",
       "skills": "Skills",
       "category": "Category",
-      "availability": "Availability",
-      "portfolio": "Portfolio",
-      "bankInfo": "Bank Information",
-      "confirmation": "Confirmation",
+      "availability": "Verify your Identity",
+      "portfolio": "Identity Verification",
+      "bankInfo": "Payment Information",
+      "confirmation": "Final Confirmation",
       "review": "Review"
     },
     "update": {
       "update": "Update",
-      "job_section": "Job Section",
-      "updateJob_section": "Update your job section carefully.",
-      "describe_to_customers": "Describe About You for Customers",
+      "job_section": "Professional Profile",
+      "updateJob_section": "Complete your professional profile",
+      "describe_to_customers": "Tell Customer About Yourself",
       "describe_subtext": "Let your customers understand your background, skills, and experience."
     },
     "toast": {
@@ -1043,79 +986,94 @@
     },
     "step1": {
       "jobTitle": {
-        "label": "Job Title",
-        "placeholder": "e.g. Web developer and designer...",
-        "required": "Job title is required"
+        "label": "Your Profession",
+        "placeholder": "eg ... ",
+        "required": "Your profession is required"
       },
       "bannerImage": {
         "label": "Banner Image",
         "required": "Banner image is required"
       },
       "promoVideo": {
-        "label": "Promote Yourself (Video)"
+        "label": "Showcase your work (VDO)"
       },
       "freelancerType": {
-        "label": "Freelancer Type",
+        "label": "Avaiblability",
         "fulltime": "Full-time",
         "parttime": "Part-time",
         "offering": "Offering"
       },
       "serviceType": {
-        "label": "Choose Service Type",
-        "required": "Service type is required"
+        "label": "Service Category",
+        "required": "Service Category is required"
       }
     },
     "step2": {
-      "headline": "Describe About You for Customers",
+      "headline": "Introduce yourself to Customer",
       "subtitle": "Let your customers understand your background, skills, and experience.",
-      "about_label": "About me",
-      "about_placeholder": "Hi, I'm a UI/UX Designer....",
-      "about_required": "About me is required",
+      "about_label": "Your Service",
+      "about_placeholder": "I am ...",
+      "about_required": "Your service is required",
       "about_tip": "Tip: Briefly share your experience and specialties.",
-      "skills_title": "Communication language",
-      "skills_placeholder": "e.g. Lao",
-      "skills_required": "Communication language is required",
+      "skills_title": "Languages",
+      "skills_placeholder": "eg. Lao",
+      "skills_required": "Languages is required",
       "experience_title": "Work Experience",
-      "experience_placeholder": "e.g. Lead Designer",
+      "experience_placeholder": "eg ...",
       "experience_required": "Work experience is required",
       "resume_required": "Resume is required",
       "resume_label": "Your Resume",
-      "certificate_label": "Your Certificates (optional)",
+      "certificate_label": "Portfolio (optional)",
       "add_more": "Add more",
-      "select_image": "Select Image"
+      "select_image": "Upload Image"
     },
     "step3": {
-      "title": "What Do You Offer?",
-      "subtitle": "Write what customer can expect on you and make explain clearly in the tag",
+      "title": "What services do you offer?",
+      "subtitle": "Describe your service clearly so customers know what to expect.",
       "serviceDescription": {
-        "label": "What customers can expect from you?",
+        "label": "Describe your service",
         "placeholder": "Describe your service, your process, and what makes you unique. Be clear and concise...",
         "error": "Service Description is required"
       },
       "hourlyRate": {
-        "label": "Hourly Rate",
-        "error": "Hourly Rate is required"
+        "label": "Hourly / Daily Rate / Per Job",
+        "error": "Hourly / Daily Rate / Per Job is required"
       },
       "tip": "This will help customers understand your value.",
-      "click_change_currency": "Click to change currency"
+      "click_change_currency": "Click to change currency",
+      "rateType":{
+        "perJob":"Job",
+        "perHour":"Hour",
+        "perDay":"Day"
+      }
     },
     "step4": {
-      "title": "Your Real Information",
-      "subtitle": "Please provide your actual information as required for the system.",
+      "title": "Your Identity Information",
+      "subtitle": "Please provide your real information for verification",
       "documentTypes": {
         "ID_CARD": "ID Card",
         "PASSPORT": "Passport",
         "VISA": "Visa"
       },
       "cardId": {
-        "label": "Card ID",
-        "placeholder": "Enter Card ID",
+        "label": "Card Number",
+        "placeholder": "Enter ID number",
         "error": "Card ID is required"
       },
       "expiryDate": {
-        "label": "Card Expired Date",
+        "label": "Expiry Date",
         "placeholder": "Select Date",
-        "error": "Card Expiry Date is required"
+        "error": "Expiry Date is required"
+      },
+      "passport": {
+        "label": "Passport Number",
+        "placeholder": "Enter passport number",
+        "error": "Passport number is required"
+      },
+      "visa": {
+        "label": "Visa Number",
+        "placeholder": "Enter visa number",
+        "error": "Visa number is required"
       },
       "phoneNumber": {
         "label": "Phone Number",
@@ -1147,62 +1105,67 @@
     },
     "step5": {
       "title": "Verify Your Identity",
-      "subtitle": "Upload a photo of your personal card and a selfie of you holding the card.",
+      "subtitle": "Upload a photo of your indentity document and a selfie holding the document.",
       "selfieWithCard": {
-        "label": "Selfie With Card",
-        "description": "Clearly show your face and the card you own.",
+        "label": "Selfie with document",
+        "description": "Make sure your face and document are clearly visible",
         "error": "This image is required"
       },
       "cardImage": {
-        "label": "Card Image",
-        "description": "Show your personal card clearly and without blur.",
+        "label": "Document Photo",
+        "description": "Upload a clear photo of you document.",
         "error": "This image is required"
       }
     },
     "step6": {
-      "title": "Payment Method",
-      "subtitle": "Bank account is sensitive information, so info to freelancer carefully with this data",
+      "title": "Payments",
+      "subtitle": "Your bank information is secure and will only be used for payments.",
       "methods": {
         "LAOS_BANK": "Lao Bank",
         "PAYPAL": "PayPal"
       },
+      "bankName": {
+        "label": "Bank Name",
+        "placeholder": "Enter your bank name",
+        "error": "Bank name is required"
+      },
       "accountName": {
         "label": "Account Name",
-        "placeholder": "Enter your account name",
+        "placeholder": "Enter your account holder's name",
         "error": "Account name is required"
       },
       "bankAccount": {
-        "label": "Bank account number",
-        "placeholder": "e.g. 123456789",
+        "label": "Bank Account Number",
+        "placeholder": "e.g. 1234",
         "error": "Bank number should be at least 8 digits",
         "hint": "Account number should be 8–17 digits"
       },
       "paypal": {
         "label": "PayPal Email / Phone",
-        "placeholder": "e.g. you@example.com or +85620...",
+        "placeholder": "eg. you@example.com or +85620...",
         "error": "PayPal email or phone is required"
       }
     },
     "step7": {
-      "title": "Confirm Your Freelancer Role",
-      "subtitle": "Make a confirm and wait for admin approve your freelancer account.",
+      "title": "Confirm Your Freelancer Account",
+      "subtitle": "Please confirm your information and wait for admin approval",
       "points": {
         "review": {
-          "icon": "System or admin will review and approve your account soon.",
-          "text": "System or admin will review and approve your account soon."
+          "icon": "Your account will be review and approved soon.",
+          "text": "Your account will be review and approved soon."
         },
         "notification": {
           "icon": "You'll be notified if there are any issues with your profile.",
           "text": "You'll be notified if there are any issues with your profile."
         },
         "payment": {
-          "icon": "Once approved, your profile will be visible to customers for hiring.",
-          "text": "Once approved, your profile will be visible to customers for hiring."
+          "icon": "Once approved, your profile will be visible to clients.",
+          "text": "Once approved, your profile will be visible to clients."
         }
       },
       "agreement": {
-        "text": "I confirm that the data I provided is correct, and I understand the",
-        "policy": "policy",
+        "text": "I confirm that the information I provided is correct and I agree to the",
+        "policy": "policy.",
         "error": "Please agree to the terms and conditions"
       }
     }
@@ -1210,14 +1173,14 @@
   "payment": {
     "title": "Payment",
     "paymentForWork": "Payment for work",
-     "paymentForStar": "Payment for buying recommand stars",
-        "paymentForAppendWork": "Payment for adding new work",
+    "paymentForStar": "Payment for buying recommand stars",
+    "paymentForAppendWork": "Payment for adding new work",
     "amountToPay": "Amount to Pay",
     "downloadQR": "Download QR Code",
     "saving": "Saving...",
     "saveQRHint": "Save QR code to pay later",
     "unlockPotential": "Unlock Your Freelancer Potential",
-    "upgradeFee": "A one-time upgrade fee is required to access all premium features on Asor.",
+    "upgradeFee": "A one-time upgrade fee is required to unlock all premium features on Asor.",
     "howToPay": "How to Pay",
     "step1": "Open your BCEL One app",
     "step2": "Scan the QR code above",
@@ -1319,7 +1282,8 @@
       "live_until": "Live until",
       "view_on_map": "View on map",
       "shareLocation": "Share location",
-      "chooseDuration": "How long should this location be shared?"
+      "chooseDuration": "How long should this location be shared?",
+      "sending": "Sending..."
     },
     "list": {
       "title": "Chats",
@@ -1360,7 +1324,7 @@
       "deadline_update": "The deadline will be updated to",
       "hire_freelancer": "The freelancer will be automatically hired and the work will start immediately.",
       "accept_warning": "This action is permanent and cannot be undone",
-      "reject_confirmation": "Decline Offering",
+      "reject_confirmation": "Reject Offering ?",
       "reject_message": "Are you sure you want to decline this offering?",
       "reject_info1": "The offering will be declined and the freelancer will be notified.",
       "reject_info2": "Your original work details (budget and deadline) will remain unchanged.",
@@ -1399,8 +1363,14 @@
     "invalidFormatMessage": "Please select a valid video file (MP4, MOV, AVI, M4V)",
     "error": "Error",
     "errorMessage": "Failed to process the selected video",
-    "uploadPrompt": "Video (16:9, max 1 minute)",
+    "uploadPrompt": "Upload VDO showing your work or Skill \n (Max 60 seconds)",
     "ok": "OK",
-    "upload_banner_Prompt": "Upload Banner image (16:9)"
+    "upload_banner_Prompt": "Upload photo"
+  },
+  "network_error": {
+    "title": "Connection Error",
+    "default_message": "Unable to connect to the server. Please check your internet connection and try again.",
+    "retry_button": "Try Again",
+    "retrying_button": "Retrying..."
   }
 }

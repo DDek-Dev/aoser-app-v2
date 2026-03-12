@@ -100,7 +100,6 @@ const NotificationsScreen = () => {
       case 'PostComment':
         // Navigate to post detail if relatedPost exists
         if (notification.notificationType === "Like" || notification.notificationType === "PostComment") {
-          console.log("PostDetail")
           // navigation.navigate('PostDetail', { postId: notification.relatedPost });
         }
         break;
@@ -116,11 +115,9 @@ const NotificationsScreen = () => {
       case 'Review':
         // Navigate to reviews page
         if (notification.notificationType === "Review") {
-          console.log("FreelancerProfile")
-          // navigation.navigate('FreelancerProfile', { 
-          //   freelancerId: notification.relatedFreelancer,
-          //   tab: 'reviews' 
-          // });
+
+          navigation.navigate('FreelancerProfile', { userId: notification.recipient._id });
+
         }
         break;
 
@@ -139,7 +136,9 @@ const NotificationsScreen = () => {
 
       case 'PaymentHistory':
         // Navigate to payment history
-        console.log("PaymentHistory")
+        // if (notification.notificationType === "Work") {
+        //   navigation.navigate('FreelancerWorkDetail', { workId: notification.aboutNotification });
+        // }
 
         // navigation.navigate('PaymentHistory');
         break;
@@ -147,8 +146,7 @@ const NotificationsScreen = () => {
       case 'UserProfile':
         // Navigate to user profile
         if (notification.notificationType === "UserProfile") {
-          console.log("UserProfile")
-          navigation.navigate('FreelancerProfile', { userId: notification.aboutNotification });
+          navigation.navigate('FreelancerWorkDetail', { workId: notification.aboutNotification });
         } else if (notification.sender) {
           console.log("FreelancerUserProfile")
 
@@ -206,7 +204,7 @@ const NotificationsScreen = () => {
   const sections = groupNotifications(localNotifications);
 
   if (isLoading || isError) return (
-    <View className='w-full h-full mt-6'>
+    <View className='w-full h-full '>
       <SkeletonNotification />
     </View>
   );

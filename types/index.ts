@@ -154,10 +154,11 @@ export type BookingFormData = {
   kindOfWork: 'ONLINE' | 'OFFLINE';
   deadLine?: string | null;
   startDate?: string | null;
-  subWorkDetails: SubWorkDetail[];
+  subWorkDetails?: SubWorkDetail[];
   currency: 'LAK' | 'USD';
   budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
   serviceType: string;
+  assignedTo?: string;
   jobs?: string[];
   address:{
     country: string;
@@ -184,6 +185,7 @@ export type AppendWork ={
   deadLine?: string;
   status: "PENDING" | "CONFIRMED" | "PAYMENT_COMPLETED" | "REJECTED";
   systemPercent: number;
+  totalDonePercent: number;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -505,9 +507,10 @@ export interface Notifications {
   isRead: boolean;
   relatedPost?: string;
   relatedChat?: string;
-  relatedFreelancer?: string;
+  relatedFreelancer?: string; 
   createdAt: string;
   updatedAt: string;
+  notifyAbout: ["ADMING_PAYMENT_CLAIM_TO_WORKER", "ADMIN_UPDATE_WORK_DATA", "FREELANCER_SUBMIT_WORK", "FREELANCER_EXCEPT_ASIGNED_WORK", "FREELANCER_EXCEPTION_APPEND_WORK", "FREELANCER_APPLY_WORK","OWNER_APPEND_WORK", "CONFIRMATION_WORK","UPDATE_WORK_DATA","CREATE_WORK_AND_ASSIGNED_WORKER","CREATE_PUBLIC_WORK","CREATE_REVIEW","AOSER_ADMIN_UPDATE_NEWS","AOSER_ADMIN_CREATE_NEWS","UPDATE_FREELANCER_DATA","UPDATE_FREELANCER_KYC","CREATE_FREELANCER_KYC"]
 }
 
 

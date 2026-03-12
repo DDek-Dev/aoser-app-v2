@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, TouchableWithoutFeedback, Platform, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,9 +17,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
-import { useCreateFreelancer, useUpdateFreelancerProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
+import { useCreateFreelancer, useMyProfile, useUpdateFreelancerProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
-import { District, FileWithType, Province } from 'types';
+import { FileWithType } from 'types';
 
 import {
     saveFileToTemp,
@@ -31,6 +31,7 @@ import {
     AoserProfileData,
     Step1Data,
     Step2Data,
+    Step4Data,
     Step5Data,
     Step6Data,
     Step7Data
@@ -38,6 +39,7 @@ import {
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
+import FreelancerSkeleton from 'screens/freelancer/FreelancerSkeleton';
 
 
 interface ErrorState {
@@ -58,6 +60,8 @@ const UpgradeToFreelancer = () => {
     const [profileImg, setProfileImg] = useState<FileWithType | null>(null);
     const [userId, setUserId] = useState('');
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
+    const { data: profileData, isLoading: profileLoading, isError: profileError, refetch: profileRefetch } = useMyProfile();
+
     const [gender, setGender] = useState('');
     const [phone, setPhone] = useState('');
     const queryClient = useQueryClient();
@@ -81,6 +85,9 @@ const UpgradeToFreelancer = () => {
         profileImg: false,
         gender: false,
         phone: false,
+        province: false,
+        district: false,
+        village: false,
     });
 
 
@@ -97,7 +104,6 @@ const UpgradeToFreelancer = () => {
     const [aboutMe, setAboutMe] = useState('');
     const [skills, setSkills] = useState<string[]>([]);
     const [experiences, setExperiences] = useState<string[]>(['']);
-    const [resumeImageFile, setResumeImageFile] = useState<FileWithType | null>(null);
     const [certificateImages, setCertificateImages] = useState<FileWithType[]>([]);
     const [errorsStep2, setErrorsStep2] = useState<ErrorState>({ aboutMe: false, skills: false, experiences: false });
 
@@ -107,6 +113,8 @@ const UpgradeToFreelancer = () => {
     const [serviceDesc, setServiceDesc] = useState('');
     const [hourlyRate, setHourlyRate] = useState(0);
     const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
+    const [rateType, setRateType] = useState<'PER_HOUR' | 'PER_JOB' | 'PER_DAY'>('PER_HOUR');
+
     // const [errorsStep3, setErrorsStep3] = useState<ErrorState>({ serviceDesc: false, hourlyRate: false });
 
     const [errorsStep3, setErrorsStep3] = useState({
@@ -119,17 +127,13 @@ const UpgradeToFreelancer = () => {
     const [cardID, setCardID] = useState('');
     const [fromDate, setFromDate] = useState<Date | null>(null);
     const [cardType, setCardType] = useState<'ID_CARD' | 'PASSPORT' | 'VISA'>('ID_CARD');
-
-    const [selectedProvince, setSelectedProvince] = useState<Province | undefined>(undefined);
-    const [selectedDistrict, setSelectedDistrict] = useState<District | undefined>(undefined);
-    const [village, setVillage] = useState('');
+    const [addressProvince, setAddressProvince] = useState('');
+    const [addressDistrict, setAddressDistrict] = useState('');
+    const [addressVillage, setAddressVillage] = useState('');
     const [errorsStep4, setErrorsStep4] = useState<ErrorState>({
         cardID: false,
         cardType: false,
         fromDate: false,
-        province: false,
-        district: false,
-        village: false,
     });
 
 
@@ -143,9 +147,11 @@ const UpgradeToFreelancer = () => {
         cardImage: false,
     })
 
+
     //   Step 6
 
     const [paymentMethod, setPaymentMethod] = useState<'LAOS_BANK' | 'PAYPAL'>('LAOS_BANK');
+    const [bankName, setBankName] = useState('');
     const [accountName, setAccountName] = useState('');
     const [bankNumber, setBankNumber] = useState('');
     const [paypalInfo, setPaypalInfo] = useState('');
@@ -161,7 +167,14 @@ const UpgradeToFreelancer = () => {
         agreed: false,
     });
 
+    if (profileLoading) {
+        return <ActivityIndicator />
+    }
 
+    console.log("User profile ", JSON.stringify(profileData, null, 2));
+    useEffect(() => {
+
+    })
 
     const renderStep = () => {
         switch (step) {
@@ -180,6 +193,12 @@ const UpgradeToFreelancer = () => {
                     setProfileImg={setProfileImg}
                     setGender={setGender}
                     setPhone={setPhone}
+                    province={addressProvince}
+                    district={addressDistrict}
+                    village={addressVillage}
+                    setProvince={setAddressProvince}
+                    setDistrict={setAddressDistrict}
+                    setVillage={setAddressVillage}
                     errors={aoserProfile}
                 />
             case 1:
@@ -208,8 +227,7 @@ const UpgradeToFreelancer = () => {
                     setSkills={setSkills}
                     experiences={experiences}
                     setExperiences={setExperiences}
-                    resumeImageFile={resumeImageFile}
-                    setResumeImageFile={setResumeImageFile}
+
                     certificateImages={certificateImages}
                     setCertificateImages={setCertificateImages}
                     errors={errorsStep2}
@@ -222,6 +240,8 @@ const UpgradeToFreelancer = () => {
                     setHourlyRate={setHourlyRate}
                     budgetCurrency={budgetCurrency}
                     setBudgetCurrency={setBudgetCurrency}
+                    rateType={rateType}
+                    setRateType={setRateType}
                     errors={errorsStep3}
                 />;
             case 4:
@@ -233,14 +253,6 @@ const UpgradeToFreelancer = () => {
                     fromDate={fromDate}
                     setFromDate={setFromDate}
                     errors={errorsStep4}
-
-                    // address
-                    province={selectedProvince}
-                    setProvince={setSelectedProvince}
-                    district={selectedDistrict}
-                    setDistrict={setSelectedDistrict}
-                    village={village}
-                    setVillage={setVillage}
                 />;
             case 5:
                 return <UpgradeToFreelancerStep5
@@ -248,12 +260,15 @@ const UpgradeToFreelancer = () => {
                     setSelfieWithCard={setSelfieWithCard}
                     cardImage={cardImage}
                     setCardImage={setCardImage}
+
                     errors={errorsStep5}
                 />;
             case 6:
                 return <UpgradeToFreelancerStep6
                     paymentMethod={paymentMethod}
                     setPaymentMethod={setPaymentMethod}
+                    bankName={bankName}
+                    setBankName={setBankName}
                     accountName={accountName}
                     setAccountName={setAccountName}
                     bankNumber={bankNumber}
@@ -290,6 +305,9 @@ const UpgradeToFreelancer = () => {
                 profileImg: !profileImg?.uri,
                 gender: !gender.trim(),
                 phone: !phone.trim(),
+                province: !addressProvince.trim(),
+                district: !addressDistrict.trim(),
+                village: !addressVillage.trim(),
             };
             setAoserProfile(newErrors);
 
@@ -306,6 +324,14 @@ const UpgradeToFreelancer = () => {
                 lastName,
                 gender,
                 phone,
+                address: {
+                    country: 'Laos',
+                    province: addressProvince.trim(),
+                    district: addressDistrict.trim(),
+                    village: addressVillage.trim(),
+                    latitude: 0,
+                    longitude: 0,
+                },
             };
 
             // ---------------------------
@@ -350,12 +376,7 @@ const UpgradeToFreelancer = () => {
                 // 3B. REMOTE IMAGE → DO NOT COPY
                 // ---------------------------
                 else {
-
-                    dataToSave.profileImg = {
-                        uri: profileImg.uri,
-                        name: "existing_profile.jpg",
-                        type: profileImg.type || "image/jpeg",
-                    };
+                    dataToSave.profileImg = null;
                 }
             }
 
@@ -424,7 +445,6 @@ const UpgradeToFreelancer = () => {
                 aboutMe: aboutMe.trim() === '',
                 skills: cleanedSkills.length === 0,
                 experiences: cleanedExperiences.length === 0,
-                // resumeImage: !resumeImageFile,
             };
 
             setErrorsStep2(newErrors);
@@ -436,15 +456,7 @@ const UpgradeToFreelancer = () => {
                 aboutMe,
             };
 
-            // Handle resume image
-            if (resumeImageFile) {
-                const tempPath = await saveFileToTemp(
-                    resumeImageFile.uri,
-                    `resume_${Date.now()}.${resumeImageFile.type.split('/')[1]}`
-                );
-                dataToSave.resumeImagePath = tempPath;
-                dataToSave.resumeImageMeta = createFileMeta(resumeImageFile);
-            }
+
 
             // Handle certificate images array
             if (certificateImages.length > 0) {
@@ -483,6 +495,7 @@ const UpgradeToFreelancer = () => {
                 serviceDesc: serviceDesc,
                 hourlyRate: hourlyRate,
                 budgetCurrency: budgetCurrency,
+                rateType: rateType,
             };
             try {
                 await AsyncStorage.setItem('@freelancer_step3', JSON.stringify(formData));
@@ -499,9 +512,6 @@ const UpgradeToFreelancer = () => {
                 cardType: cardType === null,
                 cardID: cardID.trim() === '',
                 fromDate: fromDate === null,
-                province: selectedProvince === undefined,
-                district: selectedDistrict === undefined,
-                village: village.trim() === '',
 
             }
 
@@ -511,26 +521,10 @@ const UpgradeToFreelancer = () => {
                 return;
             }
 
-            const formData = {
+            const formData: Step4Data = {
                 cardType: cardType,
                 cardID: cardID,
-                fromDate: fromDate,
-                // address: {
-                //     province: selectedProvince,
-                //     district: selectedDistrict,
-                //     village: village,
-                //     latitude: 0,
-                //     longitude: 0,
-                // },
-
-                address: {
-                    province: selectedProvince,  // ✅ String value
-                    district: selectedDistrict,  // ✅ String value
-                    village: village,                               // ✅ Already string
-                    latitude: 0,
-                    longitude: 0,
-                    country: 'Laos', // Add country if needed
-                },
+                fromDate: fromDate as Date,
             };
 
             console.log('🚀 ~ file: UpgradeToFreelancer.tsx ~ line 107 ~ handleNextPress ~ formData', formData)
@@ -582,6 +576,7 @@ const UpgradeToFreelancer = () => {
         if (step === 6) {
             const newErrors: ErrorState = {
                 accountName: accountName.trim() === '',
+                bankName: bankName.trim() === '',
                 ...(paymentMethod === 'PAYPAL'
                     ? { paypalInfo: paypalInfo.trim() === '' }
                     : { bankNumber: bankNumber.trim() === '' }),
@@ -592,6 +587,7 @@ const UpgradeToFreelancer = () => {
 
             const dataToSave: Step6Data = {
                 paymentMethod,
+                bankName,
                 accountName,
                 ...(paymentMethod === 'PAYPAL'
                     ? { paypalInfo }
@@ -697,9 +693,9 @@ const UpgradeToFreelancer = () => {
                 const lastName = reconstructedData['@aoser_profile']?.lastName || '';
                 const gender = reconstructedData['@aoser_profile']?.gender || '';
                 const phone = reconstructedData['@aoser_profile']?.phone || '';
-                const userProfileImage = uploadResults['@aoser_profile']?.profileImg as string || '';
+                const uploadedUserProfileImage = uploadResults['@aoser_profile']?.profileImg as string | undefined;
 
-                const finalData = {
+                const finalData: Record<string, any> = {
 
                     // Personal Info
 
@@ -714,29 +710,14 @@ const UpgradeToFreelancer = () => {
 
                     // Media - CORRECTED property names
                     bannerImage: uploadResults['@freelancer_step1']?.bannerImageFile as string || '',
-                    videoPromote: uploadResults['@freelancer_step1']?.promoVideoFile as string || '',
-                    resumeImage: uploadResults['@freelancer_step2']?.resumeImageFile as string || '',
-
-                    // Certificates - CORRECTED step and property name
-                    // certificates: uploadResults['@freelancer_step2']?.certificateFiles as string[] || [],
-                    certificates: (() => {
-                        const certFiles = uploadResults.certificateFiles;
-                        if (!certFiles) return [];
-
-                        // If it's already an array, return it
-                        if (Array.isArray(certFiles)) return certFiles as string[];
-
-                        // If it's an object with numeric keys, convert to array
-                        return Object.values(certFiles) as string[];
-                    })(),
                     // Professional Info
                     serviceType: reconstructedData['@freelancer_step1']?.category || '',
-                    jobs: reconstructedData['@freelancer_step1']?.subcategories || [],
                     about: reconstructedData['@freelancer_step2']?.aboutMe || '', // Note: aboutMe not about
                     skills: reconstructedData['@freelancer_step2']?.skills || [],
                     workExperience: reconstructedData['@freelancer_step2']?.experience || [], // Note: experience not workExperience
                     customerExpect: reconstructedData['@freelancer_step3']?.serviceDesc || '',
                     hourlyRate: reconstructedData['@freelancer_step3']?.hourlyRate || '',
+                    rateType: reconstructedData['@freelancer_step3']?.rateType || '',
 
                     // KYC Info
                     personalCardType: reconstructedData['@freelancer_step4']?.cardType,
@@ -749,40 +730,61 @@ const UpgradeToFreelancer = () => {
 
                     // Address
                     address: {
-                        country: 'Laos',
-                        province: reconstructedData['@freelancer_step4']?.address.province.province_la as string,
-                        district: reconstructedData['@freelancer_step4']?.address.district.district_la as string,
-                        village: reconstructedData['@freelancer_step4']?.address.village,
+                        country: reconstructedData['@aoser_profile']?.address?.country || 'Laos',
+                        province: reconstructedData['@aoser_profile']?.address?.province || '',
+                        district: reconstructedData['@aoser_profile']?.address?.district || '',
+                        village: reconstructedData['@aoser_profile']?.address?.village || '',
                         latitude: 0,
                         longitude: 0
                     },
 
                     // Bank Info
                     bankAccountType: reconstructedData['@freelancer_step6']?.paymentMethod,
+                    bankName: reconstructedData['@freelancer_step6']?.bankName || '',
                     bankAccountName: reconstructedData['@freelancer_step6']?.accountName || '',
                     bankAccountNumber: reconstructedData['@freelancer_step6']?.bankNumber || '',
                 };
 
+                const optionalPromoVideo = uploadResults['@freelancer_step1']?.promoVideoFile as string | undefined;
+                if (optionalPromoVideo) {
+                    finalData.videoPromote = optionalPromoVideo;
+                }
 
-                console.log('✅ Final data:', finalData);
-                // setIsSubmitting(false);
+
+                const optionalSubcategories = reconstructedData['@freelancer_step1']?.subcategories;
+                if (Array.isArray(optionalSubcategories) && optionalSubcategories.length > 0) {
+                    finalData.jobs = optionalSubcategories;
+                }
+
+                const rawCertificateFiles = uploadResults.certificateFiles;
+                const optionalCertificates = Array.isArray(rawCertificateFiles)
+                    ? rawCertificateFiles
+                    : rawCertificateFiles
+                        ? Object.values(rawCertificateFiles)
+                        : [];
+                if (optionalCertificates.length > 0) {
+                    finalData.certificates = optionalCertificates;
+                }
+
+
+                // console.log('✅ Final data:', JSON.stringify(finalData, null, 2));
+                setIsSubmitting(false);
 
                 // Submit to backend
                 createFreelancer(finalData, {
 
                     onSuccess: async (response) => {
 
-
-
-
-
-                        const profileData = {
+                        const profileData: Record<string, string> = {
                             firstName: firstName.trim(),
                             lastName: lastName.trim(),
                             gender: gender.trim(),
                             phone: phone.trim(),
-                            userProfileImage: userProfileImage,
                         };
+
+                        if (uploadedUserProfileImage) {
+                            profileData.userProfileImage = uploadedUserProfileImage;
+                        }
 
                         // console.log("Updating profile with data:", profileData);
 
@@ -800,6 +802,7 @@ const UpgradeToFreelancer = () => {
                                     title: t('editProfile.oops'),
                                     textBody: t('editProfile.update_failed'),
                                 })
+                                setIsSubmitting(false);
                             },
                         });
 
@@ -816,7 +819,7 @@ const UpgradeToFreelancer = () => {
                         // Optional: Force an immediate refetch
                         await queryClient.refetchQueries({ queryKey: ['myProfile'] });
                         // Navigate back
-                        navigation.popTo('FreelancerRoleGate');
+                        navigation.replace('FreelancerRoleGate');
                         setIsSubmitting(false);
                     },
                     onError: (error) => {
@@ -833,8 +836,7 @@ const UpgradeToFreelancer = () => {
                 });
 
 
-
-
+                setIsSubmitting(false);
             } catch (error) {
                 console.log('❌ Error in submission process:', error);
                 Toast.show({
@@ -892,7 +894,7 @@ const UpgradeToFreelancer = () => {
 
                             <TouchableOpacity
                                 onPress={handleBack}
-                                    disabled={isSubmitting}
+                                disabled={isSubmitting}
                                 className="bg-textSecondary mt-6 py-4 rounded-full items-center w-1/3"
                             >
                                 <Text className="text-white text-base font-semibold">{t('kyc.buttons.back')}</Text>

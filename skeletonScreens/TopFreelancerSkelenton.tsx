@@ -2,9 +2,9 @@ import { View } from "react-native"
 
 export const TopFreelancerSkelenton = () => {
     return (
-        <View className="w-64 mr-4 bg-white rounded-xl overflow-hidden border border-border">
+        <View className="w-[49.5%] mr-1 bg-white rounded-xl overflow-hidden border border-border">
             {/* Banner Skeleton */}
-            <View className="w-full h-28 bg-gray-300 animate-pulse" />
+            <View className="w-full h-48 bg-gray-300 animate-pulse" />
             
             <View className="p-2 space-y-1">
                 <View className="flex-row justify-between">

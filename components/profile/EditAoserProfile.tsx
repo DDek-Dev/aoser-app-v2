@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import PhoneInput from 'components/ui/PhoneInput';
 import { useSelectAddress } from 'hooks/useSelectAddress';
 import Dropdown from 'components/filter/Dropdown';
+import { useQueryClient } from 'node_modules/@tanstack/react-query/build/modern/QueryClientProvider';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -111,6 +112,7 @@ const EditAoserProfile = () => {
         village: false,
     });
 
+      const queryClient = useQueryClient(); 
     // ── API hooks ─────────────────────────────────────────────────────────────
     const { data: addressData, isLoading: addressLoading, error: addressError } = useSelectAddress();
     const { data, isLoading: profileLoading } = useMyProfile();
@@ -314,7 +316,7 @@ const EditAoserProfile = () => {
             setProfileImageFilename(newFilename);
             return newFilename;
         } catch (err) {
-            console.error('Image upload error:', err);
+            console.log('Image upload error:', err);
             throw new Error(t('editProfile.upload_error'));
         } finally {
             setIsUploading(false);
@@ -348,15 +350,17 @@ const EditAoserProfile = () => {
 
             updateProfile(profileData, {
                 onSuccess: () => {
+                    // queryClient.invalidateQueries(['ProfileScreen']);
                     Toast.show({
                         type: ALERT_TYPE.SUCCESS,
                         title: t('editProfile.success'),
                         textBody: t('editProfile.profile_updated'),
                     });
+                    queryClient.invalidateQueries({ queryKey: ['ProfileScreen'] });
                     setTimeout(() => navigation.goBack(), 500);
                 },
                 onError: (err) => {
-                    console.error('Update error:', err);
+                    console.log('Update error:', err);
                     Toast.show({
                         type: ALERT_TYPE.DANGER,
                         title: t('editProfile.oops'),
@@ -365,7 +369,7 @@ const EditAoserProfile = () => {
                 },
             });
         } catch (err) {
-            console.error('handleUpdate error:', err);
+            console.log('handleUpdate error:', err);
             Toast.show({
                 type: ALERT_TYPE.DANGER,
                 title: t('editProfile.oops'),
@@ -418,7 +422,7 @@ const EditAoserProfile = () => {
                                     )}
                                 </TouchableOpacity>
 
-                                {hasImage && (
+                                {/* {hasImage && (
                                     <TouchableOpacity
                                         onPress={() => setDeleteConfirmModalVisible(true)}
                                         className="absolute bottom-0 right-0 bg-error p-2 rounded-full border-2 border-white"
@@ -426,7 +430,7 @@ const EditAoserProfile = () => {
                                     >
                                         <Ionicons name="trash-outline" size={16} color="white" />
                                     </TouchableOpacity>
-                                )}
+                                )} */}
                             </View>
 
                             {errors.profileImage ? (
@@ -738,7 +742,7 @@ const EditAoserProfile = () => {
                                 </View>
                             </TouchableOpacity>
 
-                            {hasImage && (
+                            {/* {hasImage && (
                                 <TouchableOpacity
                                     onPress={() => {
                                         setImageActionModalVisible(false);
@@ -758,7 +762,7 @@ const EditAoserProfile = () => {
                                         </Text>
                                     </View>
                                 </TouchableOpacity>
-                            )}
+                            )} */}
 
                             <TouchableOpacity
                                 onPress={() => setImageActionModalVisible(false)}

@@ -56,6 +56,8 @@ import { useTranslation } from 'react-i18next';
 import PaymentDetail_Id from 'screens/freelancer/PaymentDetail_Id';
 import CustomerProfile from 'screens/profile/CustomerProfile';
 import AppendOwnerWork from 'components/publicwork/AppendOwnerWork';
+import TopFreelancerList from 'components/freelancer/TopFreelancerList';
+import ConfirmPostjob from 'components/publicwork/ConfirmPostjob';
 
 
 
@@ -158,9 +160,20 @@ export default function MainNavigator() {
           }}
         />
         <RootStack.Screen name="FreelancerProfile" component={FreelancerProfile}
-
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
         />
-        <RootStack.Screen name="ResumeImageViewer" component={ResumeImageViewer} />
+        <RootStack.Screen name="TopFreelancerList" component={TopFreelancerList}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <RootStack.Screen name="ResumeImageViewer" component={ResumeImageViewer}  
+ 
+        />
 
         <RootStack.Screen name="Bookfreelancer">
           {(props) => (
@@ -178,6 +191,11 @@ export default function MainNavigator() {
         <RootStack.Screen
           name="ConfirmBookingScreen"
           component={ConfirmBookingScreen}
+
+        />
+        <RootStack.Screen
+          name="ConfirmPostjob"
+          component={ConfirmPostjob}
 
         />
 
@@ -201,26 +219,24 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        {/* <RootStack.Screen name="AuthFreelancerProfile">
-          {(route) => (
-            <ProtectedRoute
-              fallbackMessage={t('protectedRoute.signInToAccess')}
-              onSignInPress={() => navigation.navigate('SignIn')}
-              onSignUpPress={() => navigation.navigate('SignUp')}
-            >
-              <AuthFreelancerProfile {...route} />
-            </ProtectedRoute>
-          )}
-        </RootStack.Screen> */}
-
         <RootStack.Screen name="AuthFreelancerProfile" component={AuthFreelancerProfile} />
         <RootStack.Screen name="CustomerProfile" component={CustomerProfile} options={{
           headerShown: false,
           animation: 'ios_from_right',
         }} />
-        <RootStack.Screen name="LanguageSelectScreen" component={LanguageSelectScreen} />
+        <RootStack.Screen name="LanguageSelectScreen" component={LanguageSelectScreen} 
+        options={{
+          headerShown: false,
+          animation: 'ios_from_right',
+        }}
+        />
 
-        <RootStack.Screen name="ChangePasswordScreen">
+        <RootStack.Screen name="ChangePasswordScreen"
+         options={{
+          headerShown: false,
+          animation: 'ios_from_right',
+        }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -235,7 +251,12 @@ export default function MainNavigator() {
 
         <RootStack.Screen name="NotificationSettingsScreen" component={NotificationSettingsScreen} />
 
-        <RootStack.Screen name="AskAQuestionScreen">
+        <RootStack.Screen name="AskAQuestionScreen"
+         options={{
+          headerShown: false,
+          animation: 'ios_from_right',
+        }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -248,9 +269,16 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} />
+        <RootStack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} 
+         options={{
+          headerShown: false,
+          animation: 'ios_from_right',
+        }}
+        />
 
-        <RootStack.Screen name="AuthFreelancerSetting">
+        <RootStack.Screen name="AuthFreelancerSetting"
+        
+        >
           {() => (
             <ProtectedRoute
               fallbackMessage={t('protectedRoute.signInToAccess')}
@@ -275,7 +303,12 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="EditAoserProfile">
+        <RootStack.Screen name="EditAoserProfile"
+         options={{
+          headerShown: false,
+          animation: 'ios_from_right',
+        }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -318,7 +351,12 @@ export default function MainNavigator() {
         />
 
         {/* Works */}
-        <RootStack.Screen name="FreelancerWorkHistory">
+        <RootStack.Screen name="FreelancerWorkHistory"
+        options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -331,7 +369,12 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="FreelancerWorkDetail" component={FreelancerWorkDetail} />
+        <RootStack.Screen name="FreelancerWorkDetail" component={FreelancerWorkDetail} 
+        options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
         <RootStack.Screen name="EditWorkById" component={EditWorkById} />
         <RootStack.Screen name="AppendOwnerWork" component={AppendOwnerWork} />
 

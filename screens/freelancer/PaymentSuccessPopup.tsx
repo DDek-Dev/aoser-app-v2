@@ -92,7 +92,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
         throw new Error('Bill not ready');
       }
     } catch (error) {
-      console.log('Download error:', error);
+      
       Toast.show({
         type: ALERT_TYPE.DANGER,
         title: 'Error',

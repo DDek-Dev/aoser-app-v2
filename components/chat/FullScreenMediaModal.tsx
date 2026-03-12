@@ -9,6 +9,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Linking,
+  StyleSheet,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +19,7 @@ import ScreenWrapper from 'components/ui/ScreenWrapper';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
+const loadedVideoUriCache = new Set<string>();
 
 interface FullScreenMediaModalProps {
   visible: boolean;
@@ -43,10 +45,21 @@ const FullScreenVideoItem: React.FC<{
   };
 
   const videoUri = resolveUri(item);
-  const videoPlayer = useVideoPlayer(videoUri, (player) => {
+  const [isLoading, setIsLoading] = useState(() => !loadedVideoUriCache.has(videoUri));
+  const videoPlayer = useVideoPlayer({ uri: videoUri, useCaching: true }, (player) => {
     player.loop = true;
     player.muted = false;
+    player.keepScreenOnWhilePlaying = false;
   });
+
+  useEffect(() => {
+    setIsLoading(!loadedVideoUriCache.has(videoUri));
+  }, [videoUri]);
+
+  const markLoaded = () => {
+    loadedVideoUriCache.add(videoUri);
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     if (shouldPlay) {
@@ -63,7 +76,13 @@ const FullScreenVideoItem: React.FC<{
         style={{ width: '100%', height: '100%' }}
         contentFit="contain"
         showsTimecodes={true}
+        onFirstFrameRender={markLoaded}
       />
+      {isLoading && (
+        <View style={{ ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="small" color="#fff" />
+        </View>
+      )}
     </View>
   );
 };
@@ -195,7 +214,7 @@ const FullScreenMediaModal: React.FC<FullScreenMediaModalProps> = ({
               setImageLoading(prev => ({ ...prev, [item.id]: false }));
             }}
             onError={(error) => {
-              console.error("Image load error for:", imageUri, error.nativeEvent);
+              console.log("Image load error for:", imageUri, error.nativeEvent);
               setImageLoading(prev => ({ ...prev, [item.id]: false }));
             }}
           />

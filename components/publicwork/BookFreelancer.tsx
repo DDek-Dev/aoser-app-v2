@@ -9,14 +9,14 @@ import {
   ActivityIndicator,
   Image,
   TextInput,
-
-  ScrollView
+  ScrollView,
+  Pressable,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import { FreelancerStackParamList } from 'types/navigation';
-import { getCategories, useFreelancerById } from 'hooks/useFreelancer';
+import { useFreelancerById } from 'hooks/useFreelancer';
 import FormInput from 'components/ui/Input';
 import TextArea from 'components/ui/TextArea';
 import SelectInput from 'components/ui/SelectInput';
@@ -24,12 +24,14 @@ import DatePicker from 'components/ui/DatePicker';
 import BudgetInput from 'components/ui/BudgetInput';
 import { SubWorkDetail } from 'types';
 import SubWorkDetailsInput from 'components/ui/SubTaskInputList';
-import { getCurrentLanguage, Language } from 'utils/dateFormatter';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
 import { profileImage } from 'assets';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Dropdown from 'components/filter/Dropdown';
+import { useSelectAddress } from 'hooks/useSelectAddress';
+import { getCurrentLanguage, Language } from 'utils/dateFormatter';
 
 type BookFreelancerRouteProp = RouteProp<FreelancerStackParamList, 'Bookfreelancer'>;
 
@@ -42,157 +44,281 @@ const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 const BookFreelancer = ({ route }: Props) => {
   type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList>;
   const navigation = useNavigation<SearchBarNavigationProp>();
-  const insets = useSafeAreaInsets();
+  
   const [workType, setWorkType] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
-  const [hasDeadline, setHasDeadline] = useState(true);
+
   const [subWorkDetails, setSubWorkDetails] = useState<SubWorkDetail[]>([]);
   const [subTasks, setSubTasks] = useState<string[]>([]);
   const [newSubTask, setNewSubTask] = useState('');
   const [category, setCategory] = useState('');
   const [nameOfWork, setNameOfWork] = useState('');
   const [workDetail, setWorkDetail] = useState('');
-  const [budget, setBudget] = useState<number | 0>(0);
+  const [budget, setBudget] = useState<number | null>(null);
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
   const fromInputRef = useRef<TextInput>(null);
   const toInputRef = useRef<TextInput>(null);
   const categoryRef = useRef<{ focus: () => void }>(null);
   const [subcategories, setSubcategories] = useState<string[]>([]);
-  const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY'>('FIXED_PRICE');
+  const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>('FIXED_PRICE');
 
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
-  const [fromDateText, setFromDateText] = useState('');
-  const [toDateText, setToDateText] = useState('');
   const [tempFromDate, setTempFromDate] = useState(new Date());
   const [tempToDate, setTempToDate] = useState(new Date());
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
+  const [fromDateString, setFromDateString] = useState('');
+  const [fromTimeString, setFromTimeString] = useState('');
+  const [toDateString, setToDateString] = useState('');
+  const [toTimeString, setToTimeString] = useState('');
+
+  const { data: addressData } = useSelectAddress();
+  const [selectedProvince, setSelectedProvince] = useState<any>(undefined);
+  const [selectedDistrict, setSelectedDistrict] = useState<any>(undefined);
+  const [village, setVillage] = useState('');
 
   const [errors, setErrors] = useState({
     nameOfWork: false,
     workDetail: false,
-    budget: false,
+    // budget: false,
     category: false,
-    dateInvalid: false,
-    subcategories: false
+    toDate: false,
   });
-
-  const userId = route.params.userId;
+  const [toDateErrorMessage, setToDateErrorMessage] = useState('');
   const currentLanguage: Language = getCurrentLanguage();
 
+  const userId = route.params.userId;
   const { t } = useTranslation();
   const { data: freelancer, isLoading } = useFreelancerById(userId);
 
-  // Parse date from text input (dd/mm/yyyy or ວ/ດ/ປ format)
-  const parseDateFromText = (text: string): Date | null => {
-    const cleaned = text.replace(/[^\d]/g, '');
-    if (cleaned.length !== 8) return null;
+  // ─── Date Auto-Correction ────────────────────────────────────────────────────
+  /**
+   * Normalises a raw date string typed by the user.
+   * - Replaces `-` or `.` separators with `/`
+   * - Clamps day to 1-31, month to 1-12
+   * - Returns a corrected "DD/MM/YYYY" string (partial strings are left as-is
+   *   until they are long enough to validate).
+   */
+  const normaliseDateInput = (raw: string): string => {
+    // Replace common alternative separators
+    const normalised = raw.replace(/[-,.]/g, '/');
 
-    const day = parseInt(cleaned.substring(0, 2), 10);
-    const month = parseInt(cleaned.substring(2, 4), 10);
-    const year = parseInt(cleaned.substring(4, 8), 10);
+    const parts = normalised.split('/');
+    if (parts.length !== 3) return normalised;
 
-    if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900 || year > 2100) return null;
+    let [dayStr, monthStr, yearStr] = parts;
 
-    const date = new Date(year, month - 1, day);
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
 
-    if (date.getDate() !== day || date.getMonth() !== month - 1) return null;
+    const correctedDay = isNaN(day) ? dayStr : String(Math.min(Math.max(day, 1), 31));
+    const correctedMonth = isNaN(month) ? monthStr : String(Math.min(Math.max(month, 1), 12));
 
+    return `${correctedDay}/${correctedMonth}/${yearStr}`;
+  };
+
+  // ─── Time Auto-Correction ────────────────────────────────────────────────────
+  /**
+   * Normalises a raw time string typed by the user.
+   * - Replaces `.` or `,` separators with `:`
+   * - Clamps hours to 0-23, minutes to 0-59
+   * - Falls back to "0:0" for completely unparseable input once the user has
+   *   typed at least one `:` separator.
+   */
+  const normaliseTimeInput = (raw: string): string => {
+    // Replace common alternative separators
+    const normalised = raw.replace(/[.,]/g, ':');
+
+    // Only attempt correction once the user has typed a separator
+    if (!normalised.includes(':')) return normalised;
+
+    const parts = normalised.split(':');
+    if (parts.length !== 2) return '0:0';
+
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+
+    const correctedHours = isNaN(hours) ? 0 : Math.min(Math.max(hours, 0), 23);
+    const correctedMinutes = isNaN(minutes) ? 0 : Math.min(Math.max(minutes, 0), 59);
+
+    return `${correctedHours}:${correctedMinutes}`;
+  };
+
+  // ─── Existing parse helpers (unchanged) ─────────────────────────────────────
+  const parseDate = (dateString: string): Date | null => {
+    if (!dateString || dateString.length < 8) return null;
+
+    const parts = dateString.split('/');
+    if (parts.length !== 3) return null;
+
+    const [part1, part2, year] = parts;
+    const day = parseInt(part1, 10);
+    const month = parseInt(part2, 10);
+    const yearNum = parseInt(year, 10);
+
+    if (isNaN(day) || isNaN(month) || isNaN(yearNum)) return null;
+    if (day < 1 || day > 31) return null;
+    if (month < 1 || month > 12) return null;
+    if (yearNum < 1900 || yearNum > 2100) return null;
+
+    const date = new Date(yearNum, month - 1, day);
+    if (isNaN(date.getTime())) return null;
     return date;
   };
 
-  // Format date for display
-  const formatDateForDisplay = (date: Date | null): string => {
-    if (!date) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = String(date.getFullYear());
+  const parseTime = (timeString: string): { hours: number; minutes: number } | null => {
+    if (!timeString || timeString.length < 3) return null;
 
+    const parts = timeString.split(':');
+    if (parts.length !== 2) return null;
+
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+
+    if (isNaN(hours) || isNaN(minutes)) return null;
+    if (hours < 0 || hours > 23) return null;
+    if (minutes < 0 || minutes > 59) return null;
+
+    return { hours, minutes };
+  };
+
+  const combineDateAndTime = (dateString: string, timeString: string): Date | null => {
+    const parsedDate = parseDate(dateString);
+    if (!parsedDate) return null;
+
+    const parsedTime = parseTime(timeString);
+    if (!parsedTime) return parsedDate;
+
+    parsedDate.setHours(parsedTime.hours, parsedTime.minutes, 0, 0);
+    return parsedDate;
+  };
+
+  const updateFromDate = (dateStr: string, timeStr: string) => {
+    setFromDate(combineDateAndTime(dateStr, timeStr));
+  };
+
+  const updateToDate = (dateStr: string, timeStr: string) => {
+    setToDate(combineDateAndTime(dateStr, timeStr));
+  };
+
+  const formatDateForDisplay = (date: Date): string => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
 
-  // Handle from date text change
+  const formatTimeForDisplay = (date: Date): string => {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  // ─── Handlers with auto-correction ──────────────────────────────────────────
   const handleFromDateChange = (text: string) => {
-    const cleaned = text.replace(/[^\d]/g, '');
-    let formatted = '';
-
-    if (cleaned.length > 0) {
-      formatted = cleaned.substring(0, 2);
-      if (cleaned.length >= 3) {
-        formatted += '/' + cleaned.substring(2, 4);
-      }
-      if (cleaned.length >= 5) {
-        formatted += '/' + cleaned.substring(4, 8);
-      }
-    }
-
-    setFromDateText(formatted);
-
-    if (cleaned.length === 8) {
-      const parsedDate = parseDateFromText(formatted);
-      if (parsedDate) {
-        setFromDate(parsedDate);
-      }
-    } else {
-      setFromDate(null);
-    }
+    const corrected = normaliseDateInput(text);
+    setFromDateString(corrected);
+    updateFromDate(corrected, fromTimeString);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
   };
 
-  // Handle to date text change
+  const handleFromDateBlur = () => {
+    // Re-apply correction on blur so partial entries get fixed when user leaves field
+    const corrected = normaliseDateInput(fromDateString);
+    setFromDateString(corrected);
+    updateFromDate(corrected, fromTimeString);
+  };
+
+  const handleFromTimeChange = (text: string) => {
+    const corrected = normaliseTimeInput(text);
+    setFromTimeString(corrected);
+    updateFromDate(fromDateString, corrected);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
+  };
+
+  const handleFromTimeBlur = () => {
+    const corrected = normaliseTimeInput(fromTimeString);
+    setFromTimeString(corrected);
+    updateFromDate(fromDateString, corrected);
+  };
+
   const handleToDateChange = (text: string) => {
-    const cleaned = text.replace(/[^\d]/g, '');
-    let formatted = '';
-
-    if (cleaned.length > 0) {
-      formatted = cleaned.substring(0, 2);
-      if (cleaned.length >= 3) {
-        formatted += '/' + cleaned.substring(2, 4);
-      }
-      if (cleaned.length >= 5) {
-        formatted += '/' + cleaned.substring(4, 8);
-      }
-    }
-
-    setToDateText(formatted);
-
-    if (cleaned.length === 8) {
-      const parsedDate = parseDateFromText(formatted);
-      if (parsedDate) {
-        setToDate(parsedDate);
-      }
-    } else {
-      setToDate(null);
-    }
+    const corrected = normaliseDateInput(text);
+    setToDateString(corrected);
+    updateToDate(corrected, toTimeString);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
   };
 
-  // Handle deadline requirement change
-  const handleDeadlineChange = (value: boolean) => {
-    setHasDeadline(value);
-    if (!value) {
-      setFromDate(null);
-      setToDate(null);
-      setFromDateText('');
-      setToDateText('');
-      setErrors(prev => ({ ...prev, dateInvalid: false }));
-    }
+  const handleToDateBlur = () => {
+    const corrected = normaliseDateInput(toDateString);
+    setToDateString(corrected);
+    updateToDate(corrected, toTimeString);
   };
 
+  const handleToTimeChange = (text: string) => {
+    const corrected = normaliseTimeInput(text);
+    setToTimeString(corrected);
+    updateToDate(toDateString, corrected);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
+  };
+
+  const handleToTimeBlur = () => {
+    const corrected = normaliseTimeInput(toTimeString);
+    setToTimeString(corrected);
+    updateToDate(toDateString, corrected);
+  };
+
+  // ─── Address helpers ─────────────────────────────────────────────────────────
+  const provinces = addressData?.[0]?.provinces ?? [];
+  const districts = selectedProvince?.districts ?? [];
+  const provinceOptions = provinces.map((p: any) => ({ label: p.province_la, value: p }));
+  const districtOptions = districts.map((d: any) => ({ label: d.district_la, value: d }));
+
+  const handleProvinceSelect = (province: any) => {
+    setSelectedProvince(province);
+    setSelectedDistrict(undefined);
+    setVillage('');
+  };
+
+  const handleDistrictSelect = (district: any) => {
+    setSelectedDistrict(district);
+    setVillage('');
+  };
+
+
+  // ─── Submit ──────────────────────────────────────────────────────────────────
   const handleSubmit = () => {
-    const dateInvalid = hasDeadline && (
-      !fromDate ||
-      !toDate ||
-      (fromDate && toDate && toDate < fromDate)
-    );
+    const hasToDateInput =
+      toDateString.trim() !== '' ||
+      toTimeString.trim() !== '' ||
+      Boolean(toDate);
+
+    let dateInvalid = false;
+    let dateValidationMessage = '';
+
+    if (hasToDateInput) {
+      if (!fromDate || !toDate) {
+        dateInvalid = true;
+        dateValidationMessage = t('postWork.select_both_dates');
+      } else if (toDate <= fromDate) {
+        dateInvalid = true;
+        dateValidationMessage = t('postWork.end_date_after_start');
+      }
+    }
 
     const newErrors = {
       nameOfWork: nameOfWork.trim() === '',
       workDetail: workDetail.trim() === '',
-      budget: budget === 0,
+      // budget: budget === 0 || budget === null,
       category: category.trim() === '',
-      subcategories: subcategories.length === 0,
-      dateInvalid,
+      toDate: dateInvalid,
     };
     setErrors(newErrors);
+    setToDateErrorMessage(dateValidationMessage);
 
     let finalSubTasks = [...subTasks];
     if (newSubTask.trim() && !subTasks.includes(newSubTask.trim())) {
@@ -201,6 +327,9 @@ const BookFreelancer = ({ route }: Props) => {
       setNewSubTask('');
     }
 
+    if(budget === 0 || budget === null){
+      setBudgetType('OFFERING');
+    }
     const hasError = Object.values(newErrors).some(Boolean);
     if (hasError) return;
 
@@ -210,26 +339,38 @@ const BookFreelancer = ({ route }: Props) => {
       budget,
       category,
       kindOfWork: workType,
-      deadLine: hasDeadline && toDate ? toDate.toISOString() : null,
-      startDate: hasDeadline && fromDate ? fromDate.toISOString() : null,
+      deadLine:  toDate ? toDate.toISOString() : null,
+      startDate:  fromDate ? fromDate.toISOString() : null,
       subWorkDetails,
       currency: budgetCurrency,
       budgetType,
       serviceType: category,
+      assignedTo:userId,
+      // subcategories may be an empty array (null-equivalent)
       jobs: subcategories,
-      address:{
-        province: '',
-        district: '',
-        village: '',
-        country: '',
-      }
+      address: {
+        country: selectedProvince ? 'Laos' : '',
+        province: selectedProvince?.province_la || '',
+        district: selectedDistrict?.district_la || '',
+        village: village.trim() || '',
+      },
     };
 
-    navigation.navigate('ConfirmBookingScreen', { formData });
+    if (selectedProvince) {
+      (formData as any).address = {
+        province: selectedProvince?.province_la,
+        district: selectedDistrict?.district_la ?? null,
+        village: village.trim() || null,
+        country: 'Laos',
+      };
+    }
+
+    console.log('Form Data to Submit:', formData);
+
+    navigation.navigate('ConfirmBookingScreen', { formData , isBook:true});
   };
 
-  const categories = getCategories();
-
+  // ─── Guards ──────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 justify-center items-center">
@@ -250,46 +391,66 @@ const BookFreelancer = ({ route }: Props) => {
     navigation.goBack();
   };
 
+  // ─── Render ──────────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScreenWrapper safeEdges={['top']} style={{ backgroundColor: 'white', flex: 1 }}>
+      <ScreenWrapper safeEdges={['top', 'bottom']} style={{ backgroundColor: 'white', flex: 1 }}>
         <Header_back
           text={t('postWork.book_freelancer')}
           onPress={handleBack}
-          iconColor='#3B82F6'
-          backgroundColor='bg-surface'
+          iconColor="#3B82F6"
+          backgroundColor="bg-surface"
         />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'height' : 'padding'}
+      <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        // keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 110}
+
         >
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            // contentContainerStyle={{ paddingBottom: 100 }}
-      
-          >
-            <View className='px-4'>
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <View className="px-2">
               {freelancer && (
                 <View className="flex-row items-center bg-primary p-4 rounded-2xl mb-6">
                   <Image
-                    source={freelancer?.userProfileImage ? { uri: IMAGE_BASE + freelancer?.userProfileImage } : profileImage}
+                    source={
+                      freelancer?.userProfileImage
+                        ? { uri: IMAGE_BASE + freelancer?.userProfileImage }
+                        : profileImage
+                    }
                     className="w-14 h-14 rounded-full border-2 border-white mr-4"
                   />
-                  <View className='flex-col gap-1'>
+                  <View className="flex-col gap-1">
                     <Text className="font-semibold text-surface text-body">{freelancer?.firstName}</Text>
                     <Text className="text-surface text-caption">{freelancer?.jobTitle}</Text>
-                    <Text className="text-caption text-warning">⭐ {freelancer?.starRating} {t('freelancer_profile.reviews')}</Text>
+                    <Text className="text-caption text-warning">
+                      * {freelancer?.starRating} {t('freelancer_profile.reviews')}
+                    </Text>
                   </View>
                 </View>
               )}
 
-              <View className='bg-blue-50 p-4 rounded-2xl mb-6'>
+              <View className="bg-blue-50 p-4 rounded-2xl mb-2">
+                <SelectInput
+                  label={t('postWork.service_type')}
+                  value={category}
+                  initialSubcategories={subcategories}
+                  onSelect={(serviceTypeId, jobIds) => {
+                    setCategory(serviceTypeId);
+                    setSubcategories(jobIds);
+                  }}
+                  required
+                  inputClassName={errors.category ? 'border-error' : 'border-border'}
+                  isValidate={errors.category ? `${t('postWork.service_type_required')}` : ''}
+                  ref={categoryRef}
+                />
+              </View>
+
+              <View className="bg-blue-50 p-4 rounded-2xl mb-6">
                 <FormInput
                   label={t('postWork.work_title')}
-                  placeholder={t('postWork.work_title_placeholder')}
+                  // placeholder={t('postWork.work_title_placeholder')}
                   value={nameOfWork}
                   onChangeText={setNameOfWork}
                   inputClassName={errors.nameOfWork ? 'border-error' : 'border-border'}
@@ -297,17 +458,19 @@ const BookFreelancer = ({ route }: Props) => {
                   isValidate={`${errors.nameOfWork ? `${t('postWork.work_title_required')}` : ''}`}
                 />
 
-                <Text className="text-caption text-text my-1 font-bold">{t('postWork.work_type')}</Text>
-                <View className="flex-row mb-4 space-x-4 gap-2">
+                <Text className="text-body mt-2 text-text my-1 font-bold">{t('postWork.work_type')}</Text>
+                <View className="flex-row mb-2 space-x-4 gap-2">
                   {['ONLINE', 'OFFLINE'].map((type) => (
                     <TouchableOpacity
                       key={type}
                       onPress={() => setWorkType(type as 'ONLINE' | 'OFFLINE')}
-                      className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary' : 'border-border'}`}
+                      className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary bg-primary' : 'border-border'}`}
                     >
                       <View className="flex-row items-center">
-                        {workType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
-                        <Text className="text-caption text-text capitalize ml-1">{type === "ONLINE" ? `${t('postWork.online')}` : `${t('postWork.offline')}`}</Text>
+                        {workType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                        <Text className={`${workType === type ? 'text-white' : 'text-text'} text-caption capitalize ml-1`}>
+                          {type === 'ONLINE' ? `${t('postWork.online')}` : `${t('postWork.offline')}`}
+                        </Text>
                       </View>
                     </TouchableOpacity>
                   ))}
@@ -322,38 +485,20 @@ const BookFreelancer = ({ route }: Props) => {
                   required
                   isValidate={`${errors.workDetail ? `${t('postWork.work_description_required')}` : ''}`}
                 />
-
-                <FormInput label={t('postWork.sample_work')} placeholder="Paste link or reference" inputClassName="border-border" />
-              </View>
-
-              <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
-                <SelectInput
-                  label={t('postWork.service_type')}
-                  value={category}
-                  initialSubcategories={subcategories}
-                  onSelect={(serviceTypeId, jobIds) => {
-                    setCategory(serviceTypeId);
-                    setSubcategories(jobIds);
-                  }}
-                  required
-                  inputClassName={errors.category ? 'border-error' : 'border-border'}
-                  isValidate={errors.category ?  `${t('postWork.service_type_required')}` : ''}
-                  ref={categoryRef}
-                />
               </View>
 
               <View className="bg-blue-50 p-4 rounded-2xl mb-4">
                 <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
                 <View className="flex-row space-x-4 gap-2 mb-6">
-                  {['FIXED_PRICE', 'HOURLY'].map((type) => (
+                  {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
                     <TouchableOpacity
                       key={type}
                       onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY')}
-                      className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'}`}
+                      className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-primary' : 'border-border'}`}
                     >
                       <View className="flex-row items-center gap-2">
-                        {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
-                        <Text className="text-caption text-text">
+                        {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                        <Text className={`${budgetType === type ? 'text-surface' : 'text-text'} text-caption`}>
                           {type === 'FIXED_PRICE' ? `${t('postWork.fixed_price')}` : `${t('postWork.hourly')}`}
                         </Text>
                       </View>
@@ -361,95 +506,123 @@ const BookFreelancer = ({ route }: Props) => {
                   ))}
                 </View>
 
-                <BudgetInput
-                  label={t('postWork.budget')}
-                  value={budget}
-                  onChange={setBudget}
-                  currency={budgetCurrency}
-                  onCurrencyChange={setBudgetCurrency}
-                  error={errors.budget}
-                  isValidate={`${errors.budget ?`${t('postWork.budget_required')}` : ''}`}
-                  required
-                />
+                {budgetType === 'OFFERING' ? (
+                  <View className='flex-row mb-4'>
+                    <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                  </View>
+                ) : (
+                  <BudgetInput
+                    label={t('postWork.budget')}
+                    value={budget}
+                    onChange={setBudget}
+                    currency={budgetCurrency}
+                    onCurrencyChange={setBudgetCurrency}
+                    // error={errors.budget}
+                    // isValidate={`${errors.budget ? `${t('postWork.budget_required')}` : ''}`}
+                    required
+                  />
+                )}
               </View>
 
-              <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
+              <View className="bg-blue-50 p-4 rounded-2xl mb-4">
                 <Text className="text-body mb-1 text-text font-bold">{t('postWork.deadline_requirement')}</Text>
-                <View className="flex-row mb-4 space-x-4 gap-2">
-                  {[true, false].map((option) => (
-                    <TouchableOpacity
-                      key={option ? 'yes' : 'no'}
-                      onPress={() => handleDeadlineChange(option)}
-                      className={`flex-1 border py-4 rounded-xl items-center ${hasDeadline === option ? 'border-primary' : 'border-gray-300'}`}
-                    >
-                      <View className="flex-row items-center">
-                        {hasDeadline === option && <Ionicons name="checkmark-circle" size={16} color="#2563EB" />}
-                        <Text className="text-sm ml-1">{option ? `${t('postWork.yes')}` : `${t('postWork.no')}`}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+               
 
-                {hasDeadline && (
-                  <>
-                    <View className="flex-row justify-between items-center mb-4">
-                      <View className="flex-1 mr-2">
-                        <FormInput
-                          label={currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'}
-                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'dd/mm/yy'}
-                          value={fromDateText}
-                          onChangeText={handleFromDateChange}
-                          inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                          ref={fromInputRef}
-                          keyboardType="numeric"
-                          maxLength={10}
-                        />
+           
+                  <View>
+                    {/* ── FROM ── */}
+                    <View className="mb-2">
+                      <View className="flex-row items-end gap-2">
+                        <View className="flex-1">
+                          <FormInput
+                            label={t('editWork.deadline.from')}
+                            placeholder={t('editWork.deadline.toPlaceholder')}
+                            value={fromDateString}
+                          inputClassName={'border-border'}
+
+                            // inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                            ref={fromInputRef}
+                            isDate={true}
+                            onChangeText={handleFromDateChange}
+                            onBlur={handleFromDateBlur}
+                          />
+                        </View>
+
+                        <View className="w-24">
+                          <FormInput
+                            placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                            value={fromTimeString}
+                          inputClassName={'border-border'}
+
+                            // inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                            isTime={true}
+                            onChangeText={handleFromTimeChange}
+                            onBlur={handleFromTimeBlur}
+                          />
+                        </View>
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            setTempFromDate(fromDate || new Date());
+                            setShowFromPicker(true);
+                          }}
+                          className="bg-blue-200 flex justify-center items-center rounded-full p-4"
+                        >
+                          <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
+                        </TouchableOpacity>
                       </View>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setTempFromDate(fromDate || new Date());
-                          setShowFromPicker(true);
-                        }}
-                        className="bg-blue-200 mt-1 flex justify-center items-center rounded-full p-4"
-                      >
-                        <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                      </TouchableOpacity>
                     </View>
 
-                    <View className="flex-row justify-between mb-4 items-center">
-                      <View className="flex-1 mr-2">
-                        <FormInput
-                          label={currentLanguage === 'la' ? 'ຫາ' : 'To'}
-                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'dd/mm/yy'}
-                          value={toDateText}
-                          onChangeText={handleToDateChange}
-                          inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                          ref={toInputRef}
-                          keyboardType="numeric"
-                          maxLength={10}
-                        />
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setTempToDate(toDate || new Date());
-                          setShowToPicker(true);
-                        }}
-                        className="bg-blue-200 mt-2 flex justify-center items-center rounded-full p-4"
-                      >
-                        <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                      </TouchableOpacity>
-                    </View>
+                    {/* ── TO ── */}
+                    <View className="mb-4">
+                      <View className="flex-row items-end gap-2">
+                        <View className="flex-1">
+                          <FormInput
+                            label={t('editWork.deadline.to')}
+                            placeholder={t('editWork.deadline.toPlaceholder')}
+                            value={toDateString}
+                          inputClassName={'border-border'}
 
-                    {errors.dateInvalid && (
-                      <Text className="text-error text-caption mb-2">
-                        {!fromDate || !toDate
-                          ? (currentLanguage === 'la' ? 'ກະລຸນາເລືອກວັນທີເລີ່ມຕົ້ນແລະສິ້ນສຸດ' : 'Please select both start and end dates')
-                          : (currentLanguage === 'la' ? 'ວັນທີສິ້ນສຸດຕ້ອງຢູ່ຫຼັງວັນທີເລີ່ມຕົ້ນ' : 'End date must be after start date')
-                        }
-                      </Text>
-                    )}
-                  </>
-                )}
+                            // inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                            ref={toInputRef}
+                            isDate={true}
+                            onChangeText={handleToDateChange}
+                            onBlur={handleToDateBlur}
+                          />
+                        </View>
+
+                        <View className="w-24">
+                          <FormInput
+                            label=""
+                            placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                            value={toTimeString}
+                          inputClassName={'border-border'}
+
+                            // inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
+                            isTime={true}
+                            onChangeText={handleToTimeChange}
+                            onBlur={handleToTimeBlur}
+                          />
+                        </View>
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            setTempToDate(toDate || new Date());
+                            setShowToPicker(true);
+                          }}
+                          className="bg-blue-200 flex justify-center items-center rounded-full p-4"
+                        >
+                          <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
+                        </TouchableOpacity>
+                      </View>
+                      {errors.toDate && (
+                        <Text className="text-error text-caption mt-1">
+                          {toDateErrorMessage}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+            
 
                 {showFromPicker && (
                   <DatePicker
@@ -457,9 +630,13 @@ const BookFreelancer = ({ route }: Props) => {
                     date={fromDate || new Date()}
                     tempDate={tempFromDate}
                     setTempDate={setTempFromDate}
+                    mode="datetime"
                     setDate={(date: Date) => {
                       setFromDate(date);
-                      setFromDateText(formatDateForDisplay(date));
+                      setFromDateString(formatDateForDisplay(date));
+                      setFromTimeString(formatTimeForDisplay(date));
+                      setErrors(prev => ({ ...prev, toDate: false }));
+                      setToDateErrorMessage('');
                     }}
                     onClose={() => setShowFromPicker(false)}
                   />
@@ -471,31 +648,66 @@ const BookFreelancer = ({ route }: Props) => {
                     date={toDate || new Date()}
                     tempDate={tempToDate}
                     setTempDate={setTempToDate}
+                    mode="datetime"
                     setDate={(date: Date) => {
                       setToDate(date);
-                      setToDateText(formatDateForDisplay(date));
+                      setToDateString(formatDateForDisplay(date));
+                      setToTimeString(formatTimeForDisplay(date));
+                      setErrors(prev => ({ ...prev, toDate: false }));
+                      setToDateErrorMessage('');
                     }}
                     onClose={() => setShowToPicker(false)}
                   />
                 )}
               </View>
 
+              <View className="bg-blue-50 p-4 rounded-2xl mb-4">
+                <Text className="text-body text-text font-bold mb-2">{t('customerProfile.locationInfo')}</Text>
+
+                <View className="bg-blue-50 rounded-2xl">
+                  <Dropdown
+                    label={t('kyc.step4.location.province.label')}
+                    value={selectedProvince?.province_la}
+                    placeholder={t('kyc.step4.location.province.placeholder')}
+                    options={provinceOptions}
+                    onSelect={handleProvinceSelect}
+                  />
+                </View>
+
+                <View className="mt-3">
+                  <Dropdown
+                    label={t('kyc.step4.location.district.label')}
+                    value={selectedDistrict?.district_la}
+                    placeholder={t('kyc.step4.location.district.placeholder')}
+                    options={districtOptions}
+                    onSelect={handleDistrictSelect}
+                    disabled={!selectedProvince}
+                  />
+                </View>
+
+                <View className="mt-3">
+                  <FormInput
+                    label={t('kyc.step4.location.village.label')}
+                    value={village}
+                    onChangeText={setVillage}
+                    placeholder={t('kyc.step4.location.village.placeholder')}
+                    inputClassName={selectedDistrict ? 'border-border' : 'border-gray-200'}
+                  />
+                </View>
+              </View>
+
               {workType === 'ONLINE' && (
-                <SubWorkDetailsInput
-                  subWorkDetails={subWorkDetails}
-                  setSubWorkDetails={setSubWorkDetails}
-                />
+                <SubWorkDetailsInput subWorkDetails={subWorkDetails} setSubWorkDetails={setSubWorkDetails} />
               )}
             </View>
           </ScrollView>
+
           <View className="px-5 pb-4 bg-white">
             <TouchableOpacity onPress={handleSubmit} className="bg-blue-600 py-4 rounded-xl items-center">
               <Text className="text-white font-semibold text-base">{t('postWork.next')}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-          <View className="h-20"></View>
-
       </ScreenWrapper>
     </View>
   );

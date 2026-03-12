@@ -5,6 +5,7 @@ import { Freelancer, UserProfile } from "types/profile";
 
 import { CreateReview, ServiceType, SubService, Favorite, Review, GetFavorite, JobpopularData } from "types";
 import axios from "axios";
+import networkCheck from "./networkCheck";
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -29,7 +30,7 @@ export const workerApi = {
     getMyProfile: async (token: string): Promise<UserProfile> => {
         try {
 
-            const response = await axios.get(`${API_BASE_URL}/worker/freelancer-profile`, {
+            const response = await networkCheck.get(`${API_BASE_URL}/worker/freelancer-profile`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Aoser ${token}`,
@@ -44,6 +45,27 @@ export const workerApi = {
             return response.data.data;
         } catch (error) {
             console.log('Error fetching profile:', error);
+            throw error;
+        }
+    },
+    getAdminId: async (token: string): Promise<UserProfile> => {
+        try {
+
+            const response = await networkCheck.get(`${API_BASE_URL}/auth/admin-user`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+
+
+            if (!response) {
+                throw new Error(response || 'Failed to fetch Admin');
+            }
+
+            return response.data.data;
+        } catch (error) {
+            console.log('Error fetching Admin profile:', error);
             throw error;
         }
     },
@@ -103,7 +125,7 @@ export const workerApi = {
 
     getAllfreelancers: async (token: string): Promise<UserProfile[]> => {
         try {
-            const response = await apiClient.get('/worker/freelancers', {
+            const response = await networkCheck.get('/worker/freelancers', {
                 headers: {
                     Authorization: `Aoser ${token}`,
                 },
@@ -194,7 +216,7 @@ export const workerApi = {
        */
     getServiceTypeApi: async (): Promise<ServiceType[]> => {
         try {
-            const response = await apiClient.get('/worker/service-types');
+            const response = await networkCheck.get('/worker/service-types');
             return response.data.data.serviceType || [];
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -209,7 +231,7 @@ export const workerApi = {
 
     // Get jobs by service type ID
     getJobsByServiceType: async (serviceTypeId: string): Promise<SubService[]> => {
-        const response = await axios.get(`${API_BASE_URL}/worker/service-type-job/${serviceTypeId}`, {
+        const response = await networkCheck.get(`${API_BASE_URL}/worker/service-type-job/${serviceTypeId}`, {
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -219,7 +241,7 @@ export const workerApi = {
     },
     createReview: async (data: CreateReview, token: string) => {
         try {
-            const res = await axios.post(`${API_BASE_URL}/worker/review`, data, {
+            const res = await networkCheck.post(`${API_BASE_URL}/worker/review`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -231,18 +253,19 @@ export const workerApi = {
         }
     },
 
-    getReviews: async (freelancerId: string, token: string): Promise<Review[]> => {
+    getReviews: async (freelancerId: string): Promise<Review[]> => {
+        console.log(freelancerId)
         try {
             // Construct query parameters
             const queryParams: Record<string, string> = {};
 
             // console.log(`${API_BASE_URL}/worker/reviews?reviewTo=${freelancerId}`);
-            const response = await axios.get(`${API_BASE_URL}/worker/reviews?reviewTo=${freelancerId}`, {
+            const response = await networkCheck.get(`${API_BASE_URL}/worker/reviews?reviewTo=${freelancerId}`, {
                 params: queryParams,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Aoser ${token}`,
-                },
+                // headers: {
+                //     'Content-Type': 'application/json',
+                //     'Authorization': `Aoser ${token}`,
+                // },
             });
 
             return response.data?.data || [];
@@ -254,10 +277,7 @@ export const workerApi = {
 
     createFavorite: async (data: Favorite, token: string) => {
 
-        console.log("data to create: ", data);
-        console.log("token API: ", API_BASE_URL);
-
-        const res = await axios.post(`${API_BASE_URL}/worker/favorite/`, data, {
+        const res = await networkCheck.post(`${API_BASE_URL}/worker/favorite/`, data, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Aoser ${token}`,
@@ -270,7 +290,7 @@ export const workerApi = {
     deleteFavorite: async (favoriteId: string, token: string) => {
         try {
             //   console.log("favoriteId to delete: ", favoriteId);
-            const res = await axios.delete(`${API_BASE_URL}/worker/favorite/${favoriteId}`, {
+            const res = await networkCheck.delete(`${API_BASE_URL}/worker/favorite/${favoriteId}`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -292,7 +312,7 @@ export const workerApi = {
 
 
         try {
-            const response = await axios.get(`${API_BASE_URL}/worker/favorites`, {
+            const response = await networkCheck.get(`${API_BASE_URL}/worker/favorites`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -311,13 +331,18 @@ export const workerApi = {
       */
     getTopFreelancers: async (token: string): Promise<Freelancer[]> => {
         try {
-            const response = await apiClient.get('/worker/top-freelancers', {
+            const response = await networkCheck.get('/worker/top-freelancers', {
                 headers: {
                     Authorization: `Aoser ${token}`,
                 },
             });
 
-            return response.data.data || [];
+            const payload = response.data?.data;
+            if (!Array.isArray(payload)) {
+                throw new Error('Invalid top freelancers response format');
+            }
+
+            return payload;
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 console.log('Error fetching top freelancers:', {
@@ -352,7 +377,12 @@ export const workerApi = {
                 },
             });
 
-            return response.data.data || [];
+            const payload = response.data?.data;
+            if (!Array.isArray(payload)) {
+                throw new Error('Invalid recommended freelancers response format');
+            }
+
+            return payload;
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 console.log('Error fetching recommended freelancers:', {
@@ -370,7 +400,7 @@ export const workerApi = {
 
     getPopularJob: async (token: string): Promise<JobpopularData[]> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/worker/popular-job`, {
+            const response = await networkCheck.get(`${API_BASE_URL}/worker/popular-job`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -385,7 +415,7 @@ export const workerApi = {
 
     getHiredFreelancers: async (token: string): Promise<Freelancer[]> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/worker/hired-freelancers`, {
+            const response = await networkCheck.get(`${API_BASE_URL}/worker/hired-freelancers`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,

@@ -7,11 +7,20 @@ import * as FileSystem from 'expo-file-system/legacy';
 
 type AoserProfile = {
   _id: string;
+  userId?: string;
   firstName: string;
   lastName: string;
   profileImg: FileWithType | null;
   gender: string;
   phone: string;
+  address?: {
+    country?: string;
+    province?: string;
+    district?: string;
+    village?: string;
+    latitude?: number;
+    longitude?: number;
+  };
 };
 
 
@@ -45,7 +54,11 @@ export const useAoserProfile = () => {
         }
       }
       
-      return parsedData;
+      return {
+        ...parsedData,
+        _id: parsedData._id || parsedData.userId || '',
+        userId: parsedData.userId || parsedData._id || '',
+      };
     },
   });
 };
@@ -276,8 +289,7 @@ export type UpgradeToFreelancerStep4 = {
   cardType: SetStateAction<"ID_CARD" | "PASSPORT" | "VISA">;
   cardID: string;
   fromDate: Date;
-  phone: string;
-  address: {
+  address?: {
     province?: Province;
     district?: District;
     village?: string;
@@ -378,9 +390,10 @@ export const useUpgradeToFreelancerStep5 = () => {
 
 type UpgradeToFreelancerStep6 = {
   paymentMethod: 'LAOS_BANK' | 'PAYPAL';
+  bankName: string;
   accountName: string;
-  bankNumber: string;
-  paypalInfo: string;
+  bankNumber?: string;
+  paypalInfo?: string;
 };
 
 export const useUpgradeToFreelancerStep6 = () => {
@@ -432,7 +445,7 @@ const fetchFreelancerLocalProfile = async (): Promise<Freelancer | null> => {
 
       const profile = {
         // User Info
-        _id: aoser_profile.userId,
+        _id: aoser_profile.userId || aoser_profile._id || '',
         firstName: aoser_profile.firstName || '',
         lastName: aoser_profile.lastName || '',
         userProfileImage: aoser_profile.profileImg?.uri,
@@ -452,10 +465,11 @@ const fetchFreelancerLocalProfile = async (): Promise<Freelancer | null> => {
         skills: step2.skills || [],
         workExperience: step2.experience || [],
         certificates: step2.certificatePaths || [],
-        resumeImage: step2.resumeImageFile?.uri,
+        resumeImage: step2.resumeImagePath || '',
         customerExpect: step3.serviceDesc || '',
         starRating: 0,
         recommendStar: 0,
+        address: aoser_profile.address || undefined,
 
         // Status
         workerStatus: 'ACTIVE',
@@ -464,7 +478,7 @@ const fetchFreelancerLocalProfile = async (): Promise<Freelancer | null> => {
        
       };
 
-      console.log('Fetched freelancer profile:', profile);
+      console.log('Fetched freelancer profile:', JSON.stringify(profile,null,2));
 
       return profile as Freelancer;
     }

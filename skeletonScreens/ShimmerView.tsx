@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Animated, Easing } from 'react-native';
 
 // Shimmer animation component
-const ShimmerView = ({ width = '100%', height = 20, borderRadius = 8, style = {} }: any) => {
+export const ShimmerView = ({ width = '100%', height = 20, borderRadius = 8, style = {} }: any) => {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo, useCallback } from 'react';
+import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Animated,
@@ -17,13 +17,17 @@ import { FreelancerStackParamList } from 'types/navigation';
 import Freelancers from 'components/freelancer/Freelancers';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useTranslation } from 'react-i18next';
-import { useRecommendedFreelancers } from 'hooks/useFreelancer';
+import { useGetTopfreelancers, useRecommendedFreelancers } from 'hooks/useFreelancer';
 import TopFreelancers from 'components/freelancer/TopFreelancers';
+import NetworkErrorPopup from 'components/ui/NetworkErrorPopup';
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isRetryingNetwork, setIsRetryingNetwork] = useState(false);
+  const [isSlowConnection, setIsSlowConnection] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateXAnim = useRef(new Animated.Value(0)).current;
@@ -38,12 +42,22 @@ export default function HomeScreen() {
     data,
     isLoading,
     isFetching,
+    isError: isRecommendedError,
+    error: recommendedError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     refetch,
     isRefetching,
   } = useRecommendedFreelancers(selectedCategoryId || '');
+  const {
+    data: topFreelancers = [],
+    isLoading: isTopFreelancersLoading,
+    isFetching: isTopFreelancersFetching,
+    isError: isTopFreelancersError,
+    error: topFreelancersError,
+    refetch: refetchTopFreelancers,
+  } = useGetTopfreelancers();
 
   // Flatten all pages efficiently
   const allFreelancers = useMemo(() => {
@@ -52,8 +66,72 @@ export default function HomeScreen() {
 
   // Handle pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetch(), refetchTopFreelancers()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, refetch, refetchTopFreelancers]);
+
+  const isLikelyNetworkError = (error: unknown): boolean => {
+    if (!error) return false;
+
+    const maybeError = error as any;
+    const code = maybeError?.code;
+    const message = String(maybeError?.message || '').toLowerCase();
+
+    if (maybeError?.isAxiosError && !maybeError?.response) return true;
+    if (code === 'ERR_NETWORK' || code === 'ERR_INTERNET_DISCONNECTED' || code === 'ECONNABORTED') return true;
+
+    return (
+      message.includes('network') ||
+      message.includes('internet') ||
+      message.includes('timeout') ||
+      message.includes('failed to fetch')
+    );
+  };
+
+  const hasNetworkIssue =
+    (isRecommendedError && isLikelyNetworkError(recommendedError)) ||
+    (isTopFreelancersError && isLikelyNetworkError(topFreelancersError));
+
+  useEffect(() => {
+    const hasAnyData = allFreelancers.length > 0 || topFreelancers.length > 0;
+    const isAnyLoading = isLoading || isFetching || isTopFreelancersLoading || isTopFreelancersFetching;
+
+    if (!isAnyLoading || hasAnyData) {
+      setIsSlowConnection(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsSlowConnection(true);
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [
+    allFreelancers.length,
+    topFreelancers.length,
+    isLoading,
+    isFetching,
+    isTopFreelancersLoading,
+    isTopFreelancersFetching,
+  ]);
+
+  const showNetworkPopup = hasNetworkIssue || isSlowConnection;
+
+  const handleNetworkRetry = useCallback(async () => {
+    if (isRetryingNetwork) return;
+    setIsRetryingNetwork(true);
+    setIsSlowConnection(false);
+    try {
+      await Promise.all([refetch(), refetchTopFreelancers()]);
+    } finally {
+      setIsRetryingNetwork(false);
+    }
+  }, [isRetryingNetwork, refetch, refetchTopFreelancers]);
 
   // Banner animations
   const bannerTextOpacity = scrollY.interpolate({
@@ -142,6 +220,9 @@ export default function HomeScreen() {
       <Animated.ScrollView
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
+        alwaysBounceVertical
+        overScrollMode="always"
+        contentContainerStyle={{ flexGrow: 1 }}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false }
@@ -149,7 +230,7 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
+            refreshing={isRefreshing}
             onRefresh={handleRefresh}
             colors={['#3B82F6']}
             tintColor="#3B82F6"
@@ -167,7 +248,15 @@ export default function HomeScreen() {
             transform: [{ translateX: translateXAnim }],
           }}
         >
-          {selectedCategory === 'All' && <TopFreelancers scrollY={scrollY} />}
+          {selectedCategory === 'All' && (
+            <TopFreelancers
+              scrollY={scrollY}
+              freelancers={topFreelancers}
+              isLoading={isTopFreelancersLoading}
+              isFetching={isTopFreelancersFetching}
+  
+            />
+          )}
 
           <Freelancers
             title={
@@ -182,9 +271,19 @@ export default function HomeScreen() {
             isFetchingNextPage={isFetchingNextPage}
             fetchNextPage={fetchNextPage}
             scrollY={scrollY}
+            selectedCategory={selectedCategory}
           />
         </Animated.View>
       </Animated.ScrollView>
+
+      <NetworkErrorPopup
+        visible={showNetworkPopup}
+        title={t('works.error.some_wrong')}
+        message={t('works.error.if_the_problem')}
+        retryLabel={t('works.error.try_again')}
+        onRetry={handleNetworkRetry}
+        isRetrying={isRetryingNetwork}
+      />
     </ScreenWrapper>
   );
 }

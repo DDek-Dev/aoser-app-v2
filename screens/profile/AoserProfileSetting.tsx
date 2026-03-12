@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -16,10 +16,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAoserProfile } from 'hooks/useFreelancerKYC';
 import { useMyProfile } from 'hooks/useFreelancer';
 import { FileWithType } from 'types';
-import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useTranslation } from 'react-i18next';
 import { profileImage } from 'assets';
 import PhoneInput from 'components/ui/PhoneInput';
+import Dropdown from 'components/filter/Dropdown';
+import { District, Province } from 'types';
+import { useSelectAddress } from 'hooks/useSelectAddress';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -31,17 +33,26 @@ type Props = {
     profileImg: FileWithType | null;
     gender: string;
     phone: string;
+    province: string;
+    district: string;
+    village: string;
     setFirstName: (firstName: string) => void;
     setLastName: (lastName: string) => void;
     setProfileImg: (profileImg: FileWithType | null) => void;
     setGender: (gender: string) => void;
     setPhone: (phone: string) => void;
+    setProvince: (value: string) => void;
+    setDistrict: (value: string) => void;
+    setVillage: (value: string) => void;
     errors: {
         firstName?: boolean;
         lastName?: boolean;
         profileImg?: boolean;
         gender?: boolean;
         phone?: boolean;
+        province?: boolean;
+        district?: boolean;
+        village?: boolean;
     };
 };
 
@@ -53,11 +64,17 @@ const AoserProfileSetting = ({
     profileImg,
     gender,
     phone,
+    province,
+    district,
+    village,
     setFirstName,
     setLastName,
     setProfileImg,
     setGender,
     setPhone,
+    setProvince,
+    setDistrict,
+    setVillage,
     errors,
 }: Props) => {
     const { data: profile, isLoading: isProfileLoading } = useAoserProfile();
@@ -68,50 +85,103 @@ const AoserProfileSetting = ({
     const [genderModalVisible, setGenderModalVisible] = useState(false);
     const [imageActionModalVisible, setImageActionModalVisible] = useState(false);
     const [deleteConfirmationModalVisible, setDeleteConfirmationModalVisible] = useState(false);
+    const [selectedProvince, setSelectedProvince] = useState<Province | undefined>(undefined);
+    const [selectedDistrict, setSelectedDistrict] = useState<District | undefined>(undefined);
+    const initializedRef = useRef(false);
+    const { data: addressData, isLoading: isAddressLoading, isError: isAddressError } = useSelectAddress();
 
     const GENDER_OPTIONS = [
         { label: t('signUpScreen.male'), value: 'MALE' },
         { label: t('signUpScreen.female'), value: 'FEMALE' },
     ];
 
-    console.log("myProfile", myProfile);
-    console.log("Profile", profile);
-    // Load profile data
+
+    // Load profile data once. User edits should not be overwritten after initial hydration.
     useEffect(() => {
-        if (profile) {
-            setUserId(profile._id);
-            setFirstName(profile.firstName || '');
-            setLastName(profile.lastName || '');
-            setGender(profile.gender || '');
-            setPhone(profile.phone || '');
+        if (initializedRef.current) return;
+        if (!profile && !myProfile) return;
 
-            if (profile.profileImg) {
-                setProfileImg({
-                    uri: profile.profileImg.uri,
-                    name: "profile_existing.jpg",
-                    type: "image/jpeg",
-                });
-            } else {
-                setProfileImg(null);
-            }
-        } else if (myProfile) {
-            setUserId(myProfile._id);
-            setFirstName(myProfile.firstName || '');
-            setLastName(myProfile.lastName || '');
-            setGender(myProfile.gender || '');
-            setPhone(myProfile.phone || '');
+        const userIdValue = profile?._id || profile?.userId || myProfile?._id || '';
+        const firstNameValue = profile?.firstName || myProfile?.firstName || '';
+        const lastNameValue = profile?.lastName || myProfile?.lastName || '';
+        const genderValue = profile?.gender || myProfile?.gender || '';
+        const phoneValue = profile?.phone || myProfile?.phone || '';
+        const provinceValue = profile?.address?.province || myProfile?.address?.province || '';
+        const districtValue = profile?.address?.district || myProfile?.address?.district || '';
+        const villageValue = profile?.address?.village || myProfile?.address?.village || '';
 
-            if (myProfile.userProfileImage) {
-                setProfileImg({
-                    uri: `${IMAGES_BASE_URL}${myProfile.userProfileImage}`,
-                    name: "profile_existing.jpg",
-                    type: "image/jpeg",
-                });
-            } else {
-                setProfileImg(null);
-            }
+        setUserId(userIdValue);
+        setFirstName(firstNameValue);
+        setLastName(lastNameValue);
+        setGender(genderValue);
+        setPhone(phoneValue);
+        setProvince(provinceValue);
+        setDistrict(districtValue);
+        setVillage(villageValue);
+
+        if (profile?.profileImg?.uri) {
+            setProfileImg({
+                uri: profile.profileImg.uri,
+                name: profile.profileImg.name || "profile_existing.jpg",
+                type: profile.profileImg.type || "image/jpeg",
+            });
+        } else if (myProfile?.userProfileImage) {
+            setProfileImg({
+                uri: `${IMAGES_BASE_URL}${myProfile.userProfileImage}`,
+                name: "profile_existing.jpg",
+                type: "image/jpeg",
+            });
+        } else {
+            setProfileImg(null);
         }
+
+        initializedRef.current = true;
     }, [myProfile, profile]);
+
+    useEffect(() => {
+        const provinces = addressData?.[0]?.provinces || [];
+        if (!provinces.length) {
+            setSelectedProvince(undefined);
+            setSelectedDistrict(undefined);
+            return;
+        }
+
+        const matchedProvince = provinces.find((item) => item.province_la === province);
+
+        if (!matchedProvince) {
+            setSelectedProvince(undefined);
+            setSelectedDistrict(undefined);
+            return;
+        }
+
+        setSelectedProvince((prev) =>
+            prev?.province_la === matchedProvince.province_la ? prev : matchedProvince
+        );
+
+        const matchedDistrict = matchedProvince.districts.find((item) => item.district_la === district);
+        if (!matchedDistrict) {
+            setSelectedDistrict(undefined);
+            return;
+        }
+
+        setSelectedDistrict((prev) =>
+            prev?.district_la === matchedDistrict.district_la ? prev : matchedDistrict
+        );
+    }, [addressData, province, district]);
+
+    const handleProvinceSelect = (selected: Province) => {
+        setSelectedProvince(selected);
+        setSelectedDistrict(undefined);
+        setProvince(selected.province_la);
+        setDistrict('');
+        setVillage('');
+    };
+
+    const handleDistrictSelect = (selected: District) => {
+        setSelectedDistrict(selected);
+        setDistrict(selected.district_la);
+        setVillage('');
+    };
 
     const handleImageChange = (file?: FileWithType) => {
         if (file) {
@@ -244,7 +314,7 @@ const AoserProfileSetting = ({
         }
     };
 
-    if (isProfileLoading || isMyProfileLoading) {
+    if (isProfileLoading || isMyProfileLoading || isAddressLoading) {
         return (
             <View className="flex-1 justify-center items-center bg-white">
                 <ActivityIndicator size="large" color="#3B82F6" />
@@ -252,7 +322,7 @@ const AoserProfileSetting = ({
         );
     }
 
-    if (isError) {
+    if (isError || isAddressError || !addressData?.length) {
         return (
             <View className="flex-1 justify-center items-center bg-white">
                 <Text className="text-red-500">{t('kyc.aoser_profile.some_wrong')}</Text>
@@ -262,6 +332,16 @@ const AoserProfileSetting = ({
 
     const displayGender = GENDER_OPTIONS.find((opt) => opt.value === gender)?.label || t('signUpScreen.selectGender');
     const hasImage = !!profileImg?.uri;
+    const provinces = addressData[0]?.provinces || [];
+    const districts = selectedProvince?.districts || [];
+    const provinceOptions = provinces.map((item) => ({
+        label: item.province_la,
+        value: item,
+    }));
+    const districtOptions = districts.map((item) => ({
+        label: item.district_la,
+        value: item,
+    }));
 
     return (
         <View className="flex-1 bg-white px-5 pt-6">
@@ -559,6 +639,62 @@ const AoserProfileSetting = ({
                     inputClassName={errors?.phone ? 'border-error' : 'border-border'}
                     isValidate={errors?.phone ? t('kyc.step4.phoneNumber.error') : ''}
                 />
+            </View>
+
+            <View className="mb-2">
+                <Dropdown
+                    label={t('kyc.step4.location.province.label')}
+                    value={selectedProvince?.province_la || province}
+                    placeholder={t('kyc.step4.location.province.placeholder')}
+                    options={provinceOptions}
+                    onSelect={handleProvinceSelect}
+                />
+                {errors.province && (
+                    <Text className="text-error text-caption mt-1">
+                        {t('kyc.step4.location.province.error')}
+                    </Text>
+                )}
+            </View>
+
+            <View className="mb-2">
+                <Dropdown
+                    label={t('kyc.step4.location.district.label')}
+                    value={selectedDistrict?.district_la || district}
+                    placeholder={t('kyc.step4.location.district.placeholder')}
+                    options={districtOptions}
+                    onSelect={handleDistrictSelect}
+                    disabled={!selectedProvince}
+                />
+                {errors.district && (
+                    <Text className="text-error text-caption mt-1">
+                        {t('kyc.step4.location.district.error')}
+                    </Text>
+                )}
+            </View>
+
+            <View className="mb-4">
+                                                <Text className="text-body font-medium text-text mb-2">{t('kyc.step4.location.village.label')}</Text>
+                
+                <View className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.village ? 'border border-error' : 'border border-border'}`}>
+                    <TextInput
+                        placeholder={t('kyc.step4.location.village.placeholder')}
+                        className="flex-1 text-text"
+                        value={village}
+                        onChangeText={setVillage}
+                        placeholderTextColor="#999"
+                        editable={!!selectedDistrict}
+                    />
+                </View>
+                {errors.village && (
+                    <Text className="text-error text-caption mt-1">
+                        {t('kyc.step4.location.village.error')}
+                    </Text>
+                )}
+                {!selectedDistrict && (
+                    <Text className="text-caption text-textSecondary mt-1">
+                        {t('kyc.step4.location.village.hint')}
+                    </Text>
+                )}
             </View>
         </View>
     );

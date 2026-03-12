@@ -1,5 +1,4 @@
-import { use, useState } from 'react';
-import { View, Image, Text, Pressable, TouchableWithoutFeedback } from 'react-native';
+import { View, Image, Text, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,6 +12,7 @@ const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 type HeaderProps = {
   userId: string
   backgroundImage?: string;
+  userfileImage?: string;
   profileImage: string;
   name: string;
   job: string;
@@ -27,6 +27,7 @@ type HeaderProps = {
 export default function Header({
   userId,
   backgroundImage,
+  userfileImage,
   profileImage,
   name,
   job,
@@ -37,62 +38,42 @@ export default function Header({
   , isme
   , isReview
 }: HeaderProps) {
-
+const imageUri = isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}`;
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { t } = useTranslation()
+  const getImageSource = () => {
+    // Case 1: User selected a new local image (review mode)
+    if (userfileImage && isReview) {
+      return { uri: profileImage };
+    }
 
-  // console.log("profileImage", profileImage);
+    // Case 2: No local selection, but DB has image
+    if (profileImage) {
+      return { uri: IMAGES_BASE_URL + profileImage };
+    }
+
+    // Case 3: No image at all
+    return proIMG;
+  };
+
   return (
     <View className="relative">
 
       <Pressable
-        onPress={() => navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + backgroundImage })}
+        onPress={() => navigation.navigate('ResumeImageViewer', { uri: isReview?backgroundImage:  IMAGES_BASE_URL + backgroundImage })}
         className="self-center w-full h-48"
       >
         <Image source={{ uri: isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}` }} className="w-full h-48" />
       </Pressable>
 
       <View className="items-start px-4 -mt-10 relative z-0">
-        {/* <Image source={{ uri: isReview? profileImage : IMAGES_BASE_URL + profileImage }} className="w-20 h-20 rounded-full border-4 border-white" /> */}
-
-        {/* <Image
-          source={
-            isReview
-              ? profileImage
-              : profileImage
-                ? { uri: IMAGES_BASE_URL + profileImage }
-                : proIMG
-          }
-          className="w-20 h-20 rounded-full border-4 border-white"
-        /> */}
-
-        {/* <Image
-          source={
-            profileImage
-              ? profileImage.startsWith('file://') || profileImage.startsWith('content://')
-                ? { uri: profileImage } // ✅ Local file (from temp or device)
-                : { uri: IMAGES_BASE_URL + profileImage } // ✅ Remote file (from DB/server)
-              : proIMG // ✅ Default image when no profileImage
-          }
-          className="w-20 h-20 rounded-full border-4 border-white"
-        /> */}
-
-
+       
         <Pressable
           onPress={() => navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + profileImage })}
-
+          disabled={isReview? true : false}
         >
           <Image
-            source={
-              profileImage
-                ? {
-                  uri:
-                    profileImage.startsWith('http') || profileImage.startsWith('file://') || profileImage.startsWith('content://')
-                      ? profileImage
-                      : IMAGES_BASE_URL + profileImage
-                }
-                : proIMG
-            }
+            source={getImageSource()}
             className="w-20 h-20 rounded-full border-4 border-white"
             defaultSource={proIMG} // ເພີ່ມ defaultSource ສຳລັບ iOS
             onError={() => console.log("Failed to load profile image")}
@@ -141,6 +122,7 @@ export default function Header({
           <Text className="text-blue-600 font-medium text-body">{rating} (0 {t('freelancer_profile.reviews')})</Text>
         </View>
       </View>
+      
     </View>
   );
 }

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Pressable,
   Keyboard,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -151,7 +150,7 @@ export default function SearchBar() {
     <View className="flex-1 bg-white pt-12 px-4">
       {/* Search Header */}
       <View className="flex-row items-center mb-4">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="p-1">
+        <TouchableOpacity onPress={() => navigation.popToTop()} className="p-1">
           <MaterialIcons name="chevron-left" size={32} color="#3B82F6" />
         </TouchableOpacity>
         

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   Image,
   Pressable,
   FlatList,
+  RefreshControl,
+  Animated,
 } from 'react-native';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -18,6 +20,7 @@ import { useFreeLancers, useGetServiceTypes } from 'hooks/useFreelancer';
 import { UserProfile } from 'types/profile';
 import { useTranslation } from 'react-i18next';
 import { SearchViewSkeleton } from 'skeletonScreens/ShimmerView';
+import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -26,6 +29,7 @@ interface EnhancedProfile extends UserProfile {
   serviceTypeName?: string;
   jobTitles?: string[];
   relevanceScore: number;
+
 }
 
 // Normalize string for fuzzy matching
@@ -167,7 +171,7 @@ export default function SearchView() {
   const [isSortVisible, setIsSortVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState('all');
 
-  const { data: freelancers, isLoading: freelancersLoading } = useFreeLancers();
+  const { data: freelancers, isLoading: freelancersLoading, refetch, isRefetching } = useFreeLancers();
   const { data: serviceTypes, isLoading: serviceTypesLoading } = useGetServiceTypes();
 
   // Create service type lookup map
@@ -176,7 +180,7 @@ export default function SearchView() {
     return new Map(serviceTypes.map(st => [st._id || st._id, st.name]));
   }, [serviceTypes]);
 
-
+  const scrollY = useRef(new Animated.Value(0)).current;
   // Filter and score results
   const filteredResults = useMemo(() => {
     if (!freelancers) return [];
@@ -196,7 +200,7 @@ export default function SearchView() {
         relevanceScore: 0,
       }));
     }
- 
+
     // Filter, score, and enhance
     const matched = freelancers
       .map(item => {
@@ -239,46 +243,49 @@ export default function SearchView() {
 
   // Render freelancer card
   const renderFreelancerCard = ({ item }: { item: EnhancedProfile }) => (
-    <Pressable onPress={() => handleProfilePress(item._id)}>
-      <View className="flex-row items-start mt-1 bg-white rounded-xl overflow-hidden border border-gray-200">
+    <Pressable
+      onPress={() => handleProfilePress(item._id)}
+      className=" w-[49.5%] mt-1 bg-white rounded-lg m-[1px] border border-border overflow-hidden"
+    >
+      {item.videoPromote !== null ? (
+        <View className=''>
+          <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
+        </View>
+      ) : (
         <Image
           source={{ uri: BASE_IMAGE + item.bannerImage }}
-          className="w-[40%] h-44"
+          className="w-full h-28"
           resizeMode="cover"
         />
-        <View className="flex-1 p-3 space-y-1.5">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center">
-              <FontAwesome name="star" size={14} color="#facc15" />
-              <Text className="ml-1 text-xs font-medium text-yellow-500">
-                {item.starRating?.toFixed(1) || '0.0'}
-              </Text>
-            </View>
-            <View className="bg-blue-50 px-2 py-1 flex-row items-center gap-1 rounded-full">
-              <Text className="text-xs font-semibold text-warning">
-                {item.hourlyRateCurrency}
-              </Text>
-              <Text className="text-xs font-semibold text-primary">
-                {item.hourlyRate}
-              </Text>
-              <Text className="text-xs text-primary">/{t('freelancer_profile.hour')}</Text>
-            </View>
+      )}
+
+      <View className="p-3 space-y-2">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <FontAwesome name="star" size={12} color="#facc15" />
+            <Text className="ml-1 text-caption font-medium text-yellow-500">
+              {item.starRating}
+            </Text>
           </View>
-
-          <Text className="text-body font-semibold text-gray-800" numberOfLines={1}>
-            {item.jobTitle}
-          </Text>
-
-          {item.serviceTypeName && (
-            <View className="bg-gray-100 px-2 py-1 my-2 rounded-md self-start">
-              <Text className="text-cation text-gray-600" >{item.serviceTypeName}</Text>
-            </View>
-          )}
-
-          <Text className="text-cation text-gray-500" numberOfLines={2}>
-            {item.customerExpect}
-          </Text>
+          <View className="p-1 bg-blue-50 rounded-full flex-row">
+            <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
+            <Text className="text-caption font-semibold text-primary ml-2">{item.hourlyRate}</Text>
+            <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text>
+          </View>
         </View>
+
+        <Text className="text-body font-semibold text-text" numberOfLines={1}>
+          {item.jobTitle}
+        </Text>
+
+        {item.address && (
+          <View className="flex-row items-center">
+            <Ionicons name="location-outline" size={14} color="#6B7280" />
+            <Text className="text-sm text-textSecondary flex-1 ml-1" numberOfLines={1}>
+              {item.address.district}, {item.address.province}
+            </Text>
+          </View>
+        )}
       </View>
     </Pressable>
   );
@@ -289,7 +296,7 @@ export default function SearchView() {
         {/* Header */}
         <View className="bg-primary pt-12 pb-4 rounded-b-2xl shadow-sm">
           <View className="flex-row items-center px-1 mb-1">
-            <TouchableOpacity onPress={() => navigation.goBack()} className="p-1">
+            <TouchableOpacity onPress={() => navigation.navigate('SearchBar', { text: '', focus: false })} className="p-1">
               <MaterialIcons name="chevron-left" size={32} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity
@@ -361,17 +368,24 @@ export default function SearchView() {
             data={filteredResults}
             renderItem={renderFreelancerCard}
             keyExtractor={(item, index) => item._id || index.toString()}
+            numColumns={2}                          // ← 2-column grid
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-              paddingHorizontal: 4,
+              paddingHorizontal: 2,
               paddingBottom: 64,
             }}
-            ListHeaderComponent={
-              <View className="py-2">
-                <Text className="text-sm text-gray-600">
-                  {filteredResults.length} {t('freelancer_profile.results_found') || 'results'}
-                </Text>
-              </View>
+            onScroll={Animated.event(          // ← add this
+              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+              { useNativeDriver: false }
+            )}
+            scrollEventThrottle={16}
+            refreshControl={                        // ← pull to refresh
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                colors={['#3B82F6']}
+                tintColor="#3B82F6"
+              />
             }
           />
         )}

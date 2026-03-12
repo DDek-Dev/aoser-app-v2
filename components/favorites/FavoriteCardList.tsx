@@ -3,6 +3,7 @@ import {
   Text,
   Image,
   TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -43,7 +44,7 @@ const FavoriteCardList = ({ data }: Props) => {
   return (
     <View className="space-y-3">
       {data.filter((items) => items.likedItemType === "UserProfile").map((item, index) => (
-        <TouchableOpacity
+        <Pressable
           onPress={() => navigator.navigate('FreelancerProfile', { userId: item.likedItem._id })}
           key={index}
           className="flex-row items-start bg-white rounded-2xl pr-2 mb-2 border border-gray-200"
@@ -54,20 +55,19 @@ const FavoriteCardList = ({ data }: Props) => {
             resizeMode="cover"
           />
 
-          <View className="flex-1 space-y-1 py-4">
+          <View className="flex-1 space-y-1 py-4 overflow-hidden">
             <View className="flex-row items-start  w-full">
-              <View className="flex-row gap-2">
+              {/* <View className="flex-row gap-2">
                 <View className="flex-row items-center">
                   <FontAwesome name="star" size={14} color="#facc15" />
                   <Text className="ml-1 text-body font-medium text-yellow-500">
-                    {item.likedItem.hourlyRate}
+                    {item.likedItem.starRating}
                   </Text>
                 </View>
-                {/* <Text className="text-gray-400 font-bold">.</Text>
-                <Text className="text-gray-400 text-sm">{item.distance} Km</Text> */}
-              </View>
+               
+              </View> */}
 
-              <View className="bg-blue-100 px-2 py-1 rounded-full ml-6">
+              <View className="bg-blue-100 px-2 py-1 rounded-full ">
 
                 <View className='flex-row'>
                   <Text className='font-bold text-warning '>{item.likedItem.hourlyRateCurrency}</Text>
@@ -84,9 +84,25 @@ const FavoriteCardList = ({ data }: Props) => {
             <Text className="text-body text-textSecondary" numberOfLines={2}>
               {item.likedItem.customerExpect}
             </Text>
+            {item.likedItem.address.village !== '' && item.likedItem.address.district !== '' && item.likedItem?.address.province !== '' &&
+
+              <View className="flex-row mt-3 items-center">
+
+
+                <View className="flex-row gap-2 items-center">
+                  <Ionicons name="location-outline" size={18} color="#F59E0B" />
+
+                  <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                    {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                    {item.likedItem?.address.village}, {item.likedItem?.address.district}, {item.likedItem?.address.province}
+                  </Text>
+                </View>
+              </View>
+            }
           </View>
 
-        </TouchableOpacity>
+        </Pressable>
       ))}
     </View>
   );

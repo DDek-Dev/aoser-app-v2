@@ -6,7 +6,7 @@ import { useGetBillData } from 'hooks/usePayment'; // Adjust path
 import { useTranslation } from 'react-i18next';
 
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate } from 'utils/dateFormatter';
+import { formatDate, formatDisplayDateTime } from 'utils/dateFormatter';
 import { aoserlogo_no_bg_blue, bcelone, pal } from 'assets';
 import { useNavigation } from '@react-navigation/native';
 type Props = {
@@ -131,6 +131,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
             </ScreenWrapper>
         );
     }
+
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']}>
             <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
@@ -190,7 +191,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
                                 style={{ lineHeight: 25 }}
                             >
                                 {[...Array(80)].map((_, i) => (
-                                    `${formatDate(payment.fromBankInformation.txtime)} • ${payment.invoiceId} • ${formatCurrency(payment.amount, payment.currency)} ${payment.currency} • AOSER • `
+                                    `${payment.fromBankInformation.txtime} • ${formatCurrency(payment.amount, payment.currency)} ${payment.currency} • AOSER • `
                                 )).join('')}
                             </Text>
                         </View>

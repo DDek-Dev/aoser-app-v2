@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { View,  Animated, ScrollView as RNScrollView } from 'react-native';
+import { View, Animated, ScrollView as RNScrollView } from 'react-native';
 import Header from 'components/profile/Header';
 import InfoStats from 'components/profile/InfoStats';
 import Reviews from 'components/profile/Reviews';
 import WhatExpect from 'components/profile/whatExpect';
 import VDOPromote from 'components/profile/VDOPromote';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
-import ResumeImage from 'components/profile/ResumeImage';
+
 
 import LoadingScreen from 'screens/Loading/LoadingScreen';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
@@ -16,6 +16,7 @@ import { useFreelancerById, useFreelancerReviews } from 'hooks/useFreelancer';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import FreelancerSkeleton from 'screens/freelancer/FreelancerSkeleton';
 
 type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'AuthFreelancerProfile'>;
 
@@ -29,14 +30,14 @@ export default function AuthFreelancerProfile({ route }: Props) {
 
 
   const { data: reviews, isLoading: isLoadingReviews } = useFreelancerReviews(profile?._id ? profile._id : '');
- const {user } = useAuth();
-    const {t}= useTranslation()
+  const { user } = useAuth();
+  const { t } = useTranslation()
 
   const navigation = useNavigation();
   const opacity = useRef(new Animated.Value(0.3)).current;
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  
+
   const handleScroll = () => {
     // Clear existing timeout
     if (timeoutRef.current) {
@@ -66,9 +67,16 @@ export default function AuthFreelancerProfile({ route }: Props) {
     };
   }, []);
   const isOwnProfile = user?._id === profile?._id;
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading) return (
+    <ScreenWrapper safeEdges={['top', 'bottom']}>
+      <FreelancerSkeleton />
+    </ScreenWrapper>
+
+  )
   if (!profile) return null;
 
+
+  console.log('profile', JSON.stringify(profile, null, 2))
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']} >
 
@@ -102,7 +110,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
             job={profile.jobTitle || ''}
             rating={profile.starRating || 0}
             status={profile.workerStatus || ''}
-           
+
             ishidden={true}
             isme={isOwnProfile}
           />
@@ -115,9 +123,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
           <VDOPromote video={profile.videoPromote} context="profile" />
 
           <TabbedProfileSection profile={profile} stylepadd="" />
-          {profile.resumeImage &&
-          <ResumeImage resumeImage={profile.resumeImage} />
-          }
+
           <WhatExpect profile={profile} />
           <View className="h-[1px] bg-gray-200 mt-4" />
           <View className='mb-24'>

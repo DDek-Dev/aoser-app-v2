@@ -14,7 +14,8 @@
       },
       "oauth_client": [
         {
-          "client_id": "534310388147-tuisjc8oj44do4ii2urpgejm4p6qvj63.apps.googleusercontent.com",
+   
+          "client_id": "534310388147-25i8jdpds4sm5vvk326gevnoem9gl8rt.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -27,7 +28,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "534310388147-tuisjc8oj44do4ii2urpgejm4p6qvj63.apps.googleusercontent.com",
+              "client_id": "534310388147-25i8jdpds4sm5vvk326gevnoem9gl8rt.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

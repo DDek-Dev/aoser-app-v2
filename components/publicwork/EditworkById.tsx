@@ -15,6 +15,7 @@ import { FreelancerStackParamList } from 'types/navigation';
 import FormInput from 'components/ui/Input';
 import TextArea from 'components/ui/TextArea';
 import SelectInput from 'components/ui/SelectInput';
+import Dropdown from 'components/filter/Dropdown';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import DatePicker from 'components/ui/DatePicker';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -24,6 +25,7 @@ import { formatDate, getCurrentLanguage, Language } from 'utils/dateFormatter';
 import SubWorkDetailsInput from 'components/ui/SubTaskInputList';
 import { SubWorkDetail } from 'types';
 import { usePublicWorkById, useUpdateWorkById } from 'hooks/usePublicWork';
+import { useSelectAddress } from 'hooks/useSelectAddress';
 import { useTranslation } from 'react-i18next';
 
 type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'EditWorkById'>;
@@ -79,6 +81,10 @@ export default function EditWorkById({ route }: Props) {
         dateInvalid: false,
         // subcategories: false
     });
+    const { data: addressData } = useSelectAddress();
+    const [selectedProvince, setSelectedProvince] = useState<any>(undefined);
+    const [selectedDistrict, setSelectedDistrict] = useState<any>(undefined);
+    const [village, setVillage] = useState('');
 
     const currentLanguage: Language = getCurrentLanguage();
     const params = route?.params;
@@ -95,6 +101,23 @@ export default function EditWorkById({ route }: Props) {
     const updateWorkById = useUpdateWorkById();
     const data = workdata?.work;
 
+    const provinces = addressData?.[0]?.provinces ?? [];
+    const districts = selectedProvince?.districts ?? [];
+    const provinceOptions = provinces.map((p: any) => ({ label: p.province_la, value: p }));
+    const districtOptions = districts.map((d: any) => ({ label: d.district_la, value: d }));
+
+    const handleProvinceSelect = (province: any) => {
+        setSelectedProvince(province);
+        setSelectedDistrict(undefined);
+        setVillage('');
+    };
+
+    const handleDistrictSelect = (district: any) => {
+        setSelectedDistrict(district);
+        setVillage('');
+    };
+
+    // console.log('workdata', JSON.stringify(workdata, null , 2))
     // Populate form with current data
     useEffect(() => {
         if (data) {
@@ -135,6 +158,35 @@ export default function EditWorkById({ route }: Props) {
         }
     }, [data]);
 
+    useEffect(() => {
+        if (!data?.address) return;
+
+        const normalise = (value?: string) => (value || '').trim().toLowerCase();
+        const provinceName = data.address.province || '';
+        const districtName = data.address.district || '';
+
+        const matchedProvince = provinces.find(
+            (p: any) =>
+                normalise(p.province_la) === normalise(provinceName) ||
+                normalise(p.province_en) === normalise(provinceName)
+        );
+
+        const nextProvince =
+            matchedProvince || (provinceName ? { province_la: provinceName, districts: [] } : undefined);
+
+        const matchedDistrict = (matchedProvince?.districts || []).find(
+            (d: any) =>
+                normalise(d.district_la) === normalise(districtName) ||
+                normalise(d.district_en) === normalise(districtName)
+        );
+
+        const nextDistrict = matchedDistrict || (districtName ? { district_la: districtName } : undefined);
+
+        setSelectedProvince(nextProvince);
+        setSelectedDistrict(nextDistrict);
+        setVillage(data.address.village || '');
+    }, [data?.address, provinces]);
+
     const formatDateForDisplay = (date: Date | null): string => {
         if (!date) {
             return t('editWork.deadline.fromPlaceholder');
@@ -155,7 +207,13 @@ export default function EditWorkById({ route }: Props) {
         subWorkDetails,
         budgetCurrency,
         budgetType,
-        subcategories
+        subcategories,
+        address: {
+            country: selectedProvince ? 'Laos' : data?.address?.country || '',
+            province: selectedProvince?.province_la || data?.address?.province || '',
+            district: selectedDistrict?.district_la || data?.address?.district || '',
+            village: village.trim() || data?.address?.village || '',
+        }
     });
 
     // Update the ref whenever state changes
@@ -172,9 +230,15 @@ export default function EditWorkById({ route }: Props) {
             subWorkDetails,
             budgetCurrency,
             budgetType,
-            subcategories
+            subcategories,
+            address: {
+                country: selectedProvince ? 'Laos' : data?.address?.country || '',
+                province: selectedProvince?.province_la || data?.address?.province || '',
+                district: selectedDistrict?.district_la || data?.address?.district || '',
+                village: village.trim() || data?.address?.village || '',
+            }
         };
-    }, [nameOfWork, workDetail, budget, category, workType, hasDeadline, toDate, fromDate, subWorkDetails, budgetCurrency, budgetType, subcategories]);
+    }, [nameOfWork, workDetail, budget, category, workType, hasDeadline, toDate, fromDate, subWorkDetails, budgetCurrency, budgetType, subcategories, selectedProvince, selectedDistrict, village, data?.address]);
 
 
     const parseDate = (dateString: string): Date | null => {
@@ -187,7 +251,7 @@ export default function EditWorkById({ route }: Props) {
         if (isNaN(date.getTime())) return null;
         return date;
     };
-    
+
     // Parse time string (HH:MM)
     const parseTime = (timeString: string): { hours: number; minutes: number } | null => {
         if (!timeString || timeString.length < 3) return null;
@@ -249,6 +313,9 @@ export default function EditWorkById({ route }: Props) {
             dateInvalid,
         };
         setErrors(newErrors);
+         if (currentState.budget === 0 || currentState.budget === null) {
+            setBudgetType('OFFERING');
+        }
 
         const cleanedSubWorkDetails = currentState.subWorkDetails.map(section => ({
             sectionTitle: section.sectionTitle,
@@ -257,6 +324,8 @@ export default function EditWorkById({ route }: Props) {
                 subWorkStatus: task.subWorkStatus
             }))
         }));
+
+       
 
         try {
             const formData = {
@@ -271,7 +340,9 @@ export default function EditWorkById({ route }: Props) {
                 budgetType: currentState.budgetType,
                 serviceType: currentState.category,
                 jobs: currentState.subcategories,
+                address: currentState.address,
             };
+           
 
             if (!params?.workId) {
                 console.log('Missing workId parameter22');
@@ -325,7 +396,7 @@ export default function EditWorkById({ route }: Props) {
                             <View className="flex-1">
                                 <Text className="font-semibold text-primary text-heading">{t('editWork.title')}</Text>
                                 <Text className="text-primary text-body">{t('editWork.subtitle')}</Text>
-                            </View> 
+                            </View>
                         </View>
 
                         <TouchableOpacity
@@ -608,6 +679,41 @@ export default function EditWorkById({ route }: Props) {
                                     }}
                                 />
                             )}
+                        </View>
+
+                        <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
+                            <Text className="text-body text-text font-bold mb-2">{t('customerProfile.locationInfo')}</Text>
+
+                            <View className='bg-blue-50 rounded-2xl'>
+                                <Dropdown
+                                    label={t('kyc.step4.location.province.label')}
+                                    value={selectedProvince?.province_la}
+                                    placeholder={t('kyc.step4.location.province.placeholder')}
+                                    options={provinceOptions}
+                                    onSelect={handleProvinceSelect}
+                                />
+                            </View>
+
+                            <View className='mt-3'>
+                                <Dropdown
+                                    label={t('kyc.step4.location.district.label')}
+                                    value={selectedDistrict?.district_la}
+                                    placeholder={t('kyc.step4.location.district.placeholder')}
+                                    options={districtOptions}
+                                    onSelect={handleDistrictSelect}
+                                    disabled={!selectedProvince}
+                                />
+                            </View>
+
+                            <View className='mt-3'>
+                                <FormInput
+                                    label={t('kyc.step4.location.village.label')}
+                                    value={village}
+                                    onChangeText={setVillage}
+                                    placeholder={t('kyc.step4.location.village.placeholder')}
+                                    inputClassName={selectedDistrict ? 'border-border' : 'border-gray-200'}
+                                />
+                            </View>
                         </View>
 
                         {workType === 'ONLINE' && (

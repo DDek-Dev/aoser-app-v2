@@ -30,8 +30,7 @@ const EditFreelancerAboutMe = () => {
     const [aboutMe, setAboutMe] = useState('');
     const [skills, setSkills] = useState<string[]>(['']);
     const [experiences, setExperiences] = useState<string[]>(['']);
-    const [resumeImage, setResumeImage] = useState<string>('');
-    const [resumeImageFile, setResumeImageFile] = useState<FileWithType | null>(null);
+ 
     const [certificateImages, setCertificateImages] = useState<FileWithType[]>([]);
     const [certificateImagesFiles, setCertificateImagesFiles] = useState<FileWithType[]>([]);
     // Loading states
@@ -52,7 +51,6 @@ const EditFreelancerAboutMe = () => {
             setAboutMe(data.about || '');
             setSkills(data.skills?.length > 0 ? data.skills : ['']);
             setExperiences(data.workExperience?.length > 0 ? data.workExperience : ['']);
-            setResumeImage(data.resumeImage ? `${IMAGES_BASE_URL}${data.resumeImage}` : '');
 
 
             const certificateFiles = data.certificates?.map(cert => ({
@@ -67,15 +65,7 @@ const EditFreelancerAboutMe = () => {
         }
     }, [data]);
 
-    const handleResumeImageChange = (file?: FileWithType) => {
-        if (file) {
-            setResumeImageFile(file);
-            setResumeImage(file.uri);
-        } else {
-            setResumeImageFile(null);
-            setResumeImage('');
-        }
-    };
+
 
     const handleCertificateImagesChange = (files: FileWithType[]) => {
         if (files) {
@@ -88,17 +78,10 @@ const EditFreelancerAboutMe = () => {
 
     };
 
-    const uploadFiles = async (): Promise<{ resumeUrl: string; certificateUrls: string[] }> => {
+    const uploadFiles = async (): Promise<{ certificateUrls: string[] }> => {
         const filesToUpload: { name: string; type: string }[] = [];
 
-        // Add resume file if exists
-        if (resumeImageFile) {
-            filesToUpload.push({
-                name: resumeImageFile.name,
-                type: resumeImageFile.type,
-            });
-        }
-
+   
         // Add certificate files if exist
         certificateImagesFiles.forEach(file => {
             filesToUpload.push({
@@ -109,7 +92,7 @@ const EditFreelancerAboutMe = () => {
 
         if (filesToUpload.length === 0) {
             return {
-                resumeUrl: resumeImage,
+               
                 certificateUrls: certificateImages.map(img => img.uri) // Extract URIs
             };
         }
@@ -119,21 +102,12 @@ const EditFreelancerAboutMe = () => {
             // Get presigned URLs
             const presignedUrls = await getPresignedUrls(filesToUpload);
 
-            let resumeUrl = resumeImage;
+           
             const certificateUrls: string[] = certificateImages.map(img => img.uri);
 
             let urlIndex = 0;
 
-            // Upload resume
-            if (resumeImageFile) {
-                await uploadFileToUrl(
-                    presignedUrls[urlIndex].url,
-                    resumeImageFile.uri,
-                    presignedUrls[urlIndex].contentType
-                );
-                resumeUrl = presignedUrls[urlIndex].filename;
-                urlIndex++;
-            }
+           
 
             // Upload certificates
             for (let i = 0; i < certificateImagesFiles.length; i++) {
@@ -150,7 +124,7 @@ const EditFreelancerAboutMe = () => {
                 urlIndex++;
             }
             console.log('Final certificate URLs:', certificateUrls);
-            return { resumeUrl, certificateUrls };
+            return {  certificateUrls };
 
         } catch (error) {
             console.log('File upload error:', error);
@@ -179,7 +153,7 @@ const EditFreelancerAboutMe = () => {
 
         try {
             // Upload files first
-            const { resumeUrl, certificateUrls } = await uploadFiles();
+            const {  certificateUrls } = await uploadFiles();
 
             console.log('Uploaded URLs:', { certificateUrls });
 
@@ -188,7 +162,6 @@ const EditFreelancerAboutMe = () => {
                 about: aboutMe.trim(),
                 skills: skills.filter(skill => skill.trim()),
                 workExperience: experiences.filter(exp => exp.trim()),
-                resumeImage: resumeUrl.replace(IMAGES_BASE_URL || '', ''),
                 certificates: certificateUrls.map(url => url.replace(IMAGES_BASE_URL || '', '')),
             };
             console.log('Update data:', updateData);
@@ -305,14 +278,6 @@ const EditFreelancerAboutMe = () => {
                 // editable={!isProcessing}
                 />
 
-                {/* Resume Upload */}
-                <SelectImage
-                    label={t('kyc.step2.resume_label')}
-                    image={resumeImage}
-                    onChange={handleResumeImageChange}
-                    inputClassName="border border-border"
-                // editable={!isProcessing}
-                />
 
                 {/* Certificates Upload */}
                 <SelectMultiImage

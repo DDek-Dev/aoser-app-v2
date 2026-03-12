@@ -662,7 +662,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
             </View>
           </View>
 
-          {item.createdBy.address &&
+          {item?.createdBy?.address &&
 
 
             <View className="flex-row mt-3 items-center">
@@ -786,7 +786,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
           </View>
 
           {/* Address */}
-          {item.createdBy.address && (
+          {item?.createdBy?.address && (
             <View className="flex-row mt-3 items-center">
               <Text>{t('payment_success.address')}: </Text>
               <View className="flex-row gap-2 items-center ml-2">

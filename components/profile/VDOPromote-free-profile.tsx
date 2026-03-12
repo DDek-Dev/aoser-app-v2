@@ -6,148 +6,164 @@ import VideoSkeleton from 'components/skeletonScreens/VideoSkeleton';
 
 type Props = {
   video?: string | null;
-  context?: 'home' | 'profile'; // 'home' for preview, 'profile' for full view
+  context?: 'home' | 'profile';
   scrollY?: any;
-}
+};
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
+const HOME_PREVIEW_DURATION_MS = 7000;
+const VISIBILITY_CHECK_INTERVAL_MS = 120;
+const ACTIVATE_VISIBILITY_RATIO = 0.55;
+const DEACTIVATE_VISIBILITY_RATIO = 0.2;
+const loadedVideoUriCache = new Set<string>();
 
 export default function VDOPromote_free_profile({ video, context = 'home', scrollY }: Props) {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAppActive, setIsAppActive] = useState(appState.current === 'active');
-
-  const videoS = video ? { uri: `${IMAGES_BASE_URL}${video}` } : null;
+  const videoUri = video ? `${IMAGES_BASE_URL}${video}` : null;
+  const [isLoading, setIsLoading] = useState(() => !!videoUri && !loadedVideoUriCache.has(videoUri));
   const [showFullScreen, setShowFullScreen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const loopTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isActive, setIsActive] = useState(false);
+
   const layoutRef = useRef<{ top: number; height: number } | null>(null);
   const containerRef = useRef<any>(null);
   const scrollListener = useRef<any>(null);
+  const previewLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const measureThrottleRef = useRef(0);
+  const isActiveRef = useRef(false);
 
-  if (!videoS) return null;
+  const videoS = videoUri ? { uri: videoUri, useCaching: true as const } : null;
 
-  // Single player for this component
   const player = useVideoPlayer(videoS, (p) => {
     if (context === 'home') {
       p.muted = true;
-      if (isActive && isAppActive) p.play();
+      p.loop = false;
     } else {
       p.muted = false;
-      p.play();
+      p.loop = false;
     }
-    // Set loading to false after player is ready
-    setTimeout(() => setIsLoading(false), 600);
+    p.keepScreenOnWhilePlaying = false;
+    p.bufferOptions = {
+      preferredForwardBufferDuration: 10,
+      waitsToMinimizeStalling: true,
+      minBufferForPlayback: 1,
+      prioritizeTimeOverSizeThreshold: true,
+    };
   });
 
-  // 7-second continuous loop when active (home context)
   useEffect(() => {
-    if (context !== 'home' || !player) return;
+    const shouldShowLoading = !!videoUri && !loadedVideoUriCache.has(videoUri);
+    setIsLoading(shouldShowLoading);
+  }, [videoUri]);
 
-    // clear existing timer
-    if (loopTimerRef.current) {
-      try { clearInterval(loopTimerRef.current as any); } catch (e) {}
-      loopTimerRef.current = null;
-    }
+  const markVideoLoaded = () => {
+    if (videoUri) loadedVideoUriCache.add(videoUri);
+    setIsLoading(false);
+  };
 
-    if (isActive && isAppActive) {
-      try {
-        // seek to start and play
-        // @ts-ignore
-        player.currentTime = 0;
-        player.play();
-      } catch (e) {}
-
-      loopTimerRef.current = setInterval(() => {
-        try {
-          if (!isAppActive) return;
-          // @ts-ignore
-          player.currentTime = 0;
-          player.play();
-        } catch (err) {
-          console.error('Error resetting home preview video:', err);
-        }
-      }, 7000) as unknown as NodeJS.Timeout;
-    } else {
-      try { player.pause(); } catch (e) {}
-      if (loopTimerRef.current) {
-        try { clearInterval(loopTimerRef.current as any); } catch (e) {}
-        loopTimerRef.current = null;
-      }
-    }
-
-    return () => {
-      if (loopTimerRef.current) {
-        try { clearInterval(loopTimerRef.current as any); } catch (e) {}
-        loopTimerRef.current = null;
-      }
-    };
-  }, [context, player, isActive, isAppActive]);
-
-  // AppState listener to pause/resume playback
   useEffect(() => {
     const handle = (nextAppState: AppStateStatus) => {
       appState.current = nextAppState;
-      const nowActive = nextAppState === 'active';
-      setIsAppActive(nowActive);
-
-      try {
-        if (!nowActive) {
-          try { player.pause(); } catch (e) {}
-          if (loopTimerRef.current) { try { clearInterval(loopTimerRef.current as any); } catch (e) {} loopTimerRef.current = null; }
-        } else {
-          if (isActive && context === 'home') {
-            try {
-              // @ts-ignore
-              player.currentTime = 0;
-              player.play();
-            } catch (e) {}
-          }
-        }
-      } catch (e) {}
+      setIsAppActive(nextAppState === 'active');
     };
 
     const sub = AppState.addEventListener ? AppState.addEventListener('change', handle) : undefined;
-    return () => { if (sub && typeof sub.remove === 'function') sub.remove(); };
-  }, [player, isActive, context]);
+    return () => {
+      if (sub && typeof sub.remove === 'function') sub.remove();
+    };
+  }, []);
 
-  // Visibility detection using measure() + scrollY
+  useEffect(() => {
+    if (!player) return;
+
+    if (context === 'home') {
+      if (isActive && isAppActive && !isLoading && !showFullScreen) {
+        try { player.play(); } catch (e) {}
+      } else {
+        try { player.pause(); } catch (e) {}
+      }
+      return;
+    }
+
+    if (isAppActive) {
+      try { player.play(); } catch (e) {}
+    } else {
+      try { player.pause(); } catch (e) {}
+    }
+  }, [player, context, isActive, isAppActive, isLoading, showFullScreen]);
+
+  useEffect(() => {
+    if (previewLoopRef.current) {
+      clearInterval(previewLoopRef.current);
+      previewLoopRef.current = null;
+    }
+
+    if (!videoS || context !== 'home' || !isActive || !isAppActive || isLoading || showFullScreen) return;
+
+    try { player.replay(); } catch (e) {}
+
+    previewLoopRef.current = setInterval(() => {
+      try { player.replay(); } catch (e) {}
+    }, HOME_PREVIEW_DURATION_MS);
+
+    return () => {
+      if (previewLoopRef.current) {
+        clearInterval(previewLoopRef.current);
+        previewLoopRef.current = null;
+      }
+    };
+  }, [player, context, isActive, isAppActive, isLoading, showFullScreen, videoS]);
+
+  const updateActiveState = (ratio: number) => {
+    const previous = isActiveRef.current;
+    const next = previous
+      ? ratio >= DEACTIVATE_VISIBILITY_RATIO
+      : ratio >= ACTIVATE_VISIBILITY_RATIO;
+
+    if (previous !== next) {
+      isActiveRef.current = next;
+      setIsActive(next);
+    }
+  };
+
   useEffect(() => {
     if (!scrollY || !containerRef.current) return;
-
     const add = (scrollY as any).addListener;
     if (typeof add !== 'function') {
+      isActiveRef.current = false;
       setIsActive(false);
       return;
     }
 
-    // Use measure(pageY) on each scroll tick (throttled via rAF) so visibility is relative to window
     let rafId: number | null = null;
     scrollListener.current = (scrollY as any).addListener(() => {
-      if (rafId !== null) return; // already scheduled
+      if (rafId !== null) return;
       rafId = requestAnimationFrame(() => {
         rafId = null;
+
+        const now = Date.now();
+        if (now - measureThrottleRef.current < VISIBILITY_CHECK_INTERVAL_MS) return;
+        measureThrottleRef.current = now;
+
         try {
           containerRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
             const winH = Dimensions.get('window').height;
             const top = pageY || 0;
             const h = height || (layoutRef.current?.height ?? 0);
             const bottom = top + h;
-
             const visibleTop = Math.max(top, 0);
             const visibleBottom = Math.min(bottom, winH);
             const visibleHeight = Math.max(0, visibleBottom - visibleTop);
             const ratio = h > 0 ? visibleHeight / h : 0;
-            const shouldBeActive = ratio >= 0.3;
-            if (shouldBeActive !== isActive) setIsActive(shouldBeActive);
+            updateActiveState(ratio);
           });
         } catch (e) {
+          isActiveRef.current = false;
           setIsActive(false);
         }
       });
     });
 
-    // initial measure to set state
     try {
       containerRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
         const winH = Dimensions.get('window').height;
@@ -158,95 +174,91 @@ export default function VDOPromote_free_profile({ video, context = 'home', scrol
         const visibleBottom = Math.min(bottom, winH);
         const visibleHeight = Math.max(0, visibleBottom - visibleTop);
         const ratio = h > 0 ? visibleHeight / h : 0;
-        setIsActive(ratio >= 0.3);
+        updateActiveState(ratio);
       });
     } catch (e) {}
 
     return () => {
-      try { if (scrollListener.current && typeof (scrollY as any).removeListener === 'function') (scrollY as any).removeListener(scrollListener.current); } catch (e) {}
+      try {
+        if (scrollListener.current && typeof (scrollY as any).removeListener === 'function') {
+          (scrollY as any).removeListener(scrollListener.current);
+        }
+      } catch (e) {}
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [scrollY, isActive]);
+  }, [scrollY]);
+
+  useEffect(() => {
+    return () => {
+      if (previewLoopRef.current) {
+        clearInterval(previewLoopRef.current);
+        previewLoopRef.current = null;
+      }
+      try { player.pause(); } catch (e) {}
+    };
+  }, [player]);
 
   const containerStyle = context === 'home' ? styles.homeContainer : styles.profileContainer;
   const videoViewStyle = context === 'home' ? styles.homeVideo : styles.profileVideo;
 
+  if (!videoS) return null;
+
   return (
     <>
       {context === 'profile' ? (
-        <Pressable
-          onPress={() => setShowFullScreen(true)}
-          style={{ flex: 1 }}
-        >
-          <View ref={containerRef} style={containerStyle} onLayout={(e) => {
-            const { y, height } = e.nativeEvent.layout;
-            layoutRef.current = { top: y, height };
+        <Pressable onPress={() => setShowFullScreen(true)} style={{ flex: 1 }}>
+          <View
+            ref={containerRef}
+            style={containerStyle}
+            onLayout={(e) => {
+              const { y, height } = e.nativeEvent.layout;
+              layoutRef.current = { top: y, height };
+            }}
+          >
+            <VideoView
+              style={videoViewStyle}
+              player={player}
+              fullscreenOptions={{ enable: true }}
+              allowsPictureInPicture={true}
+              nativeControls={true}
+              contentFit="cover"
+              onFirstFrameRender={markVideoLoaded}
+            />
 
-            // initial visibility check using content-relative y
-            try {
-              const val = typeof (scrollY as any).__getValue === 'function' ? (scrollY as any).__getValue() : 0;
-              const winH = Dimensions.get('window').height;
-              const top = y;
-              const bottom = top + height;
-              const viewportTop = val;
-              const viewportBottom = val + winH;
-              const visibleTop = Math.max(top, viewportTop);
-              const visibleBottom = Math.min(bottom, viewportBottom);
-              const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-              const ratio = height > 0 ? visibleHeight / height : 0;
-              setIsActive(ratio >= 0.3);
-            } catch (err) {
-              // ignore
-            }
-          }}>
-            {isLoading && <VideoSkeleton />}
-            {!isLoading && (
-              <VideoView
-                style={videoViewStyle}
-                player={player}
-                fullscreenOptions={{ enable: true }}
-                allowsPictureInPicture={true}
-                nativeControls={true}
-                contentFit="cover"
-              />
+            {isLoading && (
+              <View style={styles.skeletonOverlay}>
+                <VideoSkeleton />
+              </View>
             )}
           </View>
         </Pressable>
       ) : (
-        <View ref={containerRef} style={containerStyle} onLayout={(e) => {
-          const { y, height } = e.nativeEvent.layout;
-          layoutRef.current = { top: y, height };
-          try {
-            const val = typeof (scrollY as any).__getValue === 'function' ? (scrollY as any).__getValue() : 0;
-            const winH = Dimensions.get('window').height;
-            const top = y;
-            const bottom = top + height;
-            const viewportTop = val;
-            const viewportBottom = val + winH;
-            const visibleTop = Math.max(top, viewportTop);
-            const visibleBottom = Math.min(bottom, viewportBottom);
-            const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-            const ratio = height > 0 ? visibleHeight / height : 0;
-            setIsActive(ratio >= 0.3);
-          } catch (err) {
-            // ignore
-          }
-        }}>
-          {isLoading && <VideoSkeleton aspectRatio={4 / 5} />}
-          {!isLoading && (
-            <VideoView
-              style={videoViewStyle}
-              player={player}
-              fullscreenOptions={{ enable: false }}
-              allowsPictureInPicture={false}
-              nativeControls={false}
-              contentFit="cover"
-            />
+        <View
+          ref={containerRef}
+          style={containerStyle}
+          onLayout={(e) => {
+            const { y, height } = e.nativeEvent.layout;
+            layoutRef.current = { top: y, height };
+          }}
+        >
+          <VideoView
+            style={videoViewStyle}
+            player={player}
+            fullscreenOptions={{ enable: false }}
+            allowsPictureInPicture={false}
+            nativeControls={false}
+            contentFit="cover"
+            onFirstFrameRender={markVideoLoaded}
+          />
+
+          {isLoading && (
+            <View style={styles.skeletonOverlay}>
+              <VideoSkeleton aspectRatio={4 / 5} />
+            </View>
           )}
         </View>
       )}
 
-      {/* Full Screen Modal for Profile */}
       {context === 'profile' && (
         <Modal
           visible={showFullScreen}
@@ -255,23 +267,27 @@ export default function VDOPromote_free_profile({ video, context = 'home', scrol
           statusBarTranslucent
         >
           <SafeAreaView style={styles.fullScreenContainer}>
-            <Pressable 
+            <Pressable
               style={styles.closeButton}
               onPress={() => setShowFullScreen(false)}
             >
               <Ionicons name="close" size={28} color="white" />
             </Pressable>
-            
-            {isLoading && <VideoSkeleton height={Dimensions.get('window').height} />}
-            {!isLoading && (
-              <VideoView
-                style={styles.fullScreenVideo}
-                player={player}
-                fullscreenOptions={{ enable: true }}
-                allowsPictureInPicture={true}
-                nativeControls={true}
-                contentFit="contain"
-              />
+
+            <VideoView
+              style={styles.fullScreenVideo}
+              player={player}
+              fullscreenOptions={{ enable: true }}
+              allowsPictureInPicture={true}
+              nativeControls={true}
+              contentFit="contain"
+              onFirstFrameRender={markVideoLoaded}
+            />
+
+            {isLoading && (
+              <View style={styles.skeletonOverlay}>
+                <VideoSkeleton height={Dimensions.get('window').height} />
+              </View>
             )}
           </SafeAreaView>
         </Modal>
@@ -281,7 +297,6 @@ export default function VDOPromote_free_profile({ video, context = 'home', scrol
 }
 
 const styles = StyleSheet.create({
-  // Home preview styles - 4:5 aspect ratio
   homeContainer: {
     width: '100%',
     aspectRatio: 4 / 5,
@@ -294,8 +309,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-
-  // Profile view styles - 4:5 aspect ratio
   profileContainer: {
     width: '100%',
     aspectRatio: 4 / 5,
@@ -307,8 +320,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-
-  // Full screen modal styles
   fullScreenContainer: {
     flex: 1,
     backgroundColor: '#000',
@@ -327,5 +338,9 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 20,
+  },
+  skeletonOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 5,
   },
 });

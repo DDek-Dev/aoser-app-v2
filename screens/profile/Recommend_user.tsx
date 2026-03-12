@@ -9,7 +9,7 @@ import {
   Keyboard,
   Platform,
   TextInput as TextInputType,
-  TouchableWithoutFeedback,
+
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -198,11 +198,6 @@ const RecommendUser = () => {
 
     Keyboard.dismiss();
 
-    console.log('[BuyStar] Processing purchase:', {
-      stars: selectedStars,
-      total: totalPrice,
-      userId: user._id,
-    });
 
     navigation.navigate('PaymentScreen', {
       workId: user._id,
@@ -244,7 +239,7 @@ const RecommendUser = () => {
     <ScreenWrapper safeEdges={['bottom', 'top']} style={{ flex: 1, backgroundColor: 'white' }}>
       {/* ===== HEADER ===== */}
       <Header_back
-        text={t('profile.buyStar.title')}
+        text={t('profile.freelancerSetting.buy_star')}
         onPress={handleGoBack}
         iconColor="#3B82F6"
       />

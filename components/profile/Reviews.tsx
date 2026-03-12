@@ -40,7 +40,7 @@ export default function Reviews({ reviews }: ReviewsProps) {
 
   const visibleReviews = safeReviews.slice(0, visibleCount);
   const showSeeMore = safeReviews.length > visibleCount;
-
+console.log(JSON.stringify(visibleReviews, null, 2))
   const avgRating = safeReviews.length
     ? (safeReviews.reduce((sum, review) => sum + review.rating, 0) / safeReviews.length).toFixed(1)
     : '0.0';
@@ -75,8 +75,9 @@ export default function Reviews({ reviews }: ReviewsProps) {
 
       <View className="flex-row gap-4 items-center mb-6">
         <View className="items-center h-24 w-24 bg-blue-100 justify-center rounded-full">
-          <Text className="text-2xl font-bold text-blue-600">{avgRating}</Text>
-          <Text className="text-gray-500 text-sm">{t('freelancer_profile.review.from')} 5.0</Text>
+          <Text className="text-2xl font-bold text-blue-600">{avgRating} </Text>
+          {/* <Text className="text-gray-500 text-sm">{t('freelancer_profile.review.from')} 5.0</Text> */}
+          <Text className="text-gray-500 text-sm">0.0/5.0</Text>
         </View>
         <View className="items-center">
           {renderStars(parseFloat(avgRating))}
@@ -93,7 +94,7 @@ export default function Reviews({ reviews }: ReviewsProps) {
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-2">
                     <Image
-                      source={reviewerInfo.profileImage ? { uri: IMAGES_BASE_URL + reviewerInfo.profileImage } : profileImage}
+                      source={review.reviewer.userProfileImage ? { uri: IMAGES_BASE_URL + review.reviewer.userProfileImage } : profileImage}
                       className="w-10 h-10 rounded-full"
                       onError={() => console.log(`Failed to load image for review ${review._id}`)}
                     />

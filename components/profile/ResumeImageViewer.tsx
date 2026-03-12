@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, StatusBar, Platform, Pressable } from 'react-na
 import ImageViewer from 'react-native-image-zoom-viewer';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import Modal from 'react-native-modal';
+import { MaterialIcons } from '@expo/vector-icons';
 
 type ResumeImageViewerRouteProp = RouteProp<
   { params: { uri: string } },
@@ -31,8 +32,9 @@ export default function ResumeImageViewer() {
           backgroundColor="black"
         />
 
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>← Back</Text>
+        <Pressable className='flex-row gap-2 items-center' style={styles.backButton} onPress={() => navigation.goBack()}>
+          <MaterialIcons name='chevron-left'  size={32} color={'white'}/>
+          {/* <Text style={styles.backText}>Back</Text> */}
         </Pressable>
       </View>
     </Modal>
@@ -42,7 +44,7 @@ export default function ResumeImageViewer() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: 'white',
   },
   backButton: {
     position: 'absolute',

@@ -81,41 +81,30 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
   }
 
   const workData = projects.work as Job;
+  const creatorAddress = workData?.createdBy?.address;
 
   const IconComponent = getIcon(workData?.serviceType?.icon);
   return (
     <View className="space-y-3 w-[18rem]">
+
+      {/* Header Badge */}
+      <View className="bg-primary px-4 py-2.5 rounded-tl-xl rounded-tr-xl">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <View className="bg-blue-400 rounded-full p-1.5 mr-2">
+              <Ionicons name="document-text" size={16} color="white" />
+            </View>
+            <Text className="text-white font-bold text-sm">
+              {t('tab.works') || 'Work'}
+            </Text>
+          </View>
+          
+        </View>
+      </View>
       <Pressable
         onPress={() => navigation.navigate('FreelancerWorkDetail', { workId: projects?.work?._id as string })}
-        className="bg-surface rounded-2xl border border-border px-4 py-4 mb-2"
+        className="bg-surface rounded-2xl px-4 py-4 mb-2"
       >
-
-        {/* <View className="flex-row justify-between items-center mb-2">
-          <View className="flex-1 pr-2">
-            <Text className="text-body font-semibold text-text" numberOfLines={1}>{workData.workTitle}</Text>
-          </View>
-        </View>
-
-
-        <Text numberOfLines={2} className="text-body mb-2 text-textSecondary">
-          {workData.description}
-        </Text>
-
-
-        <View className='flex-row justify-between'>
-          <View className='flex-row '>
-            <Text className='font-bold text-warning ml-2'>{workData.currency} </Text>
-            <Text className='font-bold text-primary '>{new Intl.NumberFormat().format(workData.budget)}</Text>
-          </View>
-
-          <View className='flex-row gap-2 items-center'>
-            <Ionicons name="time-outline" size={18} color="#F59E0B" />
-            <Text className="text-sm text-textSecondary">{formatDate(workData.deadLine as string, currentLanguage)}</Text>
-          </View>
-
-        </View> */}
-
-
 
         {/* profile of create by1 */}
 
@@ -133,7 +122,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
 
             <IconComponent
               size={24}
-              color={workData?.serviceType?.color || 'black'}
+              color={workData?.serviceType?.color || 'blue'}
               strokeWidth={2}
             />
 
@@ -147,7 +136,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
 
 
 
-        <View className='bg-background px-2 rounded-2xl p-2'>
+        <View className='bg-background px-2 rounded-2xl p-2 overflow-hidden'>
 
 
           <View className=" flex-row items-center  ">
@@ -201,7 +190,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
             </View>
           </View>
 
-          {workData.createdBy.address &&
+          {creatorAddress &&
 
 
             <View className="flex-row mt-3 items-center">
@@ -211,10 +200,10 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
               <View className="flex-row gap-2 items-center">
                 <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-                <Text className="text-sm text-textSecondary">
+                <Text className="text-sm text-textSecondary" numberOfLines={1}>
                   {/* {formatDate(item.deadLine as string, currentLanguage)} */}
 
-                  {workData.createdBy.address.village}, {workData.createdBy.address.district}, {workData.createdBy.address.province}
+                  {creatorAddress.village}, {creatorAddress.district}, {creatorAddress.province} ajs fdjs djs djs djs d sjd
                 </Text>
               </View>
             </View>

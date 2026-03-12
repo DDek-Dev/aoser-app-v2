@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { t } from 'i18next';
 import { AuthResponse, LoginFormData, OTPVerifyData, Tokens, ForgotPasswordFormData, ResetPasswordFormData, GoogleLoginFormData } from 'types/auth';
+import networkCheck from './networkCheck';
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -28,6 +29,7 @@ export const authApi = {
                 15000 // 15 second timeout
             );
 
+           
             // Handle HTTP errors (404, 500, etc.)
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -53,7 +55,7 @@ export const authApi = {
      handleGoogleLogin : async (idToken: string) : Promise<any>=> {
         try {
             
-            const res = await axios.post(`${API_BASE_URL}/auth/google/login`, { idToken });
+            const res = await networkCheck.post(`${API_BASE_URL}/auth/google/login`, { idToken });
             return res.data;
         } catch (err: any) {
             console.log(err.message);

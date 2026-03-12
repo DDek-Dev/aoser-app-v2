@@ -1,6 +1,7 @@
 // api/publiceWorkApi.ts
 import axios from 'axios';
 import { AppendWork, BookingFormData, Job, SubWorkDetail, WorkApplies, WorkById } from 'types';
+import networkCheck from './networkCheck';
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -8,10 +9,10 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 export const publiceWorkApi = {
     getPublicWork: async (token: string): Promise<Job[]> => {
 
-        console.log("API_BASE_URL2 : ", API_BASE_URL);
+
 
         try {
-            const res = await axios.get(`${API_BASE_URL}/worker/works`, {
+            const res = await networkCheck.get(`${API_BASE_URL}/worker/works`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -28,7 +29,7 @@ export const publiceWorkApi = {
     getAllMyWork: async (token: string) => {
 
         try {
-            const res = await axios.get(`${API_BASE_URL}/worker/my-works`, {
+            const res = await networkCheck.get(`${API_BASE_URL}/worker/my-works`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -45,7 +46,7 @@ export const publiceWorkApi = {
     // Add these methods if you need them
     getPublicWorkById: async (id: string): Promise<WorkById> => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/worker/work/${id}`, {
+            const res = await networkCheck.get(`${API_BASE_URL}/worker/work/${id}`, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -64,14 +65,13 @@ export const publiceWorkApi = {
 
         try {
 
-            const res = await axios.put(`${API_BASE_URL}/worker/work/${id}`, data, {
+            const res = await networkCheck.put(`${API_BASE_URL}/worker/work/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
                 },
             });
 
-            console.log("RES UPdate in Update API : ", res.data);
 
             return res.data.data.work;
 
@@ -85,15 +85,14 @@ export const publiceWorkApi = {
 
         try {
 
-            const res = await axios.put(`${API_BASE_URL}/worker/work/${id}`, data, {
+            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-append-sub-work/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
                 },
             });
 
-            console.log("RES UPdate in Update API : ", res.data);
-
+      
             return res.data.data.work;
 
         } catch (error) {
@@ -102,17 +101,15 @@ export const publiceWorkApi = {
         }
     },
     appendOwnerWork: async (id: string, data: any, token: string): Promise<Job> => {
-        console.log(" in append API : ", id, data);
         try {
 
-            const res = await axios.post(`${API_BASE_URL}/worker/work-appending/${id}`, data, {
+            const res = await networkCheck.post(`${API_BASE_URL}/worker/work-appending/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
                 },
             });
 
-            console.log("RES UPdate in append API : ", res.data);
 
             return res.data.data.work;
 
@@ -126,14 +123,13 @@ export const publiceWorkApi = {
       
         try {
 
-            const res = await axios.put(`${API_BASE_URL}/worker/freelancer-except-append-work/${id}`, data, {
+            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-except-append-work/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
                 },
             });
 
-            console.log("RES UPdate in Update API : ", res.data);
 
             return res.data.data.work;
 
@@ -146,7 +142,7 @@ export const publiceWorkApi = {
     updateSubworkStatus: async (id: string, data: SubWorkDetail[], token: string): Promise<SubWorkDetail[]> => {
 
         try {
-            const res = await axios.put(
+            const res = await networkCheck.put(
                 `${API_BASE_URL}/worker/freelancer-work/${id}`,
                 data,
                 {
@@ -166,7 +162,7 @@ export const publiceWorkApi = {
     },
     acceptWork: async (id: string, data: any, token: string) => {
         try {
-            const res = await axios.put(
+            const res = await networkCheck.put(
                 `${API_BASE_URL}/worker/freelancer-work-exception/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -182,7 +178,7 @@ export const publiceWorkApi = {
     submitWork: async (id: string, token: string): Promise<SubWorkDetail[]> => {
 
         try {
-            const res = await axios.put(
+            const res = await networkCheck.put(
                 `${API_BASE_URL}/worker/freelancer-work-submit/${id}`,
                 {},
                 {
@@ -204,7 +200,7 @@ export const publiceWorkApi = {
 
     completetWork: async (id: string, data: any, token: string) => {
         try {
-            const res = await axios.put(
+            const res = await networkCheck.put(
                 `${API_BASE_URL}/worker/work-confirm-complete/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -234,21 +230,23 @@ export const publiceWorkApi = {
             serviceType: data.serviceType,
             jobs: data.jobs || [],
             exampleWork: undefined,
-            assignedTo: undefined,
+            assignedTo: data.assignedTo,
             address: {
                 country: data?.address?.country || "Laos",
-                province: data?.address?.province || null,
-                district: data?.address?.district || null,
-                village: data?.address?.village || null,
+                province: data?.address?.province || '',
+                district: data?.address?.district || '',
+                village: data?.address?.village || '',
             }
         };
+
+       
 
         // Remove undefined values to avoid sending empty fields
         const cleanData = Object.fromEntries(
             Object.entries(requestData).filter(([_, value]) => value !== undefined)
         );
 
-        const res = await axios.post(`${API_BASE_URL}/worker/work`, cleanData, {
+        const res = await networkCheck.post(`${API_BASE_URL}/worker/work`, cleanData, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Aoser ${token}`,
@@ -259,7 +257,7 @@ export const publiceWorkApi = {
     },
 
     deletePublicWork: async (id: string) => {
-        const res = await axios.delete(`${API_BASE_URL}/worker/work/${id}`, {
+        const res = await networkCheck.delete(`${API_BASE_URL}/worker/work/${id}`, {
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -269,7 +267,7 @@ export const publiceWorkApi = {
 
     freelancerApplyWork: async (workId: string, token: string) => {
 
-        const res = await axios.post(`${API_BASE_URL}/worker/freelancer-work-apply/${workId}`, {}, {
+        const res = await networkCheck.post(`${API_BASE_URL}/worker/freelancer-work-apply/${workId}`, {}, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Aoser ${token}`,
@@ -281,7 +279,7 @@ export const publiceWorkApi = {
 
         try {
 
-            const res = await axios.get(`${API_BASE_URL}/worker/freelancer-work-applies`, {
+            const res = await networkCheck.get(`${API_BASE_URL}/worker/freelancer-work-applies`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -298,7 +296,7 @@ export const publiceWorkApi = {
     },
     getAllsingleCustomerWork: async (token: string, customerId: string, workStatus: string): Promise<Job[]> => {
         try {
-            const res = await axios.get(
+            const res = await networkCheck.get(
                 `${API_BASE_URL}/worker/freelancer-works/customerId/${customerId}?workStatus=${workStatus}`,
                 {
                     headers: {
@@ -317,13 +315,12 @@ export const publiceWorkApi = {
     freeLRequestUpdateW: async (id: string, data: any, token: string): Promise<Job[]> => {
 
         try {
-            const res = await axios.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, { updateData: data }, {
+            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, { updateData: data }, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
                 },
             });
-            console.log("RES UPdate in Update API : ", res.data.data);
             return res.data.data;
         } catch (error) {
             console.log("ERROR : ", error);

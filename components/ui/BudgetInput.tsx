@@ -1,13 +1,14 @@
 // BudgetInput.tsx
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react'; // Add useEffect
 import { useTranslation } from 'react-i18next';
-import { View, TextInput, Text, TouchableOpacity } from 'react-native';
+import { View, TextInput, Text, TouchableOpacity, Pressable } from 'react-native';
 
 type Currency = 'LAK' | 'USD';
 
 
 type Props = {
-    label: string;
+    label?: string;
     value: number | null; // Allow null
     onChange: (value: number) => void;
     currency: Currency;
@@ -16,7 +17,10 @@ type Props = {
     required?: boolean;
     isValidate?: string;
     classNamebuget?: string,
-    isChange?: boolean
+    isChange?: boolean,
+    rateType?: 'PER_HOUR' | 'PER_JOB' | 'PER_DAY';
+    setRateType?: (rateType: 'PER_HOUR' | 'PER_JOB' | 'PER_DAY') => void;
+    isRateTypeShow?: boolean;
 };
 
 
@@ -46,8 +50,8 @@ const BudgetInput: React.FC<Props> = ({
     const [displayValue, setDisplayValue] = useState('');
     const [isFocused, setIsFocused] = useState(false);
 
-    const {t} = useTranslation();
-   const handleBlur = () => {
+    const { t } = useTranslation();
+    const handleBlur = () => {
         setIsFocused(false);
         // Clear display if value is null or empty
         if (value !== null && value !== undefined && value !== 0) {
@@ -72,7 +76,7 @@ const BudgetInput: React.FC<Props> = ({
         setDisplayValue(formatted);
 
         const numericValue = parseNumber(formatted);
-        
+
         onChange(numericValue || 0);
     };
 
@@ -84,11 +88,12 @@ const BudgetInput: React.FC<Props> = ({
                     {label} {required && <Text className="text-error">*</Text>}
                 </Text>
 
-                {isChange? (
+                {isChange ? (
 
                     <Text className='text-caption text-textSecondary '>{t('kyc.step3.click_change_currency')}</Text>
-                ): null}
+                ) : null}
             </View>
+            
 
             <View className={`flex-row border rounded-xl items-center overflow-hidden ${error ? 'border-error' : 'border-border'
                 } ${isFocused && 'border-primary'}`}>
@@ -96,7 +101,8 @@ const BudgetInput: React.FC<Props> = ({
                     onPress={() => onCurrencyChange(currency === 'LAK' ? 'USD' : 'LAK')}
                     className='h-full w-20 flex-row items-center justify-center py-4'
                 >
-                    <Text className="mr-2 text-warning font-bold">{currency}</Text>
+                    {/* <Text className="mr-2 text-warning font-bold">{currency}</Text> */}
+                    <Text className="mr-2 text-warning font-bold">LAK</Text>
                 </TouchableOpacity>
                 <TextInput
                     keyboardType="numeric"
@@ -107,7 +113,7 @@ const BudgetInput: React.FC<Props> = ({
                     onFocus={() => setIsFocused(true)}
                     onBlur={handleBlur}
                     placeholderTextColor={'#6B7280'}
-                  
+
                 />
             </View>
             {error && (

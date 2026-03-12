@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { chatApi } from 'api/chatApi';
 import { useAuth } from './useAuth';
 
-export const useChats = () => {
+export const useChats = (options?: { enabled?: boolean }) => {
   const { tokens } = useAuth();
   return useQuery({
     queryKey: ['chats'],
     queryFn: () => chatApi.getChat_users(tokens?.accessToken || ''),
+    enabled: (options?.enabled ?? true) && !!tokens?.accessToken,
   });
 };
 
@@ -30,6 +31,7 @@ export const useUnreadChatCount = (userId: string) => {
   return useQuery({
     queryKey: ['unreadchatCount' ,userId],
     queryFn: ()=> chatApi.getUnreadChatcount(tokens?.accessToken || ''),
+    enabled: !!tokens?.accessToken && !!userId,
   });
 };
 

@@ -1,7 +1,7 @@
 
-import axios from 'axios';
 
 import { Chat, ChatRoom } from 'types';
+import networkCheck from './networkCheck';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -9,7 +9,7 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 export const chatApi = {
     getChat_users: async (token: string): Promise<Chat[]> => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/chat/chat-users`, {
+            const response = await networkCheck.get(`${API_BASE_URL}/chat/chat-users`, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -24,7 +24,7 @@ export const chatApi = {
     getChatroom: async (token: string, roomId: string, skip = 0, limit = 20): Promise<ChatRoom> => {
         const url = `${API_BASE_URL}/chat/user-conversations/${roomId}?skip=${skip}&limit=${limit}`;
         try {
-            const response = await axios.get(url, {
+            const response = await networkCheck.get(url, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,
@@ -46,7 +46,7 @@ export const chatApi = {
     getUnreadChatcount: async (token: string): Promise<any> => {
         const url = `${API_BASE_URL}/chat/user-chat-unread-count`;
         try {
-            const response = await axios.get(url, {
+            const response = await networkCheck.get(url, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,

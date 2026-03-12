@@ -9,6 +9,7 @@ import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton'
 import { NoResults } from 'components/NoResults';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import LoadingScreen from 'screens/Loading/LoadingScreen';
 
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -21,6 +22,7 @@ type FreelancersProps = {
   isFetchingNextPage?: boolean;
   fetchNextPage?: () => Promise<any>;
   scrollY?: any;
+  selectedCategory: string
 };
 
 export default function Freelancers({
@@ -31,6 +33,7 @@ export default function Freelancers({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
+  selectedCategory,
   scrollY,
 }: FreelancersProps) {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
@@ -90,22 +93,34 @@ export default function Freelancers({
   }, [isAuthenticated, user?._id, navigation]);
 
   // Initial loading state
-  if (isLoading) {
+  if (isLoading && selectedCategory !== "All") {
     return (
-      <View className="mt-6 px-4 mb-24">
+
+      <View className=''>
         <View className="flex-row justify-between items-center mb-2">
           <Text className="text-body font-bold mb-2">{title}</Text>
         </View>
-        <View className="flex-row gap-4">
+        <LoadingScreen />
+      </View>
+    )
+  }
+  if (isLoading && selectedCategory === "All") {
+    return (
+      <View className="mt-6 px-2 mb-24">
+        <View className="flex-row justify-between items-center mb-2">
+          <Text className="text-body font-bold mb-2 px-2">{title}</Text>
+        </View>
+
+        <View className="flex-row gap-1">
           <FreelancerCardSkeleton />
           <FreelancerCardSkeleton />
         </View>
-        <View className="flex-row gap-4">
+        <View className="flex-row gap-1">
           <FreelancerCardSkeleton />
           <FreelancerCardSkeleton />
         </View>
       </View>
-    );
+    )
   }
 
   // No results state
@@ -153,7 +168,7 @@ export default function Freelancers({
 
                 <View className='p-1 bg-blue-50 rounded-full flex-row'>
                   <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
-                  <Text className="text-caption font-semibold text-primary ml-2">{item.hourlyRate}</Text>
+                  <Text className="text-caption font-semibold text-primary ml-2">{new Intl.NumberFormat().format(item.hourlyRate)}</Text>
                   <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text>
                 </View>
               </View>
@@ -172,10 +187,10 @@ export default function Freelancers({
                   {/* <Text>{t('workDetail.deadline')} : </Text> */}
                   {/* <Text>{t('payment_success.address')}:  </Text> */}
                   <Ionicons name="location-outline" size={18} color="#6B7280" />
-                  
+
                   <View className="">
 
-                    <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                    <Text className="text-[12px] text-textSecondary" numberOfLines={1}>
                       {/* {formatDate(item.deadLine as string, currentLanguage)} */}
 
                       {item.address.village}, {item.address.district}, {item.address.province}

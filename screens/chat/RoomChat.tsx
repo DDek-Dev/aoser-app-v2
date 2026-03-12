@@ -57,6 +57,7 @@ const RoomChat = () => {
   const queryClient = useQueryClient();
   const { userId: partnerId } = route.params;
   const { tokens, user, isLoadingAuth } = useAuth();
+  const currentUserId = user?._id || '';
 
   const { data: chat, isLoading } = useChatRoom(partnerId);
   // const { data: appliedWorks, isLoading: isLoadingApplied } = useGetAllAppliedWork();
@@ -90,6 +91,8 @@ const RoomChat = () => {
   const textInputRef = useRef<TextInput>(null);
   const flatListRef = useRef<FlatList>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const remoteTypingTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const initializedConversationRef = useRef<string | null>(null);
   const { t } = useTranslation();
   const {
     handleCopyMessage,
@@ -99,36 +102,77 @@ const RoomChat = () => {
 
 
   const handleReplyToMessage = useCallback((message: Message) => {
-    console.log('message', message)
+
     setReplyTo(message)
     return message
   }, []);
   const handleUpdateMessage = useCallback((message: Message) => {
-    console.log('message on update', message)
+  
     setUpdateTo(message)
     return message
   }, []);
   // console.log('replto', replyTo)
 
+  const getOptimisticTimestamp = useCallback(() => new Date().toISOString(), []);
 
+  const clearRemoteTypingTimeout = useCallback((userId: string) => {
+    const timeout = remoteTypingTimeoutsRef.current[userId];
+    if (timeout) {
+      clearTimeout(timeout);
+      delete remoteTypingTimeoutsRef.current[userId];
+    }
+  }, []);
 
-  if (!user?._id) {
-    return null;
-  }
+  const scheduleRemoteTypingClear = useCallback((userId: string) => {
+    clearRemoteTypingTimeout(userId);
+    remoteTypingTimeoutsRef.current[userId] = setTimeout(() => {
+      setTypingUsers(prev => prev.filter(id => id !== userId));
+      delete remoteTypingTimeoutsRef.current[userId];
+    }, 3500);
+  }, [clearRemoteTypingTimeout]);
+
+  const markCurrentConversationRead = useCallback(() => {
+    if (!chat?.conversation?._id || !user?._id) return;
+    SocketService.markMessagesAsRead(chat.conversation._id);
+  }, [chat?.conversation?._id, user?._id]);
 
   // console.log('chat', JSON.stringify(chat, null, 2))
 
+  useEffect(() => {
+    if (!chat?.conversation?._id) return;
 
-  // Load initial messages from API
+    if (initializedConversationRef.current !== chat.conversation._id) {
+      initializedConversationRef.current = chat.conversation._id;
+      setMessages(chat.conversationMessages || []);
+      return;
+    }
+
+    // Merge any fresh API messages without removing local optimistic state
+    setMessages(prev => {
+      const existingIds = new Set(
+        prev.map(m => (m as any)._id || (m as any).tempId).filter(Boolean)
+      );
+      const incoming = (chat.conversationMessages || []).filter(m => {
+        const id = (m as any)._id || (m as any).tempId;
+        return id && !existingIds.has(id);
+      });
+      if (incoming.length === 0) return prev;
+      return [...prev, ...incoming];
+    });
+  }, [chat?.conversation?._id, chat?.conversationMessages]);
+
+  useEffect(() => {
+    if (updateTo) {
+      setMessage(updateTo.message);
+    } else if (!replyTo) {
+      setMessage('');
+    }
+  }, [updateTo, replyTo]);
+
+
+  // Prefetch work payloads used in chat messages
   useEffect(() => {
 
-    if (updateTo) {
-      setMessage(updateTo.message)
-    } else {
-      if (!replyTo) {
-        setMessage('');
-      }
-    }
     // ✅ PREFETCH ALL WORK IDs (only happens once per session)
     const workMessages = chat?.conversationMessages.filter(
       (msg: Message) => msg.messageType === 'WORK' && msg.work
@@ -153,7 +197,7 @@ const RoomChat = () => {
       }
     });
 
-  }, [chat?.conversationMessages, queryClient, updateTo]);
+  }, [chat?.conversationMessages, queryClient]);
 
 
   // Socket connection and event listeners
@@ -161,7 +205,6 @@ const RoomChat = () => {
     if (!SERVER_URL || !tokens?.accessToken || !chat?.conversation?._id) return;
 
     const conversationId = chat.conversation._id;
-
 
     try {
       // Connect socket
@@ -171,12 +214,14 @@ const RoomChat = () => {
       const joinTimeout = setTimeout(() => {
         if (SocketService.isConnected()) {
           SocketService.joinConversation(conversationId);
+          markCurrentConversationRead();
         }
       }, 500);
 
       // Listen for new messages
       const handleNewMessage = (newMessage: Message & { tempId?: string }) => {
-
+        const incomingSenderId = String((newMessage as any)?.sender || '');
+        const currentUserId = String(user?._id || '');
 
         setMessages(prev => {
           // Check if message already exists (avoid duplicates)
@@ -194,9 +239,15 @@ const RoomChat = () => {
             }
           }
 
-          // Fallback: replace first pending optimistic message from this user
-          const tempIndex = prev.findIndex(m => (m as OptimisticMessage).pending && m.sender === newMessage.sender);
-          if (tempIndex !== -1 && newMessage.sender === user._id) {
+          // Fallback: replace a matching pending optimistic message from this user
+          const tempIndex = prev.findIndex(m => {
+            const optimistic = m as OptimisticMessage;
+            return optimistic.pending
+              && optimistic.sender === newMessage.sender
+              && optimistic.messageType === newMessage.messageType
+              && (optimistic.message || '') === (newMessage.message || '');
+          });
+          if (tempIndex !== -1 && incomingSenderId === currentUserId) {
             const updated = [...prev];
             updated[tempIndex] = newMessage;
             return updated;
@@ -205,42 +256,53 @@ const RoomChat = () => {
           return [...prev, newMessage];
         });
 
-
-
-        // Auto-mark as read if from other user
-        // if (newMessage.sender !== user._id) {
-        //   SocketService.markMessagesAsRead(conversationId);
-        // }
+        // Auto-mark as read when a new message comes from the other participant
+        if (incomingSenderId && incomingSenderId !== currentUserId) {
+          markCurrentConversationRead();
+        }
       };
 
       // Listen for message status updates
-      const handleStatusUpdate = (data: { conversationId: string; status: string }) => {
-        if (data.conversationId !== conversationId) {
+      const handleStatusUpdate = (data: any) => {
+        const payloadConversationId = String(data?.conversationId || data?.conversation || '');
+        if (payloadConversationId !== conversationId) return;
+        const nextStatus = data?.status as 'SENT' | 'DELIVERED' | 'READ' | undefined;
+        if (!nextStatus) return;
 
-          setMessages(prev =>
-            prev.map(msg =>
-              msg.sender === user._id && msg.status !== 'READ'
-                ? { ...msg, status: data.status as 'SENT' | 'DELIVERED' | 'READ' }
-                : msg
-            )
-          );
-        }
+        const messageIds: string[] = Array.isArray(data?.messageIds)
+          ? data.messageIds.map((id: any) => String(id))
+          : data?.messageId
+            ? [String(data.messageId)]
+            : [];
+
+        setMessages(prev =>
+          prev.map(msg =>
+            messageIds.length > 0
+              ? (messageIds.includes(String(msg._id || '')) ? { ...msg, status: nextStatus } : msg)
+              : (
+                String(msg.sender || '') === String(user?._id || '') && msg.status !== 'READ'
+                  ? { ...msg, status: nextStatus }
+                  : msg
+              )
+          )
+        );
       };
 
       // Listen for typing indicators
-      const handleTyping = (data: { userId: string; isTyping: boolean }) => {
-        if (data.userId !== user._id) {
-          setTypingUsers(prev => {
-            if (data.isTyping) {
-              return prev.includes(data.userId) ? prev : [...prev, data.userId];
-            } else {
-              return prev.filter(id => id !== data.userId);
-            }
-          });
+      const handleTyping = (data: any) => {
+        const typingUserId = String(data?.userId || data?.senderId || data?.sender || '');
+        const isTyping = Boolean(data?.isTyping ?? data?.typing);
+        if (!typingUserId || typingUserId === String(user?._id || '')) return;
+
+        if (isTyping) {
+          setTypingUsers(prev => (prev.includes(typingUserId) ? prev : [...prev, typingUserId]));
+          scheduleRemoteTypingClear(typingUserId);
+          return;
         }
+
+        clearRemoteTypingTimeout(typingUserId);
+        setTypingUsers(prev => prev.filter(id => id !== typingUserId));
       };
-
-
 
       SocketService.onMessageReceived(handleNewMessage);
       SocketService.onMessageStatusUpdate(handleStatusUpdate);
@@ -248,6 +310,8 @@ const RoomChat = () => {
 
       return () => {
         clearTimeout(joinTimeout);
+        setTypingUsers([]);
+        Object.keys(remoteTypingTimeoutsRef.current).forEach(id => clearRemoteTypingTimeout(id));
         SocketService.removeListener('message:send');
         SocketService.removeListener('messages:status:update');
         SocketService.removeListener('typing');
@@ -255,7 +319,22 @@ const RoomChat = () => {
     } catch (err) {
       console.log('Socket error:', err);
     }
-  }, [SERVER_URL, tokens?.accessToken, user?._id, chat?.conversation?._id]);
+  }, [
+    SERVER_URL,
+    tokens?.accessToken,
+    user?._id,
+    chat?.conversation?._id,
+    markCurrentConversationRead,
+    clearRemoteTypingTimeout,
+    scheduleRemoteTypingClear,
+  ]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      markCurrentConversationRead();
+    });
+    return unsubscribe;
+  }, [navigation, markCurrentConversationRead]);
 
   // Keyboard listeners
   useEffect(() => {
@@ -284,6 +363,15 @@ const RoomChat = () => {
       keyboardWillHide.remove();
     };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      Object.keys(remoteTypingTimeoutsRef.current).forEach(id => clearRemoteTypingTimeout(id));
+    };
+  }, [clearRemoteTypingTimeout]);
 
 
 
@@ -404,12 +492,12 @@ const RoomChat = () => {
 
 
   const shareLocation = async () => {
-    if (!chat?.conversation?._id) return;
+    if (!chat?.conversation?._id || !currentUserId) return;
 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(t('chat.chatroom.permissionNeeded') || 'Permission needed', t('chat.chatroom.locationPermissionMessage') || 'Location permission is required to share your location.');
+        // Alert.alert(t('chat.chatroom.permissionNeeded') || 'Permission needed', t('chat.chatroom.locationPermissionMessage') || 'Location permission is required to share your location.');
         return;
       }
 
@@ -421,8 +509,9 @@ const RoomChat = () => {
       const tempId = `temp_${Date.now()}`;
       const optimisticMessage: OptimisticMessage = {
         tempId,
+        createdAt: getOptimisticTimestamp(),
         conversation: chat.conversation._id,
-        sender: user._id,
+        sender: currentUserId,
         message: ``,
         messageType: 'LOCATION',
         status: 'SENT',
@@ -443,7 +532,7 @@ const RoomChat = () => {
       SocketService.sendMessage(
         {
           conversationId: chat.conversation._id,
-          // tempId,
+          tempId,
           message: optimisticMessage.message,
           messageType: 'LOCATION',
           location: { latitude, longitude },
@@ -455,14 +544,14 @@ const RoomChat = () => {
             setMessages(prev => prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m));
           } else {
             setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
-            Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
+            // Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
           }
         }
       );
 
     } catch (err) {
       console.log('shareLocation error', err);
-      Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
+      // Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
     }
 
     setFileOptionsVisible(false);
@@ -473,13 +562,13 @@ const RoomChat = () => {
   const sendProjectMessage = (selectedProjects: Job[], updatedData?: ProjectUpdateData[]) => {
 
     const isOffering = updatedData && updatedData.length > 0;
-    console.log('isOffering', isOffering);
+    
     if (!isOffering) {
-      if (!chat?.conversation?._id) return;
+      if (!chat?.conversation?._id || !currentUserId) return;
       selectedProjects.forEach((project, idx) => {
         const workId = project;
         const tempId = `temp_${Date.now()}_${idx}`;
-        console.log('WORK HANDLE SEND ', workId);
+       
         // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
         queryClient.setQueryData(
           publicWorkKeys.detail(workId),
@@ -488,8 +577,9 @@ const RoomChat = () => {
 
         const optimisticMessage: OptimisticMessage = {
           tempId,
+          createdAt: getOptimisticTimestamp(),
           conversation: chat.conversation._id,
-          sender: user._id,
+          sender: currentUserId,
           message: '',
           isUnSend: false,
           work: workId,
@@ -503,6 +593,7 @@ const RoomChat = () => {
         SocketService.sendMessage(
           {
             conversationId: chat.conversation._id,
+            tempId,
             message: optimisticMessage.message,
             work: workId,
             messageType: 'WORK',
@@ -526,16 +617,15 @@ const RoomChat = () => {
       });
 
     } else {
-      if (!chat?.conversation?._id) return;
+      if (!chat?.conversation?._id || !currentUserId) return;
       updatedData.forEach((project, idx) => {
         const workId = project;
-        console.log('WORK HANDLE SEND ;;;;;;', workId);
         const tempId = `temp_${Date.now()}_${idx}`;
-        console.log('WORK HANDLE SEND ', workId);
         const optimisticMessage: OptimisticMessage = {
           tempId,
+          createdAt: getOptimisticTimestamp(),
           conversation: chat.conversation._id,
-          sender: user._id,
+          sender: currentUserId,
           offeringWorkId: workId.offeringWorkId as any,
           message: '',
           isUnSend: false,
@@ -549,6 +639,7 @@ const RoomChat = () => {
         SocketService.sendMessage(
           {
             conversationId: chat.conversation._id,
+            tempId,
             message: optimisticMessage.message,
             offeringWorkId: workId.offeringWorkId,
             messageType: 'OFFERING_WORK',
@@ -576,7 +667,7 @@ const RoomChat = () => {
 
   // SEND MEDIA FUCNTION 
   const sendMediaMessage = async (mediaFiles: MediaFile[], textMessage: string) => {
-    if (!chat?.conversation?._id) return;
+    if (!chat?.conversation?._id || !currentUserId) return;
     setIsFileSending(true);
     // Build file metadata for presigned URL request
     const fileMeta = mediaFiles.map(f => ({
@@ -622,8 +713,9 @@ const RoomChat = () => {
     // Optimistic UI: show local URIs until server responds
     const optimisticMessage: OptimisticMessage = {
       tempId,
+      createdAt: getOptimisticTimestamp(),
       conversation: chat.conversation._id,
-      sender: user._id,
+      sender: currentUserId,
       isUnSend: false,
       message: textMessage || '',
       files: mediaFiles.map(f => f.uri),
@@ -648,7 +740,7 @@ const RoomChat = () => {
       setIsFileSending(false);
     } catch (err) {
       console.log('File upload failed', err);
-      Alert.alert('Upload failed', 'One or more file uploads failed.');
+      // Alert.alert('Upload failed', 'One or more file uploads failed.');
       setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
       setIsFileSending(false);
       return;
@@ -673,7 +765,7 @@ const RoomChat = () => {
             )
           );
         } else {
-          Alert.alert('Error', 'Failed to send files');
+          // Alert.alert('Error', 'Failed to send files');
           setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
         }
       }
@@ -687,7 +779,7 @@ const RoomChat = () => {
   };
 
   const handleSendMessage = () => {
-    if (!message.trim() || !chat?.conversation?._id) return;
+    if (!message.trim() || !chat?.conversation?._id || !currentUserId) return;
 
     // Check if we're updating an existing message
     if (updateTo) {
@@ -699,8 +791,9 @@ const RoomChat = () => {
     // Optimistic UI
     const optimisticMessage: OptimisticMessage = {
       tempId,
+      createdAt: getOptimisticTimestamp(),
       conversation: chat.conversation._id,
-      sender: user._id,
+      sender: currentUserId,
       isUnSend: false,
       message: message.trim(),
       messageType: 'TEXT',
@@ -714,15 +807,18 @@ const RoomChat = () => {
 
     // Stop typing indicator
     SocketService.sendTypingIndicator(chat.conversation._id, false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     // Send via socket
     SocketService.sendMessage(
-      {
-        conversationId: chat.conversation._id,
-        // tempId,
-        message: optimisticMessage.message,
-        messageType: 'TEXT',
-        replyTo: replyTo?._id,
+        {
+          conversationId: chat.conversation._id,
+          tempId,
+          message: optimisticMessage.message,
+          messageType: 'TEXT',
+          replyTo: replyTo?._id,
       },
       (response) => {
         if (response?.ok && response.message) {
@@ -734,7 +830,13 @@ const RoomChat = () => {
           );
         } else {
           // Mark as failed
-          Alert.alert('Error', 'Failed to send message');
+          
+           Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('chat.chatroom.error'),
+        textBody: t('chat.chatroom.failedToSendMessage'),
+      });
+        
           setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
         }
       }
@@ -789,8 +891,15 @@ const RoomChat = () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      typingTimeoutRef.current = setTimeout(() => {
+        if (!chat?.conversation?._id) return;
+        SocketService.sendTypingIndicator(chat.conversation._id, false);
+      }, 3000);
 
     } else {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
       SocketService.sendTypingIndicator(chat.conversation._id, false);
     }
   };
@@ -800,6 +909,7 @@ const RoomChat = () => {
   const handleCloseMediaPreview = () => {
     setShowMediaPreview(false);
     setSelectedMedia([]);
+    setMessage('');
   };
 
   // Helper to infer media type from uri or mimeType
@@ -834,13 +944,13 @@ const RoomChat = () => {
   // console.log('all nedia:', allMedia);
 
   return (
-    <ScreenWrapper safeEdges={['top', 'bottom']}>
+    <ScreenWrapper safeEdges={[ 'bottom']} style={{flex: 1}}>
       <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-        <View className="flex-1 bg-background">
+        <View className="flex-1">
           {/* Header */}
-          <View className="flex-row justify-between items-center px-4 py-3 border-b border-border bg-surface">
+          <View className="flex-row pt-12 justify-between items-center px-4 py-3  bg-primary">
             <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-              <MaterialIcons name="chevron-left" size={32} color="#2b82F6" />
+              <MaterialIcons name="chevron-left" size={32} color="#E5E7EB" />
             </TouchableOpacity>
 
             <Pressable className='flex-row items-center gap-2'
@@ -856,12 +966,13 @@ const RoomChat = () => {
 
 
               <View className="">
-                <Text className="text-body text-text font-bold">
+                <Text className="text-body text-surface font-bold">
                   {chat.userProfile.firstName} {chat.userProfile.lastName || ''}
                 </Text>
                 {typingUsers.length > 0 && (
-                  <Text className="text-sm text-primary">{t('chat.chatroom.typing')}</Text>
+                  <Text className="text-sm text-surface text-right">{t('chat.chatroom.typing')}</Text>
                 )}
+                {/* <Text className="text-sm text-primary">{t('chat.chatroom.typing')}</Text> */}
               </View>
               {/* <Header_back iconColor='#2b82F6' onPress={() => navigation.goBack()} /> */}
               {chat.userProfile.userProfileImage ? (
@@ -889,8 +1000,10 @@ const RoomChat = () => {
               style={{
                 flex: 1,
                 opacity: chatFadeAnim,
-                paddingBottom: keyboardHeight > 0 ? 120 : 80,
+                
+                paddingBottom: keyboardHeight > 0 ? 20 : 0,
               }}
+              className={'bg-black/5'}
             >
               <ChatListContainer
                 messages={messages}
@@ -1002,7 +1115,7 @@ const RoomChat = () => {
           />
           {/* Chat Input */}
           <View
-            className="px-4 py-4 bg-surface border-t border-border"
+            className="px-4 py-4 bg-surface "
             style={{
               position: 'absolute',
               bottom: 0,

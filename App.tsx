@@ -1,85 +1,67 @@
-// App.tsx - CORRECTED VERSION
-
+// App.tsx
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import './global.css';
-// import OnboardingNavigator from 'navigation/OnboardingNavigator';
 import MainNavigator from 'navigation/MainNavigator';
 import { navigationRef } from 'navigation/RootNavigation';
-import './i18n'; // This imports and initializes i18n
+import './i18n';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AlertNotificationRoot } from 'react-native-alert-notification';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AuthProvider } from 'contexts/AuthContext';
-
+import { deactivateKeepAwake } from 'expo-keep-awake';
 import i18n from './i18n';
 import { I18nextProvider } from 'react-i18next';
-import { useEffect, useState } from 'react';
 import { initLanguage } from 'utils/authStorage';
+import NetInfo from '@react-native-community/netinfo';
+import { NetworkErrorOverlay } from 'components/ui/NetworkErrorOverlay';
+import { apiEvents } from 'api/networkCheck'; // ນຳເຂົ້າ apiEvents ທີ່ເຮົາສ້າງໄວ້
 
 const queryClient = new QueryClient();
 
 export default function App() {
-  // const [isCompleteOnboarding, setIsCompleteOnboarding] = useState(false);
-  // const [isLoading, setIsLoading] = useState(true);
-  const [isLanguageReady, setIsLanguageReady] = useState(false);
-  // const [hasSelectedLanguage, setHasSelectedLanguage] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState<boolean | null>(true);
+  const [hasApiError, setHasApiError] = useState(false);
 
-  // Initialize everything in one useEffect
   useEffect(() => {
+    // 1. ຕິດຕາມສະຖານະເນັດ (Real-time NetInfo)
+    const unsubscribeNet = NetInfo.addEventListener(state => {
+      setIsConnected(state.isConnected);
+      if (state.isConnected) setHasApiError(false); // ຖ້າເນັດມາໃຫ້ລ້າງ Error
+    });
+
+    // 2. ຕິດຕາມ Error ຈາກ Axios Interceptor
+    const onApiNetworkError = () => setHasApiError(true);
+    apiEvents.on('network_error', onApiNetworkError);
+
+    // 3. Initialize App Data
     const initializeApp = async () => {
       try {
-        // 1. Initialize language first
         await initLanguage(i18n);
-        setIsLanguageReady(true);
-
-        // 2. Check onboarding status
-        // const value = await AsyncStorage.getItem('onboarding_complete');
-        // setIsCompleteOnboarding(value === 'true');
+        deactivateKeepAwake();
       } catch (error) {
         console.log('Error initializing app:', error);
-        // Set defaults on error
-        // setIsCompleteOnboarding(false);
-        setIsLanguageReady(true); // Still set to true to show app
-      } finally {
-        setIsLoading(false);
       }
     };
-
     initializeApp();
+
+    return () => {
+      unsubscribeNet();
+      apiEvents.off('network_error', onApiNetworkError);
+    };
   }, []);
 
+  const handleRetry = async () => {
+    const state = await NetInfo.fetch();
+    setIsConnected(state.isConnected);
+    setHasApiError(false);
+  };
 
-  // useEffect(() => {
-  //   const initializeApp = async () => {
-  //     try {
-  //       // Initialize language
-  //       await initLanguage(i18n);
+  const isOverlayVisible = isConnected === false || hasApiError;
 
-  //       // Check if language has been selected
-  //       const selectedLang = await AsyncStorage.getItem('selected_language');
-  //       setHasSelectedLanguage(!!selectedLang && ['en', 'la'].includes(selectedLang));
-  //     } catch (error) {
-  //       console.log('Error initializing app:', error);
-  //       setHasSelectedLanguage(false);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   initializeApp();
-  // }, []);
-  // // Show loading indicator while initializing
-  // if (isLoading) {
-  //   return (
-  //     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  //       <ActivityIndicator size="large" color="#3B82F6" />
-  //     </View>
-  //   );
-  // }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -88,19 +70,15 @@ export default function App() {
           <AuthProvider>
             <GestureHandlerRootView style={{ flex: 1 }}>
               <KeyboardProvider>
-                <AlertNotificationRoot
-                  theme='light'
-                  toastConfig={{
-                    autoClose: true,
-                  }}
-                >
+                <AlertNotificationRoot theme='light'>
                   <BottomSheetModalProvider>
                     <StatusBar style="auto" />
                     <MainNavigator />
-                    {/* {hasSelectedLanguage ? (
-                    ) : (
-                      <OnboardingNavigator />
-                    )} */}
+
+                    <NetworkErrorOverlay
+                      visible={isOverlayVisible}
+                      onRetry={handleRetry}
+                    />
                   </BottomSheetModalProvider>
                 </AlertNotificationRoot>
               </KeyboardProvider>

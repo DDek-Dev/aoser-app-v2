@@ -1,6 +1,7 @@
 import axios from 'axios';
 // import * as FileSystem from 'expo-file-system';
 import * as FileSystem from 'expo-file-system/legacy';
+import networkCheck from './networkCheck';
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -22,7 +23,7 @@ export const getPresignedUrls = async (files: { name: string; type: string, size
   console.log("FILE : ", fileMeta);
 
 
-  const res = await axios.post(`${API_BASE_URL}/worker/presigned-urls`, {
+  const res = await networkCheck.post(`${API_BASE_URL}/worker/presigned-urls`, {
     files: fileMeta
   });
   console.log("RES : ", res.data.data);

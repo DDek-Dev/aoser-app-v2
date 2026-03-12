@@ -10,6 +10,7 @@ import {
   BackHandler,
   StyleSheet,
   ActivityIndicator,
+  Pressable,
 
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +27,7 @@ import { formatDate, formatDisplayDateTime, getCurrentLanguage } from 'utils/dat
 import { useCreateFavorite, useDeleteFavorite, useMyProfile } from 'hooks/useFreelancer';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'hooks/useAuth';
+import ScreenWrapper from 'components/ui/ScreenWrapper';
 
 
 interface JobDetailModalProps {
@@ -34,7 +36,7 @@ interface JobDetailModalProps {
   job: Job | null;
   user?: any;
   refetch: () => void;
-  onUserPress: (userId: string) => void;
+  onUserPress?: (userId: string) => void;
 }
 
 
@@ -81,8 +83,6 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
     if (animationTimeoutRef.current) {
       clearTimeout(animationTimeoutRef.current);
     }
-
-
     animationTimeoutRef.current = setTimeout(() => {
       InteractionManager.runAfterInteractions(() => {
         if (visible && job) {
@@ -102,7 +102,6 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
 
   // Handle Android back button
-
 
 
   const handleSheetChanges = (index: number) => {
@@ -172,7 +171,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       return;
     }
 
-    console.log('job::: ', job)
+
 
     setIsProcessing(true);
 
@@ -272,8 +271,27 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
   // console.log(data.businessType);
   if (isLoading) return <ActivityIndicator />;
-  if (error) return <Text>Error fetching freelancee </Text>;
+  // if (!error) return <Text>{t('works.error.couldnot_load')}</Text>;
+  if (error) {
+    return (
 
+      <View className="flex-row justify-center items-center p-2 bg-background">
+        <View>
+
+          <Text className="text-caption text-textSecondary text-start">
+            {t('works.error.couldnot_load')}
+          </Text>
+          <Text className="text-caption text-textSecondary text-start ">
+            {t('works.error.if_the_problem')}
+          </Text>
+
+        </View>
+     
+
+      </View>
+
+    );
+  }
 
   return (
     <BottomSheetModal
@@ -343,13 +361,13 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
               <View className="bg-primary/10 p-2 rounded-lg">
                 <MaterialIcons name="wallet" size={24} color="#3b82f6" />
               </View>
-              <Text className="text-sm text-textSecondary">{t('postWork.budget')}</Text>
+              <Text className="text-body text-text">{t('postWork.budget')}</Text>
             </View>
             <View className="flex-row items-baseline gap-1">
               <Text className="text-2xl font-bold text-primary">
                 {new Intl.NumberFormat().format(jobBudget)}
               </Text>
-              <Text className="text-sm font-semibold text-warning">{job?.currency}</Text>
+              <Text className="text-body font-semibold text-warning">{job?.currency}</Text>
             </View>
           </View>
 
@@ -359,7 +377,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
               <View className="bg-primary/10 p-2 rounded-lg">
                 <MaterialIcons name="donut-small" size={24} color="#3b82f6" />
               </View>
-              <Text className="text-sm text-textSecondary">{t('workDetail.kind_of_work')}</Text>
+              <Text className="text-body text-text">{t('workDetail.kind_of_work')}</Text>
             </View>
             <View className={`px-4 py-2 rounded-full ${jobType === "ONLINE" ? "bg-green-100" : "bg-purple-100"
               }`}>
@@ -376,29 +394,61 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
               <View className="bg-primary/10 p-2 rounded-lg">
                 <MaterialIcons name="date-range" size={24} color="#3b82f6" />
               </View>
-              <Text className="text-sm text-textSecondary">{t('workDetail.deadline')}</Text>
+              <Text className="text-body text-text">{t('postWork.from')}</Text>
             </View>
             <Text className="text-sm font-semibold text-text">
-              { formatDisplayDateTime(jobDeadline)}
+              {formatDisplayDateTime(job?.startDate as string)}
+            </Text>
+          </View>
+          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+            <View className="flex-row items-center gap-3">
+              <View className="bg-primary/10 p-2 rounded-lg">
+                <MaterialIcons name="date-range" size={24} color="#3b82f6" />
+              </View>
+              <Text className="text-body text-text">{t('postWork.to')}</Text>
+            </View>
+            <Text className="text-sm font-semibold text-text">
+              {formatDisplayDateTime(job?.deadLine as string)}
             </Text>
           </View>
 
           {/* Interested Freelancers */}
-          <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
             <View className="flex-row items-center gap-3">
               <View className="bg-primary/10 p-2 rounded-lg">
                 <MaterialIcons name="person" size={24} color="#3b82f6" />
               </View>
-              <Text className="text-sm text-textSecondary">
+              <Text className="text-body text-text">
                 {t('workDetail.interested_freelancers')}
               </Text>
             </View>
             <View className="bg-primary/20 px-3 py-1.5 rounded-full">
               <Text className="text-sm font-bold text-primary">
-                {job?.totalLikes || 0}
+                {job?.workApplicants?.length || 0}
               </Text>
             </View>
           </View>
+
+          {job.address &&
+            <View className="flex-row mt-3 items-center  pb-4 border-b border-border">
+              <View className="flex-row items-center">
+                <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
+                  <Ionicons name="location-outline" size={24} color="#F59E0B" />
+                </View>
+
+                <View className="flex-1">
+                  {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
+
+                  <Text className="text-body text-text ">
+                    {job.address.village}, {job.address.district}, {job.address.province}
+
+                  </Text>
+                </View>
+
+
+              </View>
+            </View>
+          }
         </View>
 
         {/* Work Detail Section Header */}
@@ -465,7 +515,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
 
         <Animated.View
-          className="absolute bottom-64 left-4 right-4 rounded-2xl items-center "
+          className="absolute bottom-[10rem] left-4 right-4 rounded-2xl items-center "
         // style={{
         //   transform: [{ translateY: footerAnim }],
         //   zIndex: 5,
@@ -482,7 +532,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
           )}
 
           {data?.businessType !== "FREELANCER" && data?._id !== job.createdBy._id && (
-            <View className="bg-surface p-4 rounded-2xl items-center shadow-lg" style={styles.blueShadow}>
+            <View className="bg-surface p-4 rounded-2xl items-center shadow-lg w-[100%]" style={styles.blueShadow}>
               <View className="bg-blue-100 p-3 rounded-full mb-3">
                 <Ionicons name="rocket-outline" size={28} color="#2563eb" />
               </View>

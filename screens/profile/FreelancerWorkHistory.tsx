@@ -18,7 +18,7 @@ import { FreelancerStackParamList } from 'types/navigation';
 import { Job } from 'types';
 
 // Utils
-import { formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime, formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
 import { profileImage } from 'assets';
 
 // =============================================================================
@@ -44,19 +44,6 @@ const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 // STATUS TAG COMPONENT
 // =============================================================================
 
-/**
- * StatusTag Component
- * 
- * Displays a styled badge showing the current status of a work item.
- * Supports multiple status types with different colors and icons.
- * 
- * Status Types:
- * - PUBLISHED: New work posted
- * - DOING: Work in progress
- * - AWAITING_COMPLETED: Pending completion review
- * - COMPLETED: Work finished
- * - ASSIGNED_WORKER: Work assigned to freelancer
- */
 const StatusTag: React.FC<StatusTagProps> = ({ status }) => {
     const { t } = useTranslation();
 
@@ -152,32 +139,10 @@ const StatusTag: React.FC<StatusTagProps> = ({ status }) => {
 // WORK ITEM CARD COMPONENT
 // =============================================================================
 
-/**
- * WorkItemCard Component
- * 
- * Displays a single work history item with:
- * - Client profile image and name
- * - Work status badge
- * - Work title and description
- * - Service type
- * - Deadline (if available)
- * - Budget information
- * - Action button (View Details/View Project)
- * 
- * Features:
- * - Pressable with visual feedback
- * - Conditional rendering for optional fields
- * - Responsive layout
- * - Shadow effects for iOS and Android
- */
 const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
     const { t } = useTranslation();
     const currentLanguage = getCurrentLanguage();
 
-    // Determine if image URL needs base path
-    // const profileImageUri = item.createdBy.userProfileImage?.startsWith('http')
-    // ? item.createdBy.userProfileImage
-    // : `${IMAGES_BASE_URL}${item.createdBy.userProfileImage}`;
 
     if (!item.createdBy) {
         return null
@@ -185,86 +150,137 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
     return (
         <Pressable
             onPress={() => onPress(item._id)}
-            className="bg-surface rounded-2xl mx-4 mb-4 overflow-hidden border border-border"
+            className="bg-surface rounded-2xl mx-2 overflow-hidden border border-border"
             accessibilityRole="button"
             accessibilityLabel={`View work: ${item.workTitle}`}
             accessibilityHint="Double tap to view work details"
         >
             {/* ===== CARD HEADER ===== */}
-            <View className="flex-row justify-between items-center p-4">
-                <View className="flex-row items-center gap-3">
-                    {/* Client Profile Image */}
-                    <View className="relative">
+
+
+            <View className='p-4'>
+
+                <View className='flex-row justify-between px-1'>
+
+                    <View className="flex-row gap-2 items-center">
                         <Image
-                            source={item.createdBy.userProfileImage ? { uri: IMAGES_BASE_URL + item.createdBy.userProfileImage as any } : profileImage}
-                            className="w-12 h-12 rounded-full  border border-border"
+                            source={item.createdBy.userProfileImage ? { uri: IMAGES_BASE_URL + item.createdBy.userProfileImage } : profileImage}
+                            className="w-10 h-10 rounded-full"
                         />
+                        <Text>{item.createdBy.firstName} {item.createdBy.lastName}</Text>
+                    </View>
+                    <View>
+                        <StatusTag status={item.workStatus} />
+                        <Text className="text-caption text-textSecondary mt-2 text-center">
+                            {formatRelativeTime(item.createdAt, currentLanguage)}
+                        </Text>
                     </View>
 
-                    {/* Client Info */}
-                    <View>
-                        <Text className="text-primary font-semibold text-[16px]" numberOfLines={1}>
-                            {item.createdBy.firstName} {item.createdBy.lastName}
-                        </Text>
-                        {/* Optional: Display hiring type if needed */}
-                        {/* <Text className="text-warning text-caption">
-              {item.hiringType === 'NEW_HIRE' 
-                ? t('profile.freelancer_workHistory.new_hire')
-                : t('profile.freelancer_workHistory.re_hire')
-              }
-            </Text> */}
-                    </View>
                 </View>
 
-                {/* Status Badge */}
-                <StatusTag status={item.workStatus} />
+                <View className='h-[1px] bg-border my-2' />
             </View>
 
             {/* ===== CARD CONTENT ===== */}
             <View className="px-4 pb-4">
-                {/* Work Title */}
-                <Text
-                    className="text-text font-semibold text-subheading mb-3 leading-6"
-                    numberOfLines={2}
-                >
-                    {item.workTitle}
-                </Text>
+                <View className="flex-row justify-between items-start mb-2">
+                    <View className="flex-1 mr-3 ">
+                        <Text className="text-body font-semibold text-gray-900" numberOfLines={2}>
+                            {item.workTitle}
+                        </Text>
 
-                {/* Service Type */}
-                <View className="flex-row items-center gap-2 mb-3">
-                    <View className="bg-primary/10 p-2 rounded-full">
-                        <MaterialIcons name="work" size={16} color="#3B82F6" />
                     </View>
-                    <Text className="text-textSecondary text-body flex-1" numberOfLines={1}>
-                        {item.serviceType?.name || t('profile.freelancer_workHistory.no_service_type')}
-                    </Text>
+                    <View className="w-6 mr-3 ">
+
+
+                    </View>
+
                 </View>
 
-                {/* Deadline - Only show if available */}
-                {item.deadLine && (
-                    <View className="flex-row items-center gap-2 mb-4">
-                        <View className="bg-warning/10 p-2 rounded-full">
-                            <Ionicons name="calendar" size={16} color="#F59E0B" />
-                        </View>
-                        <Text className="text-textSecondary text-body">
-                            {t('profile.freelancer_workHistory.deadline_label')}: {formatRelativeTime(item.deadLine, currentLanguage)}
-                        </Text>
-                    </View>
-                )}
+                <Text className="text-body text-gray-500 mb-3" numberOfLines={3}>
+                    {item.description}
+                </Text>
 
-                {/* Budget Section */}
-                <View className="bg-gradient-to-r from-success/5 to-secondary/5 rounded-xl p-4 mb-4">
-                    <Text className="text-textSecondary text-caption mb-1">
-                        {t('profile.freelancer_workHistory.total_budget')}
-                    </Text>
-                    <View className="flex-row items-center gap-2">
-                        <Text className="text-success font-bold text-[20px]">
-                            {item.currency || 'USD'}
-                        </Text>
-                        <Text className="text-success font-bold text-[20px]">
-                            {item.budget?.toLocaleString() || '0'}
+
+
+                <View className='bg-background px-2 rounded-2xl p-2'>
+
+
+                    <View className=" flex-row items-center  ">
+
+                        <Text >{t('postWork.work_type')} : </Text>
+                        <Text className="text-caption text-text bg-surface p-2 rounded-full  ">
+                            {item.kindOfWork === "ONLINE" ? "Online" : "Offline"}
                         </Text>
                     </View>
+                    {item.budgetType === 'OFFERING' ? (
+                        <View className=''>
+                            <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                        </View>
+                    ) : (
+
+                        <View className="flex-row items-center">
+                            <Text>{t('postWork.budget')} : </Text>
+                            <Text className="font-bold text-body text-primary">
+                                {new Intl.NumberFormat().format(item.budget)}
+                            </Text>
+                            <Text className="font-bold text-body text-warning ml-2">{item.currency} </Text>
+                        </View>
+
+                    )}
+
+
+                    {item.startDate !== undefined &&
+
+                        <View className="flex-row mt-3 items-center">
+                            <Text>{currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'} : </Text>
+
+                            <View className="flex-row gap-2 items-center">
+                                <Ionicons name="time-outline" size={18} color="#F59E0B" />
+                                <Text className="text-sm text-textSecondary">
+                                    {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+                                    {formatDisplayDateTime(item.startDate as string)}
+                                </Text>
+                            </View>
+                        </View>
+                    }
+
+                    {item.deadLine !== undefined &&
+                        <View className="flex-row mt-3 items-center">
+                            {/* <Text>{t('workDetail.deadline')} : </Text> */}
+                            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+
+                            <View className="flex-row gap-2 items-center">
+                                <Ionicons name="time-outline" size={18} color="#F59E0B" />
+
+                                <Text className="text-sm text-textSecondary">
+                                    {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                                    {formatDisplayDateTime(item.deadLine as string)}
+                                </Text>
+                            </View>
+                        </View>
+
+                    }
+
+                    {item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
+
+                        <View className="flex-row mt-3 items-center">
+                            {/* <Text>{t('workDetail.deadline')} : </Text> */}
+                            <Text>{t('payment_success.address')}:  </Text>
+
+                            <View className="flex-row gap-2 items-center">
+                                <Ionicons name="location-outline" size={18} color="#F59E0B" />
+
+                                <Text className="text-sm text-textSecondary">
+                                    {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                                    {item.address.village}, {item.address.district}, {item.address.province}
+                                </Text>
+                            </View>
+                        </View>
+                    }
+
                 </View>
 
                 {/* Action Button */}
@@ -273,13 +289,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
                     className="bg-primary rounded-xl py-3 px-4 flex-row items-center justify-center gap-2"
                     activeOpacity={0.8}
                     accessibilityRole="button"
-                    style={{
-                        shadowColor: '#3B82F6',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.2,
-                        shadowRadius: 8,
-                        elevation: 6,
-                    }}
+
                 >
                     <Text className="text-white font-semibold text-body">
                         {item.workStatus === 'PUBLISHED'
@@ -287,11 +297,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
                             : t('profile.freelancer_workHistory.view_project')
                         }
                     </Text>
-                    <Ionicons
-                        name={item.workStatus === 'PUBLISHED' ? 'eye' : 'arrow-forward'}
-                        size={16}
-                        color="#FFFFFF"
-                    />
+
                 </TouchableOpacity>
             </View>
         </Pressable>
@@ -302,22 +308,6 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
 // MAIN COMPONENT
 // =============================================================================
 
-/**
- * FreelancerWorkHistory Component
- * 
- * Displays the freelancer's complete work history including:
- * - All projects (published, in progress, completed)
- * - Project details and status
- * - Navigation to individual work details
- * 
- * Features:
- * - FlatList for performance with large lists
- * - Pull-to-refresh (can be added)
- * - Empty state when no work history
- * - Loading state
- * - Safe area handling for iOS notch
- * - Accessibility support
- */
 const FreelancerWorkHistory: React.FC = () => {
     // Hooks
     const insets = useSafeAreaInsets();

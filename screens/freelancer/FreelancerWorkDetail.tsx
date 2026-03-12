@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert, TextInput as RNTextInput, Pressable, Modal, Linking, RefreshControl } from 'react-native';
+import { View, Text, Image, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert, TextInput as RNTextInput, ScrollView, Pressable, Modal, Linking, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { RouteProp, useNavigation, useFocusEffect } from '@react-navigation/nati
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import ReviewModal from 'components/freelancer/ReviewModal';
-import { ScrollView } from 'react-native-gesture-handler';
+
 import { useAcceptAppendWork, useAcceptWork, useCompleteWork, usePublicWorkById, useSubmitWork, useUpdateAppendWorkById, useUpdateSubworkStatus, useUpdateWorkById } from 'hooks/usePublicWork';
 import LoadingScreen from 'screens/Loading/LoadingScreen';
 import { SubWorkDetail, SubTask, ExampleWork, } from 'types';
@@ -18,6 +18,7 @@ import InterestedFreelancer from './InterestedFreelancer';
 import { useTranslation } from 'react-i18next';
 import { profileImage } from 'assets';
 import BudgetInput from 'components/ui/BudgetInput';
+import WorkDetailSkenleton from 'skeletonScreens/WorkDetailSkenleton';
 
 type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'FreelancerWorkDetail'>;
 
@@ -46,7 +47,6 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const [jobDetailVisible, setJobDetailVisible] = useState(false);
   const [isReview, setIsReview] = useState<boolean>(false);
   const [acceptState, setAcceptState] = useState<'idle' | 'accepting' | 'accepted'>('idle');
-  const [completeState, setCompleteState] = useState<'notyet' | 'completing' | 'completed'>('notyet');
   const [budget, setBudget] = useState<number | null>(null);
   const [ispriceEdit, setIspriceEdit] = useState(false);
   const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>();
@@ -60,7 +60,13 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const [editingSubTaskKey, setEditingSubTaskKey] = useState<string | null>(null);
   const [editedSectionTitle, setEditedSectionTitle] = useState('');
   const [editedSubTaskTitle, setEditedSubTaskTitle] = useState('');
-  
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleteConfirmTitle, setDeleteConfirmTitle] = useState('');
+  const [deleteConfirmMessage, setDeleteConfirmMessage] = useState('');
+  const [confirmModalVariant, setConfirmModalVariant] = useState<'danger' | 'primary' | 'warning'>('danger');
+  const [confirmModalActionText, setConfirmModalActionText] = useState('');
+  const pendingDeleteActionRef = useRef<null | (() => Promise<void> | void)>(null);
+
   // AppendWork editing state - maps appendWorkId to local edits
   const [appendWorkEdits, setAppendWorkEdits] = useState<{
     [appendWorkId: string]: {
@@ -84,10 +90,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const updateWorkById = useUpdateWorkById();
   const updateAppendWorkById = useUpdateAppendWorkById();
   const acceptAppendWork = useAcceptAppendWork()
+
+  const [isFreelancer, setIsFreelancer] = useState(false);
   // Constants
   const statusOptions: SubWorkStatus[] = ['TODO', 'DOING', 'DONE', 'DELAY', 'FAILED'];
   const data = workData?.work;
-
 
   // ============= EFFECTS =============
   // Refetch work data when screen comes into focus
@@ -128,6 +135,10 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
   const handleJobPress = useCallback(() => {
     setJobDetailVisible(true);
+  }, []);
+  const handleApplicantPress = useCallback(() => {
+    setJobDetailVisible(true);
+    setIsFreelancer(true)
   }, []);
 
   const handleCloseJobDetail = useCallback(() => {
@@ -233,6 +244,18 @@ export default function FreelancerWorkDetail({ route }: Props) {
     }));
   };
 
+  const buildAppendSubWorkPayload = (items: SubWorkDetail[]) => {
+    return stripIds(items).map(section => ({
+      sectionTitle: section.sectionTitle.trim(),
+      subTask: section.subTask
+        .map(task => ({
+          title: task.title.trim(),
+          subWorkStatus: task.subWorkStatus,
+        }))
+        .filter(task => task.title.length > 0),
+    }));
+  };
+
   const getStatusBadgeColor = (status: SubWorkStatus) => {
     switch (status) {
       case 'TODO': return { bg: '#E5E7EB', text: '#6B7280' };
@@ -256,7 +279,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     }
 
     if (isCustomer) {
-      const customerVisibleStatuses = ['PUBLISHED', 'PRIVATE', 'ASSIGNED_WORKER', 'ASSIGNED_AWAIT_PAYMENT', 'DOING'];
+      const customerVisibleStatuses = ['PUBLISHED', 'PRIVATE', 'ASSIGNED_WORKER', 'ASSIGNED_AWAIT_PAYMENT'];
       return customerVisibleStatuses.includes(data?.workStatus as string);
     }
     if (isFreelancer) {
@@ -265,6 +288,51 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
     return false;
   }
+
+  const openActionConfirm = ({
+    title,
+    message,
+    actionText,
+    variant = 'danger',
+    onConfirm,
+  }: {
+    title: string;
+    message: string;
+    actionText: string;
+    variant?: 'danger' | 'primary' | 'warning';
+    onConfirm: () => Promise<void> | void;
+  }) => {
+    pendingDeleteActionRef.current = onConfirm;
+    setDeleteConfirmTitle(title);
+    setDeleteConfirmMessage(message);
+    setConfirmModalActionText(actionText);
+    setConfirmModalVariant(variant);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const openDeleteConfirm = (onConfirm: () => Promise<void> | void) => {
+    openActionConfirm({
+      title: t('workDetail.delete_section'),
+      message: t('workDetail.delete_section_confirm'),
+      actionText: t('workDetail.delete'),
+      variant: 'danger',
+      onConfirm,
+    });
+  };
+
+  const closeDeleteConfirm = () => {
+    setShowDeleteConfirmModal(false);
+    pendingDeleteActionRef.current = null;
+    setConfirmModalActionText('');
+  };
+
+  const confirmDelete = async () => {
+    const action = pendingDeleteActionRef.current;
+    setShowDeleteConfirmModal(false);
+    pendingDeleteActionRef.current = null;
+    if (!action) return;
+    await action();
+  };
 
   // ============= ACTION HANDLERS =============
   const handleStatusChange = async (sectionId: number, subTaskIndex: number, newStatus: SubWorkStatus) => {
@@ -368,16 +436,19 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
   const handleSectionEditBlur = async (sectionId: number) => {
     if (!editedSectionTitle.trim()) {
-      Alert.alert(`${t('workDetail.delete_section')}`, `${t('workDetail.delete_section_confirm')}`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: `${t('workDetail.delete')}`,
-          style: 'destructive',
-          onPress: () => {
-            setSubWorkItems(prev => prev.filter((section, idx) => idx !== sectionId));
-          }
+      openDeleteConfirm(async () => {
+        const updated = subWorkItems.filter((_, idx) => idx !== sectionId);
+        setSubWorkItems(updated);
+        try {
+          await updateStatusMutation.mutateAsync({
+            id: params.workId,
+            data: stripIds(updated)
+          });
+          await refetch();
+        } catch (error) {
+          console.log('Failed to delete section:', error);
         }
-      ]);
+      });
     } else {
       const updatedSubWorkItems = subWorkItems.map((section, idx) =>
         idx === sectionId
@@ -468,7 +539,6 @@ export default function FreelancerWorkDetail({ route }: Props) {
         data: { workStatus: 'CONFIRM' }
       });
 
-      setCompleteState('completed');
 
       Toast.show({
         type: ALERT_TYPE.SUCCESS,
@@ -480,7 +550,49 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
     } catch (error) {
       console.log('Failed to accept work:', error);
-      setCompleteState('notyet');
+
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'OOP!',
+        textBody: `${t('workDetail.textBody_of_error')}`,
+      });
+    }
+  }
+
+  const handleCancelWork = async () => {
+    try {
+      await updateWorkById.mutateAsync({
+        id: params.workId,
+        data: { workStatus: 'DOING' }
+      });
+      await refetch();
+    } catch (error) {
+      console.log('Failed to cancel completion confirmation:', error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: 'OOP!',
+        textBody: `${t('workDetail.textBody_of_error')}`,
+      });
+    }
+  }
+  const handleCancel = async () => {
+    try {
+      await completetWork.mutateAsync({
+        id: params.workId,
+        data: { workStatus: 'CANCEL' }
+      });
+
+
+      // Toast.show({
+      //   type: ALERT_TYPE.SUCCESS,
+      //   title: `${t('workDetail.success')}`,
+      //   textBody: `${t('workDetail.textBody_of_accept_success')}`,
+      // });
+
+      await refetch();
+
+    } catch (error) {
+      console.log('Failed to accept work:', error);
 
       Toast.show({
         type: ALERT_TYPE.DANGER,
@@ -525,13 +637,12 @@ export default function FreelancerWorkDetail({ route }: Props) {
         workId: params.workId
       };
 
-      console.log("Form data for accepting append work: ", formData);
-
+   
       if (!workId) {
         console.log('Missing workId parameter');
         return;
       }
-      console.log("Form data for accepting append work: ", formData);
+   
       await acceptAppendWork.mutateAsync({
         id: workId,
         data: formData
@@ -544,7 +655,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
   }
 
   // ==================== APPENDWORK SECTION EDITING ====================
-  
+
   const handleAppendWorkAddSection = async (appendWorkId: string) => {
     const edit = getAppendWorkEdit(appendWorkId, []);
     if (!edit.newSectionTitle.trim()) return;
@@ -560,10 +671,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
       newSectionTitle: ''
     });
 
+
     try {
       await updateAppendWorkById.mutateAsync({
         id: appendWorkId,
-        data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+        data: buildAppendSubWorkPayload(updatedSubWorkItems)
       });
       await refetch();
     } catch (error) {
@@ -598,11 +710,48 @@ export default function FreelancerWorkDetail({ route }: Props) {
     try {
       await updateAppendWorkById.mutateAsync({
         id: appendWorkId,
-        data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+        data: buildAppendSubWorkPayload(updatedSubWorkItems)
       });
       await refetch();
     } catch (error) {
       console.log('Failed to add subtask to append work:', error);
+    }
+  };
+
+  const handleAppendWorkStatusChange = async (
+    appendWorkId: string,
+    sectionId: number,
+    subTaskIndex: number,
+    newStatus: SubWorkStatus,
+    initialData: SubWorkDetail[]
+  ) => {
+    const edit = getAppendWorkEdit(appendWorkId, initialData);
+
+    const updatedSubWorkItems = edit.subWorkItems.map((section, idx) =>
+      idx === sectionId
+        ? {
+          ...section,
+          subTask: section.subTask.map((task, index) =>
+            index === subTaskIndex
+              ? { ...task, subWorkStatus: newStatus }
+              : task
+          )
+        }
+        : section
+    );
+
+    updateAppendWorkEdit(appendWorkId, { subWorkItems: updatedSubWorkItems });
+    setShowStatusDropdown(null);
+
+    try {
+      await updateAppendWorkById.mutateAsync({
+        id: appendWorkId,
+        data: buildAppendSubWorkPayload(updatedSubWorkItems)
+      });
+      await refetch();
+    } catch (error) {
+      console.log('Failed to update append work status:', error);
+      await refetch();
     }
   };
 
@@ -627,17 +776,21 @@ export default function FreelancerWorkDetail({ route }: Props) {
     const edit = getAppendWorkEdit(appendWorkId, []);
 
     if (!edit.editedSectionTitle.trim()) {
-      Alert.alert(`${t('workDetail.delete_section')}`, `${t('workDetail.delete_section_confirm')}`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: `${t('workDetail.delete')}`,
-          style: 'destructive',
-          onPress: () => {
-            const updated = edit.subWorkItems.filter((section, idx) => idx !== sectionId);
-            updateAppendWorkEdit(appendWorkId, { subWorkItems: updated });
-          }
+      openDeleteConfirm(async () => {
+        const latestEdit = getAppendWorkEdit(appendWorkId, []);
+        const updated = latestEdit.subWorkItems.filter((_, idx) => idx !== sectionId);
+        updateAppendWorkEdit(appendWorkId, { subWorkItems: updated });
+
+        try {
+          await updateAppendWorkById.mutateAsync({
+            id: appendWorkId,
+            data: buildAppendSubWorkPayload(updated)
+          });
+          await refetch();
+        } catch (error) {
+          console.log('Failed to delete append work section:', error);
         }
-      ]);
+      });
     } else {
       const updatedSubWorkItems = edit.subWorkItems.map((section, idx) =>
         idx === sectionId
@@ -650,7 +803,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
       try {
         await updateAppendWorkById.mutateAsync({
           id: appendWorkId,
-          data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+          data: buildAppendSubWorkPayload(updatedSubWorkItems)
         });
         await refetch();
       } catch (error) {
@@ -686,7 +839,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     try {
       await updateAppendWorkById.mutateAsync({
         id: appendWorkId,
-        data: { subWorkDetails: stripIds(updatedSubWorkItems) }
+        data: buildAppendSubWorkPayload(updatedSubWorkItems)
       });
       await refetch();
     } catch (error) {
@@ -727,7 +880,12 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
   // ============= EARLY RETURN AFTER ALL HOOKS =============
   if (!data || isLoading || !user || !workData?.work) {
-    return <LoadingScreen />;
+    return (
+      <ScreenWrapper safeEdges={[ 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
+        <WorkDetailSkenleton/>
+      </ScreenWrapper>
+    )
+ 
   }
 
   // ============= RENDER COMPONENTS =============
@@ -865,118 +1023,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
       </>
     );
   };
-  console.log("Work detail data: ", data.appendWorks);
+
   const renderWorkOverview = () => (
 
     <>
-      {/* <View className="bg-surface rounded-2xl p-4 shadow-sm">
-        <View className='flex-row items-center justify-end mb-4'>
-          <View className="ml-2 bg-blue-100 w-32 px-3 py-2 rounded-full">
-            <Text className="text-secondary text-caption text-center font-medium">{data?.kindOfWork}</Text>
-          </View>
-        </View>
-        <View className="flex-row items-center mb-2">
-          <Text className="text-body text-text font-bold">{data?.workTitle}</Text>
-        </View>
-        <Text className="text-body text-textSecondary mb-1 font-bold ">{t('workDetail.description')}</Text>
-        <Text className="text-body text-textSecondary mb-2 p-4 bg-background rounded-2xl">{data?.description}</Text>
 
-        <ExampleWorkDisplay exampleWork={data?.exampleWork || []} />
-
-        <Text className="text-body text-textSecondary font-bold mt-3 mb-2">{t('workDetail.categories')}</Text>
-        <View className="bg-gray-100 w-[100px] px-3 py-1 rounded-full mb-4">
-          <Text className="text-primary text-caption  text-center">{data?.serviceType?.name}</Text>
-        </View>
-
-        {ispriceEdit ? (
-          <View className='flex-row items-center gap-4'>
-            <View className="bg-blue-50 flex-1 p-4 rounded-2xl mb-4">
-              <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
-              <View className="flex-row space-x-4 gap-2 mb-6">
-                {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
-                    className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'}`}
-                  >
-                    <View className="flex-row items-center gap-2">
-                      {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
-                      <Text className="text-caption text-text">
-                        {type === 'FIXED_PRICE'
-                          ? `${t('postWork.fixed_price')}`
-                          : type === 'HOURLY'
-                            ? `${t('postWork.hourly')}`
-                            : `${t('postWork.offering')}`
-                        }
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {budgetType === 'OFFERING' ? (
-                <View className='flex-row mb-4'>
-                  <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
-                </View>
-              ) : (
-                <BudgetInput
-                  label={t('postWork.budget')}
-                  value={budget}
-                  onChange={setBudget}
-                  currency={budgetCurrency}
-                  onCurrencyChange={setBudgetCurrency}
-                  error={errors.budget}
-                  classNamebuget="flex-1"
-                />
-              )}
-
-              <View className='flex-col gap-2 mt-3'>
-                <Pressable onPress={() => priceUpdate()} className='bg-primary rounded-2xl p-4'>
-                  <Text className='text-surface text-center'>
-                    {t('editWork.updateButton')}
-                  </Text>
-                </Pressable>
-                <Pressable onPress={() => {
-                  setIspriceEdit(false)
-                  setBudget(data?.budget)
-                }} className='bg-background rounded-2xl p-4'>
-                  <Text className='text-error text-center'>
-                    {t('workDetail.cancel')}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        ) : (
-          <View className="flex-row items-center mb-2 gap-2">
-            {data?.budgetType === 'OFFERING' ? (
-              <View className='flex-row '>
-                <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
-              </View>
-            ) : (
-              <View className='flex-row '>
-                <Text className="text-lg text-warning font-bold mr-2">{data?.currency}</Text>
-                <Text className="text-lg text-success font-bold mr-2">{new Intl.NumberFormat().format(data?.budget)}</Text>
-              </View>
-            )}
-
-            {data?.workStatus === 'PUBLISHED' && user?._id === data?.createdBy?._id && (
-              <Pressable onPress={() => setIspriceEdit(true)} className='bg-background rounded-full p-2'>
-                <Ionicons name="create-outline" size={24} color="#3B82F6" />
-              </Pressable>
-            )}
-          </View>
-        )}
-
-        <View className="flex-row items-center gap-2 mt-2">
-          <Ionicons name="time-outline" size={16} color="#6B7280" />
-          <Text className="text-caption text-textSecondary">{t('postWork.from')}: {formatRelativeTime(data?.startDate as string, language)}</Text>
-        </View>
-        <View className="flex-row items-center gap-2 mt-2">
-          <Ionicons name="time-outline" size={16} color="#6B7280" />
-          <Text className="text-caption text-textSecondary">{t('postWork.to')}: {formatRelativeTime(data?.deadLine as string, language)}</Text>
-        </View>
-      </View> */}
 
       <View className="bg-surface rounded-3xl overflow-hidden shadow-sm border border-border">
         {/* Header Section with gradient accent */}
@@ -1069,6 +1120,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     {t('workDetail.offering_price')}
                   </Text>
                 </View>
+
               ) : (
                 <View className="mb-4">
                   <BudgetInput
@@ -1090,7 +1142,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     setIspriceEdit(false);
                     setBudget(data?.budget);
                   }}
-                  className="flex-1 bg-white border-2 border-error rounded-2xl py-3 items-center active:bg-error/5"
+                  className="flex-1 bg-white border border-error rounded-2xl py-3 items-center active:bg-error/5"
                 >
                   <View className="flex-row items-center gap-2">
                     <Ionicons name="close-circle-outline" size={20} color="#EF4444" />
@@ -1121,13 +1173,41 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     <Ionicons name="cash" size={20} color="#F59E0B" />
                   </View>
                   <View>
-                    <Text className="text-caption text-text font-medium mb-0.5">
-                      {t('postWork.budget_type')}
-                    </Text>
-                    {data?.budgetType === 'OFFERING' ? (
-                      <Text className="text-primary font-bold text-lg">
-                        {t('workDetail.offering_price')}
+
+                    <View className='flex-row'>
+
+                      <Text className="text-caption text-text font-medium mb-0.5">
+                        {t('postWork.budget_type')}
                       </Text>
+                      {/* Budget type badge */}
+                      <View className="bg-white/60 backdrop-blur px-3 py-1.5 rounded-full self-start">
+                        <Text className="text-primary text-caption font-semibold">
+                          {data?.budgetType === 'FIXED_PRICE'
+                            ? t('postWork.fixed_price')
+                            : data?.budgetType === 'HOURLY'
+                              ? t('postWork.hourly')
+                              : t('postWork.offering')}
+                        </Text>
+                      </View>
+                    </View>
+                    {data?.budgetType === 'OFFERING' ? (
+
+                      <View>
+
+
+                        <Text className="text-primary font-bold text-lg">
+                          {t('workDetail.offering_price')}
+                        </Text>
+
+                        <View className="flex-row items-baseline gap-1">
+                          <Text className="text-warning font-bold text-xl">
+                            {data?.currency}
+                          </Text>
+                          <Text className="text-success font-bold text-2xl">
+                            {new Intl.NumberFormat().format(data?.budget)}
+                          </Text>
+                        </View>
+                      </View>
                     ) : (
                       <View className="flex-row items-baseline gap-1">
                         <Text className="text-warning font-bold text-xl">
@@ -1151,16 +1231,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 )}
               </View>
 
-              {/* Budget type badge */}
-              <View className="bg-white/60 backdrop-blur px-3 py-1.5 rounded-full self-start">
-                <Text className="text-primary text-caption font-semibold">
-                  {data?.budgetType === 'FIXED_PRICE'
-                    ? t('postWork.fixed_price')
-                    : data?.budgetType === 'HOURLY'
-                      ? t('postWork.hourly')
-                      : t('postWork.offering')}
-                </Text>
-              </View>
+
             </View>
           )}
 
@@ -1205,7 +1276,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
             {/* Divider */}
             <View className="h-px bg-border my-2 ml-4" />
 
-            {data.address &&
+            {data.address?.village !== '' && data.address?.district !== '' && data.address?.province !== '' &&
 
 
               <View className="flex-row mt-3 items-center">
@@ -1220,8 +1291,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text>
 
                     <Text className="text-body text-text ">
-                      {data.address.village}, {data.address.district}, {data.address.province}
-
+                      {data?.address.village}, {data?.address.district}, {data?.address.province}
                     </Text>
                   </View>
 
@@ -1256,7 +1326,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
               <View className="flex-row items-center gap-2">
                 <Text className='text-textSecondary'>|</Text>
                 {/* <Text className="text-warning text-body">
-                  {data?.serviceType?.name}
+                  {appendWork._id}
                 </Text> */}
 
                 {appendWork.status === 'PENDING' && user?._id !== appendWork?.createdBy && (
@@ -1284,19 +1354,29 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 {appendWork.status === 'PAYMENT_COMPLETED' && user?._id === appendWork?.createdBy && (
 
                   <View className='flex-row gap-2 items-center'>
- 
+
                     <Text className="text-success text-body">
                       {t('payment_success.title')}
                     </Text>
 
                     <Pressable onPress={() => navigation.navigate('PaymentDetail_Id', { workId: appendWork?._id })}
 
-                     className='bg-border py-2 px-4 rounded-full flex-row items-center gap-2'>
+                      className='bg-border py-2 px-4 rounded-full flex-row items-center gap-2'>
                       <Text>{t('payment_success.bill')}: </Text>
                       <Ionicons name="newspaper-outline" size={16} color="#6B7280" />
 
                     </Pressable>
                   </View>
+                )}
+                {appendWork.status === 'PAYMENT_COMPLETED' && user?._id !== appendWork?.createdBy && (
+                  <Text className="text-success text-body">
+                    {t('payment_success.title')}
+                  </Text>
+                )}
+                {appendWork.status === 'REJECTED' && user?._id !== appendWork?.createdBy && (
+                  <Text className="text-error text-body">
+                    {t('chat.offer.reject_offering')}
+                  </Text>
                 )}
               </View>
               <View className="bg-primary px-3 py-1 rounded-full">
@@ -1343,7 +1423,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 <Text className='text-text  text-body font-bold mb-2'>{t('workDetail.sub_work_list')}</Text>
                 <View className="flex-row items-center gap-2">
                   <Text className="text-body text-textSecondary font-semibold mb-2">{t('workDetail.progress')}</Text>
-                  <Text className="text-xl font-bold text-textSecondary mb-1">{Number(data?.totalDonePercent).toFixed(0)}%</Text>
+                  <Text className="text-xl font-bold text-textSecondary mb-1">{Number(appendWork.totalDonePercent).toFixed(0)}% </Text>
                 </View>
               </View>
               <View >
@@ -1353,12 +1433,12 @@ export default function FreelancerWorkDetail({ route }: Props) {
                   const edit = getAppendWorkEdit(appendWork._id, appendWork.subWorkDetails);
                   const isFreelancer = data?.createdBy?._id !== user?._id;
                   const isCustomer = data?.createdBy?._id === user?._id;
-                  
+
                   // Role-based editing permissions:
                   // Customer (createdBy) can edit when status is PENDING
                   // Freelancer (assignedTo) can edit when status is PAYMENT_COMPLETED
-                  const canEdit = (isCustomer && appendWork.status === 'PENDING') || 
-                                  (isFreelancer && appendWork.status === 'PAYMENT_COMPLETED');
+                  const canEdit = (isCustomer && appendWork.status === 'PENDING') ||
+                    (isFreelancer && appendWork.status === 'PAYMENT_COMPLETED');
 
                   return edit.subWorkItems.map((section, idx) => {
                     const expandKey = `${appendWork._id}-${idx}`;
@@ -1412,9 +1492,10 @@ export default function FreelancerWorkDetail({ route }: Props) {
                               const statusKey = `${idx}-${subTaskIndex}`;
                               const currentStatus = subTask.subWorkStatus;
                               const statusColors = getStatusBadgeColor(currentStatus);
-
+                              const dropdownKey = `append-${appendWork._id}-${statusKey}`;
+                              const canUpdateAppendStatus = isFreelancer && appendWork.status === 'PAYMENT_COMPLETED';
                               return (
-                                <View key={statusKey} className="flex-row items-center justify-between mb-3 p-2 bg-gray-50 rounded-lg">
+                                <View key={statusKey} className="flex-row items-center justify-between mb-3 p-2 bg-gray-50 rounded-lg relative">
                                   {edit.editingSubTaskKey === statusKey ? (
                                     <RNTextInput
                                       value={edit.editedSubTaskTitle}
@@ -1431,11 +1512,62 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                       <Text className="text-body text-text">{subTask.title}</Text>
                                     </TouchableOpacity>
                                   )}
-                                  <View style={{ backgroundColor: statusColors.bg }} className="px-2 py-1 rounded ml-2">
+                                  {/* <View style={{ backgroundColor: statusColors.bg }} className="px-2 py-1 rounded ml-2">
                                     <Text style={{ color: statusColors.text }} className="text-caption font-bold">
                                       {currentStatus}
                                     </Text>
-                                  </View>
+                                  </View> */}
+
+                                  {canUpdateAppendStatus ? (
+                                    <TouchableOpacity
+                                      className="px-3 py-1 rounded-full flex-row items-center"
+                                      style={{ backgroundColor: statusColors.bg }}
+                                      onPress={() => setShowStatusDropdown(showStatusDropdown === dropdownKey ? null : dropdownKey)}
+                                    >
+                                      <Text className="text-caption font-medium mr-1" style={{ color: statusColors.text }}>
+                                        {currentStatus}
+                                      </Text>
+                                      <Ionicons name="chevron-down" size={12} color={statusColors.text} />
+                                    </TouchableOpacity>
+                                  ) : (
+                                    <View
+                                      className="px-3 py-1 rounded-full flex-row items-center"
+                                      style={{ backgroundColor: statusColors.bg }}
+                                    >
+                                      <Text className="text-caption font-medium mr-1" style={{ color: statusColors.text }}>
+                                        {currentStatus}
+                                      </Text>
+                                      <Ionicons name="chevron-down" size={12} color={statusColors.text} />
+                                    </View>
+                                  )}
+
+                                  {canUpdateAppendStatus && showStatusDropdown === dropdownKey && (
+                                    <View className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-border z-30 min-w-[100px]">
+                                      {statusOptions.map((status) => {
+                                        const optionColors = getStatusBadgeColor(status);
+                                        return (
+                                          <TouchableOpacity
+                                            key={status}
+                                            className="px-3 py-2 border-b border-border"
+                                            onPress={() =>
+                                              handleAppendWorkStatusChange(
+                                                appendWork._id,
+                                                idx,
+                                                subTaskIndex,
+                                                status,
+                                                appendWork.subWorkDetails
+                                              )
+                                            }
+                                          >
+                                            <View className="flex-row items-center">
+                                              <View className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: optionColors.bg }} />
+                                              <Text className="text-body text-text">{status}</Text>
+                                            </View>
+                                          </TouchableOpacity>
+                                        );
+                                      })}
+                                    </View>
+                                  )}
                                 </View>
                               );
                             })}
@@ -1449,9 +1581,10 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                     newSubTitles: { ...edit.newSubTitles, [String(idx)]: text }
                                   })}
                                   className="flex-1 text-body text-text"
+
                                 />
                                 <TouchableOpacity onPress={() => handleAppendWorkAddSubTask(appendWork._id, idx)}>
-                                  <Text className="text-primary font-medium">Add +</Text>
+                                  <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
                                 </TouchableOpacity>
                               </View>
                             )}
@@ -1468,6 +1601,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 const isCustomer = data?.createdBy?._id === user?._id;
                 const canAddSection = isCustomer && appendWork.status === 'PENDING';
 
+
                 return canAddSection ? (
                   <View className="mt-4 px-3 py-2 bg-gray-50 border border-border rounded-full flex-row items-center justify-between">
                     <TextInput
@@ -1477,11 +1611,31 @@ export default function FreelancerWorkDetail({ route }: Props) {
                       className="flex-1 text-body text-text"
                     />
                     <TouchableOpacity onPress={() => handleAppendWorkAddSection(appendWork._id)}>
-                      <Text className="text-primary font-medium">Add +</Text>
+                      <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
                     </TouchableOpacity>
                   </View>
                 ) : null;
               })()}
+              {(() => {
+                const edit = getAppendWorkEdit(appendWork._id, appendWork.subWorkDetails);
+                const isFreelancer = data?.assignedTo?._id === user?._id;
+                const canAddSection = isFreelancer && appendWork.status === 'PAYMENT_COMPLETED';
+
+                return canAddSection ? (
+                  <View className="mt-4 px-3 py-2 bg-gray-50 border border-border rounded-full flex-row items-center justify-between">
+                    <TextInput
+                      placeholder="Add new section..."
+                      value={edit.newSectionTitle}
+                      onChangeText={(text) => updateAppendWorkEdit(appendWork._id, { newSectionTitle: text })}
+                      className="flex-1 text-body text-text"
+                    />
+                    <TouchableOpacity onPress={() => handleAppendWorkAddSection(appendWork._id)}>
+                      <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : null;
+              })()}
+
 
               {appendWork.status === 'PENDING' && user?._id !== appendWork?.createdBy && (
 
@@ -1572,20 +1726,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </View>
 
           </View>
-
-
-
-
-
-
-
         </View>
       ))}
-
-
-
-
-
     </>
   );
 
@@ -1649,7 +1791,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     const statusKey = `${idx}-${subTaskIndex}`;
                     const currentStatus = subTask.subWorkStatus;
                     const statusColors = getStatusBadgeColor(currentStatus);
-                    const dropdownKey = statusKey;
+                    const dropdownKey = `main-${statusKey}`;
 
                     return (
                       <View key={subTaskIndex} className="mb-2 relative">
@@ -1704,7 +1846,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                         )}
 
                         {showStatusDropdown === dropdownKey && (
-                          <View className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-border z-10 min-w-[100px]">
+                          <View className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-lg border border-border z-30 min-w-[100px]">
                             {statusOptions.map((status) => {
                               const optionColors = getStatusBadgeColor(status);
                               return (
@@ -1738,7 +1880,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                         />
                       </View>
                       <TouchableOpacity onPress={() => addSubTask(idx)}>
-                        <Text className="text-primary font-medium">Add +</Text>
+                        <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -1758,19 +1900,33 @@ export default function FreelancerWorkDetail({ route }: Props) {
             className="flex-1 text-body text-text"
           />
           <TouchableOpacity onPress={addNewSection}>
-            <Text className="text-primary font-medium">Add +</Text>
+            <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
           </TouchableOpacity>
         </View>
       )}
+      {subWorkItems.length == 0 && (
+        <View className="flex-1 justify-center items-center px-6 mt-2">
+          <View className="w-48 h-48 bg-background rounded-full justify-center items-center mb-6">
+            <Ionicons name="time-outline" size={64} color="#E5E7EB" />
+          </View>
+          <Text className="text-xl font-semibold text-textSecondary mb-2">
+            {t('workDetail.none_subWork.title')}
+          </Text>
+          <Text className="text-gray-500 text-center mb-8">
+            {t('workDetail.none_subWork.description')}
+          </Text>
+        </View>
+      )}
+
     </View>
   );
 
   // ============= MAIN RENDER =============
   return (
     <ScreenWrapper>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         {/* Header */}
-        <View className='bg-primary px-4 pt-12 pb-4 flex-row items-center justify-between'>
+        <View className='bg-primary px-4 pt-12 pb-4 flex-row items-center justify-between' >
           {data?.workStatus === "PUBLISHED" || data?.workStatus === "PRIVATE" ? (
             <View className="flex-row items-center">
               <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
@@ -1788,8 +1944,16 @@ export default function FreelancerWorkDetail({ route }: Props) {
                   <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                   </TouchableOpacity>
-                  <Image
+                  {/* <Image
                     source={{ uri: data?.assignedTo?.userProfileImage ? IMAGE_BASE_URL + data?.assignedTo?.userProfileImage : profileImage }}
+                    className="w-10 h-10 rounded-full mr-3"
+                  /> */}
+                  <Image
+                    source={
+                      data?.assignedTo?.userProfileImage
+                        ? { uri: IMAGE_BASE_URL + data?.assignedTo?.userProfileImage }
+                        : profileImage  // local asset: pass directly, NOT inside { uri: ... }
+                    }
                     className="w-10 h-10 rounded-full mr-3"
                   />
                   <View>
@@ -1802,8 +1966,17 @@ export default function FreelancerWorkDetail({ route }: Props) {
                   <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
                     <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
                   </TouchableOpacity>
-                  <Image
+                  {/* <Image
                     source={{ uri: data?.createdBy?.userProfileImage ? IMAGE_BASE_URL + data?.createdBy?.userProfileImage : profileImage }}
+                    className="w-10 h-10 rounded-full mr-3"
+                  /> */}
+
+                  <Image
+                    source={
+                      data?.createdBy?.userProfileImage
+                        ? { uri: IMAGE_BASE_URL + data?.createdBy?.userProfileImage }
+                        : profileImage  // same fix here
+                    }
                     className="w-10 h-10 rounded-full mr-3"
                   />
                   <View>
@@ -1830,7 +2003,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </Pressable>
           )} */}
 
-          {data?.createdBy?._id === user?._id && data?.workStatus === "DOING" && data?.kindOfWork === "OFFLINE" && (
+          {data?.createdBy?._id === user?._id && data?.workStatus === "DOING" && (
             <Pressable onPress={() => navigation.navigate('AppendOwnerWork', { workId: data?._id })} className='p-3'>
               <Text className="text-surface font-semibold text-base">{t('workDetail.add_work')}</Text>
             </Pressable>
@@ -1853,7 +2026,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
           </View>
         )}
 
-        {data?.workStatus === 'COMPLETED' && (
+        {data?.workStatus === 'COMPLETED' && data?.createdBy?._id === user?._id && (
           <View className="bg-success px-4 py-2 flex-row items-center justify-between h-12">
             <Text className="text-surface text-caption font-medium">{t('workDetail.project_did_successfully')}</Text>
             {data?.createdBy?._id === user?._id && (
@@ -1875,29 +2048,31 @@ export default function FreelancerWorkDetail({ route }: Props) {
         </View>
 
         {/* Content */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.select({ ios: 0, android: 20 })}
-          style={{ flex: 1 }}
+
+
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: insets.bottom }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#3B82F6"
+              colors={['#3B82F6']}
+            />
+          }
         >
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: insets.bottom }}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor="#3B82F6"
-                colors={['#3B82F6']}
-              />
-            }
+          <Pressable
+            className="px-2 py-4 relative"
+            onPress={() => {
+              if (showStatusDropdown) setShowStatusDropdown(null);
+            }}
           >
-            <View className="px-2 py-4">
-              {activeTab === 'overview' ? renderWorkOverview() : renderSubWorkList()}
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+            {activeTab === 'overview' ? renderWorkOverview() : renderSubWorkList()}
+          </Pressable>
+        </ScrollView>
+
 
         {/* Bottom Action Bar */}
         <View className="flex-row justify-evenly items-center px-6 py-4 border-t border-border bg-white">
@@ -1925,6 +2100,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
           {/* Action Buttons Based on Work Status */}
           {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id === user?._id && (
             <TouchableOpacity onPress={() => handleJobPress()} className="bg-primary py-4 px-16 rounded-full flex-row items-center justify-center">
+              <Text className="text-surface text-base font-semibold items-center">{t('workDetail.interested_freelancers')}</Text>
+            </TouchableOpacity>
+          )}
+          {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id !== user?._id && (
+            <TouchableOpacity onPress={() => handleApplicantPress()} className="bg-primary py-4 px-16 rounded-full flex-row items-center justify-center">
               <Text className="text-surface text-base font-semibold items-center">{t('workDetail.interested_freelancers')}</Text>
             </TouchableOpacity>
           )}
@@ -1986,7 +2166,16 @@ export default function FreelancerWorkDetail({ route }: Props) {
           {data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id && (
             <TouchableOpacity
               className={`py-3 px-16 rounded-full z-10 ${submitState === 'submitted' ? 'bg-green-600' : submitState === 'submitting' ? 'bg-primary/50' : 'bg-primary'}`}
-              onPress={handleSubmitWork}
+              // onPress={handleSubmitWork}
+              onPress={() =>
+                  openActionConfirm({
+                    title: t('workDetail.confirm'),
+                    message: t('workDetail.confirm_work.message_send'),
+                    actionText: t('chat.chatroom.send'),
+                    variant: 'primary',
+                    onConfirm: handleSubmitWork,
+                  })
+                }
               disabled={submitState === 'submitted' || submitState === 'submitting'}
             >
               <Text className="text-surface text-base font-semibold">
@@ -1996,9 +2185,36 @@ export default function FreelancerWorkDetail({ route }: Props) {
           )}
 
           {data?.workStatus === 'AWAITING_COMPLETED' && data?.createdBy?._id === user?._id && (
-            <TouchableOpacity className="bg-primary py-3 px-16 rounded-full" onPress={handleConfirmWork}>
-              <Text className="text-surface text-base font-semibold">{t('workDetail.confirm')}</Text>
-            </TouchableOpacity>
+            <View className=''>
+              <TouchableOpacity
+                className="bg-primary py-3 px-20 rounded-full"
+                onPress={() =>
+                  openActionConfirm({
+                    title: t('workDetail.confirm'),
+                    message: t('workDetail.confirm_work.message_comfirm'),
+                    actionText: t('workDetail.confirm'),
+                    variant: 'primary',
+                    onConfirm: handleConfirmWork,
+                  })
+                }
+              >
+                <Text className="text-surface text-base font-semibold">{t('workDetail.confirm')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="border mt-3 border-error py-2 px-20 rounded-full"
+                onPress={() =>
+                  openActionConfirm({
+                    title: t('profile.cancel'),
+                    message: t('workDetail.confirm_work.message_cancel'),
+                    actionText: t('workDetail.confirm'),
+                    variant: 'warning',
+                    onConfirm: handleCancel,
+                  })
+                }
+              >
+                <Text className="text-error text-base font-semibold">{t('profile.cancel')}</Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           {data?.workStatus === 'AWAITING_COMPLETED' && data?.createdBy?._id !== user?._id && (
@@ -2029,12 +2245,61 @@ export default function FreelancerWorkDetail({ route }: Props) {
         onSubmitReview={() => setIsReview(true)}
       />
 
+      <Modal
+        visible={showDeleteConfirmModal}
+        transparent
+        animationType="fade"
+        onRequestClose={closeDeleteConfirm}
+      >
+        <View className="flex-1 bg-black/40 justify-center items-center px-6">
+          <View className="w-full bg-white rounded-2xl p-5 border border-border">
+            <View className="flex-row items-center mb-3">
+              {confirmModalVariant === 'primary'? 
+              
+              <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
+                <Ionicons name="checkbox" size={20} color="#F59E0B" />
+              </View>
+             :
+             
+              <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
+                <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              </View>
+             
+             }
+              <Text className="text-base font-semibold text-text flex-1">{deleteConfirmTitle}</Text>
+            </View>
+
+            <Text className="text-body text-textSecondary mb-5">
+              {deleteConfirmMessage}
+            </Text>
+
+            <View className="flex-row justify-end gap-2">
+              <TouchableOpacity
+                onPress={closeDeleteConfirm}
+                className="px-4 py-2 rounded-full border border-border"
+              >
+                <Text className="text-textSecondary font-medium">{t('common.cancel') || 'Cancel'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={confirmDelete}
+                className={`px-5 py-2 rounded-full ${confirmModalVariant ==='primary' ? "bg-primary" : "bg-error" }`}
+              >
+                <Text className="text-white font-semibold">
+                  {confirmModalActionText || t('workDetail.delete')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <InterestedFreelancer
         visible={jobDetailVisible}
         onClose={handleCloseJobDetail}
         jobs={workData}
         refetch={refetch}
         onUserPress={handleUserProfileNavigation}
+        isFreelancer={isFreelancer}
       />
 
       <View style={{ height: insets.bottom + 20 }} />

@@ -108,6 +108,10 @@ const SelectImage: React.FC<Props> = ({
     onChange(undefined);
     setImageActionModalVisible(false);
   };
+  const handleRemove = () => {
+    onChange(undefined);
+
+  };
 
   return (
     <>
@@ -120,13 +124,23 @@ const SelectImage: React.FC<Props> = ({
       {/* IMAGE AREA */}
       <View className="relative mb-4">
         {image ? (
-          <Pressable onPress={() => setImageActionModalVisible(true)}>
-            <Image
-              source={{ uri: image }}
-              className="w-full h-64 rounded-md"
-              resizeMode="cover"
-            />
-          </Pressable>
+          <View>
+
+
+            <Pressable onPress={() => setImageActionModalVisible(true)}>
+              <Image
+                source={{ uri: image }}
+                className="w-full h-64 rounded-md"
+                resizeMode="cover"
+              />
+            </Pressable>
+            <TouchableOpacity
+              onPress={handleRemove}
+              className="absolute top-2 right-2 bg-primary p-1.5 rounded-full"
+            >
+              <Ionicons name="close" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
         ) : (
           <TouchableOpacity
             onPress={() => setImageActionModalVisible(true)}

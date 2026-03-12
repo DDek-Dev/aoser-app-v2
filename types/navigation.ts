@@ -1,5 +1,6 @@
 import { BookingFormData } from "types";
 import { UserProfile } from "./profile";
+import { NavigatorScreenParams } from "@react-navigation/native";
 
 export type OnboardingStackParamList = {
   LanguageSelection: undefined;
@@ -9,26 +10,27 @@ export type OnboardingStackParamList = {
 };
 export type FreelancerStackParamList = {
   AuthCallback: undefined;
-  MainTabs: undefined;
-  SearchBar: { text: string ; focus?: boolean };
+  MainTabs: NavigatorScreenParams<TabParamList> | undefined;
+  SearchBar: { text: string; focus?: boolean };
   SearchView: { query: string };
   Onboarding: undefined;
 
   FreelancerProfile: { userId: string };
   ResumeImageViewer: { uri: string };
   Bookfreelancer: { userId: string };
-  ConfirmBookingScreen: { formData: BookingFormData };
-
+  ConfirmBookingScreen: { formData: BookingFormData , isBook?:boolean};
+  ConfirmPostjob: { formData: BookingFormData};
+  TopFreelancerList: undefined;
 
   // profile setting
   AoserProfileSetting: undefined;
-  
+
   // start freelancer role 
-  
+
   UpgradeToFreelancer: undefined;
   // freelancer profile 
   CustomerProfile: { userId: string };
-  
+
   FreelancerRoleGate: undefined;
   AuthFreelancerProfile: { userId: string };
   AuthFreelancerSetting: undefined;
@@ -55,7 +57,7 @@ export type FreelancerStackParamList = {
   AppendOwnerWork: { workId: string };
 
   // Payment
-  PaymentScreen: { workId: string , budget: number ,currency: string , terminalid: string, invoiceType:string, workCode?: string};
+  PaymentScreen: { workId: string, budget: number, currency: string, terminalid: string, invoiceType: string, workCode?: string };
   PaymentDetail_Id: { workId: string };
 
   // Chat 
@@ -70,8 +72,8 @@ export type FreelancerStackParamList = {
 
   // Auth login/signup
   SignUp: undefined;
-  SignIn:  undefined;
-  OtpRequest: { email: string};
+  SignIn: undefined;
+  OtpRequest: { email: string };
   ForgotPassword: undefined;
   ProfileSetup: undefined;
 };

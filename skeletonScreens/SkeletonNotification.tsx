@@ -1,10 +1,12 @@
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, ScrollView, Animated, Text } from 'react-native';
 
 const SkeletonNotification = () => {
   const opacity = useRef(new Animated.Value(0.3)).current;
 
+  const {t} = useTranslation();
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -31,16 +33,16 @@ const SkeletonNotification = () => {
 
   return (
 
-    <ScreenWrapper safeEdges={['top']}>
+    <ScreenWrapper safeEdges={['top']} style={{backgroundColor:'#fff'}}>
 
 
-    <View className="flex-1 bg-surface  pt-5">
+    <View className="flex-1  ">
       {/* Header */}
       {/* <SkeletonBox className="w-48 h-9 mb-8 rounded-lg" /> */}
       <View className='px-4 flex-row justify-between items-center mb-4'>
         <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">
           <View className="flex-1">
-            <Text className="font-semibold text-primary text-heading">Notifications</Text>
+            <Text className="font-semibold text-primary text-heading">{t('notification.notification')}</Text>
           </View>
         </View>
       </View>

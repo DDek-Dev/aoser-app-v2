@@ -456,7 +456,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
 
 
-        <View className={`flex-row ${isDeleteMode && isSelected ? 'bg-blue-50' : ''}  mb-4 ${isFromUser ? 'justify-end' : 'justify-start'}`}>
+        <View className={`flex-row ${isDeleteMode && isSelected ? 'bg-blue-50' : ''}  mb-1 ${isFromUser ? 'justify-end' : 'justify-start'}`}>
           {isDeleteCompleteID === item._id ? (
             <View>
 
@@ -578,23 +578,22 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 <View
                   className={`rounded-2xl overflow-hidden ${isFromUser
                     ? 'bg-primary rounded-br-sm'
-                    : 'bg-surface border border-border rounded-bl-sm'
+                    : 'bg-background border border-border overflow-hidden rounded-bl-sm'
                     }`}
                 >
 
 
                   {/* Main Message Content */}
-                  <View className="px-4 py-3">
+                  <View className="p-1">
                     {/* Text Message */}
                     {item.message && (
                       <Text
-                        className={`text-body ${isFromUser ? 'text-white' : 'text-text'
+                        className={`text-body p-2 ${isFromUser ? 'text-white' : 'text-text'
                           }`}
                       >
                         {item.message}
                       </Text>
                     )}
-
                     {/* Location Message */}
                     {item.messageType === 'LOCATION' && (
                       <TouchableOpacity
@@ -650,7 +649,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                         </View>
 
                         {/* Info Section */}
-                        <View style={{ padding: 12 }}>
+                        <View >
                           {/* <Text style={{
                             color: isFromUser ? '#fff' : '#1f2937',
                             fontWeight: 'bold',
@@ -700,13 +699,13 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
                     {/* Projects */}
                     {item.work && item.messageType === 'WORK' && (
-                      <View className="mt-2">
+                      <View className="">
                         <ProjectMessageItem projects={item} />
                       </View>
                     )}
                     {item.messageType === 'OFFERING_WORK' && (
 
-                      <View className="mt-2">
+                      <View className="">
                         <ProjectOfferingMessage projects={item} />
                       </View>
                     )}

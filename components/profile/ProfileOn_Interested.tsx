@@ -21,7 +21,7 @@ type NavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'Freel
 
 interface ProfileOn_InterestedProps {
   job: Job;
-  handleUserProfileNavigation: (userId: string) => void;
+  handleUserProfileNavigation?: (userId: string) => void;
   onClose?: () => void;
 }
 
@@ -37,7 +37,7 @@ export default function ProfileOn_Interested({ job, handleUserProfileNavigation,
   const handleProfilePress = (userId: string) => {
     try {
 
-      handleUserProfileNavigation(userId);
+      // handleUserProfileNavigation(userId);
     } catch (error) {
       console.log('Navigation error:', error);
     }

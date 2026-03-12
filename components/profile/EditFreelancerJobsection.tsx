@@ -46,7 +46,6 @@ const EditFreelancerJobsection = () => {
     const updateProfileMutation = useUpdateFreelancerProfile();
 
 
-    console.log("profile ----: ", profile)
     const { t } = useTranslation();
 
     useEffect(() => {

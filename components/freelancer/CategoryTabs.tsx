@@ -107,7 +107,7 @@ export default function CategoryTabs({
     if (index > 0 && index < categories.length - 1) {
       flatListRef.current?.scrollToIndex({
         index,
-        animated: true,
+      animated: true,
         viewPosition: 0.5, 
       });
     }
@@ -125,7 +125,7 @@ export default function CategoryTabs({
           width: 70,
           height: 70,
           marginRight: 6,
-          // marginBottom: 4,
+          marginBottom: 4,
           borderRadius: 16,
           // zIndex: 10,
           backgroundColor: isActive ? '#3b82f6' : '#fff',

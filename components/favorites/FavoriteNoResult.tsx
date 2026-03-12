@@ -13,10 +13,10 @@ export const FavoriteNoResult = () => {
         <Ionicons name="time-outline" size={64} color="#E5E7EB" />
       </View>
       <Text className="text-xl font-semibold text-textSecondary mb-2">
-        {t('favorites.favorite_no_result.no_favorite')}
+        {t('favorites.work.no_favorite')}
       </Text>
       <Text className="text-gray-500 text-center mb-8">
-        {t('favorites.favorite_no_result.items_will_appear_here')}
+        {t('favorites.work.items_will_appear_here')}
       </Text>
     </View>
 

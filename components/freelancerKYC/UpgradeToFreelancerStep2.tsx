@@ -22,8 +22,7 @@ type Props = {
     setSkills: React.Dispatch<React.SetStateAction<string[]>>;
     experiences: string[];
     setExperiences: React.Dispatch<React.SetStateAction<string[]>>;
-    resumeImageFile: FileWithType | null;
-    setResumeImageFile: (resumeImageFile: FileWithType | null) => void;
+  
     certificateImages: FileWithType[];
     setCertificateImages: (certificateImages: FileWithType[]) => void;
     errors: any;
@@ -36,17 +35,14 @@ const UpgradeToFreelancerStep2 = (
         setSkills,
         experiences,
         setExperiences,
-        resumeImageFile,
-        setResumeImageFile,
+
         certificateImages,
         setCertificateImages,
         errors,
     }: Props
 ) => {
 
-    const handleImageChange = (file?: FileWithType) => {
-        setResumeImageFile(file || null);
-    };
+
 
     const { t } = useTranslation();
     const { data: dataStep2, isLoading } = useUpgradeToFreelancerStep2();
@@ -56,7 +52,6 @@ const UpgradeToFreelancerStep2 = (
             setAboutMe(dataStep2.aboutMe || '');
             setSkills(dataStep2.skills?.length > 0 ? dataStep2.skills : ['']);
             setExperiences(dataStep2.experience?.length > 0 ? dataStep2.experience : ['']);
-            setResumeImageFile(dataStep2.resumeImageFile || null);
             setCertificateImages(dataStep2.certificateImages || []);
         }
     }, [dataStep2]);
@@ -148,16 +143,7 @@ const UpgradeToFreelancerStep2 = (
             />
 
 
-            {/* Resume Upload */}
-            <SelectImage
-                label={t('kyc.step2.resume_label')}
-                image={resumeImageFile?.uri || null}
-                onChange={handleImageChange}
-                // inputClassName="border border-border"
-                inputClassName={errors.resumeImage ? 'border-error' : 'border-border'} // ✅ Add error styling
-                // isValidate={errors.resumeImage ? t('kyc.step2.resume_required') : ''}
-                // required
-            />
+      
             {/* certificates Upload */}
             <SelectMultiImage
                 label={t('kyc.step2.certificate_label')}

@@ -87,7 +87,7 @@ export const useAuth = () => {
   const googleUrlMutation = useMutation({
     mutationFn: authApi.handleGoogleLogin,
     onSuccess: async (data) => {  // ← CORRECT! Remove the extra () =>
-      console.log('✅ Mutation success, data:');
+      // console.log('✅ Mutation success, data:');
 
       const newTokens = {
         accessToken: data.data.accessToken,
@@ -113,13 +113,13 @@ export const useAuth = () => {
     },
     onError: (error) => {
       console.log('❌ Google login failed:', error);
-      Alert.alert('Error', 'Failed to login with Google');
+      // Alert.alert('Error', 'Failed to login with Google');
     },
   });
 
 
   const googleLogin = async () => {
-    console.log('Starting Google login process', process.env.EXPO_PUBLIC_WEBCLIENT_ID);
+    // console.log('Starting Google login process', process.env.EXPO_PUBLIC_WEBCLIENT_ID);
     try {
       GoogleSignin.configure({
         webClientId: process.env.EXPO_PUBLIC_WEBCLIENT_ID, // from Google Cloud Console
@@ -132,7 +132,7 @@ export const useAuth = () => {
 
       const user: any = await GoogleSignin.signIn();
       const idToken = user.data.idToken;
-      console.log('ID Token:', idToken);
+
 
       await googleUrlMutation.mutate(idToken);
 

@@ -38,7 +38,7 @@ export default function PostWorkScreen() {
   const navigation = useNavigation<SearchBarNavigationProp>();
   const insets = useSafeAreaInsets();
   const [workType, setWorkType] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
-  const [hasDeadline, setHasDeadline] = useState(true);
+
   const [subWorkDetails, setSubWorkDetails] = useState<SubWorkDetail[]>([]);
   const [subTasks, setSubTasks] = useState<string[]>([]);
   const [newSubTask, setNewSubTask] = useState('');
@@ -71,9 +71,11 @@ export default function PostWorkScreen() {
   const [errors, setErrors] = useState({
     nameOfWork: false,
     workDetail: false,
-    budget: false,
+    // budget: false,
     category: false,
+    toDate:false,
   });
+  const [toDateErrorMessage, setToDateErrorMessage] = useState('');
 
   // Address selection (optional)
   const { data: addressData } = useSelectAddress();
@@ -83,6 +85,61 @@ export default function PostWorkScreen() {
 
   const currentLanguage: Language = getCurrentLanguage();
 
+
+
+  // ─── Date Auto-Correction ────────────────────────────────────────────────────
+  /**
+   * Normalises a raw date string typed by the user.
+   * - Replaces `-` or `.` separators with `/`
+   * - Clamps day to 1-31, month to 1-12
+   * - Returns a corrected "DD/MM/YYYY" string (partial strings are left as-is
+   *   until they are long enough to validate).
+   */
+  const normaliseDateInput = (raw: string): string => {
+    // Replace common alternative separators
+    const normalised = raw.replace(/[-,.]/g, '/');
+
+    const parts = normalised.split('/');
+    if (parts.length !== 3) return normalised;
+
+    let [dayStr, monthStr, yearStr] = parts;
+
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10);
+
+    const correctedDay = isNaN(day) ? dayStr : String(Math.min(Math.max(day, 1), 31));
+    const correctedMonth = isNaN(month) ? monthStr : String(Math.min(Math.max(month, 1), 12));
+
+    return `${correctedDay}/${correctedMonth}/${yearStr}`;
+  };
+
+  // ─── Time Auto-Correction ────────────────────────────────────────────────────
+  /**
+   * Normalises a raw time string typed by the user.
+   * - Replaces `.` or `,` separators with `:`
+   * - Clamps hours to 0-23, minutes to 0-59
+   * - Falls back to "0:0" for completely unparseable input once the user has
+   *   typed at least one `:` separator.
+   */
+  const normaliseTimeInput = (raw: string): string => {
+    // Replace common alternative separators
+    const normalised = raw.replace(/[.,]/g, ':');
+
+    // Only attempt correction once the user has typed a separator
+    if (!normalised.includes(':')) return normalised;
+
+    const parts = normalised.split(':');
+    if (parts.length !== 2) return '0:0';
+
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+
+    const correctedHours = isNaN(hours) ? 0 : Math.min(Math.max(hours, 0), 23);
+    const correctedMinutes = isNaN(minutes) ? 0 : Math.min(Math.max(minutes, 0), 59);
+
+    return `${correctedHours}:${correctedMinutes}`;
+  };
+
   // Parse date string (DD/MM/YYYY or MM/DD/YYYY)
   const parseDate = (dateString: string): Date | null => {
     if (!dateString || dateString.length < 8) return null; // Need at least D/M/YYYY
@@ -91,7 +148,7 @@ export default function PostWorkScreen() {
     if (parts.length !== 3) return null;
 
     const [part1, part2, year] = parts;
-    
+
     // Parse based on language (adjust if your format differs)
     const day = parseInt(part1);
     const month = parseInt(part2);
@@ -104,10 +161,10 @@ export default function PostWorkScreen() {
     if (yearNum < 1900 || yearNum > 2100) return null;
 
     const date = new Date(yearNum, month - 1, day);
-    
+
     // Check if date is valid
     if (isNaN(date.getTime())) return null;
-    
+
     return date;
   };
 
@@ -147,14 +204,12 @@ export default function PostWorkScreen() {
   const updateFromDate = (dateStr: string, timeStr: string) => {
     const combined = combineDateAndTime(dateStr, timeStr);
     setFromDate(combined);
-    console.log('From Date Updated:', combined?.toISOString());
   };
 
   // Update toDate whenever date or time string changes
   const updateToDate = (dateStr: string, timeStr: string) => {
     const combined = combineDateAndTime(dateStr, timeStr);
     setToDate(combined);
-    console.log('To Date Updated:', combined?.toISOString());
   };
 
   // Format Date object to display string
@@ -171,6 +226,68 @@ export default function PostWorkScreen() {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
   };
+
+
+
+  // ─── Handlers with auto-correction ──────────────────────────────────────────
+  const handleFromDateChange = (text: string) => {
+    const corrected = normaliseDateInput(text);
+    setFromDateString(corrected);
+    updateFromDate(corrected, fromTimeString);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
+  };
+
+  const handleFromDateBlur = () => {
+    // Re-apply correction on blur so partial entries get fixed when user leaves field
+    const corrected = normaliseDateInput(fromDateString);
+    setFromDateString(corrected);
+    updateFromDate(corrected, fromTimeString);
+  };
+
+  const handleFromTimeChange = (text: string) => {
+    const corrected = normaliseTimeInput(text);
+    setFromTimeString(corrected);
+    updateFromDate(fromDateString, corrected);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
+  };
+
+  const handleFromTimeBlur = () => {
+    const corrected = normaliseTimeInput(fromTimeString);
+    setFromTimeString(corrected);
+    updateFromDate(fromDateString, corrected);
+  };
+
+  const handleToDateChange = (text: string) => {
+    const corrected = normaliseDateInput(text);
+    setToDateString(corrected);
+    updateToDate(corrected, toTimeString);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
+  };
+
+  const handleToDateBlur = () => {
+    const corrected = normaliseDateInput(toDateString);
+    setToDateString(corrected);
+    updateToDate(corrected, toTimeString);
+  };
+
+  const handleToTimeChange = (text: string) => {
+    const corrected = normaliseTimeInput(text);
+    setToTimeString(corrected);
+    updateToDate(toDateString, corrected);
+    setErrors(prev => ({ ...prev, toDate: false }));
+    setToDateErrorMessage('');
+  };
+
+  const handleToTimeBlur = () => {
+    const corrected = normaliseTimeInput(toTimeString);
+    setToTimeString(corrected);
+    updateToDate(toDateString, corrected);
+  };
+
+
 
   // Address helpers
   const provinces = addressData?.[0]?.provinces ?? [];
@@ -192,19 +309,33 @@ export default function PostWorkScreen() {
 
   // Handle submit
   const handleSubmit = () => {
-    const dateInvalid = hasDeadline && (
-      !fromDate ||
-      
-      (fromDate && toDate && toDate < fromDate)
-    );
+    const hasToDateInput =
+      toDateString.trim() !== '' ||
+      toTimeString.trim() !== '' ||
+      Boolean(toDate);
+
+    let dateInvalid = false;
+    let dateValidationMessage = '';
+
+    if (hasToDateInput) {
+      if (!fromDate || !toDate) {
+        dateInvalid = true;
+        dateValidationMessage = t('postWork.select_both_dates');
+      } else if (toDate <= fromDate) {
+        dateInvalid = true;
+        dateValidationMessage = t('postWork.end_date_after_start');
+      }
+    }
 
     const newErrors = {
       nameOfWork: nameOfWork.trim() === '',
       workDetail: workDetail.trim() === '',
-      budget: budget === 0 || budget === null,
+      // budget: budget === 0 || budget === null,
       category: category.trim() === '',
+      toDate: dateInvalid,
     };
     setErrors(newErrors);
+    setToDateErrorMessage(dateValidationMessage);
 
     // Auto-add pending subtask
     let finalSubTasks = [...subTasks];
@@ -214,8 +345,12 @@ export default function PostWorkScreen() {
       setNewSubTask('');
     }
 
-    const hasError = Object.values(newErrors).some(Boolean) || dateInvalid;
-    
+    if (budget === 0 || budget === null) {
+      setBudgetType('OFFERING');
+    }
+
+    const hasError = Object.values(newErrors).some(Boolean);
+
     if (hasError) {
       console.log('Validation Errors:', newErrors, 'Date Invalid:', dateInvalid);
       console.log('From Date:', fromDate?.toISOString());
@@ -236,12 +371,12 @@ export default function PostWorkScreen() {
       budgetType,
       serviceType: category,
       jobs: subcategories,
-     address:{
+      address: {
         country: selectedProvince ? "Laos" : '',
         province: selectedProvince?.province_la || '',
         district: selectedDistrict?.district_la || '',
         village: village.trim() || '',
-     }
+      }
     };
 
     // Include address only if user selected any address fields (optional)
@@ -254,8 +389,8 @@ export default function PostWorkScreen() {
       };
     }
 
-    console.log('Submitting Form Data:', formData);
-    navigation.navigate('ConfirmBookingScreen', { formData });
+    // console.log('Submitting Form Data:', formData);
+    navigation.navigate('ConfirmPostjob', { formData });
   };
 
   return (
@@ -372,16 +507,17 @@ export default function PostWorkScreen() {
                   onChange={setBudget}
                   currency={budgetCurrency}
                   onCurrencyChange={setBudgetCurrency}
-                  error={errors.budget}
-                  isValidate={`${errors.budget ? `${t('postWork.budget_required')}` : ''}`}
+                  // error={errors.budget}
+                  // isValidate={`${errors.budget ? `${t('postWork.budget_required')}` : ''}`}
                   required
+                  
                 />
               )}
             </View>
 
             <View className='bg-blue-50 p-4 rounded-2xl mb-2'>
               <Text className="text-body mb-1 text-text font-bold">{t('postWork.deadline_requirement')}</Text>
-              <View className="flex-row mb-4 space-x-4 gap-2">
+              {/* <View className="flex-row mb-4 space-x-4 gap-2">
                 {[true, false].map((option) => (
                   <Pressable
                     key={option ? 'yes' : 'no'}
@@ -396,10 +532,10 @@ export default function PostWorkScreen() {
                     </View>
                   </Pressable>
                 ))}
-              </View>
+              </View> */}
 
-              {hasDeadline && (
-                <>
+            
+                <View>
                   {/* Start Date & Time */}
                   <View className="mb-2">
                     {/* <Text className="text-body text-text font-bold">
@@ -409,15 +545,17 @@ export default function PostWorkScreen() {
                       <View className="flex-1">
                         <FormInput
                           label={t('editWork.deadline.from')}
-                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປປປປ' : 'dd/mm/yyyy'}
+                          placeholder={t('editWork.deadline.toPlaceholder')}
                           value={fromDateString}
                           inputClassName={'border-border'}
                           ref={fromInputRef}
                           isDate={true}
-                          onChangeText={(text) => {
-                            setFromDateString(text);
-                            updateFromDate(text, fromTimeString);
-                          }}
+                          // onChangeText={(text) => {
+                          //   setFromDateString(text);
+                          //   updateFromDate(text, fromTimeString);
+                          // }}
+                          onChangeText={handleFromDateChange}
+                          onBlur={handleFromDateBlur}
                         />
                       </View>
 
@@ -428,10 +566,13 @@ export default function PostWorkScreen() {
                           value={fromTimeString}
                           inputClassName={'border-border'}
                           isTime={true}
-                          onChangeText={(text) => {
-                            setFromTimeString(text);
-                            updateFromDate(fromDateString, text);
-                          }}
+                          // onChangeText={(text) => {
+                          //   setFromTimeString(text);
+                          //   updateFromDate(fromDateString, text);
+                          // }}
+
+                          onChangeText={handleFromTimeChange}
+                          onBlur={handleFromTimeBlur}
                         />
                       </View>
 
@@ -449,7 +590,7 @@ export default function PostWorkScreen() {
 
                   {/* End Date & Time */}
                   <View className="mb-4">
-                  
+
                     <View className="flex-row items-end gap-2">
                       <View className="flex-1">
                         <FormInput
@@ -459,10 +600,14 @@ export default function PostWorkScreen() {
                           inputClassName={'border-border'}
                           ref={toInputRef}
                           isDate={true}
-                          onChangeText={(text) => {
-                            setToDateString(text);
-                            updateToDate(text, toTimeString);
-                          }}
+                          // onChangeText={(text) => {
+                          //   setToDateString(text);
+                          //   updateToDate(text, toTimeString);
+                          // }}
+
+                          onChangeText={handleToDateChange}
+                          onBlur={handleToDateBlur}
+
                         />
                       </View>
 
@@ -473,12 +618,17 @@ export default function PostWorkScreen() {
                           value={toTimeString}
                           inputClassName={'border-border'}
                           isTime={true}
-                          onChangeText={(text) => {
-                            setToTimeString(text);
-                            updateToDate(toDateString, text);
-                          }}
+                          // onChangeText={(text) => {
+                          //   setToTimeString(text);
+                          //   updateToDate(toDateString, text);
+                          // }}
+
+                          onChangeText={handleToTimeChange}
+                          onBlur={handleToTimeBlur}
+                          // isValidate='date is less than start'
                         />
                       </View>
+                    
 
                       <TouchableOpacity
                         onPress={() => {
@@ -490,9 +640,16 @@ export default function PostWorkScreen() {
                         <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
                       </TouchableOpacity>
                     </View>
+                    {errors.toDate && 
+                    
+                      <View>
+                        <Text className='text-caption text-error mt-1'>{toDateErrorMessage}</Text>
+                      </View>
+                    
+                    }
                   </View>
-                </>
-              )}
+                </View>
+            
 
               {/* Date Picker Modals */}
               {showFromPicker && (
@@ -506,6 +663,8 @@ export default function PostWorkScreen() {
                     setFromDate(date);
                     setFromDateString(formatDateForDisplay(date));
                     setFromTimeString(formatTimeForDisplay(date));
+                    setErrors(prev => ({ ...prev, toDate: false }));
+                    setToDateErrorMessage('');
                   }}
                   onClose={() => {
                     setShowFromPicker(false);
@@ -524,6 +683,8 @@ export default function PostWorkScreen() {
                     setToDate(date);
                     setToDateString(formatDateForDisplay(date));
                     setToTimeString(formatTimeForDisplay(date));
+                    setErrors(prev => ({ ...prev, toDate: false }));
+                    setToDateErrorMessage('');
                   }}
                   onClose={() => {
                     setShowToPicker(false);

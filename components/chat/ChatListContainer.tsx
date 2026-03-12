@@ -32,11 +32,11 @@ interface ChatListContainerProps {
 
 const ChatListContainer: React.FC<ChatListContainerProps> = ({
   messages,
-
   onUpdateMessages,
   onCopyMessage,
   onReplyToMessage,
   onAIResponse,
+  keyboardHeight = 0,
   flatListRef,
   contentContainerStyle,
   onFetchPage,
@@ -66,10 +66,55 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
   // Decide which message source to use
   const sourceMessages = internalMessages !== null ? internalMessages : messages;
 
+  const getMessageId = (m: any): string | null => {
+    const id = m?._id || m?.tempId || m?.id;
+    return id ? String(id) : null;
+  };
+
+  const getReplyId = (replyTo: any): string => {
+    if (!replyTo) return '';
+    if (typeof replyTo === 'string') return replyTo;
+    return String(replyTo?._id || '');
+  };
+
+  const isSameOptimisticMessage = (existing: any, incoming: any): boolean => {
+    if (!existing?.pending) return false;
+    if (!incoming) return false;
+    if (String(existing?.sender || '') !== String(incoming?.sender || '')) return false;
+    if (String(existing?.messageType || '') !== String(incoming?.messageType || '')) return false;
+    if (String(existing?.message || '') !== String(incoming?.message || '')) return false;
+    if (getReplyId(existing?.replyTo) !== getReplyId(incoming?.replyTo)) return false;
+
+    const existingFiles = Array.isArray(existing?.files) ? existing.files.length : 0;
+    const incomingFiles = Array.isArray(incoming?.files) ? incoming.files.length : 0;
+    if (existingFiles !== incomingFiles) return false;
+
+    const existingWorkId = existing?.work?._id || existing?.work;
+    const incomingWorkId = incoming?.work?._id || incoming?.work;
+    if (String(existingWorkId || '') !== String(incomingWorkId || '')) return false;
+
+    const existingOfferingId = existing?.offeringWorkId?._id || existing?.offeringWorkId;
+    const incomingOfferingId = incoming?.offeringWorkId?._id || incoming?.offeringWorkId;
+    if (String(existingOfferingId || '') !== String(incomingOfferingId || '')) return false;
+
+    return true;
+  };
+
+  const getMessageSortTime = (m: any): number => {
+    if (m?.createdAt) {
+      const timestamp = new Date(m.createdAt).getTime();
+      if (!Number.isNaN(timestamp)) return timestamp;
+    }
+    const tempId = String(m?.tempId || '');
+    const match = tempId.match(/temp_(\d+)/);
+    if (match?.[1]) return Number(match[1]);
+    return 0;
+  };
+
   // Memoize sorted messages (newest-first for inverted list)
   const sortedMessages = useMemo(() => {
     const list = [...(sourceMessages || [])].sort(
-      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      (a, b) => getMessageSortTime(b) - getMessageSortTime(a)
     );
     const seen = new Set<string>();
     const out: Message[] = [];
@@ -122,8 +167,11 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
       const newestMessage = sortedMessages[0] as any; // newest message is first in array
       const senderId = newestMessage?.sender;
 
-      // Scroll to bottom if user sent the message themselves
-      if (senderId && currentUserId && String(senderId) === String(currentUserId)) {
+      const shouldStickToBottom = isAtBottomRef.current;
+      const isSelfMessage = senderId && currentUserId && String(senderId) === String(currentUserId);
+
+      // Only auto-scroll for self message, or if user is already at bottom.
+      if (isSelfMessage || shouldStickToBottom) {
         const timeout = setTimeout(() => {
           try {
             finalFlatListRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -137,7 +185,7 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
         return () => clearTimeout(timeout);
       }
 
-      // If it's someone else's message, don't auto-scroll
+      // If user is reading older messages, don't auto-scroll
       prevMessagesLengthRef.current = currentLength;
       return;
     }
@@ -175,22 +223,55 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
 
   // Merge live external messages into internalMessages
   useEffect(() => {
-    if (internalMessages === null) return;
     try {
-      const existingIds = new Set(
-        (internalMessages || []).map(m => (m as any)._id || (m as any).tempId)
-      );
-      const newOnes = (messages || []).filter(m => {
-        const id = (m as any)._id || (m as any).tempId;
-        return id && !existingIds.has(id);
+      setInternalMessages(prev => {
+        if (prev === null) return prev;
+        const next = [...prev];
+        let changed = false;
+
+        const indexById = new Map<string, number>();
+        next.forEach((m, idx) => {
+          const id = getMessageId(m);
+          if (id) indexById.set(id, idx);
+        });
+
+        for (const incoming of messages || []) {
+          const incomingId = getMessageId(incoming);
+
+          if (incomingId && indexById.has(incomingId)) {
+            const existingIdx = indexById.get(incomingId)!;
+            if (next[existingIdx] !== incoming) {
+              next[existingIdx] = incoming;
+              changed = true;
+            }
+            continue;
+          }
+
+          const optimisticIdx = next.findIndex(m => isSameOptimisticMessage(m as any, incoming as any));
+          if (optimisticIdx !== -1) {
+            const oldId = getMessageId(next[optimisticIdx]);
+            next[optimisticIdx] = incoming;
+            changed = true;
+            if (oldId) indexById.delete(oldId);
+            if (incomingId) indexById.set(incomingId, optimisticIdx);
+            continue;
+          }
+
+          next.unshift(incoming);
+          changed = true;
+          indexById.clear();
+          next.forEach((m, idx) => {
+            const id = getMessageId(m);
+            if (id) indexById.set(id, idx);
+          });
+        }
+
+        return changed ? next : prev;
       });
-      if (newOnes.length > 0) {
-        setInternalMessages(prev => [...newOnes, ...(prev || [])]);
-      }
     } catch (e) {
       // ignore merge errors
     }
-  }, [messages, internalMessages]);
+  }, [messages]);
 
 
   // Keyboard handling - only scroll if user is at bottom
@@ -198,17 +279,13 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       () => {
-        if (isAtBottomRef.current) {
-          setTimeout(() => {
-            try {
-              finalFlatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-            } catch {
-              // try {
-              //   finalFlatListRef.current?.scrollToEnd({ animated: true });
-              // } catch {}
-            }
-          }, 100);
-        }
+        setTimeout(() => {
+          try {
+            finalFlatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+          } catch {
+            // ignore
+          }
+        }, 100);
       }
     );
 
@@ -388,7 +465,7 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'f3f4f6' }}>
       <StatusBar
         barStyle={isDeleteMode ? 'dark-content' : 'default'}
         backgroundColor={isDeleteMode ? '#f3f4f6' : 'white'}
@@ -404,23 +481,24 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
           return anyItem._id || anyItem.tempId || anyItem.id || `${anyItem.createdAt || ''}-${anyItem.sender || ''}-${index}`;
         }}
         contentContainerStyle={contentContainerStyle || {
-          padding: 16,
-          paddingBottom: 40,
+          paddingHorizontal: 6,
+          paddingBottom: 20,
+          // For inverted list, top padding renders near the input side.
+          // Keep this stable; using keyboardHeight here creates a large gap.
+          paddingTop: 80,
         }}
         renderItem={renderMessage}
         showsVerticalScrollIndicator={false}
         onScroll={({ nativeEvent }) => {
           try {
-            const { contentOffset, layoutMeasurement, contentSize } = nativeEvent as any;
-            const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
-            // Consider within 120px of bottom as "at bottom"
-            isAtBottomRef.current = distanceFromBottom < 120;
+            const { contentOffset } = nativeEvent as any;
+            // In inverted lists, offset ~0 means user is at latest messages (bottom of chat UI).
+            isAtBottomRef.current = (contentOffset?.y || 0) <= 80;
           } catch (e) {
             // ignore
           }
         }}
         scrollEventThrottle={16}
-        maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
         inverted={true}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.2}

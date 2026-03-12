@@ -1,35 +1,14 @@
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-import LoadingScreen from 'screens/Loading/LoadingScreen';
 import { profileImage } from 'assets';
 import { useFreelancerById } from 'hooks/useFreelancer';
 import Header_back from 'components/ui/Header_back';
-
-// ── i18n keys ──────────────────────────────────────────────────────────────
-//
-// en.json → "customerProfile": {
-//   "title": "Customer Profile",
-//   "fullName": "Full Name",
-//   "phone": "Phone Number",
-//   "address": "Address",
-//   "notFound": "Profile not found",
-//   "contactInfo": "Contact Information",
-//   "locationInfo": "Location"
-// }
-//
-// la.json → "customerProfile": {
-//   "title": "ໂປຣໄຟລ໌ລູກຄ້າ",
-//   "fullName": "ຊື່ແລະນາມສະກຸນ",
-//   "phone": "ເບີໂທລະສັບ",
-//   "address": "ທີ່ຢູ່",
-//   "notFound": "ບໍ່ພົບຂໍ້ມູນໂປຣໄຟລ໌",
-//   "contactInfo": "ຂໍ້ມູນຕິດຕໍ່",
-//   "locationInfo": "ສະຖານທີ່"
-// }
+import CustomerProfileSkelenton from 'skeletonScreens/CustomerProfileSkelenton';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FreelancerStackParamList } from 'types/navigation';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -84,13 +63,24 @@ const SectionHeader = ({ label }: { label: string }) => (
 // ── Main ─────────────────────────────────────────────────────────────────────
 function CustomerProfile() {
     const { t } = useTranslation();
-    const navigation = useNavigation();
-    const insets = useSafeAreaInsets();
+    const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
+
+
     const routeParams = useRoute<RouteProp<RouteParams, 'CustomerProfile'>>().params;
 
     const { data: profile, isLoading } = useFreelancerById(routeParams.userId);
 
-    if (isLoading) return <LoadingScreen />;
+
+
+
+    if (isLoading) return (
+        <ScreenWrapper safeEdges={['top', 'bottom']}>
+            <CustomerProfileSkelenton />
+        </ScreenWrapper>
+
+    );
+
+
 
     if (!profile) {
         return (
@@ -113,11 +103,23 @@ function CustomerProfile() {
         );
     }
 
+
+    const getImageSource = () => {
+        // Case 1: User selected a new local image (review mode)
+        if (profile.userProfileImage) {
+            return { uri: profile.userProfileImage };
+        } else {
+            return profileImage
+        }
+
+
+    };
     const avatarUri = profile.userProfileImage
         ? { uri: `${IMAGES_BASE_URL}${profile.userProfileImage}` }
         : profileImage;
 
     const fullName = `${profile.firstName} ${profile.lastName}`.trim();
+    const userId = profile?._id?.substring(0, 4).toUpperCase() || 'XXXX';
 
     return (
         <ScreenWrapper safeEdges={['top']} style={{ flex: 1 }}>
@@ -135,30 +137,43 @@ function CustomerProfile() {
                 showsVerticalScrollIndicator={false}
             >
 
-                {/* ── Hero Banner ── */}
-                <View className="bg-primary px-6 pt-8 pb-16 items-center">
-                    {/* Decorative circles */}
-                    <View className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white opacity-5" />
-                    <View className="absolute top-6 right-10 w-16 h-16 rounded-full bg-white opacity-5" />
-                    <View className="absolute bottom-4 left-4 w-20 h-20 rounded-full bg-white opacity-5" />
 
-                    <View className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden">
-                        <Image
-                            source={avatarUri}
-                            defaultSource={profileImage}
-                            className="w-full h-full"
-                            resizeMode="cover"
-                        />
+                <View className='flex-row justify-start gap-2 items-center bg-primary px-6 pt-8 pb-16'>
+                    {/* ── Hero Banner ── */}
+                    <View className="text-center">
+                        {/* Decorative circles */}
+                        <View className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white opacity-5" />
+                        <View className="absolute top-6 right-10 w-16 h-16 rounded-full bg-white opacity-5" />
+                        <View className="absolute bottom-4 left-4 w-20 h-20 rounded-full bg-white opacity-5" />
+
+                        <View className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden">
+                            <Pressable
+                                onPress={() => profile.userProfileImage && navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + profile.userProfileImage })}
+
+                            >
+                                <Image
+                                    source={avatarUri}
+                                    defaultSource={profileImage}
+                                    className="w-full h-full"
+                                    resizeMode="cover"
+                                />
+                            </Pressable>
+                        </View>
+                        {/* 
+                        <Text className="text-white font-bold text-xl text-center mt-3 tracking-tight">
+                            {fullName}
+                        </Text> */}
                     </View>
 
-                    <Text className="text-white font-bold text-xl mt-3 tracking-tight">
-                        {fullName}
-                    </Text>
+                    <View className=" flex-row gap-2 items-center rounded-xl py-2 px-8  border border-border">
+                        <Text className='text-surface text-sm'>ID:</Text>
+                        <View className=" rounded-xl  items-center justify-center">
+                            <Text className="text-3xl font-semibold tracking-widest text-surface">
+                                {userId}
+                            </Text>
+                        </View>
 
-                    {/* <View className="flex-row items-center gap-1.5 mt-1.5 bg-white/20 px-3 py-1 rounded-full">
-                        <View className="w-1.5 h-1.5 rounded-full bg-green-300" />
-                        <Text className="text-caption text-white font-medium">Customer</Text>
-                    </View> */}
+                    </View>
                 </View>
 
                 {/* ── Card overlapping hero ── */}

@@ -75,7 +75,6 @@ export default function AppendOwnerWork({ route }: Props) {
     // Ensure params and workId exist, redirect if not
     useEffect(() => {
         if (!params?.workId) {
-            console.log('Missing workId parameter11');
             navigation.goBack();
         }
     }, [params, navigation]);
@@ -229,13 +228,11 @@ export default function AppendOwnerWork({ route }: Props) {
                 deadLine: currentState.toDate?.toISOString() || null,
                 subWorkDetails: cleanedSubWorkDetails,
             };
-            console.log('Submitting form with data:', JSON.stringify(formData, null, 2));
 
             if (!params?.workId) {
                 console.log('Missing workId parameter');
                 return;
             }
-            console.log("params.workId", params.workId)
 
             await appendWork.mutateAsync({
                 id: params.workId,

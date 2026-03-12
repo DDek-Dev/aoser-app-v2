@@ -3,8 +3,9 @@
     "name": "Aoser",
     "slug": "aoser",
     "version": "1.0.0",
+    "scheme": "com.aoser.app",
     "orientation": "portrait",
-    "icon": "./assets/aoser_logo_no_bg.png",
+    "icon": "./assets/aoser_logo_and2.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -14,11 +15,21 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.aoser.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
+
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Aceer to save QR codes to your photo library",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleURLTypes": [ 
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.534310388147-ie1fa8js9n91smba52idrpns8hjme379"
+            ]
+          }
+        ]
       },
-      "bundleIdentifier": "com.aoser.app"
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +44,8 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/aoser_logo_no_bg_blue.png"

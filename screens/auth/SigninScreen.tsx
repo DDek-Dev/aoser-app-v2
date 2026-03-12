@@ -29,16 +29,6 @@ import { useTranslation } from 'react-i18next';
 // ========================================
 // VALIDATION SCHEMA
 // ========================================
-const schema = yup.object({
-  email: yup
-    .string()
-    .email('Invalid email')
-    .required('Email is required'),
-  password: yup
-    .string()
-    .min(4, 'Password must be at numer and characters')
-    .required('Password is required'),
-});
 
 type FormData = {
   email: string;
@@ -60,6 +50,18 @@ export default function SigninScreen({ navigation }: any) {
     googleLogin,
     googleloading,
   } = useAuth();
+
+
+  const schema = yup.object({
+  email: yup
+    .string()
+    .email(t('signUpScreen.email_invalid'))
+    .required(t('signUpScreen.email_required')),
+  password: yup
+    .string()
+    .min(4, t('signUpScreen.password_min'))
+    .required(t('signUpScreen.password_required')),
+});
 
   const {
     control,

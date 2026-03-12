@@ -1,7 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import CertificateImageGrid from 'components/ui/CertificateImageGrid';
-import { t } from 'i18next';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   View,
@@ -11,24 +10,53 @@ import {
   Dimensions,
   PanResponder,
 } from 'react-native';
-import {  Freelancer } from 'types/profile';
+import { Freelancer } from 'types/profile';
 
 type TabContentProps = {
   profile: Freelancer;
-  stylepadd: null | string;
+  stylepadd?: string;
   isReview?: boolean;
 };
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export default function TabbedProfileSection({ profile, stylepadd, isReview }: TabContentProps) {
+export default function TabbedProfileSection({ profile, stylepadd = '', isReview }: TabContentProps) {
   const [activeTab, setActiveTab] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
-  
+  const [tabHeights, setTabHeights] = useState<number[]>([]);
+  const animatedHeight = useRef(new Animated.Value(220)).current;
+
   // Keep track of current translateX during gesture
   const lastTranslateX = useRef(0);
-  const {t} = useTranslation();
-  const tabs = [`${t('freelancer_profile.tabbedProfile.experience')}`, `${t('freelancer_profile.tabbedProfile.skill')}`, `${t('freelancer_profile.tabbedProfile.portfolio')}`, `${t('freelancer_profile.tabbedProfile.aboutme')}`];
+  const { t } = useTranslation();
+  const tabs = [`${t('freelancer_profile.tabbedProfile.portfolio')}`, `${t('freelancer_profile.tabbedProfile.skill')}`, `${t('freelancer_profile.tabbedProfile.experience')}`, `${t('freelancer_profile.tabbedProfile.aboutme')}`];
+  const getSafeHeight = (index: number) => tabHeights[index] || 220;
+
+  useEffect(() => {
+    setTabHeights((prev) => {
+      if (prev.length === tabs.length) return prev;
+      return Array(tabs.length).fill(0);
+    });
+  }, [tabs.length]);
+
+  useEffect(() => {
+    const nextHeight = getSafeHeight(activeTab);
+    Animated.timing(animatedHeight, {
+      toValue: nextHeight,
+      duration: 220,
+      useNativeDriver: false,
+    }).start();
+  }, [activeTab, tabHeights, animatedHeight]);
+
+  const updateTabHeight = (tabIndex: number, nextHeight: number) => {
+    setTabHeights((prev) => {
+      const safePrev = prev.length === tabs.length ? prev : Array(tabs.length).fill(0);
+      if (safePrev[tabIndex] === nextHeight) return safePrev;
+      const clone = [...safePrev];
+      clone[tabIndex] = nextHeight;
+      return clone;
+    });
+  };
 
   const goToTab = (index: number) => {
     const clampedIndex = Math.max(0, Math.min(tabs.length - 1, index));
@@ -85,7 +113,7 @@ export default function TabbedProfileSection({ profile, stylepadd, isReview }: T
   ).current;
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white' }}>
+    <View style={{ backgroundColor: 'white' }}>
       {/* Top Tabs */}
       <View
         style={{
@@ -120,28 +148,38 @@ export default function TabbedProfileSection({ profile, stylepadd, isReview }: T
       </View>
 
       {/* Swipeable content */}
-      <View style={{ flex: 1, overflow: 'hidden' }} {...panResponder.panHandlers}>
+      <Animated.View style={{ overflow: 'hidden', height: animatedHeight }} {...panResponder.panHandlers}>
         <Animated.View
           style={{
             flexDirection: 'row',
+            alignItems: 'flex-start',
             width: SCREEN_WIDTH * tabs.length,
             transform: [{ translateX }],
           }}
         >
-          {/* Experience */}
-          <View style={{ width: SCREEN_WIDTH, padding: 16 }}>
-            
-            {profile.workExperience?.map((item, index) => (
-              <View key={index} className="text-body text-gray-600 mb-4 items-center flex-row justify-start">
-                <MaterialIcons name='fiber-manual-record' size={14} color="#3b82f6" /> 
-                <Text> {item}</Text>
-                </View>
-            ))}
+
+
+
+          {/* Portfolio */}
+          <View
+            onLayout={(event) => updateTabHeight(0, event.nativeEvent.layout.height)}
+            style={{ width: SCREEN_WIDTH, padding: 4, alignSelf: 'flex-start' }}
+          >
+
+            <CertificateImageGrid
+              isReview={isReview}
+              certificateImages={profile.certificates || []}
+              autoSlideInterval={4000} // Optional: 4 seconds, default is 3 seconds
+            />
+
           </View>
 
           {/* Skill */}
-          <View style={{ width: SCREEN_WIDTH, padding: 16 }}>
-            
+          <View
+            onLayout={(event) => updateTabHeight(1, event.nativeEvent.layout.height)}
+            style={{ width: SCREEN_WIDTH, padding: 16, alignSelf: 'flex-start' }}
+          >
+
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {profile.skills?.map(
                 (skil) => (
@@ -165,32 +203,38 @@ export default function TabbedProfileSection({ profile, stylepadd, isReview }: T
             </View>
           </View>
 
-          {/* Portfolio */}
-          <View style={{ width: SCREEN_WIDTH, padding: 16 }}>
-           
-            <CertificateImageGrid
-              isReview={isReview}
-              certificateImages={profile.certificates|| []}
-              autoSlideInterval={4000} // Optional: 4 seconds, default is 3 seconds
-            />
+          {/* Experience */}
+          <View
+            onLayout={(event) => updateTabHeight(2, event.nativeEvent.layout.height)}
+            style={{ width: SCREEN_WIDTH, padding: 16, alignSelf: 'flex-start' }}
+          >
 
+            {profile.workExperience?.map((item, index) => (
+              <View key={index} className="text-body text-gray-600 mb-4 items-center flex-row justify-start">
+                <MaterialIcons name='fiber-manual-record' size={14} color="#3b82f6" />
+                <Text> {item}</Text>
+              </View>
+            ))}
           </View>
 
           {/* About Me */}
-          <View style={{ width: SCREEN_WIDTH, padding: 16 }}>
+          <View
+            onLayout={(event) => updateTabHeight(3, event.nativeEvent.layout.height)}
+            style={{ width: SCREEN_WIDTH, padding: 16, alignSelf: 'flex-start' }}
+          >
 
             <View className='bg-blue-50 p-4 rounded-xl'>
 
-            <Text className={`text-body text-text mt-1 ${stylepadd}`}>
-              {profile.about}
+              <Text className={`text-body text-text mt-1 ${stylepadd}`}>
+                {profile.about}
 
-            </Text>
+              </Text>
 
             </View>
-          
+
           </View>
         </Animated.View>
-      </View>
+      </Animated.View>
     </View>
   );
 }

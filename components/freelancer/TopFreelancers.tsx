@@ -4,45 +4,56 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons'; // for star icon
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useNavigation } from '@react-navigation/native';
-import { useGetTopfreelancers } from 'hooks/useFreelancer';
 import { useAuth } from 'hooks/useAuth';
+import { Freelancer } from 'types/profile';
 
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
 import { TopFreelancerSkelenton } from 'skeletonScreens/TopFreelancerSkelenton';
 import { useTranslation } from 'react-i18next';
+import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton';
 
 
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL
 
 type Props = {
     scrollY?: any;
+    freelancers: Freelancer[];
+    isLoading: boolean;
+    isFetching?: boolean;
+
 }
 
-export default function TopFreelancers({ scrollY }: Props) {
+export default function TopFreelancers({
+    scrollY,
+    freelancers,
+    isLoading,
+    isFetching,
+
+}: Props) {
 
 
     type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'FreelancerProfile'>;
     const navigation = useNavigation<SearchBarNavigationProp>();
 
-
-    const { data: freelancers, isLoading, error } = useGetTopfreelancers();
     const { t } = useTranslation();
     const { user, isAuthenticated } = useAuth();
-    if (isLoading || !freelancers) return (
+    if (isLoading && freelancers.length === 0) {
+        return (
+            <View className="mt-2">
+                <View className="flex-row justify-between items-center px-1 mb-2">
+                    <Text className="text-body font-bold mb-2 px-2">{t('home.top_freelancers')}</Text>
+                </View>
+                <View className='flex-row pl-2 gap-1'>
+                    <FreelancerCardSkeleton />
+                    <FreelancerCardSkeleton />
 
-        <View>
-            <View className="flex-row justify-between items-center px-1 mb-2">
-                <Text className="text-body font-bold mb-2 px-2">{t('home.top_freelancers')}</Text>
+                </View>
             </View>
+        );
+    }
 
 
-            <View className='flex-row pl-4'>
-                <TopFreelancerSkelenton />
-                <TopFreelancerSkelenton />
-            </View>
 
-        </View>
-    );
     // if (error) return <Text>Error: {error.message}</Text>;
 
     const handleNavigate = (item_id: string) => {
@@ -55,27 +66,27 @@ export default function TopFreelancers({ scrollY }: Props) {
             console.log("user not logged in")
 
             navigation.navigate('FreelancerProfile', { userId: item_id })
-
-
         }
     }
     return (
         <View className="mt-2">
             <View className="flex-row justify-between items-center px-1 mb-2">
                 <Text className="text-body font-bold mb-2 px-2">{t('home.top_freelancers')}</Text>
+                <Pressable onPress={() => navigation.navigate('TopFreelancerList')}>
+                    <Text className="text-body  px-2 text-primary underline">{t("home.see_all")}</Text>
+                </Pressable>
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-1">
-                {freelancers?.map((item, index) => (
+                {freelancers.map((item) => (
 
                     <Pressable
-                        key={index}
+                        key={item._id}
                         onPress={() => handleNavigate(item._id)}
                     >
 
                         <View
-                            key={index}
-                            className="w-64 mr-1 bg-white rounded-xl overflow-hidden border border-border"
+                            className="w-[13.5rem] mr-1 bg-white rounded-xl overflow-hidden border border-border"
                         >
                             {item.videoPromote !== null ?
                                 <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
@@ -96,7 +107,7 @@ export default function TopFreelancers({ scrollY }: Props) {
                                     </View>
                                     <View className='p-1 bg-blue-50 rounded-full flex-row'>
                                         <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
-                                        <Text className="text-caption font-semibold text-primary ml-2">{item.hourlyRate}</Text>
+                                        <Text className="text-caption font-semibold text-primary ml-2">{new Intl.NumberFormat().format(item.hourlyRate)}</Text>
                                         <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text>
                                     </View>
                                 </View>
@@ -112,7 +123,7 @@ export default function TopFreelancers({ scrollY }: Props) {
                                         <Ionicons name="location-outline" size={18} color="#6B7280" />
 
                                         <View className="">
-                                            <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                                            <Text className="text-[12px] text-textSecondary" numberOfLines={1}>
                                                 {item.address.village}, {item.address.district}, {item.address.province}
                                             </Text>
                                         </View>
@@ -125,6 +136,13 @@ export default function TopFreelancers({ scrollY }: Props) {
 
 
             </ScrollView>
+            {/* {isFetching && (
+                <View className="px-3 pt-1 pb-2">
+                    <Text className="text-caption text-textSecondary">
+                        {t('home.refreshing') || 'Refreshing...'}
+                    </Text>
+                </View>
+            )} */}
         </View>
     );
 }

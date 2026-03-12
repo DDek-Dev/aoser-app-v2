@@ -2,8 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { View, Text } from 'react-native';
 
+type StatusDisplayProps = {
+  status: string;
+};
 
-const StatusDisplay =  (status: string ) => {
+const StatusDisplay = ({ status }: StatusDisplayProps) => {
 
   const {t} = useTranslation();
   const statusConfig = {

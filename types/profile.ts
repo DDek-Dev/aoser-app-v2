@@ -56,6 +56,7 @@ export type Freelancer = {
   customerStatus?: "NORMALE" | "PREMIUM" | "VIP";
   starRating?: number;
   hourlyRateCurrency: "LAK" | "USD";
+  rateType:'PER_HOUR' |'PER_DAY' | 'PER_JOB'
   likes: Like[];
   isLiked?: boolean;
   totalWorks?: number;
@@ -123,6 +124,7 @@ export interface UserProfile {
   systemNoti: boolean;
   isDeleted: boolean;
   hourlyRateCurrency: "LAK" | "USD";
+   rateType:'PER_HOUR' |'PER_DAY' | 'PER_JOB'
   distanceScore: number;
   createdAt: Date | string;
   updatedAt: Date | string;

@@ -24,7 +24,7 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
   const [newSubTaskTitles, setNewSubTaskTitles] = useState<{ [key: number]: string }>({});
   const sectionInputRef = useRef<TextInput>(null);
   const subTaskInputRefs = useRef<{ [key: string]: TextInput }>({});
-const {t} = useTranslation();
+  const { t } = useTranslation();
   const handleAddSection = () => {
     if (newSectionTitle.trim()) {
       const newSection: SubWorkDetail = {
@@ -88,7 +88,7 @@ const {t} = useTranslation();
     <View className="bg-blue-50 p-4 rounded-2xl mb-6">
       <Text className="text-body mb-1 text-text font-bold">{t('postWork.sub_work_details')}</Text>
       <Text className="text-caption text-textSecondary mb-4">
-       {t('postWork.add_sections')}
+        {t('postWork.add_sections')}
       </Text>
 
       <ScrollView keyboardShouldPersistTaps="handled">
@@ -97,12 +97,12 @@ const {t} = useTranslation();
             {/* Section Header */}
             <View className="flex-row items-center mb-3">
               <TextInput
+              
                 value={section.sectionTitle}
                 onChangeText={(text) => handleUpdateSectionTitle(sectionIndex, text)}
-                placeholder="Section title"
-                placeholderTextColor="#6B7280"
-                placeholderClassName='text-caption text-textSecondary'
+                placeholder={t('workDetail.add_new_section')}
 
+                placeholderTextColor="#6B7280"
                 className="flex-1 text-body  font-semibold border-b text-text border-border pb-2"
               />
               <TouchableOpacity
@@ -120,10 +120,9 @@ const {t} = useTranslation();
                 <TextInput
                   value={task.title}
                   onChangeText={(text) => handleUpdateSubTask(sectionIndex, taskIndex, text)}
-                  placeholder="Subtasks title"
-                   placeholderTextColor="#6B7280"
-                  placeholderClassName='text-caption text-textSecondary'
-
+                  placeholder={t('workDetail.add_sub_task')}
+                  placeholderTextColor="#6B7280"
+             
                   className="flex-1 ml-2 border-b border-border text-text pb-1 text-body"
                   ref={(ref) => {
                     if (ref) {
@@ -143,7 +142,7 @@ const {t} = useTranslation();
             {/* Add Subtask Input */}
             <View className="flex-row items-center ml-4 mt-2">
               <TextInput
-                placeholder="Add subtask..."
+                placeholder={t('workDetail.add_sub_task')}
                 value={newSubTaskTitles[sectionIndex] || ''}
                 onChangeText={(text) => setNewSubTaskTitles({
                   ...newSubTaskTitles,
@@ -156,7 +155,7 @@ const {t} = useTranslation();
                     subTaskInputRefs.current[`${sectionIndex}-${section.subTask.length}`] = ref;
                   }
                 }}
-                placeholderClassName='#6B7280'
+              placeholderTextColor="#6B7280"
               />
               <TouchableOpacity
                 onPress={() => handleAddSubTask(sectionIndex)}
@@ -171,12 +170,14 @@ const {t} = useTranslation();
         {/* Add New Section */}
         <View className="flex-row items-center mt-4">
           <TextInput
-            placeholder="Add new section title..."
+            placeholder={t('workDetail.add_new_section')}
             value={newSectionTitle}
             onChangeText={setNewSectionTitle}
             className="flex-1 border border-border focus:border-primary bg-white px-4 py-3 rounded-lg text-body"
             onSubmitEditing={handleAddSection}
             ref={sectionInputRef}
+              placeholderTextColor="#6B7280"
+
           />
           <TouchableOpacity
             onPress={handleAddSection}

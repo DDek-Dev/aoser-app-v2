@@ -52,7 +52,9 @@ const UpgradeToFreelancerStep2 = (
             setAboutMe(dataStep2.aboutMe || '');
             setSkills(dataStep2.skills?.length > 0 ? dataStep2.skills : ['']);
             setExperiences(dataStep2.experience?.length > 0 ? dataStep2.experience : ['']);
-            setCertificateImages(dataStep2.certificateImages || []);
+            if (dataStep2.certificateImages !== undefined) {
+                setCertificateImages(dataStep2.certificateImages);
+            }
         }
     }, [dataStep2]);
 

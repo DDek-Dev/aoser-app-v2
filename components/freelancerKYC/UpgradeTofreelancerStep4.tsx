@@ -51,8 +51,9 @@ const UpgradeToFreelancerStep4 = ({
     if (dataStep4) {
       setCardType(dataStep4.cardType);
       setCardID(dataStep4.cardID);
-      setFromDate(new Date(dataStep4.fromDate));
-      setFromDateString(formatDate(dataStep4.fromDate));
+      const parsed = dataStep4.fromDate ? new Date(dataStep4.fromDate) : null;
+      setFromDate(parsed);
+      setFromDateString(formatDate(parsed));
     }
 
 
@@ -148,7 +149,7 @@ const UpgradeToFreelancerStep4 = ({
             <FormInput
               label={t('kyc.step4.expiryDate.label')}
               required
-              placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'mm/dd/yy'}
+              placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'dd/mm/yy'}
               value={fromDateString || ''}
               inputClassName={errors?.fromDate ? 'border-error' : 'border-border'}
               ref={fromInputRef}

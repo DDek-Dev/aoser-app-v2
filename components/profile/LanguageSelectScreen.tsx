@@ -89,7 +89,7 @@ const LanguageSelectScreen = () => {
                 <TouchableOpacity
                   key={lang.key}
                   onPress={() => handleLanguageChange(lang.key as 'la' | 'en')}
-                  className={`flex-row items-center justify-between border rounded-xl p-4 mb-4 ${isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
+                  className={`flex-row items-center justify-between border rounded-2xl p-4 mb-4 ${isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
                     }`}
                 >
                   <View className="flex-row items-center">

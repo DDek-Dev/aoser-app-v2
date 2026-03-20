@@ -150,11 +150,11 @@ export default function Freelancers({
             {item.videoPromote !== null ? (
               <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
             ) : (
-              <Image
-                source={{ uri: IMAGE_BASE + item.bannerImage }}
-                className="w-full h-28"
-                resizeMode="cover"
-              />
+            <Image
+              source={{ uri: IMAGE_BASE + item.bannerImage }}
+              className="w-full h-64 object-cover"
+              resizeMode="cover"
+            />
             )}
 
             <View className="p-3 space-y-2">
@@ -169,7 +169,12 @@ export default function Freelancers({
                 <View className='p-1 bg-blue-50 rounded-full flex-row'>
                   <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
                   <Text className="text-caption font-semibold text-primary ml-2">{new Intl.NumberFormat().format(item.hourlyRate)}</Text>
-                  <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text>
+                  {/* <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text> */}
+                  <Text className="text-caption text-primary" numberOfLines={1}>/
+                    {item?.rateType === 'PER_HOUR' && t('kyc.step3.rateType.perHour')}
+                    {item?.rateType === 'PER_DAY' && t('kyc.step3.rateType.perDay')}
+                    {item?.rateType === 'PER_JOB' && t('kyc.step3.rateType.perJob')}
+                  </Text>
                 </View>
               </View>
 

@@ -2,10 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
+type Props = {
+  title:string;
+  desc:string;
+}
+export const FavoriteNoResult = ({title, desc}: Props) => {
 
-export const FavoriteNoResult = () => {
 
-  const { t } = useTranslation();
   return (
 
     <View className="flex-1 justify-center items-center px-6">
@@ -13,10 +16,10 @@ export const FavoriteNoResult = () => {
         <Ionicons name="time-outline" size={64} color="#E5E7EB" />
       </View>
       <Text className="text-xl font-semibold text-textSecondary mb-2">
-        {t('favorites.work.no_favorite')}
+        {title}
       </Text>
       <Text className="text-gray-500 text-center mb-8">
-        {t('favorites.work.items_will_appear_here')}
+       {desc}
       </Text>
     </View>
 

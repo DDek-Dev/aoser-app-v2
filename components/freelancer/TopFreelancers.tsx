@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, Pressable } from 'react-native';
+import { View, Text, Image, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons'; // for star icon
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -8,7 +8,6 @@ import { useAuth } from 'hooks/useAuth';
 import { Freelancer } from 'types/profile';
 
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
-import { TopFreelancerSkelenton } from 'skeletonScreens/TopFreelancerSkelenton';
 import { useTranslation } from 'react-i18next';
 import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton';
 
@@ -34,6 +33,11 @@ export default function TopFreelancers({
 
     type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'FreelancerProfile'>;
     const navigation = useNavigation<SearchBarNavigationProp>();
+    const {width} = useWindowDimensions();
+    const HORIZONTAL_PADDING = 0;
+    const GAP=4;
+    const cardWidth = (width-HORIZONTAL_PADDING * 2 - GAP)/2.04
+
 
     const { t } = useTranslation();
     const { user, isAuthenticated } = useAuth();
@@ -77,7 +81,7 @@ export default function TopFreelancers({
                 </Pressable>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-1">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-1" contentContainerStyle={{paddingHorizontal:HORIZONTAL_PADDING, gap:GAP}}>
                 {freelancers.map((item) => (
 
                     <Pressable
@@ -86,15 +90,13 @@ export default function TopFreelancers({
                     >
 
                         <View
-                            className="w-[13.5rem] mr-1 bg-white rounded-xl overflow-hidden border border-border"
+                            className="bg-white rounded-xl overflow-hidden  border border-border"
+                            style={{ width: cardWidth }}
                         >
                             {item.videoPromote !== null ?
                                 <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
                                 :
                                 <Image source={{ uri: IMAGE_BASE + item.bannerImage }} className="w-full h-28" resizeMode="cover" />}
-
-
-
                             <View className="p-2 space-y-1">
                                 <View className='flex-row justify-between'>
                                     <View className='flex-row gap-2'>
@@ -108,7 +110,11 @@ export default function TopFreelancers({
                                     <View className='p-1 bg-blue-50 rounded-full flex-row'>
                                         <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
                                         <Text className="text-caption font-semibold text-primary ml-2">{new Intl.NumberFormat().format(item.hourlyRate)}</Text>
-                                        <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text>
+                                        <Text className="text-caption text-primary" numberOfLines={1}>/
+                                            {item?.rateType === 'PER_HOUR' && t('kyc.step3.rateType.perHour')}
+                                            {item?.rateType === 'PER_DAY' && t('kyc.step3.rateType.perDay')}
+                                            {item?.rateType === 'PER_JOB' && t('kyc.step3.rateType.perJob')}
+                                        </Text>
                                     </View>
                                 </View>
                                 <Text className="text-body font-semibold" numberOfLines={1}>{item.jobTitle}</Text>

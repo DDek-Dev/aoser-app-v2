@@ -56,7 +56,7 @@ export type Freelancer = {
   customerStatus?: "NORMALE" | "PREMIUM" | "VIP";
   starRating?: number;
   hourlyRateCurrency: "LAK" | "USD";
-  rateType:'PER_HOUR' |'PER_DAY' | 'PER_JOB'
+  rateType: 'PER_HOUR' | 'PER_DAY' | 'PER_JOB'
   likes: Like[];
   isLiked?: boolean;
   totalWorks?: number;
@@ -69,15 +69,15 @@ export type Freelancer = {
 export interface UserProfile {
   _id: string;
   user: {
-    _id:string;
-    email:string;
+    _id: string;
+    email: string;
   };
   userCode: string;
   gender: "MALE" | "FEMALE" | "OTHER";
   firstName: string;
   lastName: string;
   profileImage: string;
- 
+
   email: string;
   businessType: "CUSTOMER" | "FREELANCER" | "TRANSPORT" | "ACCOMMODATION" | "COMPANY" | "SHOP" | "AOSER_ADMIN";
   phone: string;
@@ -86,6 +86,7 @@ export interface UserProfile {
   personalCardExpireDate: Date | string;
   personalCardImage: string;
   bankAccountId: string;
+  bankName: string;
   bankAccountName: string;
   bankAccountType: string;
   bankAccountNumber: string;
@@ -94,7 +95,7 @@ export interface UserProfile {
   address: {
     village: string;
     country: string;
-    province: string ;
+    province: string;
     district: string;
     latitude: number;
     longitude: number;
@@ -123,12 +124,17 @@ export interface UserProfile {
   chatNoti: boolean;
   systemNoti: boolean;
   isDeleted: boolean;
+  likes: Like[];
+  isLiked?: boolean;
   hourlyRateCurrency: "LAK" | "USD";
-   rateType:'PER_HOUR' |'PER_DAY' | 'PER_JOB'
+  rateType: 'PER_HOUR' | 'PER_DAY' | 'PER_JOB'
   distanceScore: number;
   createdAt: Date | string;
   updatedAt: Date | string;
-
+  totalWorks?: number;
+  totalCompletedWork?: number;
+  totalDoingWork?: number;
+  totalLikes?: number;
 
 }
 

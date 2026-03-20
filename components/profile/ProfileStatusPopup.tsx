@@ -6,6 +6,7 @@ import {
     TouchableWithoutFeedback,
     TouchableOpacity,
     Modal,
+    useWindowDimensions,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import DatePicker from 'components/ui/DatePicker';
@@ -18,21 +19,27 @@ import { FreelancerStackParamList } from 'types/navigation';
 import { useTranslation } from 'react-i18next';
 // import { getProfileBusyDateFromDB } from 'your-data-fetching-saource'; // TODO: you implement this
 import { useUpdateFreelancerProfile } from 'hooks/useFreelancer';
-import { Freelancer } from 'types/profile';
+import { UserProfile } from 'types/profile';
 
 type Props = {
     workStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
     isme: boolean;
 }
+
+type PopupAnchor = { x: number; y: number; width: number; height: number };
+
 const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const [showPopup, setShowPopup] = useState(false);
+    const [popupAnchor, setPopupAnchor] = useState<PopupAnchor | null>(null);
     const [tempFromDate, setTempFromDate] = useState(new Date());
     const [showFromPicker, setShowFromPicker] = useState(false);
     const [showBusyDateInput, setShowBusyDateInput] = useState(false);
     const [dateError, setDateError] = useState('');
     const fromInputRef = useRef(null);
     const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE' | 'SUSPENDED'>(workStatus);
+    const statusButtonWrapperRef = useRef<View>(null);
+    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
     const today = dayjs().startOf('day');
     const updateProfileMutation = useUpdateFreelancerProfile();
@@ -42,6 +49,24 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
 
     const formatDate = (date: Date | null) => {
         return date ? dayjs(date).format('DD/MM/YYYY') : '';
+    };
+
+    const closePopup = () => {
+        setShowPopup(false);
+        setPopupAnchor(null);
+    };
+
+    const openPopup = () => {
+        const node = statusButtonWrapperRef.current;
+        if (!node?.measureInWindow) {
+            setShowPopup(true);
+            return;
+        }
+
+        node.measureInWindow((x, y, width, height) => {
+            setPopupAnchor({ x, y, width, height });
+            setShowPopup(true);
+        });
     };
 
     const handleChangeStatus = async (newStatus: 'ACTIVE' | 'INACTIVE') => {
@@ -56,8 +81,8 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
         console.log('updateData', updateData);
 
         // Update profile
-        const result = await updateProfileMutation.mutateAsync(updateData as Freelancer);
-        setShowPopup(false);
+        await updateProfileMutation.mutateAsync(updateData as UserProfile);
+        closePopup();
         if (newStatus === 'INACTIVE') {
             // setTempFromDate(fromDate);
             setStatus('INACTIVE');
@@ -92,6 +117,18 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
         setDateError('');
     };
 
+    const POPUP_WIDTH = 150;
+    const POPUP_MARGIN = 8;
+    const popupLeft = popupAnchor
+        ? Math.min(
+            windowWidth - POPUP_WIDTH - POPUP_MARGIN,
+            Math.max(POPUP_MARGIN, popupAnchor.x + popupAnchor.width - POPUP_WIDTH)
+        )
+        : windowWidth - POPUP_WIDTH - 16;
+    const popupTop = popupAnchor
+        ? Math.min(windowHeight - POPUP_MARGIN, popupAnchor.y + popupAnchor.height + 8)
+        : 60;
+
     return (
         <View className="absolute right-4 top-12 z-50 flex-row items-center gap-4">
             {isme && (
@@ -104,27 +141,29 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
                 </Pressable>
             )}
 
-            <Pressable onPress={() => setShowPopup(true)} className="p-1 bg-blue-50 rounded-full w-[100px]">
-                <View className="p-3 bg-gray-200 rounded-full">
+            <View ref={statusButtonWrapperRef}>
+                <Pressable onPress={openPopup} className="p-1 bg-blue-50 rounded-full w-[100px]">
+                    <View className="p-3 bg-gray-200 rounded-full">
 
-                    {status === 'ACTIVE' ?
-                        <Text className="text-caption text-green-500 text-center">{t('freelancer_profile.active')}</Text>
+                        {status === 'ACTIVE' ?
+                            <Text className="text-caption text-green-500 text-center">{t('freelancer_profile.active')}</Text>
 
-                        :
-                        <Text className="text-caption text-warning text-center">{t('freelancer_profile.busy')}</Text>
+                            :
+                            <Text className="text-caption text-warning text-center">{t('freelancer_profile.busy')}</Text>
 
 
-                    }
-                </View>
-            </Pressable>
+                        }
+                    </View>
+                </Pressable>
+            </View>
 
-            {showPopup && (
-                <View className="absolute right-4 top-12 z-50">
-                    <TouchableWithoutFeedback onPress={() => setShowPopup(false)}>
-                        <View className="absolute -top-12 -left-0 w-[2000px] h-[2000px] bg-transparent z-0" />
-                    </TouchableWithoutFeedback>
-
-                    <View className="bg-blue-400 rounded-2xl px-4 py-4 w-[150px] shadow-lg mt-2 z-10">
+            <Modal transparent visible={showPopup} animationType="fade" onRequestClose={closePopup}>
+                <Pressable className="flex-1 mt-8" onPress={closePopup} >
+                    <Pressable
+                        onPress={() => { }}
+                        style={{ position: 'absolute', left: popupLeft, top: popupTop, width: POPUP_WIDTH }}
+                        className="bg-primary rounded-2xl px-4 py-4 shadow-lg"
+                    >
                         <Pressable
                             onPress={() => handleChangeStatus('ACTIVE')}
                             className="bg-blue-100 px-6 w-full mb-4 py-2 rounded-full"
@@ -138,9 +177,9 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
                             <Text className="text-warning text-sm font-semibold text-center">{t('freelancer_profile.busy')}</Text>
                             {/* <Text className="text-warning text-sm font-semibold text-center"> {tempFromDate ? `${formatDate(tempFromDate)}` : 'Busy'}</Text> */}
                         </Pressable>
-                    </View>
-                </View>
-            )}
+                    </Pressable>
+                </Pressable>
+            </Modal>
 
             {isme && (
                 <Pressable onPress={() => navigation.navigate('AuthFreelancerSetting')} className="bg-border p-3 rounded-full">

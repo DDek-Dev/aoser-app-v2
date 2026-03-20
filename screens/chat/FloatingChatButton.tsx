@@ -20,8 +20,8 @@ import { useQueryClient } from '@tanstack/react-query';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BUTTON_SIZE = 60;
 const EDGE_MARGIN = 8;
-const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
-const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 64 : 120;
+const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 104 : StatusBar.currentHeight || 24;
+const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 104 : 120;
 
 const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   // Start at bottom right with 164px margin from bottom

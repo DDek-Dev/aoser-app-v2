@@ -24,7 +24,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import Header_back from 'components/ui/Header_back';
-import { District, FileWithType, Province, SelectedAddress } from 'types';
+import { District, FileWithType, Province } from 'types';
 import { getPresignedUrls, uploadFileToUrl } from 'api/uploadUtils';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { profileImage } from 'assets';
@@ -112,7 +112,7 @@ const EditAoserProfile = () => {
         village: false,
     });
 
-      const queryClient = useQueryClient(); 
+    const queryClient = useQueryClient();
     // ── API hooks ─────────────────────────────────────────────────────────────
     const { data: addressData, isLoading: addressLoading, error: addressError } = useSelectAddress();
     const { data, isLoading: profileLoading } = useMyProfile();
@@ -479,8 +479,9 @@ const EditAoserProfile = () => {
 
                         <View className="mb-2">
                             <View
-                                className={`flex-row items-center px-4 py-2 rounded-2xl border ${errors.firstName ? 'border-error' : 'border-border'
+                                className={`flex-row items-center px-4 rounded-2xl border ${errors.firstName ? 'border-error' : 'border-border'
                                     }`}
+                                    style={{ minHeight: 52 }} 
                             >
                                 <TextInput
                                     placeholder={t('signUpScreen.firstName')}
@@ -503,8 +504,9 @@ const EditAoserProfile = () => {
 
                         <View className="mb-4">
                             <View
-                                className={`flex-row items-center px-4 py-2 rounded-2xl border ${errors.lastName ? 'border-error' : 'border-border'
+                                className={`flex-row items-center px-4  rounded-2xl border ${errors.lastName ? 'border-error' : 'border-border'
                                     }`}
+                                    style={{ minHeight: 52 }} 
                             >
                                 <TextInput
                                     placeholder={t('signUpScreen.lastName')}
@@ -530,7 +532,7 @@ const EditAoserProfile = () => {
                             {t('signUpScreen.email')}
                         </Text>
                         <View className="mb-4">
-                            <View className="flex-row items-center px-4 py-2 rounded-2xl border border-border bg-gray-100">
+                            <View className="flex-row items-center px-4  rounded-2xl border border-border bg-gray-100"   style={{ minHeight: 52 }} >
                                 <TextInput
                                     placeholder="aoser@example.com"
                                     className="flex-1 text-gray-500"
@@ -557,56 +559,62 @@ const EditAoserProfile = () => {
                             />
                         </View>
 
-                        {/* ── Address ──────────────────────────────────────── */}
-                        <Text className="text-body text-text font-bold mb-2">
-                            {t('kyc.step4.location.title')}
-                        </Text>
+                        {data?.businessType === "FREELANCER" && data.registrationStatus === "APPROVED_COMPLETE" &&
+                            <>
 
-                        <View className="bg-blue-50 px-4 py-4 rounded-xl">
-                            <Dropdown
-                                label={t('kyc.step4.location.province.label')}
-                                value={selectedProvince?.province_la}
-                                placeholder={t('kyc.step4.location.province.placeholder')}
-                                options={provinceOptions}
-                                onSelect={handleProvinceSelect}
-                            />
-
-                            <Dropdown
-                                label={t('kyc.step4.location.district.label')}
-                                value={selectedDistrict?.district_la}
-                                placeholder={t('kyc.step4.location.district.placeholder')}
-                                options={districtOptions}
-                                onSelect={handleDistrictSelect}
-                                disabled={!selectedProvince}
-                            />
-
-                            <View className="mb-4">
-                                <Text className="text-body font-medium text-text mb-2">
-                                    {t('kyc.step4.location.village.label')}
+                                {/* ── Address ──────────────────────────────────────── */}
+                                <Text className="text-body text-text font-bold mb-2">
+                                    {t('kyc.step4.location.title')}
                                 </Text>
-                                <TextInput
-                                    value={village}
-                                    onChangeText={handleVillageChange}
-                                    placeholder={t('kyc.step4.location.village.placeholder')}
-                                    placeholderTextColor="#9CA3AF"
-                                    editable={!!selectedDistrict}
-                                    className={`px-4 py-4 rounded-lg border text-body ${selectedDistrict
-                                            ? 'bg-surface border-border text-text'
-                                            : 'bg-gray-100 border-gray-200 text-gray-400'
-                                        } ${errors.village ? 'border-error' : ''}`}
-                                />
-                                {errors.village && (
-                                    <Text className="text-caption text-error mt-1">
-                                        {t('kyc.step4.location.village.error')}
-                                    </Text>
-                                )}
-                                {!selectedDistrict && (
-                                    <Text className="text-caption text-textSecondary mt-1">
-                                        {t('kyc.step4.location.village.hint')}
-                                    </Text>
-                                )}
-                            </View>
-                        </View>
+
+                                <View className="bg-blue-50 px-4 py-4 rounded-xl">
+                                    <Dropdown
+                                        label={t('kyc.step4.location.province.label')}
+                                        value={selectedProvince?.province_la}
+                                        placeholder={t('kyc.step4.location.province.placeholder')}
+                                        options={provinceOptions}
+                                        onSelect={handleProvinceSelect}
+                                    />
+
+                                    <Dropdown
+                                        label={t('kyc.step4.location.district.label')}
+                                        value={selectedDistrict?.district_la}
+                                        placeholder={t('kyc.step4.location.district.placeholder')}
+                                        options={districtOptions}
+                                        onSelect={handleDistrictSelect}
+                                        disabled={!selectedProvince}
+                                    />
+
+                                    <View className="mb-4">
+                                        <Text className="text-body font-medium text-text mb-2">
+                                            {t('kyc.step4.location.village.label')}
+                                        </Text>
+                                        <TextInput
+                                            value={village}
+                                            onChangeText={handleVillageChange}
+                                            placeholder={t('kyc.step4.location.village.placeholder')}
+                                            placeholderTextColor="#9CA3AF"
+                                            editable={!!selectedDistrict}
+                                            className={`px-4 py-4 rounded-lg border text-body ${selectedDistrict
+                                                ? 'bg-surface border-border text-text'
+                                                : 'bg-gray-100 border-gray-200 text-gray-400'
+                                                } ${errors.village ? 'border-error' : ''}`}
+                                        />
+                                        {errors.village && (
+                                            <Text className="text-caption text-error mt-1">
+                                                {t('kyc.step4.location.village.error')}
+                                            </Text>
+                                        )}
+                                        {!selectedDistrict && (
+                                            <Text className="text-caption text-textSecondary mt-1">
+                                                {t('kyc.step4.location.village.hint')}
+                                            </Text>
+                                        )}
+                                    </View>
+                                </View>
+                            </>
+
+                        }
                     </View>
                 </ScrollView>
 

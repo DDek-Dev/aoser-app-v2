@@ -19,7 +19,31 @@ export default function UpgradeToFreelancerReview() {
   const { data: myProfile, isLoading: isLoadingMyProfile } = useMyProfile();
   const currentUserId = myProfile?._id || '';
   const { data: dbProfile, isLoading: isLoadingDb } = useFreelancerById(currentUserId);
-  const profile = localProfile || dbProfile;
+  const isLocalDraft = !!localProfile;
+
+  // Merge local draft on top of DB, but keep DB optional media if the draft never touched it.
+  const profile = (() => {
+    if (!localProfile) return dbProfile;
+    if (!dbProfile) return localProfile;
+
+    const promoTouched = (localProfile as any).promoVideoTouched === true;
+    const certsTouched = (localProfile as any).certificatesTouched === true;
+
+    const mergedVideoPromote = promoTouched
+      ? localProfile.videoPromote
+      : (localProfile.videoPromote || dbProfile.videoPromote);
+
+    const mergedCertificates = certsTouched
+      ? localProfile.certificates
+      : ((localProfile.certificates && localProfile.certificates.length > 0) ? localProfile.certificates : dbProfile.certificates);
+
+    return {
+      ...dbProfile,
+      ...localProfile,
+      videoPromote: mergedVideoPromote,
+      certificates: mergedCertificates,
+    };
+  })();
   const isLoading = isLoadingLocal || (!localProfile && (isLoadingMyProfile || (!!currentUserId && isLoadingDb)));
 
   console.log("profile", profile?.userProfileImage);
@@ -40,7 +64,7 @@ export default function UpgradeToFreelancerReview() {
         status={(profile.workerStatus || 'ACTIVE') as "ACTIVE" | "INACTIVE" | "SUSPENDED"}
         // busyUntil={profile.busyUntil}
         ishidden={true}
-        isReview={true}
+        isReview={isLocalDraft}
       />
       {/* <Hire_Chat_Button userId={''} /> */}
       <View className="flex-row justify-center  items-center px-4 gap-2 w-full selection:mt-4" >
@@ -64,7 +88,7 @@ export default function UpgradeToFreelancerReview() {
       {profile.videoPromote ?
         <VDOPromote
           video={profile.videoPromote}
-          isReview={true}
+          isReview={isLocalDraft}
           context="profile"
           isScreenFocused={true}
         />
@@ -73,7 +97,7 @@ export default function UpgradeToFreelancerReview() {
       }
 
 
-      <TabbedProfileSection profile={profile} stylepadd="" isReview={true} />
+      <TabbedProfileSection profile={profile} stylepadd="" isReview={isLocalDraft} />
       <WhatExpect profile={profile} />
 
 

@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
 import { useGetServiceTypes } from 'hooks/useFreelancer';
 import { SearchBarSkeleton } from 'skeletonScreens/ShimmerView';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
 const MAX_HISTORY_ITEMS = 10;
@@ -30,6 +31,7 @@ export default function SearchBar() {
   const [searchText, setSearchText] = useState(initialText);
   const [historySearchTags, setHistorySearchTags] = useState<string[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const insets = useSafeAreaInsets(); 
   
   const inputRef = useRef<TextInput>(null);
 
@@ -147,7 +149,7 @@ export default function SearchBar() {
   }
 
   return (
-    <View className="flex-1 bg-white pt-12 px-4">
+    <View className="flex-1 bg-white  px-4" style={{ paddingTop: insets.top + 8 }}>
       {/* Search Header */}
       <View className="flex-row items-center mb-4">
         <TouchableOpacity onPress={() => navigation.popToTop()} className="p-1">
@@ -248,10 +250,10 @@ export default function SearchBar() {
         </View>
       ) : (
         <View className="items-center justify-center py-12">
-          <Ionicons name="search-outline" size={48} color="#D1D5DB" />
-          <Text className="text-caption text-gray-400 mt-4">
+          {/* <Ionicons name="search-outline" size={48} color="#D1D5DB" /> */}
+          {/* <Text className="text-caption text-gray-400 mt-4">
             {t('home.no_search_history') || 'No search history yet'}
-          </Text>
+          </Text> */}
         </View>
       )}
     </View>

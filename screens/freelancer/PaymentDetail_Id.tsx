@@ -41,7 +41,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (getBillDataMutation.isPending) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center">
                     <ActivityIndicator size="large" color="#3B82F6" />
@@ -55,7 +55,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (getBillDataMutation.isError) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center px-6">
                     <View className="w-16 h-16 rounded-full bg-red-100 items-center justify-center mb-4">
@@ -86,7 +86,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (!billData || !billData.payment) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center px-6">
                     <Text className="text-xl font-bold text-gray-800 mb-2">
@@ -119,7 +119,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
                 <Header_back
-                    text={t('protectedRoute.protectedRoute')}
+                    text={t('protectedRoute.back')}
                     onPress={navigation.goBack}
                     iconColor="#3B82F6"
                 />
@@ -134,7 +134,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
 
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']}>
-            <Header_back text={t('protectedRoute.protectedRoute')} onPress={navigation.goBack} iconColor='#3B82F6' />
+            <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
             <ScrollView className="flex-1 px-4 py-4">
                 {/* Status Badge */}

@@ -52,7 +52,7 @@ function Header_back({
 
   return (
     <View 
-      className={`${containerStyles} p-4`}
+      className={`${containerStyles}`}
       onTouchEnd={onPress}
     
     >

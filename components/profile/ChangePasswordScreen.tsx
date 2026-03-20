@@ -217,27 +217,33 @@ const ChangePasswordScreen = () => {
   // Handle back button
   const handleBack = () => {
     if (step === 'otp') {
-      Alert.alert(
-        t('changePassword.goBack'),
-        t('changePassword.goBackMessage'),
-        [
-          {
-            text: t('common.cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('common.yes'),
-            onPress: () => {
-              setStep('email');
-              clearErrors('otp');
-              if (countdownRef.current) {
-                clearInterval(countdownRef.current);
-              }
-              setCountdown(0);
-            },
-          },
-        ]
-      );
+      // Alert.alert(
+      //   t('changePassword.goBack'),
+      //   t('changePassword.goBackMessage'),
+      //   [
+      //     {
+      //       text: t('common.cancel'),
+      //       style: 'cancel',
+      //     },
+      //     {
+      //       text: t('common.yes'),
+      //       onPress: () => {
+      //         setStep('email');
+      //         clearErrors('otp');
+      //         if (countdownRef.current) {
+      //           clearInterval(countdownRef.current);
+      //         }
+      //         setCountdown(0);
+      //       },
+      //     },
+      //   ]
+      // );
+      setStep('email');
+      clearErrors('otp');
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+      setCountdown(0);
     } else if (step === 'password') {
       setStep('otp');
     } else {

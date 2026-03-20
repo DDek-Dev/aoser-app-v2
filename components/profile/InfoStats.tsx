@@ -12,7 +12,7 @@ export default function InfoStats({ success, jobs, rewards }: InfoStatsType) {
   const {t} = useTranslation();
   return (
     <>
-      <View className="flex-row justify-between w-[80%] my-6 self-center">
+      <View className="flex-row justify-between w-[80%] my-6 self-center ">
         <View className="items-center">
           <MaterialIcons name="verified" size={20} color="#3b82f6" />
           <Text className="text-sm mt-1 text-gray-600">{success}</Text>

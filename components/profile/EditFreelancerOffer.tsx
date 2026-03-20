@@ -14,6 +14,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { useMyProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useTranslation } from 'react-i18next';
+import BudgetInputKYC from 'components/ui/BudgetIputKYC';
 
 const EditFreelancerOffer = () => {
     const insets = useSafeAreaInsets();
@@ -21,6 +22,7 @@ const EditFreelancerOffer = () => {
     const [serviceDesc, setServiceDesc] = useState('');
     const [hourlyRate, setHourlyRate] = useState<number | null>(null); // Allow null
     const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
+    const [rateType, setRateType] = useState<'PER_HOUR' | 'PER_JOB' | 'PER_DAY'>('PER_HOUR');
     const [errors, setErrors] = useState({
         serviceDesc: false,
         hourlyRate: false
@@ -34,6 +36,7 @@ const EditFreelancerOffer = () => {
             setServiceDesc(data.customerExpect || '');
             setHourlyRate(data.hourlyRate || null);
             setBudgetCurrency(data.hourlyRateCurrency || 'LAK');
+            setRateType(data.rateType || 'PER_HOUR');
         }
 
 
@@ -66,7 +69,8 @@ const EditFreelancerOffer = () => {
         const formData = {
             customerExpect: serviceDesc.trim(),
             hourlyRate: hourlyRate || 0, // Ensure it's a number
-            hourlyRateCurrency: budgetCurrency
+            hourlyRateCurrency: budgetCurrency,
+            rateType: rateType,
         };
 
         console.log("formData", formData);
@@ -131,7 +135,7 @@ const EditFreelancerOffer = () => {
 
                     />
 
-                    <BudgetInput
+                    {/* <BudgetInput
                         label={t('kyc.step3.hourlyRate.label')}
 
                         value={hourlyRate}
@@ -147,6 +151,25 @@ const EditFreelancerOffer = () => {
                         required
                         isValidate={`${errors.serviceDesc ? t('kyc.step3.hourlyRate.error') : ''}`}
 
+                    /> */}
+                    <BudgetInputKYC
+                        label={t('kyc.step3.hourlyRate.label')}
+
+                        value={hourlyRate}
+                        onChange={(value) => {
+                            setHourlyRate(value);
+                            if (errors.hourlyRate && value > 0) {
+                                setErrors(prev => ({ ...prev, hourlyRate: false }));
+                            }
+                        }}
+                        rateType={rateType}
+                        setRateType={setRateType}
+                        currency={budgetCurrency}
+                        onCurrencyChange={setBudgetCurrency}
+                        error={errors.hourlyRate}
+                        required
+                        isValidate={`${errors.serviceDesc ? t('kyc.step3.hourlyRate.error') : ''}`}
+                        isRateTypeShow={true}
                     />
 
                     <View className="bg-blue-50 border border-primary rounded-xl px-4 py-2 items-center mt-4">
@@ -172,7 +195,7 @@ const EditFreelancerOffer = () => {
                     disabled={isUpdating}
                 >
                     <Text className="text-white text-base font-semibold">
-                        {isUpdating ? t('kyc.toast.uploading.title') : t('kyc.update.update')}
+                        {isUpdating ? t('payment.saving') : t('kyc.update.update')}
 
                     </Text>
                 </TouchableOpacity>

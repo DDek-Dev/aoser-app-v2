@@ -86,14 +86,7 @@ const FreelancerRoleGate = () => {
 
           {/* Action Buttons */}
           <View className="w-full gap-3">
-            {/* <TouchableOpacity
-        // onPress={() => navigation.navigate('SupportScreen')} // Optional: add support screen
-        className="bg-primary py-4 px-6 rounded-xl items-center"
-      >
-        <Text className="text-surface text-body font-semibold">
-          {t('freelancerRoleGate.contactSupport')}
-        </Text>
-      </TouchableOpacity> */}
+            
 
             <TouchableOpacity
               onPress={() => navigation.popToTop()}
@@ -176,14 +169,7 @@ const FreelancerRoleGate = () => {
               </Text>
             </TouchableOpacity>
 
-            {/* <TouchableOpacity
-        onPress={() => navigation.navigate('SupportScreen')}
-        className="bg-background border border-border py-4 px-6 rounded-xl items-center"
-      >
-        <Text className="text-text text-body font-semibold">
-          {t('freelancerRoleGate.contactSupport')}
-        </Text>
-      </TouchableOpacity> */}
+            
 
             <TouchableOpacity
               onPress={() => navigation.popToTop()}
@@ -293,7 +279,7 @@ const FreelancerRoleGate = () => {
             {t('freelancerRoleGate.pendingSubtitle')}
           </Text>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.popToTop()}
             className="bg-primary flex-row gap-2 justify-center border border-border py-4 px-6 rounded-xl items-center"
           >
             <MaterialIcons name="chevron-left" size={24} color="#FFFFFF" />

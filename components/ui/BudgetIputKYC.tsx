@@ -98,7 +98,7 @@ const BudgetInputKYC: React.FC<Props> = ({
             </View>
             {isRateTypeShow &&
                 <View className="flex-row mb-4 space-x-4 gap-2">
-                    {['PER_HOUR', 'PER_JOB', 'PER_DAY'].map((type) => (
+                    {['PER_HOUR', 'PER_DAY', 'PER_JOB' ].map((type) => (
                         <Pressable
                             key={type}
                             onPress={() => setRateType(type as 'PER_HOUR' |'PER_DAY' | 'PER_JOB')}

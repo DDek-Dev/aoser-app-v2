@@ -21,6 +21,7 @@ import { UserProfile } from 'types/profile';
 import { useTranslation } from 'react-i18next';
 import { SearchViewSkeleton } from 'skeletonScreens/ShimmerView';
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -173,7 +174,7 @@ export default function SearchView() {
 
   const { data: freelancers, isLoading: freelancersLoading, refetch, isRefetching } = useFreeLancers();
   const { data: serviceTypes, isLoading: serviceTypesLoading } = useGetServiceTypes();
-
+ const insets = useSafeAreaInsets(); 
   // Create service type lookup map
   const serviceTypeMap = useMemo(() => {
     if (!serviceTypes) return new Map();
@@ -292,9 +293,9 @@ export default function SearchView() {
 
   return (
     <>
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-white" >
         {/* Header */}
-        <View className="bg-primary pt-12 pb-4 rounded-b-2xl shadow-sm">
+        <View className="bg-primary pb-4 px-4 rounded-b-2xl shadow-sm" style={{ paddingTop: insets.top + 8 }}>
           <View className="flex-row items-center px-1 mb-1">
             <TouchableOpacity onPress={() => navigation.navigate('SearchBar', { text: '', focus: false })} className="p-1">
               <MaterialIcons name="chevron-left" size={32} color="#fff" />
@@ -303,7 +304,7 @@ export default function SearchView() {
               onPress={() => navigation.navigate('SearchBar', { text: searchText, focus: true })}
               className="flex-1 ml-2"
             >
-              <View className="flex-row items-center bg-white rounded-full px-4 py-3">
+              <View className="flex-row items-center bg-white rounded-full px-4 py-4">
                 <MaterialIcons name="search" size={20} color="#666" />
                 <Text className="ml-2 text-gray-800 flex-1" numberOfLines={1}>
                   {searchText}
@@ -322,7 +323,7 @@ export default function SearchView() {
               {serviceTypes.map((tag, index) => (
                 <TouchableOpacity
                   key={tag._id || tag._id || index}
-                  className="px-4 py-2 rounded-full mr-2 border border-white/30"
+                  className="px-4 py-2 rounded-full mr-2 border mt-2 border-white/30"
                   onPress={() => handleServiceTypePress(tag.name)}
                 >
                   <Text className="text-sm text-white">{tag.name}</Text>

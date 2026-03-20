@@ -1,4 +1,4 @@
-import { View, } from 'react-native';
+import { Platform, View, } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -58,6 +58,7 @@ import CustomerProfile from 'screens/profile/CustomerProfile';
 import AppendOwnerWork from 'components/publicwork/AppendOwnerWork';
 import TopFreelancerList from 'components/freelancer/TopFreelancerList';
 import ConfirmPostjob from 'components/publicwork/ConfirmPostjob';
+import { useEffect } from 'react';
 
 
 
@@ -70,7 +71,7 @@ function TabNavigator() {
   const { isAuthenticated } = useAuthContext();
   const { t } = useTranslation();
   return (
-    <ScreenWrapper safeEdges={['bottom']} style={{ flex: 1, backgroundColor: '#000' }}>
+    <ScreenWrapper safeEdges={['bottom']} style={{ flex: 1, backgroundColor: Platform.OS === 'ios' ? '#fff' : '#000' }}>
       <View className="flex-1 relative">
         <Tab.Navigator
           tabBar={(props) => <CustomTabBar {...props} />}
@@ -129,10 +130,19 @@ function TabNavigator() {
 export default function MainNavigator() {
   const { expoPushToken, notification } = usePushNotifications();
 
-  const data = JSON.stringify(notification, undefined, 2);
 
-  console.log("TokenL: ", expoPushToken?.data);
-  console.log(data);
+  useEffect(() => {
+    if (expoPushToken?.data) {
+      // console.log("TokenL: ", expoPushToken?.data);
+    }
+    if (notification) {
+      const data = JSON.stringify(notification, undefined, 2);
+      // console.log("Notification: ", data);
+    }
+
+  }, [notification, expoPushToken]);
+
+
 
   const { t } = useTranslation();
 
@@ -171,8 +181,8 @@ export default function MainNavigator() {
             animation: 'slide_from_right',
           }}
         />
-        <RootStack.Screen name="ResumeImageViewer" component={ResumeImageViewer}  
- 
+        <RootStack.Screen name="ResumeImageViewer" component={ResumeImageViewer}
+
         />
 
         <RootStack.Screen name="Bookfreelancer">
@@ -224,18 +234,18 @@ export default function MainNavigator() {
           headerShown: false,
           animation: 'ios_from_right',
         }} />
-        <RootStack.Screen name="LanguageSelectScreen" component={LanguageSelectScreen} 
-        options={{
-          headerShown: false,
-          animation: 'ios_from_right',
-        }}
+        <RootStack.Screen name="LanguageSelectScreen" component={LanguageSelectScreen}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
         />
 
         <RootStack.Screen name="ChangePasswordScreen"
-         options={{
-          headerShown: false,
-          animation: 'ios_from_right',
-        }}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
         >
           {() => (
             <ProtectedRoute
@@ -252,10 +262,10 @@ export default function MainNavigator() {
         <RootStack.Screen name="NotificationSettingsScreen" component={NotificationSettingsScreen} />
 
         <RootStack.Screen name="AskAQuestionScreen"
-         options={{
-          headerShown: false,
-          animation: 'ios_from_right',
-        }}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
         >
           {() => (
             <ProtectedRoute
@@ -269,15 +279,15 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} 
-         options={{
-          headerShown: false,
-          animation: 'ios_from_right',
-        }}
+        <RootStack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
         />
 
         <RootStack.Screen name="AuthFreelancerSetting"
-        
+
         >
           {() => (
             <ProtectedRoute
@@ -304,10 +314,10 @@ export default function MainNavigator() {
         </RootStack.Screen>
 
         <RootStack.Screen name="EditAoserProfile"
-         options={{
-          headerShown: false,
-          animation: 'ios_from_right',
-        }}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
         >
           {() => (
             <ProtectedRoute
@@ -352,7 +362,7 @@ export default function MainNavigator() {
 
         {/* Works */}
         <RootStack.Screen name="FreelancerWorkHistory"
-        options={{
+          options={{
             headerShown: false,
             animation: 'slide_from_right',
           }}
@@ -369,8 +379,8 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="FreelancerWorkDetail" component={FreelancerWorkDetail} 
-        options={{
+        <RootStack.Screen name="FreelancerWorkDetail" component={FreelancerWorkDetail}
+          options={{
             headerShown: false,
             animation: 'slide_from_right',
           }}
@@ -378,18 +388,7 @@ export default function MainNavigator() {
         <RootStack.Screen name="EditWorkById" component={EditWorkById} />
         <RootStack.Screen name="AppendOwnerWork" component={AppendOwnerWork} />
 
-        {/* <RootStack.Screen name="EditWorkById">
-          {() => (
-            <ProtectedRoute
-              backicon={true}
-              fallbackMessage={t('protectedRoute.signInToAccess')}
-              onSignInPress={() => navigation.navigate('SignIn')}
-              onSignUpPress={() => navigation.navigate('SignUp')}
-            >
-              <EditWorkById  />
-            </ProtectedRoute>
-          )}
-        </RootStack.Screen> */}
+
 
         {/* Payment */}
         <RootStack.Screen
@@ -453,23 +452,6 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        {/* <RootStack.Screen
-          name="ChatScreen"
-          component={ChatScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        /> */}
-
-        {/* <RootStack.Screen
-          name="RoomChat"
-          component={RoomChat}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        /> */}
         <RootStack.Screen
           name="RoomChat"
           options={{
@@ -507,16 +489,17 @@ export default function MainNavigator() {
         <RootStack.Screen name="ProfileSetup" component={ProfileSetup} />
       </RootStack.Navigator>
 
-      <View
+      {/* <View
         style={{
           height: insets.bottom,
-          backgroundColor: 'black',
+          backgroundColor: Platform.OS === 'ios' ? '#fff' :'#000',
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
+          zIndex:9999
         }}
-      />
+      /> */}
     </View>
   );
 }

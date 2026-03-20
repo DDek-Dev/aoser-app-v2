@@ -30,7 +30,7 @@ const EditFreelancerAboutMe = () => {
     const [aboutMe, setAboutMe] = useState('');
     const [skills, setSkills] = useState<string[]>(['']);
     const [experiences, setExperiences] = useState<string[]>(['']);
- 
+
     const [certificateImages, setCertificateImages] = useState<FileWithType[]>([]);
     const [certificateImagesFiles, setCertificateImagesFiles] = useState<FileWithType[]>([]);
     // Loading states
@@ -81,7 +81,7 @@ const EditFreelancerAboutMe = () => {
     const uploadFiles = async (): Promise<{ certificateUrls: string[] }> => {
         const filesToUpload: { name: string; type: string }[] = [];
 
-   
+
         // Add certificate files if exist
         certificateImagesFiles.forEach(file => {
             filesToUpload.push({
@@ -92,7 +92,7 @@ const EditFreelancerAboutMe = () => {
 
         if (filesToUpload.length === 0) {
             return {
-               
+
                 certificateUrls: certificateImages.map(img => img.uri) // Extract URIs
             };
         }
@@ -102,12 +102,12 @@ const EditFreelancerAboutMe = () => {
             // Get presigned URLs
             const presignedUrls = await getPresignedUrls(filesToUpload);
 
-           
+
             const certificateUrls: string[] = certificateImages.map(img => img.uri);
 
             let urlIndex = 0;
 
-           
+
 
             // Upload certificates
             for (let i = 0; i < certificateImagesFiles.length; i++) {
@@ -124,7 +124,7 @@ const EditFreelancerAboutMe = () => {
                 urlIndex++;
             }
             console.log('Final certificate URLs:', certificateUrls);
-            return {  certificateUrls };
+            return { certificateUrls };
 
         } catch (error) {
             console.log('File upload error:', error);
@@ -153,7 +153,7 @@ const EditFreelancerAboutMe = () => {
 
         try {
             // Upload files first
-            const {  certificateUrls } = await uploadFiles();
+            const { certificateUrls } = await uploadFiles();
 
             console.log('Uploaded URLs:', { certificateUrls });
 
@@ -174,6 +174,7 @@ const EditFreelancerAboutMe = () => {
                         title: t('kyc.toast.success.title'),
                         textBody: t('kyc.toast.success.onupdate'),
                     })
+                    navigation.goBack();
                 },
                 onError: (error) => {
                     Toast.show({
@@ -305,7 +306,7 @@ const EditFreelancerAboutMe = () => {
                     disabled={isProcessing}
                 >
                     <Text className="text-white text-base font-semibold">
-                        {isUploading ? t('kyc.toast.uploading.title') : t('kyc.update.update')}
+                        {isUploading ? t('payment.saving') : t('kyc.update.update')}
 
                     </Text>
                 </TouchableOpacity>

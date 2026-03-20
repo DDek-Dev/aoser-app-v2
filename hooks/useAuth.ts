@@ -18,6 +18,7 @@ import { navigate, replace } from 'navigation/RootNavigation';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import { UserProfile } from 'types/profile';
+import { clearStaleKycDataForOtherUsers } from 'utils/kycStorage';
 
 
 
@@ -62,7 +63,7 @@ export const useAuth = () => {
         refreshToken: data.data.refreshToken,
       };
       const userData = data.data.userData;
-
+      await clearStaleKycDataForOtherUsers(userData?._id || '');
       await storeTokens(newTokens);
       await storeUser(userData as UserProfile);
 
@@ -95,6 +96,7 @@ export const useAuth = () => {
       };
       // console.log( "New daTa in Google Login API : ", { newTokens });
 
+      await clearStaleKycDataForOtherUsers(data.data.userProfile?._id || '');
       await storeTokens(newTokens);
       await storeUser(data.data.userProfile);
 
@@ -160,6 +162,7 @@ export const useAuth = () => {
       };
 
 
+      await clearStaleKycDataForOtherUsers((userData as any)?._id || '');
       await storeTokens(newTokens);
       await storeUser(userData as UserProfile);
 

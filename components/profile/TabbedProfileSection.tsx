@@ -10,10 +10,10 @@ import {
   Dimensions,
   PanResponder,
 } from 'react-native';
-import { Freelancer } from 'types/profile';
+import {  UserProfile } from 'types/profile';
 
 type TabContentProps = {
-  profile: Freelancer;
+  profile: UserProfile;
   stylepadd?: string;
   isReview?: boolean;
 };

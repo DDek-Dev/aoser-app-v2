@@ -468,7 +468,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
       } else {
         Toast.show({
           type: ALERT_TYPE.DANGER,
-          title: t('common.failed') || 'Failed',
+          title: t('common.error') || 'Failed',
           textBody: t('chat.offer.failed_message') || 'Failed to send offerings. Please try again.',
         });
       }

@@ -9,11 +9,12 @@ import {
   Animated,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback,
   Alert,
   KeyboardAvoidingView,
   Pressable,
   Modal,
+  StyleSheet,
+  findNodeHandle,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -384,11 +385,46 @@ const RoomChat = () => {
     }
   };
 
-  const handleBackgroundPress = () => {
-    if (fileOptionsVisible) {
-      setFileOptionsVisible(false);
-    }
-  };
+  const dismissKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+    textInputRef.current?.blur();
+  }, []);
+
+  const handleScreenTouchCapture = useCallback(
+    (e: any) => {
+      // When the file options menu is open, a dedicated overlay handles outside taps.
+      // Avoid closing it here or it can unmount before option `onPress` runs.
+      if (fileOptionsVisible) return false;
+
+      const target = e?.nativeEvent?.target;
+      const textInputState = (TextInput as any)?.State;
+      const focusedInput = textInputState?.currentlyFocusedInput?.();
+
+      // `currentlyFocusedField()` is deprecated; only call it as a fallback for older RN.
+      let focusedHandle: number | null = null;
+      if (focusedInput) {
+        focusedHandle = findNodeHandle(focusedInput) as number | null;
+      } else if (!textInputState?.currentlyFocusedInput && textInputState?.currentlyFocusedField) {
+        focusedHandle = textInputState.currentlyFocusedField();
+      }
+
+      const messageInputHandle = textInputRef.current
+        ? (findNodeHandle(textInputRef.current) as number | null)
+        : null;
+
+      const isTouchOnInput =
+        (messageInputHandle != null && target != null && messageInputHandle === target) ||
+        (focusedHandle != null && target != null && focusedHandle === target);
+
+      // Dismiss keyboard when tapping outside the message input.
+      if ((focusedHandle != null || keyboardHeight > 0) && !isTouchOnInput) {
+        dismissKeyboard();
+      }
+
+      return false;
+    },
+    [dismissKeyboard, fileOptionsVisible, keyboardHeight]
+  );
 
   const handleProjectSelection = () => {
     setShowProjectSelection(true);
@@ -945,8 +981,7 @@ const RoomChat = () => {
 
   return (
     <ScreenWrapper safeEdges={[ 'bottom']} style={{flex: 1}}>
-      <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-        <View className="flex-1">
+      <View className="flex-1" onStartShouldSetResponderCapture={handleScreenTouchCapture}>
           {/* Header */}
           <View className="flex-row pt-12 justify-between items-center px-4 py-3  bg-primary">
             <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
@@ -1102,6 +1137,15 @@ const RoomChat = () => {
               </Pressable>
             </Pressable>
           </Modal>
+
+          {fileOptionsVisible && (
+            <Pressable
+              style={[StyleSheet.absoluteFill, { zIndex: 40, elevation: 40 }]}
+              onPressIn={() => setFileOptionsVisible(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close file options"
+            />
+          )}
 
           {/* File Options Menu */}
           <FileOptionsMenu
@@ -1277,8 +1321,7 @@ const RoomChat = () => {
 
           />
 
-        </View>
-      </TouchableWithoutFeedback>
+      </View>
     </ScreenWrapper>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, use, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,10 @@ import {
   Platform,
   InteractionManager,
   TouchableWithoutFeedback,
-  BackHandler,
   StyleSheet,
   ActivityIndicator,
   Pressable,
-
+  BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -23,12 +22,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 
 import { Job, Favorite } from 'types';
-import { formatDate, formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
 import { useCreateFavorite, useDeleteFavorite, useMyProfile } from 'hooks/useFreelancer';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'hooks/useAuth';
-import ScreenWrapper from 'components/ui/ScreenWrapper';
-
 
 interface JobDetailModalProps {
   visible: boolean;
@@ -48,6 +45,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [isFavorite, setIsFavorite] = useState<boolean>();
+  const [close, setClose] = useState<boolean>(true);
   const [favoriteId, setFavoriteId] = useState<string | null>(
     job?._id || null
   );
@@ -80,6 +78,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
   // Show/hide modal with proper timing
   useEffect(() => {
+
     if (animationTimeoutRef.current) {
       clearTimeout(animationTimeoutRef.current);
     }
@@ -100,6 +99,20 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
     };
   }, [visible, job]);
 
+  // Handle Android hardware back button
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (visible) {
+        handleDismiss();
+        return true; // true = we handled it, prevents default back navigation
+      }
+      return false; // false = let the system handle it
+    });
+
+    return () => subscription.remove();
+  }, [visible]);
 
   // Handle Android back button
 
@@ -167,15 +180,9 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
   const handleCreateFavorite = useCallback(async () => {
     if (!job?._id || isProcessing) {
-
       return;
     }
-
-
-
     setIsProcessing(true);
-
-
     // Optimistic updates
     setIsFavorite(true);
     setTotalLikes(prev => prev + 1);
@@ -203,7 +210,6 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       setIsProcessing(false);
     }
   }, [job?._id, isProcessing, totalLikes, isFavorite, creatFavorite, refetch]);
-
 
   // Fixed delete favorite handler
   const handleDeleteFavorite = useCallback(async (likeId: string) => {
@@ -268,7 +274,6 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
 
 
-
   // console.log(data.businessType);
   if (isLoading) return <ActivityIndicator />;
   // if (!error) return <Text>{t('works.error.couldnot_load')}</Text>;
@@ -286,7 +291,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
           </Text>
 
         </View>
-     
+
 
       </View>
 
@@ -497,9 +502,6 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
             </View>
           ))}
         </View>
-
-
-
         <View className='bg-gray-200 w-full h-[1px] mb-4' />
         <Text className='text-body font-bold text-text'>{t('workDetail.interested_freelancers')}</Text>
         {job?.workApplicants?.length > 0 && (
@@ -516,12 +518,8 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
         <Animated.View
           className="absolute bottom-[10rem] left-4 right-4 rounded-2xl items-center "
-        // style={{
-        //   transform: [{ translateY: footerAnim }],
-        //   zIndex: 5,
-        // }}
         >
-          {data?.businessType === "FREELANCER" && data?._id !== job.createdBy._id && (
+          {data?.businessType === "FREELANCER" && data?.registrationStatus === 'APPROVED_COMPLETE' && data?._id !== job.createdBy._id && (
             <TouchableOpacity
               onPress={() => setShowProfile(true)}
               className="bg-primary p-6 rounded-full shadow-md -rotate-45"
@@ -531,7 +529,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
             </TouchableOpacity>
           )}
 
-          {data?.businessType !== "FREELANCER" && data?._id !== job.createdBy._id && (
+          {data?.businessType !== "FREELANCER"&& data?.registrationStatus !== 'APPROVED_COMPLETE' && data?._id !== job.createdBy._id && (
             <View className="bg-surface p-4 rounded-2xl items-center shadow-lg w-[100%]" style={styles.blueShadow}>
               <View className="bg-blue-100 p-3 rounded-full mb-3">
                 <Ionicons name="rocket-outline" size={28} color="#2563eb" />
@@ -555,6 +553,58 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
               </TouchableOpacity>
             </View>
           )}
+
+          {data?.businessType === 'FREELANCER' && data?.registrationStatus === 'REJECTED' && close && (
+            
+              <View className="flex-1 items-center justify-center p-4 bg-primary rounded-2xl">
+
+                <Pressable
+                  onPress={() => setClose(false)}
+                  className='self-end bg-border rounded-full'>
+                  <Ionicons name='close-outline' size={28} color="#EF4444" />
+                </Pressable>
+
+                {/* Title */}
+                <Text className="text-heading text-surface text-center mb-3">
+                  {t('freelancerRoleGate.rejectedTitle')}
+                </Text>
+
+                {/* Subtitle */}
+                <Text className="text-body text-surface text-center mb-8 max-w-sm">
+                  {t('freelancerRoleGate.rejectedSubtitle')}
+                </Text>
+
+
+                {/* Action Buttons */}
+                <View className="w-full gap-3">
+                  <TouchableOpacity
+                    onPress={() => {
+                      onClose()
+                      navigator.navigate('UpgradeToFreelancer')
+                    }}
+                    className="bg-surface py-4 px-6 rounded-xl items-center"
+                  >
+                    <Text className="text-primary text-body font-semibold">
+                      {t('freelancerRoleGate.reapplyButton')}
+                    </Text>
+                  </TouchableOpacity>
+
+
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      onClose()
+                    }}
+                    className="py-3 items-center"
+                  >
+                    <Text className="text-surface text-body">
+                      {t('freelancerRoleGate.backToHomeButton')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
         </Animated.View>
       )}
 

@@ -28,12 +28,13 @@ const FavoriteScreen = () => {
     const { data, isLoading, error, refetch, isRefetching } = useGetAllFavorites();
 
     const renderTabContent = () => {
+        
         switch (selectedTab) {
             case 'freelancer':
                 if (isLoading) return <JobListItem />;
 
                 if (!data || data.length === 0) {
-                    return <FavoriteNoResult />;
+                    return <FavoriteNoResult  title={t('favorites.work.no_favorite_freelancer')} desc=  {t('favorites.work.items_will_appear_here_freelancer')}/>;
                 }
 
                 return <FavoriteCardList data={data} />;
@@ -42,15 +43,14 @@ const FavoriteScreen = () => {
 
 
                 if (!data || data.length === 0) {
-                    return <FavoriteNoResult />;
+                    return <FavoriteNoResult title={t('favorites.work.no_favorite')} desc=  {t('favorites.work.items_will_appear_here')}/>;
                 }
                 return <PublicWorkCardList
                     data={data}
                     refetch={refetch}
                 />
 
-            default:
-                return <FavoriteNoResult />;
+           
         }
     };
 

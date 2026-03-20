@@ -1181,13 +1181,13 @@ export default function FreelancerWorkDetail({ route }: Props) {
                       </Text>
                       {/* Budget type badge */}
                       <View className="bg-white/60 backdrop-blur px-3 py-1.5 rounded-full self-start">
-                        <Text className="text-primary text-caption font-semibold">
+                        {/* <Text className="text-primary text-caption font-semibold">
                           {data?.budgetType === 'FIXED_PRICE'
                             ? t('postWork.fixed_price')
                             : data?.budgetType === 'HOURLY'
                               ? t('postWork.hourly')
                               : t('postWork.offering')}
-                        </Text>
+                        </Text> */}
                       </View>
                     </View>
                     {data?.budgetType === 'OFFERING' ? (
@@ -1276,7 +1276,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
             {/* Divider */}
             <View className="h-px bg-border my-2 ml-4" />
 
-            {data.address?.village !== '' && data.address?.district !== '' && data.address?.province !== '' &&
+            {data.address && data.address?.village !== '' && data.address?.district !== '' && data.address?.province !== '' &&
 
 
               <View className="flex-row mt-3 items-center">

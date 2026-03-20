@@ -22,16 +22,12 @@ import { useSelectAddress } from 'hooks/useSelectAddress';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import BudgetInput from 'components/ui/BudgetInput';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-import { formatDate, getCurrentLanguage, Language } from 'utils/dateFormatter';
+import {  getCurrentLanguage, Language } from 'utils/dateFormatter';
 import SubWorkDetailsInput from 'components/ui/SubTaskInputList';
 import { SubWorkDetail } from 'types';
 import { useTranslation } from 'react-i18next';
 
-type BookFreelancerRouteProp = RouteProp<FreelancerStackParamList, 'Bookfreelancer'>;
 
-type Props = {
-  route: BookFreelancerRouteProp;
-};
 
 export default function PostWorkScreen() {
   type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList>;
@@ -49,7 +45,7 @@ export default function PostWorkScreen() {
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
   const fromInputRef = useRef<TextInput>(null);
   const toInputRef = useRef<TextInput>(null);
-  const categoryRef = useRef<{ focus: () => void }>(null);
+  // const categoryRef = useRef<{ focus: () => void }>(null);
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>('FIXED_PRICE');
 
@@ -362,7 +358,6 @@ export default function PostWorkScreen() {
       workTitle: nameOfWork,
       description: workDetail,
       budget,
-      category,
       kindOfWork: workType,
       deadLine: toDate?.toISOString() || null,
       startDate: fromDate?.toISOString() || null,
@@ -389,14 +384,14 @@ export default function PostWorkScreen() {
       };
     }
 
-    // console.log('Submitting Form Data:', formData);
+    // console.log('Submitting Form Data:', JSON.stringify(formData, null, 2));
     navigation.navigate('ConfirmPostjob', { formData });
   };
 
   return (
     <>
-      <ScreenWrapper safeEdges={['top']} style={{ backgroundColor: 'white' }}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className='rounded-lg'>
+      <ScreenWrapper safeEdges={['top']} style={{ backgroundColor: 'white'}}>
+       
           <View className='px-4 flex-row justify-between items-center mb-4'>
             <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">
               <View className="flex-1">
@@ -414,7 +409,8 @@ export default function PostWorkScreen() {
           </View>
 
           <KeyboardAwareScrollView
-            contentContainerStyle={{ paddingBottom: insets.bottom + 10 }}
+          
+            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             className='p-4'
@@ -430,7 +426,7 @@ export default function PostWorkScreen() {
                     setSubcategories(jobIds);
                   }}
                   inputClassName={errors.category ? 'border-error' : 'border-border'}
-                  ref={categoryRef}
+                  // ref={categoryRef}
                 />
               </View>
 
@@ -595,7 +591,7 @@ export default function PostWorkScreen() {
                       <View className="flex-1">
                         <FormInput
                           label={t('editWork.deadline.to')}
-                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປປປປ' : 'dd/mm/yyyy'}
+                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປປປປ' : 'dd/mm/yy'}
                           value={toDateString}
                           inputClassName={'border-border'}
                           ref={toInputRef}
@@ -736,7 +732,7 @@ export default function PostWorkScreen() {
               />
             )}
           </KeyboardAwareScrollView>
-        </KeyboardAvoidingView>
+   
       </ScreenWrapper>
     </>
   );

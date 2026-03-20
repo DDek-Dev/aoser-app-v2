@@ -217,36 +217,38 @@ export const publiceWorkApi = {
 
     createPublicWork: async (data: BookingFormData, token: string) => {
         // Transform data to match backend format with safety checks
-        const requestData = {
-            workTitle: data.workTitle,
-            description: data.description,
-            budget: data.budget || 0, // Ensure budget is never null
-            kindOfWork: data.kindOfWork,
-            deadLine: data.deadLine ? new Date(data.deadLine) : undefined,
-            startDate: data.startDate ? new Date(data.startDate) : undefined,
-            subWorkDetails: data.subWorkDetails || [], // Ensure array exists
-            currency: data.currency,
-            budgetType: data.budgetType,
-            serviceType: data.serviceType,
-            jobs: data.jobs || [],
-            exampleWork: undefined,
-            assignedTo: data.assignedTo,
-            address: {
-                country: data?.address?.country || "Laos",
-                province: data?.address?.province || '',
-                district: data?.address?.district || '',
-                village: data?.address?.village || '',
-            }
-        };
+        // const requestData = {
+        //     workTitle: data.workTitle,
+        //     description: data.description,
+        //     budget: data.budget || 0, // Ensure budget is never null
+        //     kindOfWork: data.kindOfWork,
+        //     deadLine: data.deadLine ? new Date(data.deadLine) : undefined,
+        //     startDate: data.startDate ? new Date(data.startDate) : undefined,
+        //     subWorkDetails: data.subWorkDetails || [], // Ensure array exists
+        //     currency: data.currency,
+        //     budgetType: data.budgetType,
+        //     serviceType: data.serviceType,
+        //     jobs: data.jobs || [],
+        //     exampleWork: undefined,
+        //     assignedTo: data.assignedTo,
+        //     address: {
+        //         country: data?.address?.country || "Laos",
+        //         province: data?.address?.province || '',
+        //         district: data?.address?.district || '',
+        //         village: data?.address?.village || '',
+        //     }
+        // };
 
        
 
         // Remove undefined values to avoid sending empty fields
-        const cleanData = Object.fromEntries(
-            Object.entries(requestData).filter(([_, value]) => value !== undefined)
-        );
+        // const cleanData = Object.fromEntries(
+        //     Object.entries(requestData).filter(([_, value]) => value !== undefined)
+        // );
 
-        const res = await networkCheck.post(`${API_BASE_URL}/worker/work`, cleanData, {
+        console.log("DATA in API", JSON.stringify(data, null, 2))
+
+        const res = await networkCheck.post(`${API_BASE_URL}/worker/work`, data, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Aoser ${token}`,

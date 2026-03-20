@@ -66,7 +66,7 @@ const imageUri = isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundIma
         <Image source={{ uri: isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}` }} className="w-full h-48" />
       </Pressable>
 
-      <View className="items-start px-4 -mt-10 relative z-0">
+      <View className="items-start px-4 -mt-10 ">
        
         <Pressable
           onPress={() => navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + profileImage })}

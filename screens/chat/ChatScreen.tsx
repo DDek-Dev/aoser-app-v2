@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { View, Text, TextInput, FlatList, Modal, TouchableOpacity, Alert } from 'react-native'
 import ChatItem from './ChatItem'
-import { Ionicons } from '@expo/vector-icons'
+import { Ionicons, MaterialIcons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { FreelancerStackParamList } from 'types/navigation'
@@ -26,7 +26,7 @@ export default function ChatScreen() {
 
   const { data: chat, isLoading, refetch } = useChats()
   const { user, tokens, isLoadingAuth } = useAuth()
-  const {t}= useTranslation();
+  const { t } = useTranslation();
   const currentUserId = user?._id;
 
 
@@ -226,20 +226,20 @@ export default function ChatScreen() {
 
     try {
       Alert.alert(
-       t('chat.list.deleteChatTitle'),
-      t('chat.list.deleteChatMessage'),
+        t('chat.list.deleteChatTitle'),
+        t('chat.list.deleteChatMessage'),
         [
           {
             text: t('chat.list.cancel'),
-      style: 'cancel',
+            style: 'cancel',
             onPress: () => {
               setShowOptionsModal(false)
               setSelectedChatId(null)
             }
           },
           {
-           text: t('chat.list.deleteChat'),
-      style: 'destructive',
+            text: t('chat.list.deleteChat'),
+            style: 'destructive',
             onPress: async () => {
               setShowOptionsModal(false)
 
@@ -270,7 +270,7 @@ export default function ChatScreen() {
       )
     } catch (error) {
       console.log('Error in delete handler:', error)
-  Alert.alert(t('chat.chatroom.error'), t('chat.list.deleteError'))
+      Alert.alert(t('chat.chatroom.error'), t('chat.list.deleteError'))
     }
   }
 
@@ -279,7 +279,10 @@ export default function ChatScreen() {
     return (
       <View className="flex-1 bg-surface">
         <View className="bg-white pt-12 pb-4 px-4 rounded-b-2xl">
-          <Text className="text-primary text-heading mb-3">Chats</Text>
+          <View className='flex-row items-center mb-3'>
+            <MaterialIcons name='chevron-left' size={28} color='#3B82F6' onPress={() => navigator.goBack()} />
+            <Text className="text-primary text-heading ">{t('chat.list.title')}</Text>
+          </View>
           <View className="flex-row items-center bg-white rounded-full border border-gray-300 px-4 mb-1">
             <Ionicons name="search-outline" size={20} color="#333" />
             <View className="ml-2 text-base text-gray-600 flex-1 py-4">
@@ -301,12 +304,15 @@ export default function ChatScreen() {
     return (
       <View className="flex-1 bg-surface">
         <View className="bg-white pt-12 pb-4 px-4 rounded-b-2xl">
-          <Text className="text-primary text-heading mb-3">Chats</Text>
+          <View className='flex-row items-center mb-3'>
+            <MaterialIcons name='chevron-left' size={28} color='#3B82F6' onPress={() => navigator.goBack()} />
+            <Text className="text-primary text-heading ">{t('chat.list.title')}</Text>
+          </View>
         </View>
         <View className="flex-1 justify-center items-center px-8">
           <Ionicons name="chatbubbles-outline" size={80} color="#ccc" />
           <Text className="text-gray-500 text-lg mt-4 text-center">
-           {t('chat.list.noChatsYet')}
+            {t('chat.list.noChatsYet')}
           </Text>
           <Text className="text-gray-400 text-sm mt-2 text-center">
             {t('chat.list.startConversation')}
@@ -322,17 +328,26 @@ export default function ChatScreen() {
     <View className="flex-1 bg-surface">
       {/* Header */}
       <View className="bg-white pt-12 pb-4 px-4 rounded-b-2xl">
-        <Text className="text-primary text-heading mb-3">Chats</Text>
-        <View className="flex-row items-center bg-white rounded-full border border-gray-300 px-4 mb-1">
-          <Ionicons name="search-outline" size={20} color="#333" />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            className="ml-2 text-base text-gray-600 flex-1 py-4"
-            placeholder={t('chat.list.searchPlaceholder')}
-            placeholderTextColor="#999"
-            returnKeyType="search"
-          />
+        <View className='flex-row items-center mb-3'>
+          <MaterialIcons name='chevron-left' size={28} color='#3B82F6' onPress={() => navigator.goBack()} />
+          <Text className="text-primary text-heading ">{t('chat.list.title')}</Text>
+        </View>
+        <View className='flex-row '>
+
+
+          <View className='flex-1'>
+            <View className="flex-row items-center bg-white rounded-full border border-gray-300 px-4 mb-1">
+              <Ionicons name="search-outline" size={20} color="#333" />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                className="ml-2 text-base text-gray-600 flex-1 py-4"
+                placeholder={t('chat.list.searchPlaceholder')}
+                placeholderTextColor="#999"
+                returnKeyType="search"
+              />
+            </View>
+          </View>
         </View>
       </View>
 
@@ -344,7 +359,7 @@ export default function ChatScreen() {
               {t('chat.list.noChatsFound')}
             </Text>
             <Text className="text-gray-400 text-sm mt-2 text-center">
-            {t('chat.list.tryDifferentKeywords')}
+              {t('chat.list.tryDifferentKeywords')}
             </Text>
           </View>
         ) : (
@@ -357,7 +372,7 @@ export default function ChatScreen() {
               const otherParticipant = item.participants.find(p => p._id !== currentUserId) || item.participants[0]
               if (!item._id || !otherParticipant || item._id === undefined) return null;
 
-             
+
               return (
                 <ChatItem
                   _id={item._id}
@@ -414,7 +429,7 @@ export default function ChatScreen() {
           >
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
               <Text style={{ fontSize: 18, fontWeight: '600', textAlign: 'center' }}>
-               {t('chat.list.chatOptions')}
+                {t('chat.list.chatOptions')}
               </Text>
             </View>
 
@@ -433,7 +448,7 @@ export default function ChatScreen() {
                 style={{ marginRight: 12 }}
               />
               <Text style={{ fontSize: 16, color: '#ef4444' }}>
-             {t('chat.list.deleteChat')}
+                {t('chat.list.deleteChat')}
               </Text>
             </TouchableOpacity>
 

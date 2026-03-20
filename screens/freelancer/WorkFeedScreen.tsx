@@ -22,13 +22,14 @@ import { NoResults } from 'components/NoResults';
 import JobDetailBottomSheet from 'components/publicwork/JobDetailModal';
 import { FreelancerStackParamList, TabParamList } from 'types/navigation';
 import { Job } from 'types';
-import {  formatDisplayDateTime, formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime, formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
 import JobSearchSkeleton from 'skeletonScreens/JobSearchSkeleton';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { profileImage } from 'assets';
 import * as Icons from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 const ITEMS_PER_PAGE = 15;
@@ -41,7 +42,7 @@ const WorkFeedScreen = () => {
   const navigations = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { t } = useTranslation();
   const { user } = useAuth();
-
+  const insets = useSafeAreaInsets();
   // State management
   const [originalJobs, setOriginalJobs] = useState<Job[]>([]);
   const [displayedJobs, setDisplayedJobs] = useState<Job[]>([]);
@@ -67,7 +68,7 @@ const WorkFeedScreen = () => {
 
 
   // API hook with optimized cache settings
-  const { data:jobs, isLoading, error, refetch, isFetching } = usePublicWork({
+  const { data: jobs, isLoading, error, refetch, isFetching } = usePublicWork({
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
@@ -92,7 +93,7 @@ const WorkFeedScreen = () => {
   };
 
 
-// console.log ("data", JSON.stringify(dat, null, 2));
+  // console.log ("data", JSON.stringify(dat, null, 2));
 
   // Memoized JobItem component
   const JobItem = React.memo(({ item, onPress }: { item: Job; onPress: (job: Job) => void }) => {
@@ -187,40 +188,40 @@ const WorkFeedScreen = () => {
           )}
 
 
-          {item.startDate !==undefined  && 
+          {item.startDate !== undefined && 
 
-          <View className="flex-row mt-3 items-center">
-            <Text>{currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'} : </Text>
+            <View className="flex-row mt-3 items-center">
+              <Text>{currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'} : </Text>
 
-            <View className="flex-row gap-2 items-center">
-              <Ionicons name="time-outline" size={18} color="#F59E0B" />
-              <Text className="text-sm text-textSecondary">
-                {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-                {formatDisplayDateTime(item.startDate as string)}
-              </Text>
+              <View className="flex-row gap-2 items-center">
+                <Ionicons name="time-outline" size={18} color="#F59E0B" />
+                <Text className="text-sm text-textSecondary">
+                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+                  {formatDisplayDateTime(item.startDate as string)}
+                </Text>
+              </View>
             </View>
-          </View>
           }
 
-          {item.deadLine !==undefined  && 
-          <View className="flex-row mt-3 items-center">
-            {/* <Text>{t('workDetail.deadline')} : </Text> */}
-            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+          {item.deadLine !== undefined &&
+            <View className="flex-row mt-3 items-center">
+              {/* <Text>{t('workDetail.deadline')} : </Text> */}
+              <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
 
-            <View className="flex-row gap-2 items-center">
-              <Ionicons name="time-outline" size={18} color="#F59E0B" />
+              <View className="flex-row gap-2 items-center">
+                <Ionicons name="time-outline" size={18} color="#F59E0B" />
 
-              <Text className="text-sm text-textSecondary">
-                {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+                <Text className="text-sm text-textSecondary">
+                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
 
-                {formatDisplayDateTime(item.deadLine as string)}
-              </Text>
+                  {formatDisplayDateTime(item.deadLine as string)}
+                </Text>
+              </View>
             </View>
-          </View>
-          
+
           }
 
-          {item.address.village !=='' && item.address.district !=='' && item.address.province !== '' &&
+          {item.address && item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
 
             <View className="flex-row mt-3 items-center">
               {/* <Text>{t('workDetail.deadline')} : </Text> */}
@@ -262,7 +263,8 @@ const WorkFeedScreen = () => {
 
   const bannerHeight = scrollY.interpolate({
     inputRange: [0, 380],
-    outputRange: [190, 110],
+    // outputRange: [150, 110],
+    outputRange: [140 + insets.top, 90 + insets.top],
     extrapolate: 'clamp',
   });
 
@@ -274,7 +276,12 @@ const WorkFeedScreen = () => {
 
   const searchBarTranslateY = scrollY.interpolate({
     inputRange: [0, 400],
-    outputRange: [0, -50],
+    outputRange: [0, -60],
+    extrapolate: 'clamp',
+  });
+  const categoryTranslateY = scrollY.interpolate({
+    inputRange: [0, 400],
+    outputRange: [0, -15],
     extrapolate: 'clamp',
   });
 
@@ -394,7 +401,7 @@ const WorkFeedScreen = () => {
     // setSelectedJob(job);
     setSelectedJobId(job._id);
     setJobDetailVisible(true);
-  
+
   }, []);
 
   const handleWorkPress = useCallback((job: Job) => {
@@ -410,7 +417,7 @@ const WorkFeedScreen = () => {
   const handleCloseJobDetail = useCallback(() => {
     setJobDetailVisible(false);
     setSelectedJobId(null);
-;
+    ;
   }, []);
 
   // Get visible jobs
@@ -453,7 +460,7 @@ const WorkFeedScreen = () => {
   }
 
   // Empty state
-  if ( !Array.isArray(jobs) || jobs.length === 0) {
+  if (!Array.isArray(jobs) || jobs.length === 0) {
     return (
       <ScreenWrapper>
         <View className="flex-1 justify-center items-center p-4">
@@ -479,10 +486,17 @@ const WorkFeedScreen = () => {
           style={[
             styles.banner,
             {
+              paddingHorizontal: 16,
+              paddingBottom: 12,
+              // ✅ ใช้ insets.top แทน paddingTop: 30
+              paddingTop: insets.top + 12,
+            },
+            {
               backgroundColor: bannerBgColor,
               height: bannerHeight,
               borderBottomLeftRadius: bannerRadius,
               borderBottomRightRadius: bannerRadius,
+
             },
           ]}
         >
@@ -494,10 +508,11 @@ const WorkFeedScreen = () => {
                 fontSize: 28,
                 opacity: bannerTextOpacity,
                 lineHeight: 40,
+
               },
             ]}
           >
-            {t('works.lets_find_work')}{'\n'}{t('works.work')}
+            {t('works.lets_find_work')}
           </Animated.Text>
 
           <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }] }}>
@@ -522,9 +537,9 @@ const WorkFeedScreen = () => {
           </Animated.View>
         </Animated.View>
 
-        <View className="px-4 py-1">
+        <Animated.View className="px-4 py-1 bg-surface" style={{ transform: [{ translateY: categoryTranslateY }] }} >
           <SortByCategory data={originalJobs} onCategoryFilter={handleCategoryFilter} />
-        </View>
+        </Animated.View>
       </View>
 
       <Animated.ScrollView
@@ -635,8 +650,8 @@ const WorkFeedScreen = () => {
               )}
             </>
           ) : (
-            activeCategory === 'All'? <ActivityIndicator/> : <NoResults />
-           
+            activeCategory === 'All' ? <ActivityIndicator /> : <NoResults />
+
           )}
         </View>
       </Animated.ScrollView>
@@ -646,7 +661,7 @@ const WorkFeedScreen = () => {
         onClose={handleCloseJobDetail}
         job={selectedJob}
         refetch={refetch}
-        // onUserPress={handleUserProfileNavigation}
+
       />
     </>
   );

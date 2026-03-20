@@ -29,7 +29,6 @@ import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { profileImage } from 'assets';
 import { useTranslation } from 'react-i18next';
 import PhoneInput from 'components/ui/PhoneInput';
-import Dropdown from 'components/filter/Dropdown';
 import { useSelectAddress } from 'hooks/useSelectAddress';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;

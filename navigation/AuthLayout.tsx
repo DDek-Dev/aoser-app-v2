@@ -44,12 +44,12 @@ export default function AuthLayout({ children, scrollable = false }: AuthLayoutP
                         {content}
                         
                         {/* Bottom inset with black background */}
-                        <View 
+                        {/* <View 
                             style={{ 
                                 height: insets.bottom, 
                                 backgroundColor: 'black' 
                             }} 
-                        />
+                        /> */}
                     </View>
                 </KeyboardAvoidingView>
             </View>

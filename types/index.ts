@@ -149,8 +149,8 @@ export type BookingFormData = {
   userId?: string;
   workTitle: string;
   description: string;
-  budget: number | null;
-  category: string;
+  budget?: number | null;
+
   kindOfWork: 'ONLINE' | 'OFFLINE';
   deadLine?: string | null;
   startDate?: string | null;
@@ -160,7 +160,7 @@ export type BookingFormData = {
   serviceType: string;
   assignedTo?: string;
   jobs?: string[];
-  address:{
+  address?:{
     country: string;
     province: string;
     district: string;

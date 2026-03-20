@@ -19,16 +19,6 @@ export const useCreateFreelancer = (): UseMutationResult<UserProfile, Error, any
 };
 
 
-// export const useFreeLancers = () => {
-//   const { tokens } = useAuth();
-
-//   return useQuery({
-//     queryKey: ['freelancers'],
-//     queryFn: () => workerApi.getAllfreelancers(tokens?.accessToken || ''),
-//     enabled: !!tokens?.accessToken,
-//   });
-// };
-
 export const useFreeLancers = () => {
   const { tokens } = useAuth();
 
@@ -66,7 +56,7 @@ export const useSearchFreelancers = (searchTerm: string) => {
 
 export const useFreelancerById = (userId: string) => {
 
-  return useQuery<Freelancer | null>({
+  return useQuery<UserProfile | null>({
     queryKey: ['freelancer', userId],
     queryFn: async () => {
       if (!userId) return null;
@@ -92,13 +82,13 @@ export const useUpdateFreelancerProfile = () => {
   const queryClient = useQueryClient();
   const { tokens } = useAuth();
 
-  return useMutation<Freelancer | null, Error, Freelancer>({
-    mutationFn: async (data: Freelancer) => {
+  return useMutation<Freelancer | null, Error, UserProfile>({
+    mutationFn: async (data: UserProfile) => {
       if (!tokens?.accessToken) {
         throw new Error('No access token available');
       }
 
-      console.log('Updating freelancer profile with data:', data);
+      console.log('Updating freelancer profile with data:', JSON.stringify(data, null, 2));
 
       try {
         const response = await axios.put(`${API_BASE_URL}/worker/freelancer-profile`, data, {

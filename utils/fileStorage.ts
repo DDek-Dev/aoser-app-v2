@@ -389,6 +389,56 @@ export const uploadAllFiles = async (stepData: AllStepData): Promise<UploadResul
   }
 };
 
+const stripUploadsPrefix = (key: string): string => {
+  if (key.startsWith('uploads/')) return key.replace('uploads/', '');
+  return key;
+};
+
+const runWithConcurrency = async <T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<R>
+): Promise<R[]> => {
+  const limit = Math.max(1, concurrency);
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  const runners = new Array(Math.min(limit, items.length)).fill(null).map(async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex++;
+      results[currentIndex] = await worker(items[currentIndex], currentIndex);
+    }
+  });
+
+  await Promise.all(runners);
+  return results;
+};
+
+export const uploadFileInstant = async (file: FileWithType): Promise<string> => {
+  const [key] = await uploadFilesInstant([file], { concurrency: 1 });
+  return key;
+};
+
+export const uploadFilesInstant = async (
+  files: FileWithType[],
+  options?: { concurrency?: number }
+): Promise<string[]> => {
+  if (!files.length) return [];
+
+  const presignedUrls: PresignedUrlResponse[] = await getPresignedUrls(
+    files.map((f) => ({ name: f.name, type: f.type, size: (f as any).size }))
+  );
+
+  const concurrency = options?.concurrency ?? 3;
+  const keys = await runWithConcurrency(files, concurrency, async (file, index) => {
+    const presigned = presignedUrls[index];
+    await uploadFileToUrl(presigned.url, file.uri, presigned.contentType);
+    return stripUploadsPrefix(presigned.key);
+  });
+
+  return keys;
+};
+
 // File handling helper functions
 export const createFileMeta = (file: FileWithType): FileMeta => ({
   name: file.name,

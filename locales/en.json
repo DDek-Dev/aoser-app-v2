@@ -18,7 +18,7 @@
   },
   "protectedRoute": {
     "authentication_require": "Sign in required",
-    "description": "Please sign in to access this feature",
+    "signInToAccess": "Please sign in to access this feature",
     "googleLogin": "Continue with Google",
     "signIn": "Sign In",
     "newhere": "New Here?",
@@ -43,8 +43,8 @@
   },
   "signUpScreen": {
     "sign_up": "Sign up",
-    "gender": "Select gender",
-    "selectGender": "Select Gender",
+    "gender": "Gender",
+    "selectGender": "Gender",
     "male": "Male",
     "female": "Female",
     "fullname": "Full Name",
@@ -96,7 +96,7 @@
   },
   "----": " ------------------ PAGES OF TABS ------------------ ",
   "home": {
-    "search_freelancer": "Search freelancers...",
+    "search_freelancer": "Search services",
     "top_freelancers": "Top Freelancers",
     "recommended_freelancers": "Recommended Freelancers",
     "nomore_freelancers": "No more freelancers to load",
@@ -138,7 +138,7 @@
       "projects_count": "Projects",
       "new_hire": "New Hire",
       "re_hire": "Request again",
-      "service_type": "Select Service",
+      "service_type": "Choose Service",
       "deadline_label": "Deadline",
       "total_budget": "Total Budget",
       "check_details": "Check Details",
@@ -162,8 +162,8 @@
     "freelancerSetting": {
       "title": "Settings",
       "recommend_section_label": "Boost your profile",
-      "buy_star": "Boost star",
-      "account_setting_label": "Account Setting",
+      "buy_star": "Promote Profile",
+      "account_setting_label": "Account Settings",
       "edit_profile": "Edit Profile",
       "edit_freelancer_data_label": "Freelancer Profile",
       "job_section": "Professional Profile",
@@ -174,13 +174,13 @@
       "title": "Buy recommend star",
       "banner_title": "Boost Your Profile",
       "banner_subtitle": "Get recommended to more clients",
-      "banner_description": "More stars = more visibility",
+      "banner_description": "Star help your profile appear higher in search results and recommendations. \nMore stars = more visibility!",
       "price_per_star": "1 Star = {{price}}",
       "select_package_label": "Choose a package",
       "popular_badge": "POPULAR",
       "stars_plural": "Stars",
       "star_singular": "Star",
-      "custom_amount_label": "Or enter custom stars",
+      "custom_amount_label": "Or enter custom Stars",
       "number_of_stars": "Number of Stars",
       "enter_amount_placeholder": "Enter number Stars",
       "total_label": "Total",
@@ -191,7 +191,7 @@
       "benefit_ranking": "Higher ranking in search results",
       "benefit_visibility": "Increase profile visibility",
       "benefit_reach": "Reach more potential clients",
-      "benefit_standout": "Stand out from competition",
+      "benefit_standout": "Stand out from the competition",
       "buy_button_text": "Buy {{stars}} Star{{plural}} - {{price}}",
       "buy_button_disabled": "Select Stars to Continue",
       "package_accessibility": "Package: {{stars}} stars for {{price}}",
@@ -205,7 +205,7 @@
     }
   },
   "works": {
-    "lets_find_work": " Let's find best",
+    "lets_find_work": " Let's find best Jobs",
     "work": "Jobs",
     "start_public_work": "Post your job",
     "post_to_apply": "Publish your job and connect with freelancers. \n",
@@ -228,7 +228,7 @@
         "title": "No Freelancers Yet",
         "description": "Your job posting is live! Qualified freelancers will start showing interest soon.",
         "tip": {
-          "title": "Tip to get more applicants",
+          "title": "Tips to get more applicants",
           "description": "Make sure your job description is clear and includes budget details"
         },
         "action": {
@@ -239,7 +239,7 @@
   },
   "postWork": {
     "public_work": "Post a Job",
-    "posting_public_work": "your job will be visible to everyone on Aoser.",
+    "posting_public_work": "Your job will be visible to everyone on Aoser.",
     "next": "Next",
     "work_title": "What service do you need?",
     "work_title_placeholder": "I'm looking for...",
@@ -247,31 +247,31 @@
     "work_type": "Service Mode",
     "online": "Online",
     "offline": "On-site",
-    "work_description": "Job details",
+    "work_description": "Job Details",
     "work_description_placeholder": "Describe your request...",
     "work_description_required": "Job details is required",
     "sample_work": "Sample Work (Optional)",
     "sample_work_placeholder": "Paste link or reference",
-    "service_type": "Select Service",
+    "service_type": "Choose Service",
     "service_type_required": "Service type is required",
-    "budget_type": "Service fee",
+    "budget_type": "Pricing",
     "fixed_price": "Fixed Price",
     "hourly": "Hourly",
     "budget": "Budget",
-    "budget_placeholder": "Enter your price",
-    "offering": "Offering",
+    "budget_placeholder": "Enter your budget",
+    "offering": "Make an Offer",
     "budget_required": "Budget is required",
-    "deadline_requirement": "Desired date",
+    "deadline_requirement": "Preferred Date",
     "yes": "Yes",
     "no": "No",
-    "from": "start",
-    "to": "To",
+    "from": "Start",
+    "to": "End",
     "time_:": "at",
     "book_freelancer": "Serivce Request",
-    "date_placeholder": "mm/dd/yy",
+    "date_placeholder": "dd/mm/yy",
     "select_both_dates": "Please select both start and end dates",
     "end_date_after_start": "End date must be after start date",
-    "select_jobs": "Select Service",
+    "select_jobs": "Choose Service",
     "confirm": {
       "confirm": "Confirm request",
       "confirm_message": "Please confirm your request detail before submitting.",
@@ -283,19 +283,20 @@
       "confirming": "Confirming...",
       "confirm_submit": "Confirm & Submit",
       "error": "Error!",
+      "network_error":"Something went wrong. Please try again later.",
       "success": "Success!",
-      "work_created_successfully": "Your public work has been created successfully.",
+      "work_created_successfully": "Your public job has been created successfully.",
       "work_send_successfully": "Your request has been sent to the freelancer successfully."
     },
     "public_confirm": {
       "confirm": "Review & Post Job",
-      "confirm_message": "Please review your Job details before posting",
+      "confirm_message": "Please review your job details before posting",
       "complete_job_details": "Complete Job Details",
       "system_review_description": "To help freelancers understand your job clearly, make sure your job details are complete and accurate.",
       "important_notice": "Important Notice",
-      "important_notice_description1": "- Every Job must follow Aoser's platform policy.",
-      "important_notice_description2": "- Post that contaon prohited content, misleading information or inaproprite rask may be removed automatically bt the system.",
-      "ensure_clear_post": "Make sure your Job is clear, appropriate, and safe for our platform.",
+      "important_notice_description1": "- Every Job must follow Aoser's platform policies.",
+      "important_notice_description2": "- Post that contain prohibited content, misleading information or inappropriate task may be removed automatically by the system.",
+      "ensure_clear_post": "Make sure your job is clear, appropriate, and safe for our platform.",
       "confirming": "Confirming...",
       "confirm_submit": "Submit job",
       "error": "Error!",
@@ -303,8 +304,8 @@
       "work_created_successfully": "Your job has been posted successfully.",
       "work_send_successfully": "Your request has been sent to the freelancer successfully."
     },
-    "sub_work_details": "Task details",
-    "add_sections": "Add addition tasks or details for serice.",
+    "sub_work_details": "Task Details",
+    "add_sections": "Add additional tasks or details for the service.",
     "freelancer_no_found": "No freelancer found",
     "status": {
       "published": "Published",
@@ -319,7 +320,7 @@
   },
   "notification": {
     "notification": "Notifications",
-    "no_notification": "No Notification yet",
+    "no_notification": "No Notifications yet",
     "no_notification_description": " Notifications you receive will appear here"
   },
   "---": " ------------------ COMPONENTS  ------------------ ",
@@ -339,6 +340,7 @@
     "busyUntil": "Busy until",
     "hire": "Request service",
     "hour": "hour",
+    
     "make_a_book": "Make a Book",
     "whatExpect": "What customer can expect",
     "infoStats": {
@@ -373,11 +375,13 @@
     "fullName": "Full Name",
     "phone": "Phone Number",
     "address": "Address",
+    "select": "Select",
+    "option_avaiblable":"options available",
     "title": "Customer Profile"
   },
   "workDetail": {
-    "work_detail": "Work detail",
-    "kind_of_work": "Kind of work",
+    "work_detail": "Job details",
+    "kind_of_work": "Service Mode",
     "look_all_details": "look all of work details here",
     "edit": "Edit",
     "offer": "Offer",
@@ -414,15 +418,15 @@
     "deadline": "Deadline",
     "no_date": "No date",
     "progress": "Progress",
-    "step_by_step": "Step-by-step tasks to complete this work",
-    "add_sub_task": "Add sub task...",
-    "add_new_section": "Add task...",
+    "step_by_step": "Step-by-step tasks to complete this job",
+    "add_sub_task": "Add a sub task...",
+    "add_new_section": "Add a task...",
     "add_plus": "Add +",
     "delete_section": "Delete Section",
     "delete_section_confirm": "Are you sure you want to delete this section?",
     "cancel": "Cancel",
     "delete": "Delete",
-    "offering_price": "Offering Price",
+    "offering_price": "Make an Offer",
     "open_in_browser": "Open in Browser",
     "video_preview_not_available": "Video preview not available",
     "tap_to_open": "Tap to open in browser",
@@ -436,8 +440,8 @@
     "textBody_of_error": "Please Try Again Later.",
     "textBody_of_accept_success": "Accept Success",
     "become_freelancer_role": "Become a Freelancer",
-    "set_up_freelancer_role": "Set up your freelancer profile and receive job.",
-    "start_freelancer_role": "Start Freelancer Role.",
+    "set_up_freelancer_role": "Set up your freelancers profile to start receiving jobs.",
+    "start_freelancer_role": "Start as a Freelancer",
     "hire": "Hire",
     "hiring": "Hiring...",
     "nowork_available": "No work available",
@@ -496,16 +500,16 @@
       "label": "Deadline Requirement?",
       "yes": "Yes",
       "no": "No",
-      "from": "From",
-      "to": "To",
-      "fromPlaceholder": "mm/dd/yy",
-      "toPlaceholder": "mm/dd/yy",
+      "from": "Start",
+      "to": "End",
+      "fromPlaceholder": "dd/mm/yy",
+      "toPlaceholder": "dd/mm/yy",
       "errorBothDates": "Please select both start and end dates",
       "errorEndDate": "End date must be after start date"
     },
     "toast": {
       "success": "Success!",
-      "text_success": "Your work has been updated successfully.",
+      "text_success": "Your job has been updated successfully.",
       "append_success": "Please wait for receiving your new work from freelancer.",
       "error": "Opps!",
       "text_error": "Something went wrong. Please try again."
@@ -525,14 +529,16 @@
   },
   "favorites": {
     "favorites": "Favorites",
-    "public_works": "Posted Job",
-    "freelancer": "Freelancer",
+    "public_works": "Posted Jobs",
+    "freelancer": "Freelancers",
     "accommodation": "Accommodation",
     "driver": "Driver",
     "company": "Company",
     "work": {
-      "no_favorite": "No favorites yet",
-      "items_will_appear_here": "Items you mark as favorite will appear here"
+      "no_favorite": "No favorite jobs yet",
+      "items_will_appear_here": "Jobs you mark as favorite will appear here.",
+      "no_favorite_freelancer": "No favorite freelancer yet",
+      "items_will_appear_here_freelancer": "Freelancers you mark as favorite will appear here."
     },
     "freelancers": {},
     "favorite_no_result": {
@@ -556,8 +562,10 @@
     },
     "freelancers": {},
     "history_no_result": {
-      "no_history": "No history yet",
-      "items_will_appear_here": "You haven't added any work yet. Start exploring and add your work"
+      "no_history": "No history jobs yet",
+      "items_will_appear_here": "You haven't added any work yet. Start exploring and add your work",
+      "no_history_freelancer": "No freelancers yet",
+      "items_will_appear_here_freelancer": "Freelancers who are interested in your job will appear here"
     }
   },
   "editProfile": {
@@ -587,7 +595,7 @@
     "phone": "Phone",
     "select_contry": "Select Country",
     "country_no_found": "No countries found",
-    "save": "Save",
+    "save": "Save Changes",
     "saving": "Saving...",
     "delete_image_title": "Delete Image",
     "delete_image_message": "Are you sure you want to delete this profile image?",
@@ -668,7 +676,7 @@
     "emailLabel": "Your Email",
     "emailPlaceholder": "Enter your email",
     "categoryLabel": "Choose Category",
-    "questionLabel": "Tell Customer About Yourself",
+    "questionLabel": "Tell Clients About Yourself",
     "questionPlaceholder": "Describe your question or issue in detail...",
     "attachFile": "Attach image/video file to explain better (optional)",
     "submitButton": "Send My Question",
@@ -865,7 +873,8 @@
   },
   "profile_in_command": {
     "apply": "Apply",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "apply_failed":"Failed to apply for this work. Please try again."
   },
   "forgotPassword": {
     "title": "Forgot Password",
@@ -909,7 +918,7 @@
     "pendingTitle": "Application Under Review",
     "pendingSubtitle": "Your freelancer application is being reviewed by our team. We'll notify you once it's approved.",
     "whatHappensNext": "What happens next?",
-    "reviewProcess": "Our team will review your request shortly and you will be notified when it is approved.",
+    "reviewProcess": "Our team will review your application shortly and you will be notified once it is approved.",
     "contactSupport": "Contact Support",
     "backToHomeButton": "Back to Home",
     "estimatedTime": "We will review your information shortly to verify your account.",
@@ -930,21 +939,21 @@
   "kyc": {
     "steps": {
       "profile": "Profile",
-      "basicInfo": "Basic Infomation",
+      "basicInfo": "Basic Information",
       "skills": "Skills",
-      "category": "Category",
-      "availability": "Verify your Identity",
+      "category": "Service & Rates",
+      "availability": "Verify Your Identity",
       "portfolio": "Identity Verification",
       "bankInfo": "Payment Information",
       "confirmation": "Final Confirmation",
       "review": "Review"
     },
     "update": {
-      "update": "Update",
+      "update": "Save Changes",
       "job_section": "Professional Profile",
       "updateJob_section": "Complete your professional profile",
       "describe_to_customers": "Tell Customer About Yourself",
-      "describe_subtext": "Let your customers understand your background, skills, and experience."
+      "describe_subtext": "Help clients understand your background, skills, and experience."
     },
     "toast": {
       "uploading": {
@@ -986,16 +995,16 @@
     },
     "step1": {
       "jobTitle": {
-        "label": "Your Profession",
+        "label": "Profession",
         "placeholder": "eg ... ",
-        "required": "Your profession is required"
+        "required": "profession is required"
       },
       "bannerImage": {
         "label": "Banner Image",
         "required": "Banner image is required"
       },
       "promoVideo": {
-        "label": "Showcase your work (VDO)"
+        "label": "Showcase your work (Video)"
       },
       "freelancerType": {
         "label": "Avaiblability",
@@ -1009,8 +1018,8 @@
       }
     },
     "step2": {
-      "headline": "Introduce yourself to Customer",
-      "subtitle": "Let your customers understand your background, skills, and experience.",
+      "headline": "Introduce yourself to Clients",
+      "subtitle": "Help clients understand your background, skills, and experience.",
       "about_label": "Your Service",
       "about_placeholder": "I am ...",
       "about_required": "Your service is required",
@@ -1029,31 +1038,31 @@
     },
     "step3": {
       "title": "What services do you offer?",
-      "subtitle": "Describe your service clearly so customers know what to expect.",
+      "subtitle": "Describe your service clearly so clients know what to expect.",
       "serviceDescription": {
         "label": "Describe your service",
         "placeholder": "Describe your service, your process, and what makes you unique. Be clear and concise...",
         "error": "Service Description is required"
       },
       "hourlyRate": {
-        "label": "Hourly / Daily Rate / Per Job",
-        "error": "Hourly / Daily Rate / Per Job is required"
+        "label": "Service Rate Hourly / Daily / Per Job",
+        "error": "Service Rate is required"
       },
-      "tip": "This will help customers understand your value.",
+      "tip": "This will clients understand your value.",
       "click_change_currency": "Click to change currency",
       "rateType":{
-        "perJob":"Job",
-        "perHour":"Hour",
-        "perDay":"Day"
+        "perJob":"Per Job",
+        "perHour":"Hourly",
+        "perDay":"Daily"
       }
     },
     "step4": {
-      "title": "Your Identity Information",
+      "title": "Identity Information",
       "subtitle": "Please provide your real information for verification",
       "documentTypes": {
         "ID_CARD": "ID Card",
         "PASSPORT": "Passport",
-        "VISA": "Visa"
+        "VISA": "Driver's License"
       },
       "cardId": {
         "label": "Card Number",
@@ -1071,8 +1080,8 @@
         "error": "Passport number is required"
       },
       "visa": {
-        "label": "Visa Number",
-        "placeholder": "Enter visa number",
+        "label": "Driver's License Number",
+        "placeholder": "Enter diver's license number",
         "error": "Visa number is required"
       },
       "phoneNumber": {
@@ -1105,9 +1114,9 @@
     },
     "step5": {
       "title": "Verify Your Identity",
-      "subtitle": "Upload a photo of your indentity document and a selfie holding the document.",
+      "subtitle": "Upload a photo of your identity document and a selfie holding the document.",
       "selfieWithCard": {
-        "label": "Selfie with document",
+        "label": "Selfie with Document",
         "description": "Make sure your face and document are clearly visible",
         "error": "This image is required"
       },
@@ -1118,7 +1127,7 @@
       }
     },
     "step6": {
-      "title": "Payments",
+      "title": "Payment Method",
       "subtitle": "Your bank information is secure and will only be used for payments.",
       "methods": {
         "LAOS_BANK": "Lao Bank",
@@ -1138,7 +1147,7 @@
         "label": "Bank Account Number",
         "placeholder": "e.g. 1234",
         "error": "Bank number should be at least 8 digits",
-        "hint": "Account number should be 8–17 digits"
+        "hint": "The account number should be 8–17 digits"
       },
       "paypal": {
         "label": "PayPal Email / Phone",
@@ -1148,11 +1157,11 @@
     },
     "step7": {
       "title": "Confirm Your Freelancer Account",
-      "subtitle": "Please confirm your information and wait for admin approval",
+      "subtitle": "Please confirm your information and wait for approval",
       "points": {
         "review": {
-          "icon": "Your account will be review and approved soon.",
-          "text": "Your account will be review and approved soon."
+          "icon": "Your account will be reviewed and approved soon.",
+          "text": "Your account will be reviewed and approved soon."
         },
         "notification": {
           "icon": "You'll be notified if there are any issues with your profile.",
@@ -1165,7 +1174,7 @@
       },
       "agreement": {
         "text": "I confirm that the information I provided is correct and I agree to the",
-        "policy": "policy.",
+        "policy": "policies.",
         "error": "Please agree to the terms and conditions"
       }
     }
@@ -1178,9 +1187,9 @@
     "amountToPay": "Amount to Pay",
     "downloadQR": "Download QR Code",
     "saving": "Saving...",
-    "saveQRHint": "Save QR code to pay later",
+    "saveQRHint": "Save QR Code to pay later",
     "unlockPotential": "Unlock Your Freelancer Potential",
-    "upgradeFee": "A one-time upgrade fee is required to unlock all premium features on Asor.",
+    "upgradeFee": "A one-time upgrade fee is required to unlock all premium features on Aoser.",
     "howToPay": "How to Pay",
     "step1": "Open your BCEL One app",
     "step2": "Scan the QR code above",
@@ -1286,10 +1295,10 @@
       "sending": "Sending..."
     },
     "list": {
-      "title": "Chats",
+      "title": "Messages",
       "searchPlaceholder": "Search chats...",
-      "noChatsYet": "No chats yet",
-      "startConversation": "Start a conversation to see it here",
+      "noChatsYet": "No message yet",
+      "startConversation": "Start a conversation to begin messaging",
       "noChatsFound": "No chats found",
       "tryDifferentKeywords": "Try searching with different keywords",
       "chatOptions": "Options",

@@ -148,9 +148,12 @@ export default function SignUpScreen() {
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-          style={{ flex: 1, backgroundColor: 'white' }}
+          behavior={'padding'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          style={{
+            flex: 1,
+            backgroundColor: 'white'
+          }}
         >
           {/* Scrollable Content */}
           <ScrollView
@@ -160,7 +163,7 @@ export default function SignUpScreen() {
           >
             <View className="px-6 py-6">
 
-             
+
               {/* Google Login Button */}
               <GoogleLoginButton
                 onPress={handleGoogleLoginPress}
@@ -405,8 +408,9 @@ function FirstNameInput({ control, error, disabled }: FirstNameInputProps) {
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.firstName')}
@@ -443,8 +447,9 @@ function LastNameInput({ control, error, disabled }: LastNameInputProps) {
         <View>
 
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.lastName')}
@@ -481,8 +486,9 @@ function EmailInput({ control, error, disabled }: EmailInputProps) {
         <View>
 
           <View
-            className={`flex-row items-center px-4 py-2  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4   rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder="Aoser@example.com"
@@ -528,8 +534,9 @@ function PasswordInput({
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.password')}
@@ -585,8 +592,9 @@ function ConfirmPasswordInput({
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.confirm_password')}

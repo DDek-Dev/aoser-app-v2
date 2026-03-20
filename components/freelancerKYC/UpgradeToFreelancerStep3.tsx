@@ -50,6 +50,9 @@ const UpgradeToFreelancerStep3 = (
             setServiceDesc(dataStep3.serviceDesc);
             setHourlyRate(dataStep3.hourlyRate);
             setBudgetCurrency(dataStep3.budgetCurrency);
+            if (dataStep3.rateType) {
+                setRateType(dataStep3.rateType);
+            }
         }
     }, [dataStep3]);
 

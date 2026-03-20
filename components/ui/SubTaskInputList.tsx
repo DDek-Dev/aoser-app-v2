@@ -1,6 +1,6 @@
 // SubWorkDetailsInput.tsx
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Keyboard, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
@@ -91,19 +91,23 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
         {t('postWork.add_sections')}
       </Text>
 
-      <ScrollView keyboardShouldPersistTaps="handled">
+      <View>
         {subWorkDetails.map((section, sectionIndex) => (
-          <View key={sectionIndex} className="mb-6 p-3 bg-white rounded-2xl border border-border">
+          <View key={sectionIndex} className="mb-6 p-2 bg-white rounded-2xl border border-border">
             {/* Section Header */}
             <View className="flex-row items-center mb-3">
               <TextInput
-              
+
                 value={section.sectionTitle}
                 onChangeText={(text) => handleUpdateSectionTitle(sectionIndex, text)}
                 placeholder={t('workDetail.add_new_section')}
 
                 placeholderTextColor="#6B7280"
-                className="flex-1 text-body  font-semibold border-b text-text border-border pb-2"
+                className="flex-1 text-body font-semibold border-b text-text border-border"
+                style={{
+                  minHeight: 52,
+                  paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+                }}
               />
               <TouchableOpacity
                 onPress={() => handleDeleteSection(sectionIndex)}
@@ -122,8 +126,12 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
                   onChangeText={(text) => handleUpdateSubTask(sectionIndex, taskIndex, text)}
                   placeholder={t('workDetail.add_sub_task')}
                   placeholderTextColor="#6B7280"
-             
-                  className="flex-1 ml-2 border-b border-border text-text pb-1 text-body"
+
+                  className="flex-1 text-body rounded-2xl  border-b text-text border-border"
+                  style={{
+                    minHeight: 52,
+                    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+                  }}
                   ref={(ref) => {
                     if (ref) {
                       subTaskInputRefs.current[`${sectionIndex}-${taskIndex}`] = ref;
@@ -148,14 +156,18 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
                   ...newSubTaskTitles,
                   [sectionIndex]: text
                 })}
-                className="flex-1 border border-border bg-white text-text px-3 py-2 rounded-lg text-body"
+                className="flex-1 border border-border bg-white mb-2 text-text px-3 rounded-2xl text-body"
+                style={{
+                  minHeight: 52,
+                  paddingVertical: Platform.OS === 'ios' ? 12 : 10,
+                }}
                 onSubmitEditing={() => handleAddSubTask(sectionIndex)}
                 ref={(ref) => {
                   if (ref) {
                     subTaskInputRefs.current[`${sectionIndex}-${section.subTask.length}`] = ref;
                   }
                 }}
-              placeholderTextColor="#6B7280"
+                placeholderTextColor="#6B7280"
               />
               <TouchableOpacity
                 onPress={() => handleAddSubTask(sectionIndex)}
@@ -173,10 +185,14 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
             placeholder={t('workDetail.add_new_section')}
             value={newSectionTitle}
             onChangeText={setNewSectionTitle}
-            className="flex-1 border border-border focus:border-primary bg-white px-4 py-3 rounded-lg text-body"
+            className="flex-1 border border-border bg-white text-text px-3 rounded-2xl"
+            style={{
+              minHeight: 52,
+              paddingVertical: Platform.OS === 'ios' ? 12 : 10,
+            }}
             onSubmitEditing={handleAddSection}
             ref={sectionInputRef}
-              placeholderTextColor="#6B7280"
+            placeholderTextColor="#6B7280"
 
           />
           <TouchableOpacity
@@ -186,7 +202,7 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
             <Ionicons name="add" size={24} color="white" />
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </View>
   );
 };

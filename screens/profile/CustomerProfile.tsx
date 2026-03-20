@@ -88,7 +88,6 @@ function CustomerProfile() {
                 {/* ── Header ── */}
                 <View
                     className="flex-row items-center justify-between bg-surface border-b border-border"
-
                 >
                     <Header_back text={t('customerProfile.title')} onPress={() => navigation.goBack()} />
 
@@ -119,7 +118,7 @@ function CustomerProfile() {
         : profileImage;
 
     const fullName = `${profile.firstName} ${profile.lastName}`.trim();
-    const userId = profile?._id?.substring(0, 4).toUpperCase() || 'XXXX';
+    const userId = profile?.userCode;
 
     return (
         <ScreenWrapper safeEdges={['top']} style={{ flex: 1 }}>

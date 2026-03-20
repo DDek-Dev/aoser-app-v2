@@ -89,9 +89,9 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
     } catch (applyError: any) {
       Toast.show({
         type: ALERT_TYPE.DANGER,
-        title: t('common.failed') || 'Failed',
+        title: t('common.error') || 'Failed',
         textBody:
-          applyError?.message ||
+        
           t('profile_in_command.apply_failed') ||
           'Failed to apply for this work. Please try again.',
       });

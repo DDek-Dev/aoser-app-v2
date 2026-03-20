@@ -263,7 +263,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
 
                     }
 
-                    {item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
+                    {item.address&& item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
 
                         <View className="flex-row mt-3 items-center">
                             {/* <Text>{t('workDetail.deadline')} : </Text> */}

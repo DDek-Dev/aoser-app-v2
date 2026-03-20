@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Freelancer, UserProfile } from 'types/profile';
 
 type TabContentProps = {
-  profile: Freelancer;
+  profile: UserProfile;
 };
 
 export default function WhatExpect({ profile }: TabContentProps) {
@@ -49,7 +49,12 @@ export default function WhatExpect({ profile }: TabContentProps) {
           <View className="flex-row  py-2 px-4 items-center rounded-full">
             <Text className="text-xl font-bold text-warning">{profile.hourlyRateCurrency} </Text>
             <Text className="text-xl font-bold text-primary"> { new Intl.NumberFormat().format(profile.hourlyRate)}</Text>
-            <Text className="text-sm text-textSecondary"> / {t('freelancer_profile.hour')}</Text>
+            <Text className="text-sm text-textSecondary"> /
+
+              {profile?.rateType === 'PER_HOUR' && t('kyc.step3.rateType.perHour')}
+                    {profile?.rateType === 'PER_DAY' && t('kyc.step3.rateType.perDay')}
+                    {profile?.rateType === 'PER_JOB' && t('kyc.step3.rateType.perJob')}
+            </Text>
           </View>
         </View>
       </View>

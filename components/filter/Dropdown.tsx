@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { 
   ScrollView, 
   Text, 
@@ -30,7 +31,8 @@ const Dropdown: React.FC<DropdownProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { width, height } = Dimensions.get('window');
-  
+  const {t} = useTranslation();
+
   // Modal dimensions - 80% of screen width, 60% of screen height
   const modalWidth = width * 0.8;
   const modalHeight = height * 0.6;
@@ -49,7 +51,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         onPress={() => !disabled && setIsOpen(true)}
         className={`
           flex-row items-center justify-between 
-          px-4 py-3 rounded-lg border
+          px-4 py-3 rounded-2xl border
           ${disabled
             ? 'bg-gray-100 border-gray-200'
             : 'bg-surface border-border'
@@ -109,10 +111,10 @@ const Dropdown: React.FC<DropdownProps> = ({
               <View className="flex-row items-center justify-between p-4 border-b border-gray-200">
                 <View className="flex-1">
                   <Text className="text-lg font-semibold text-gray-800">
-                    Select {label}
+                    {t('customerProfile.select')} {label}
                   </Text>
                   <Text className="text-sm text-gray-500 mt-1">
-                    {options.length} options available
+                    {options.length} {t('customerProfile.option_avaiblable')}
                   </Text>
                 </View>
                 
@@ -142,7 +144,7 @@ const Dropdown: React.FC<DropdownProps> = ({
                         key={`${option.value?._id || option.value?.id || index}`}
                         onPress={() => handleSelect(option.value)}
                         className={`
-                          flex-row items-center px-4 py-3 mx-2 rounded-lg
+                          flex-row items-center px-4 py-3 mx-2 rounded-2xl
                           ${value === option.label ? 'bg-blue-50' : 'active:bg-gray-50'}
                         `}
                         activeOpacity={0.7}

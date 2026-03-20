@@ -18,7 +18,7 @@ import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { getPresignedUrls, uploadFileToUrl } from 'api/uploadUtils';
-import { Freelancer } from 'types/profile';
+import { Freelancer, UserProfile } from 'types/profile';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useTranslation } from 'react-i18next';
 
@@ -220,7 +220,7 @@ const EditFreelancerJobsection = () => {
             console.log('updateData', updateData);
 
             // Update profile
-            const result = await updateProfileMutation.mutateAsync(updateData as Freelancer);
+            const result = await updateProfileMutation.mutateAsync(updateData as UserProfile);
 
             console.log('Update successful:', result);
 
@@ -229,6 +229,7 @@ const EditFreelancerJobsection = () => {
                 title: t('kyc.toast.success.title'),
                 textBody:  t('kyc.toast.success.onupdate'),
             })
+            navigation.goBack();
 
         } catch (error) {
             console.log('Update error:', error);
@@ -352,7 +353,7 @@ const EditFreelancerJobsection = () => {
                     disabled={isUploading}
                 >
                     <Text className="text-white text-base font-semibold">
-                        {isUploading ? t('kyc.toast.uploading.title') : t('kyc.update.update')}
+                        {isUploading ? t('payment.saving') : t('kyc.update.update')}
                     </Text>
                 </TouchableOpacity>
             </View>

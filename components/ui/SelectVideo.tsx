@@ -36,11 +36,11 @@ const MIME_TYPE_MAP: Record<string, string> = {
 const PREVIEW_DURATION_MS = 5000;
 const loadedVideoUriCache = new Set<string>();
 
-const SelectVideo: React.FC<Props> = ({ 
-  video, 
-  label, 
-  required = false, 
-  onChange 
+const SelectVideo: React.FC<Props> = ({
+  video,
+  label,
+  required = false,
+  onChange
 }) => {
   const { t } = useTranslation();
   const playerRef = useRef<any>(null);
@@ -52,15 +52,21 @@ const SelectVideo: React.FC<Props> = ({
     message: '',
   });
 
-  const player = useVideoPlayer(
-    video ? { uri: video, useCaching: true as const } : null,
-    (playerInstance) => {
-      playerRef.current = playerInstance;
-      playerInstance.loop = false;
-      playerInstance.muted = true;
-      playerInstance.keepScreenOnWhilePlaying = false;
-    }
-  );
+  console.log('video', video)
+  // const player = useVideoPlayer(
+  //   video ? { uri: video, useCaching: true as const } : null,
+  //   (playerInstance) => {
+  //     playerRef.current = playerInstance;
+  //     playerInstance.loop = false;
+  //     playerInstance.muted = true;
+  //     playerInstance.keepScreenOnWhilePlaying = false;
+  //   }
+  // );
+
+ const player = useVideoPlayer('', (playerInstance) => {
+  playerInstance.loop = false;
+  playerInstance.muted = true;
+});
 
   useEffect(() => {
     setIsVideoLoading(!!video && !loadedVideoUriCache.has(video));
@@ -81,35 +87,69 @@ const SelectVideo: React.FC<Props> = ({
     };
   }, []);
 
+  // useEffect(() => {
+  //   if (!player) return;
+
+  //   if (previewTimeoutRef.current) {
+  //     clearTimeout(previewTimeoutRef.current);
+  //     previewTimeoutRef.current = null;
+  //   }
+
+  //   if (video) {
+  //     try {
+  //       player.replace?.({ uri: video, useCaching: true });
+  //       // Show a short preview, then pause so the screen can sleep normally.
+  //       player.currentTime = 0;
+  //       player.play?.();
+  //       previewTimeoutRef.current = setTimeout(() => {
+  //         try { player.pause?.(); } catch (error) {}
+  //         previewTimeoutRef.current = null;
+  //       }, PREVIEW_DURATION_MS);
+  //     } catch (error) {
+  //       console.log('Error updating video source:', error);
+  //     }
+  //   } else {
+  //     try {
+  //       player.pause?.();
+  //     } catch (error) {
+  //       console.log('Error pausing player:', error);
+  //     }
+  //   }
+  // }, [video, player]);
+
+  // 2. ใช้ useEffect จัดการการเปลี่ยน Video ด้วย replaceAsync
   useEffect(() => {
-    if (!player) return;
+  // ตรวจสอบว่า player ยังมีตัวตนอยู่จริงและไม่ถูก release
+  if (!player) return;
 
-    if (previewTimeoutRef.current) {
-      clearTimeout(previewTimeoutRef.current);
-      previewTimeoutRef.current = null;
-    }
-
-    if (video) {
-      try {
-        player.replace?.({ uri: video, useCaching: true });
-        // Show a short preview, then pause so the screen can sleep normally.
+  const loadVideo = async () => {
+    try {
+      if (video) {
+        // ก่อนจะ replace ให้เช็คว่า player ยังใช้งานได้
+        // การครอบด้วย try-catch ตรงนี้จะดัก Error "already released" ได้
+        await player.replaceAsync({ uri: video, useCaching: true });
         player.currentTime = 0;
-        player.play?.();
+        player.play();
+
+        if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
         previewTimeoutRef.current = setTimeout(() => {
-          try { player.pause?.(); } catch (error) {}
-          previewTimeoutRef.current = null;
+          try { player.pause(); } catch (e) {}
         }, PREVIEW_DURATION_MS);
-      } catch (error) {
-        console.log('Error updating video source:', error);
+      } else {
+        player.pause();
       }
-    } else {
-      try {
-        player.pause?.();
-      } catch (error) {
-        console.log('Error pausing player:', error);
-      }
+    } catch (e) {
+      console.warn("Player was released before it could be updated", e);
     }
-  }, [video, player]);
+  };
+
+  loadVideo();
+
+  return () => {
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+  };
+}, [video, player]);
+
 
   const showModal = (title: string, message: string) => {
     setModalState({ visible: true, title, message });
@@ -131,7 +171,7 @@ const SelectVideo: React.FC<Props> = ({
   const validateFileSize = async (uri: string): Promise<boolean> => {
     try {
       const fileInfo = await getInfoAsync(uri);
-      
+
       if (!fileInfo.exists) {
         throw new Error('File does not exist');
       }
@@ -227,8 +267,8 @@ const SelectVideo: React.FC<Props> = ({
       console.log('Selected video file:', {
         name: fileWithType.name,
         type: fileWithType.type,
-        duration: asset.duration 
-          ? `${(asset.duration / 1000).toFixed(1)}s` 
+        duration: asset.duration
+          ? `${(asset.duration / 1000).toFixed(1)}s`
           : 'Unknown',
       });
 
@@ -248,7 +288,7 @@ const SelectVideo: React.FC<Props> = ({
       clearTimeout(previewTimeoutRef.current);
       previewTimeoutRef.current = null;
     }
-    try { playerRef.current?.pause?.(); } catch (error) {}
+    try { playerRef.current?.pause?.(); } catch (error) { }
     playerRef.current = null;
     onChange(undefined);
   };
@@ -262,13 +302,28 @@ const SelectVideo: React.FC<Props> = ({
       <View className="relative">
         {video ? (
           <>
-            {player && (
+            {/* {player && (
               <VideoView
                 player={player}
                 style={styles.videoView}
                 onFirstFrameRender={markVideoLoaded}
               />
-            )}
+            )} */}
+
+            {video && player && typeof player !== 'number' ? (
+      <VideoView
+        // ใช้ key ที่เปลี่ยนตาม video URI เพื่อล้าง View เก่าทิ้งทันที
+        key={`video-player-${video}`} 
+        player={player}
+        style={styles.videoView}
+        onFirstFrameRender={markVideoLoaded}
+      />
+    ) : (
+      <View style={styles.videoView} className="bg-gray-200 justify-center items-center">
+         {/* แสดง Loading หรือ Placeholder ขณะที่ player กำลังเตรียมตัว */}
+         <ActivityIndicator />
+      </View>
+    )}
             {isVideoLoading && (
               <View style={styles.videoLoadingOverlay}>
                 <ActivityIndicator size="small" color="#FFFFFF" />
@@ -314,11 +369,11 @@ const SelectVideo: React.FC<Props> = ({
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{modalState.title}</Text>
             </View>
-            
+
             <View style={styles.modalBody}>
               <Text style={styles.modalMessage}>{modalState.message}</Text>
             </View>
-            
+
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 onPress={hideModal}

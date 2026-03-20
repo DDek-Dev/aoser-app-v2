@@ -23,11 +23,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
   const currentLanguage = getCurrentLanguage();
 
   const { t } = useTranslation();
-  if (data.length === 0) {
-    return (
-      <HistoryNoResult />
-    );
-  }
+  
   return (
     <View className="space-y-3">
       {data.map((item) => {
@@ -57,14 +53,14 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
               <View className='flex-row justify-between px-1'>
 
                 <View>
-                  <View className="flex-row gap-2 items-center">
+                  {/* <View className="flex-row gap-2 items-center">
                     <Image
                       source={displayImage}
                       className="w-10 h-10 rounded-full"
                     />
                     <Text>{displayName}</Text>
 
-                  </View>
+                  </View> */}
                   <Text className="text-caption mt-1 text-center text-textSecondary">
                    {t('works.post_on')} {formatRelativeTime(item.createdAt, currentLanguage)}
                   </Text>
@@ -155,7 +151,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
 
               }
 
-              {item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
+              {item.address && item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
 
                 <View className="flex-row mt-3 items-center">
                   {/* <Text>{t('workDetail.deadline')} : </Text> */}

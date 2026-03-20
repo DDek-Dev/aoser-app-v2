@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
-import { SafeAreaView, Edge, useSafeAreaInsets } from 'react-native-safe-area-context';
-import FloatingChatButton from 'screens/chat/FloatingChatButton';
+import {  ViewStyle } from 'react-native';
+import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 
 type ScreenWrapperProps = {
   children: React.ReactNode;
@@ -11,7 +10,6 @@ type ScreenWrapperProps = {
 };
 
 const ScreenWrapper = ({ children, safeEdges = [], style, isbluetop }: ScreenWrapperProps) => {
-  const insets = useSafeAreaInsets();
 
   return (
     <SafeAreaView

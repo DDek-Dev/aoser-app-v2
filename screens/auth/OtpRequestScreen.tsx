@@ -1,4 +1,4 @@
-import  { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -61,15 +61,15 @@ export default function OtpRequestScreen({ navigation }: any) {
   const otpValues = useRef(Array(6).fill(''));
 
   // Countdown
- useEffect(() => {
-  startCountdown();
+  useEffect(() => {
+    startCountdown();
 
-  return () => {
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-    }
-  };
-}, []);
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const loadFormData = async () => {
@@ -136,7 +136,7 @@ export default function OtpRequestScreen({ navigation }: any) {
       Toast.show({
         type: ALERT_TYPE.DANGER,
         title: `${t('otpScreen.error_title')}`,
-        textBody:`${t('otpScreen.registration_failed')}`,
+        textBody: `${t('otpScreen.registration_failed')}`,
       });
 
       // Alert.alert(
@@ -164,14 +164,14 @@ export default function OtpRequestScreen({ navigation }: any) {
         title: `${t('otpScreen.error_title')}`,
         textBody: error instanceof Error ? error.message : t('otpScreen.resend_failed'),
       });
-      
+
     } finally {
       setIsResending(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top', 'bottom']}>
 
       <Header_back
         onPress={() => navigation.goBack()}
@@ -182,98 +182,108 @@ export default function OtpRequestScreen({ navigation }: any) {
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          style={{
+            flex: 1,
+            backgroundColor: 'white'
+          }}
         >
-          <View className="flex-1">
-            {/* Scrollable Form Content */}
-            <ScrollView
-              className="flex-1 px-6 py-8"
-              contentContainerStyle={{ paddingBottom: 140 }}
-              keyboardShouldPersistTaps="handled"
-            >
-              <Text className="text-gray-500 mb-1">{t('otpScreen.otp_sent_to')}</Text>
-              <Text className="text-gray-900 mb-6 font-semibold">{email}</Text>
 
-              {/* OTP Input */}
-              <Controller
-                control={control}
-                name="otp"
-                render={() => (
-                  <View className="flex-row justify-between mb-4">
-                    {otpRefs.map((ref, i) => (
-                      <TextInput
-                        key={i}
-                        ref={ref}
-                        maxLength={1}
-                        keyboardType="numeric"
-                        className={`text-lg text-center w-12 h-12 rounded-full border ${
-                          errors.otp ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        value={otpValues.current[i]}
-                        onChangeText={(text) => handleOtpChange(text, i)}
-                      />
-                    ))}
-                  </View>
-                )}
-              />
+          {/* Scrollable Form Content */}
+          <ScrollView
+            className="flex-1 px-6 py-8"
+            contentContainerStyle={{ paddingBottom: 140 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text className="text-gray-500 mb-1">{t('otpScreen.otp_sent_to')}</Text>
+            <Text className="text-gray-900 mb-6 font-semibold">{email}</Text>
 
-              {errors.otp && (
-                <Text className="text-red-500 text-sm mt-2">{errors.otp.message}</Text>
+            {/* OTP Input */}
+            <Controller
+              control={control}
+              name="otp"
+              render={() => (
+                <View className="flex-row justify-between mb-4">
+                  {otpRefs.map((ref, i) => (
+                    <TextInput
+                      key={i}
+                      ref={ref}
+                      maxLength={1}
+                      keyboardType="numeric"
+                      // className={`text-lg text-center w-12 h-12 rounded-full border ${errors.otp ? 'border-red-500' : 'border-gray-300'
+                      //   }`}
+                      style={{
+                        width: 44, height: 44,        // explicit, not Tailwind class
+                        textAlign: 'center',
+                        fontSize: 18,
+                        borderRadius: 22,
+                        borderWidth: 1,
+                        borderColor: errors.otp ? '#ef4444' : '#d1d5db',
+                      }}
+                      value={otpValues.current[i]}
+                      onChangeText={(text) => handleOtpChange(text, i)}
+                    />
+                  ))}
+                </View>
               )}
+            />
 
-              {/* Resend */}
-              <View className="flex-row justify-end mt-2 mb-6">
-                <Text className="text-gray-400">{t('otpScreen.didnt_receive')} </Text>
+            {errors.otp && (
+              <Text className="text-red-500 text-sm mt-2">{errors.otp.message}</Text>
+            )}
 
-                <TouchableOpacity
-                  onPress={handleResendOTP}
-                  disabled={countdown > 0 || isResending}
-                >
-                  {isResending ? (
-                    <ActivityIndicator size="small" color="#2563eb" />
-                  ) : countdown > 0 ? (
-                    <Text className="text-textSecondary font-medium">
-                      {t('otpScreen.resend_in')} {countdown}s
-                    </Text>
-                  ) : (
-                    <Text className="text-blue-600 font-medium">
-                      {t('otpScreen.send_again')}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
+            {/* Resend */}
+            <View className="flex-row justify-end mt-2 mb-6">
+              <Text className="text-gray-400">{t('otpScreen.didnt_receive')} </Text>
 
-            {/* Fixed Bottom Button */}
-            <View
-              style={{
-                paddingBottom: insets.bottom + 12,
-                paddingHorizontal: 24,
-                backgroundColor: 'white',
-              }}
-            >
-              <Pressable
-                onPress={handleSubmit(onSubmit)}
-                className="bg-primary py-4 rounded-2xl"
-                disabled={otpVerifyLoading}
+              <TouchableOpacity
+                onPress={handleResendOTP}
+                disabled={countdown > 0 || isResending}
               >
-                {otpVerifyLoading ? (
-                  <View className="flex-row items-center justify-center">
-                    <ActivityIndicator color="white" size="small" />
-                    <Text className="text-white font-semibold ml-2">
-                      {t('otpScreen.verifying')}
-                    </Text>
-                  </View>
+                {isResending ? (
+                  <ActivityIndicator size="small" color="#2563eb" />
+                ) : countdown > 0 ? (
+                  <Text className="text-textSecondary font-medium">
+                    {t('otpScreen.resend_in')} {countdown}s
+                  </Text>
                 ) : (
-                  <Text className="text-white font-semibold text-center">
-                    {t('otpScreen.verify')}
+                  <Text className="text-blue-600 font-medium">
+                    {t('otpScreen.send_again')}
                   </Text>
                 )}
-              </Pressable>
+              </TouchableOpacity>
             </View>
+          </ScrollView>
 
+
+
+          {/* Fixed Bottom Button */}
+          <View
+            style={{
+              paddingBottom: insets.bottom + 12,
+              paddingHorizontal: 24,
+              backgroundColor: 'white',
+            }}
+          >
+            <Pressable
+              onPress={handleSubmit(onSubmit)}
+              className="bg-primary py-4 rounded-2xl"
+              disabled={otpVerifyLoading}
+            >
+              {otpVerifyLoading ? (
+                <View className="flex-row items-center justify-center">
+                  <ActivityIndicator color="white" size="small" />
+                  <Text className="text-white font-semibold ml-2">
+                    {t('otpScreen.verifying')}
+                  </Text>
+                </View>
+              ) : (
+                <Text className="text-white font-semibold text-center">
+                  {t('otpScreen.verify')}
+                </Text>
+              )}
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>

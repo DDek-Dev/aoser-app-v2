@@ -1,9 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
 import { Text, View } from "react-native";
 
-export const HistoryNoResult = () =>{
-const { t } = useTranslation();
+type Props = {
+  title:string;
+  desc:string;
+}
+export const HistoryNoResult = ({title, desc}: Props) =>{
+
 
   return(
   
@@ -12,10 +15,10 @@ const { t } = useTranslation();
       <Ionicons name="time-outline" size={64} color="#E5E7EB" />
     </View>
     <Text className="text-xl font-semibold text-textSecondary mb-2">
-      {t('history.history_no_result.no_history')}
+      {title}
     </Text>
     <Text className="text-gray-500 text-center mb-8">
-      {t('history.history_no_result.items_will_appear_here')}
+      {desc}
     </Text>
   </View>
   );

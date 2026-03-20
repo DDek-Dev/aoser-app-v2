@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useGetTopfreelancers, useRecommendedFreelancers } from 'hooks/useFreelancer';
 import TopFreelancers from 'components/freelancer/TopFreelancers';
 import NetworkErrorPopup from 'components/ui/NetworkErrorPopup';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -36,7 +37,7 @@ export default function HomeScreen() {
   type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'SearchBar'>;
   const navigation = useNavigation<SearchBarNavigationProp>();
   const { t } = useTranslation();
-
+const insets = useSafeAreaInsets(); 
   // Fetch freelancers with current category filter
   const {
     data,
@@ -142,7 +143,7 @@ export default function HomeScreen() {
 
   const bannerHeight = scrollY.interpolate({
     inputRange: [0, 380],
-    outputRange: [110, 110],
+    outputRange: [110, 0],
     extrapolate: 'clamp',
   });
 
@@ -154,7 +155,7 @@ export default function HomeScreen() {
 
   const searchBarTranslateY = scrollY.interpolate({
     inputRange: [0, 1000],
-    outputRange: [0, -4],
+    outputRange: [0, 0],
     extrapolate: 'clamp',
   });
 
@@ -191,16 +192,17 @@ export default function HomeScreen() {
           styles.banner,
           {
             zIndex: 99,
-            height: bannerHeight,
+            // height: bannerHeight,
             borderBottomLeftRadius: bannerRadius,
             borderBottomRightRadius: bannerRadius,
+            paddingTop: insets.top + 8,
           },
         ]}
       >
-        <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }] }}>
+        <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }]}} >
           <Pressable
             onPress={() => navigation.navigate('SearchBar', { text: '', focus: true })}
-            className="flex-row items-center bg-surface rounded-full border border-gray-300 px-4 py-4 mt-3"
+            className="flex-row items-center bg-surface rounded-full border border-gray-300 px-4 py-4 "
           >
             <Ionicons name="search-outline" size={20} color="#3B82F6" />
             <Text className="ml-2 text-base text-[#999]">{t('home.search_freelancer')}</Text>
@@ -291,7 +293,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   banner: {
     paddingHorizontal: 16,
-    paddingTop: 30,
+    // paddingTop: 30,
     paddingBottom: 12,
   },
 });

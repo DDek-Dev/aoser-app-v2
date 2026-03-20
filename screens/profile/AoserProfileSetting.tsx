@@ -54,6 +54,7 @@ type Props = {
         district?: boolean;
         village?: boolean;
     };
+    prefillFromMyProfile?: boolean;
 };
 
 const AoserProfileSetting = ({
@@ -76,10 +77,12 @@ const AoserProfileSetting = ({
     setDistrict,
     setVillage,
     errors,
+    prefillFromMyProfile,
 }: Props) => {
-    const { data: profile, isLoading: isProfileLoading } = useAoserProfile();
-    const { data: myProfile, isLoading: isMyProfileLoading, isError } = useMyProfile();
+    const { data: profile, isLoading: isProfileLoading } = useAoserProfile(userId);
+
     const { t } = useTranslation();
+
 
     const [isImageLoading, setIsImageLoading] = useState(false);
     const [genderModalVisible, setGenderModalVisible] = useState(false);
@@ -97,18 +100,65 @@ const AoserProfileSetting = ({
 
 
     // Load profile data once. User edits should not be overwritten after initial hydration.
+    // useEffect(() => {
+    //     if (initializedRef.current) return;
+    //     const myProfileAllowed = prefillFromMyProfile ? myProfile : undefined;
+    //      if (!userId) return;
+    //     if (!profile && !myProfileAllowed) return;
+
+    //     const userIdValue = profile?._id || profile?.userId || myProfileAllowed?._id || '';
+    //     const firstNameValue = profile?.firstName || myProfileAllowed?.firstName || '';
+    //     const lastNameValue = profile?.lastName || myProfileAllowed?.lastName || '';
+    //     const genderValue = profile?.gender || myProfileAllowed?.gender || '';
+    //     const phoneValue = profile?.phone || myProfileAllowed?.phone || '';
+    //     const provinceValue = profile?.address?.province || myProfileAllowed?.address?.province || '';
+    //     const districtValue = profile?.address?.district || myProfileAllowed?.address?.district || '';
+    //     const villageValue = profile?.address?.village || myProfileAllowed?.address?.village || '';
+
+    //     setUserId(userIdValue);
+    //     setFirstName(firstNameValue);
+    //     setLastName(lastNameValue);
+    //     setGender(genderValue);
+    //     setPhone(phoneValue);
+    //     setProvince(provinceValue);
+    //     setDistrict(districtValue);
+    //     setVillage(villageValue);
+
+    //     if (profile?.profileImg?.uri) {
+    //         setProfileImg({
+    //             uri: profile.profileImg.uri,
+    //             name: profile.profileImg.name || "profile_existing.jpg",
+    //             type: profile.profileImg.type || "image/jpeg",
+    //         });
+    //     } else if (myProfileAllowed?.userProfileImage) {
+    //         setProfileImg({
+    //             uri: `${IMAGES_BASE_URL}${myProfileAllowed.userProfileImage}`,
+    //             name: "profile_existing.jpg",
+    //             type: "image/jpeg",
+    //         });
+    //     } else {
+    //         setProfileImg(null);
+    //     }
+
+    //     initializedRef.current = true;
+    // }, [myProfile, profile]);
     useEffect(() => {
         if (initializedRef.current) return;
-        if (!profile && !myProfile) return;
+        if (!userId) return;
 
-        const userIdValue = profile?._id || profile?.userId || myProfile?._id || '';
-        const firstNameValue = profile?.firstName || myProfile?.firstName || '';
-        const lastNameValue = profile?.lastName || myProfile?.lastName || '';
-        const genderValue = profile?.gender || myProfile?.gender || '';
-        const phoneValue = profile?.phone || myProfile?.phone || '';
-        const provinceValue = profile?.address?.province || myProfile?.address?.province || '';
-        const districtValue = profile?.address?.district || myProfile?.address?.district || '';
-        const villageValue = profile?.address?.village || myProfile?.address?.village || '';
+        // No storage draft → parent already prefilled via props, nothing to do
+        if (!profile) return;
+
+        // Only runs when there IS a saved draft (returning to a step mid-KYC)
+        // Storage draft takes priority over whatever parent set
+        const userIdValue = profile._id || profile.userId || '';
+        const firstNameValue = profile.firstName || '';
+        const lastNameValue = profile.lastName || '';
+        const genderValue = profile.gender || '';
+        const phoneValue = profile.phone || '';
+        const provinceValue = profile.address?.province || '';
+        const districtValue = profile.address?.district || '';
+        const villageValue = profile.address?.village || '';
 
         setUserId(userIdValue);
         setFirstName(firstNameValue);
@@ -119,24 +169,16 @@ const AoserProfileSetting = ({
         setDistrict(districtValue);
         setVillage(villageValue);
 
-        if (profile?.profileImg?.uri) {
+        if (profile.profileImg?.uri) {
             setProfileImg({
                 uri: profile.profileImg.uri,
-                name: profile.profileImg.name || "profile_existing.jpg",
-                type: profile.profileImg.type || "image/jpeg",
+                name: profile.profileImg.name || 'profile_existing.jpg',
+                type: profile.profileImg.type || 'image/jpeg',
             });
-        } else if (myProfile?.userProfileImage) {
-            setProfileImg({
-                uri: `${IMAGES_BASE_URL}${myProfile.userProfileImage}`,
-                name: "profile_existing.jpg",
-                type: "image/jpeg",
-            });
-        } else {
-            setProfileImg(null);
         }
 
         initializedRef.current = true;
-    }, [myProfile, profile]);
+    }, [userId, profile]);
 
     useEffect(() => {
         const provinces = addressData?.[0]?.provinces || [];
@@ -314,7 +356,7 @@ const AoserProfileSetting = ({
         }
     };
 
-    if (isProfileLoading || isMyProfileLoading || isAddressLoading) {
+    if (isProfileLoading || isAddressLoading) {
         return (
             <View className="flex-1 justify-center items-center bg-white">
                 <ActivityIndicator size="large" color="#3B82F6" />
@@ -322,7 +364,7 @@ const AoserProfileSetting = ({
         );
     }
 
-    if (isError || isAddressError || !addressData?.length) {
+    if (isAddressError || !addressData?.length) {
         return (
             <View className="flex-1 justify-center items-center bg-white">
                 <Text className="text-red-500">{t('kyc.aoser_profile.some_wrong')}</Text>
@@ -673,8 +715,8 @@ const AoserProfileSetting = ({
             </View>
 
             <View className="mb-4">
-                                                <Text className="text-body font-medium text-text mb-2">{t('kyc.step4.location.village.label')}</Text>
-                
+                <Text className="text-body font-medium text-text mb-2">{t('kyc.step4.location.village.label')}</Text>
+
                 <View className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.village ? 'border border-error' : 'border border-border'}`}>
                     <TextInput
                         placeholder={t('kyc.step4.location.village.placeholder')}

@@ -218,6 +218,7 @@ export default function VDOPromote_free_profile({ video, context = 'home', scrol
             <VideoView
               style={videoViewStyle}
               player={player}
+              surfaceType="textureView"
               fullscreenOptions={{ enable: true }}
               allowsPictureInPicture={true}
               nativeControls={true}
@@ -244,6 +245,7 @@ export default function VDOPromote_free_profile({ video, context = 'home', scrol
           <VideoView
             style={videoViewStyle}
             player={player}
+            surfaceType="textureView"
             fullscreenOptions={{ enable: false }}
             allowsPictureInPicture={false}
             nativeControls={false}
@@ -277,6 +279,7 @@ export default function VDOPromote_free_profile({ video, context = 'home', scrol
             <VideoView
               style={styles.fullScreenVideo}
               player={player}
+              surfaceType="textureView"
               fullscreenOptions={{ enable: true }}
               allowsPictureInPicture={true}
               nativeControls={true}

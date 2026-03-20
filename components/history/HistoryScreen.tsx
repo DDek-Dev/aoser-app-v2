@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 
@@ -22,24 +22,25 @@ const TAB_KEYS = ['public_works', 'freelancer'];
 
 // Main component
 const HistoryScreen = () => {
-      const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-    
-  
+  const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
+
+
   const [selectedTab, setSelectedTab] = useState('public_works');
   const { t } = useTranslation();
   // Hooks
-  const { data: publicWorkData, isLoading: publicWorkLoading } = usegetAllMyWork();
-  const { data: freelancerData, isLoading: freelancerLoading } = useGetHiredFreelancers();
+  const { data: publicWorkData, isLoading: publicWorkLoading, refetch: refetchAllWork, isRefetching: isRefetchingAllWork } = usegetAllMyWork();
+  const { data: freelancerData, isLoading: freelancerLoading, refetch: refetchFreelancer, isRefetching: isRefetchingFreelancer } = useGetHiredFreelancers();
 
   // Render tab content based on selected tab
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'freelancer':
-        if (freelancerLoading) return <JobListItem />;
+        if (freelancerLoading || !freelancerData) return <JobListItem />;
 
         if (!freelancerData || freelancerData.length === 0) {
           return (
-            <HistoryNoResult />
+            <HistoryNoResult title={t('history.history_no_result.no_history_freelancer')} desc={t('history.history_no_result.items_will_appear_here_freelancer')} />
+
           );
         }
 
@@ -47,11 +48,14 @@ const HistoryScreen = () => {
 
       case 'public_works':
         if (publicWorkLoading || !publicWorkData) return <JobListItem />;
+        if (!publicWorkData || publicWorkData.length === 0) {
+          return (<HistoryNoResult title={t('history.history_no_result.no_history')} desc={t('history.history_no_result.items_will_appear_here')} />)
 
+        }
         return <PublicWorkHistoryList data={publicWorkData} />;
 
-      default:
-        return <HistoryNoResult />;
+
+
     }
   };
 
@@ -95,6 +99,15 @@ const HistoryScreen = () => {
         <ScrollView
           className="bg-white flex-1 px-2 "
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetchingAllWork || isRefetchingFreelancer}
+              onRefresh={refetchAllWork || refetchFreelancer}
+              colors={['#2B68F2']}
+              tintColor="#2B68F2"
+              title={t('works.error.refresh')}
+            />
+          }
         >
           {renderTabContent()}
           <View className="h-32" />

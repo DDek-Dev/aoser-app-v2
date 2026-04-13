@@ -140,7 +140,7 @@ export default function CertificateImageGrid({
           <Image
             source={{ uri: resolveImageUri(certificateImages[activeIndex], isReview) }}
             style={styles.mainImage}
-            resizeMode="contain"
+            resizeMode="cover"
           />
 
           {/* <View style={styles.previewHint}>

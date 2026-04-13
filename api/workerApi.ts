@@ -3,7 +3,7 @@
 import { Freelancer, UserProfile } from "types/profile";
 
 
-import { CreateReview, ServiceType, SubService, Favorite, Review, GetFavorite, JobpopularData } from "types";
+import { CreateReview, ServiceType, SubService, Favorite, Review, GetFavorite, JobpopularData, WalletData } from "types";
 import axios from "axios";
 import networkCheck from "./networkCheck";
 
@@ -98,31 +98,7 @@ export const workerApi = {
 
 
     },
-    // get All freelancers
-
-    // getAllfreelancers: async (token: string): Promise<UserProfile[]> => {
-    //     try {
-
-    //         const response = await fetch(`${API_BASE_URL}/worker/freelancers`, {
-    //             method: 'GET',
-    //             headers: {
-    //                 'Authorization': `Aoser ${token}`, // I fixed "Aoser" -> "Bearer"
-    //             },
-    //         });
-
-    //         const data = await response.json();
-    //         if (!response.ok) {
-    //             throw new Error(data.message || 'Failed to fetch freelancers');
-    //         }
-
-    //         return data.data;
-    //     } catch (error) {
-    //         console.log('Error fetching freelancers:', error);
-    //         throw error;
-    //     }
-    // },
-
-
+    
     getAllfreelancers: async (token: string): Promise<UserProfile[]> => {
         try {
             const response = await networkCheck.get('/worker/freelancers', {
@@ -426,5 +402,74 @@ export const workerApi = {
             console.log('Error fetching hired freelancers:', error);
             throw error;
         }
-    }
+    },
+    getWallet: async (userId: string, token: string): Promise<WalletData> => {
+        console.log(userId)
+        try {
+            // console.log(`${API_BASE_URL}/worker/reviews?reviewTo=${freelancerId}`);
+            const response = await networkCheck.get(`${API_BASE_URL}/worker/freelancer-work-payment-report/${userId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Aoser ${token}`,
+                },
+            });
+            const empty: WalletData = {
+                earnings: {
+                    LAK: {
+                        currency: "LAK",
+                        totalWorkCost: 0,
+                        totalAppendWorkCost: 0,
+                        totalAwaitingClaimWorkCost: 0,
+                        totalAwaitingClaimAppendWorkCost: 0,
+                        totalClaimCompleteWorkCost: 0,
+                        totalClaimCompleteAppendWorkCost: 0,
+                        totalRevenue: 0,
+                        totalAwaitingClaimCost: 0,
+                        totalClaimCompleteCost: 0,
+                        totalProcessingWorkCost: 0,
+                    },
+                    USD: {
+                        currency: "USD",
+                        totalWorkCost: 0,
+                        totalAppendWorkCost: 0,
+                        totalAwaitingClaimWorkCost: 0,
+                        totalAwaitingClaimAppendWorkCost: 0,
+                        totalClaimCompleteWorkCost: 0,
+                        totalClaimCompleteAppendWorkCost: 0,
+                        totalRevenue: 0,
+                        totalAwaitingClaimCost: 0,
+                        totalClaimCompleteCost: 0,
+                            totalProcessingWorkCost: 0,
+                    },
+                },
+                totalWorks: 0,
+                totalCompletedWork: 0,
+                totalProcessingWork: 0,
+                totalAwaitingClaimWork: 0,
+                totalClaimCompleteWork: 0,
+            };
+
+            const payload = response.data?.data as Partial<WalletData> | undefined;
+            if (!payload || typeof payload !== "object") return empty;
+
+            return {
+                ...empty,
+                ...payload,
+                earnings: {
+                    ...empty.earnings,
+                    ...(payload.earnings as any),
+                    LAK: { ...empty.earnings.LAK, ...(payload.earnings as any)?.LAK },
+                    USD: { ...empty.earnings.USD, ...(payload.earnings as any)?.USD },
+                },
+            };
+        } catch (error) {
+            console.log('Error fetching reviews:', error);
+            throw error;
+        }
+    },
+
+
+
+
+
 };

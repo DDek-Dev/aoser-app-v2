@@ -7,6 +7,7 @@ import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useTranslation } from 'react-i18next';
+import ScreenWrapper from 'components/ui/ScreenWrapper';
 
 interface PaymentSuccessPopupProps {
   visible: boolean;
@@ -173,6 +174,9 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
       animationType="none"
       onRequestClose={onClose}
     >
+      <ScreenWrapper safeEdges={['bottom']}>
+
+        
       <Animated.View
         style={{ opacity: fadeAnim }}
         className="flex-1 bg-primary justify-center items-center"
@@ -282,7 +286,8 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                 {/* Transaction Details */}
                 <View className="space-y-3 mb-4">
                   {/* Customer Name */}
-                  {createdBy && (
+                  
+                  {(invoiceType === 'WORK' || invoiceType === 'APPEND_WORK') && createdBy && (
                     <View className="flex-row justify-between py-2 border-b border-gray-100">
                       <Text className="text-gray-600 text-sm">
                         {t('payment_success.name_of_customer')}
@@ -430,7 +435,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
             <TouchableOpacity
               onPress={saveBillToGallery}
               disabled={isDownloading}
-              className="flex-1 bg-transparent py-4 rounded-xl items-center flex-row justify-center gap-2 border-2 border-white"
+              className="flex-1 bg-transparent py-4 rounded-xl items-center flex-row justify-center gap-1 border-2 border-white"
             >
               {isDownloading ? (
                 <>
@@ -451,6 +456,8 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
           </View>
         </Animated.View>
       </Animated.View>
+      </ScreenWrapper>
+
     </Modal>
   );
 };

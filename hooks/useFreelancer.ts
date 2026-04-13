@@ -65,7 +65,7 @@ export const useFreelancerById = (userId: string) => {
         //   'Content-Type': 'application/json',
         //   'Authorization': `Aoser ${tokens.accessToken}`,
         // },
-      });
+      }); 
 
       if (Array.isArray(response.data.data)) {
         return response.data.data[0] || null;
@@ -91,7 +91,7 @@ export const useUpdateFreelancerProfile = () => {
       console.log('Updating freelancer profile with data:', JSON.stringify(data, null, 2));
 
       try {
-        const response = await axios.put(`${API_BASE_URL}/worker/freelancer-profile`, data, {
+        const response = await axios.put(`${API_BASE_URL}/worker/freelancer-kyc-profile`, data, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Aoser ${tokens.accessToken}`,

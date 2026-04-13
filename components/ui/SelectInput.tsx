@@ -1,9 +1,9 @@
 // SelectInput.tsx
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, Pressable, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Modal, Pressable, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useGetServiceTypes, useGetJobsByServiceType } from 'hooks/useFreelancer';
-import React from 'react';
+
 import LoadingScreen from 'screens/Loading/LoadingScreen';
 import { useTranslation } from 'react-i18next';
 
@@ -65,7 +65,7 @@ const SelectInput = forwardRef<{ focus: () => void }, Props>(
     };
 
     const selectedServiceType = serviceTypes?.find(st => st._id === selectedCategory);
-    const displayValue = selectedServiceType?.name || t('postWork.service_type') || 'Select a service type';
+    const displayValue = selectedServiceType?.name || t('postWork.select_jobs') || 'Select a service';
 
     return (
       <View className="">

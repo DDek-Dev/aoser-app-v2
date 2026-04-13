@@ -107,7 +107,41 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
               <Text>{item.applicant.firstName} {item.applicant.lastName} </Text>
             </View>
           </Pressable>
+
+
+
+
+
           <TabbedProfileSection profile={item.applicant as any} stylepadd={'px-4'} />
+          {item?.offeringUpdate._id && (
+            <>
+
+              <View className="flex-row items-center gap-3 mb-4">
+                <View className="flex-1 h-px bg-gray-300" />
+
+                <Text className="text-lg font-bold text-text">
+                  {t('workDetail.freelancer_offering')}
+                </Text>
+                <View className="flex-1 h-px bg-gray-300" />
+              </View>
+              <View className='px-2'>
+
+
+                <View className="flex-row items-center mb-2">
+                  <Text className='text-bold'>{t('postWork.budget')} : </Text>
+                  <Text className="font-bold text-body text-warning ml-2">{item?.offeringUpdate?.updateData?.currency} </Text>
+                  <Text className="font-bold text-body text-primary">
+                    {new Intl.NumberFormat().format(item?.offeringUpdate?.updateData?.budget)}
+                  </Text>
+                </View>
+                <View className='bg-blue-50 rounded-2xl px-2 py-6 mb-4'>
+
+                  <Text>{item?.offeringUpdate?.reason}</Text>
+                </View>
+              </View>
+            </>
+
+          )}
           <View className="w-full h-[1px] bg-gray-200" />
 
 

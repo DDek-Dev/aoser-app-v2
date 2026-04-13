@@ -278,14 +278,14 @@ const insets = useSafeAreaInsets();
         </Animated.View>
       </Animated.ScrollView>
 
-      <NetworkErrorPopup
+      {/* <NetworkErrorPopup
         visible={showNetworkPopup}
         title={t('works.error.some_wrong')}
         message={t('works.error.if_the_problem')}
         retryLabel={t('works.error.try_again')}
         onRetry={handleNetworkRetry}
         isRetrying={isRetryingNetwork}
-      />
+      /> */}
     </ScreenWrapper>
   );
 }

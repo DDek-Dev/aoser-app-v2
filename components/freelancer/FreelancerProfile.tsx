@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIsFocused } from '@react-navigation/native';
-import { Animated, Share, Text, TouchableOpacity, View, ActivityIndicator, Platform } from 'react-native';
+import { Animated, Share, Text, TouchableOpacity, View, ActivityIndicator, Platform, Pressable } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -60,7 +60,7 @@ export default function FreelancerProfile() {
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
   // Refs
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<any>(null);
   const isFirstLoad = useRef(true);
   const scrollY = useRef(new Animated.Value(0)).current;
   const isFocused = useIsFocused();
@@ -118,7 +118,6 @@ export default function FreelancerProfile() {
         likedItemType: 'UserProfile',
       };
 
-      console.log('[Favorite] Creating favorite for:', profile._id);
       const response = await createFavorite.mutateAsync(formData);
 
       // Wait for backend to process the like
@@ -126,7 +125,7 @@ export default function FreelancerProfile() {
 
       // Refetch to ensure UI matches server state
       await refetch();
-      
+
       console.log('[Favorite] ✅ Successfully created:', response);
     } catch (error) {
       // Revert optimistic update on error
@@ -147,9 +146,9 @@ export default function FreelancerProfile() {
         return;
       }
 
-      
 
-      console.log('[Favorite] Deleting favorite with ID:', likeId);
+
+      //console.log('[Favorite] Deleting favorite with ID:', likeId);
 
       // Optimistic update - instant UI feedback
       setIsFavorite(false);
@@ -162,7 +161,7 @@ export default function FreelancerProfile() {
 
         // Refetch to ensure UI matches server state
         await refetch();
-        
+
         console.log('[Favorite] ✅ Successfully deleted');
       } catch (error) {
         // Revert optimistic update on error
@@ -180,35 +179,34 @@ export default function FreelancerProfile() {
    * Finds the correct like ID from the profile.likes array.
    */
   const handleFavoriteToggle = useCallback(() => {
-  // Clear existing debounce timer
-  if (debounceRef.current) {
-    clearTimeout(debounceRef.current);
-  }
-
-  // Debounce to prevent rapid clicks (spam protection)
-  debounceRef.current = setTimeout(() => {
-    // Find the like ID where the current user (createdBy) has liked this profile (likedItem)
-    const likeId = profile?.likes?.find(
-      like => like.createdBy === user?._id 
-    )?._id;
-
-    console.log('[Favorite] Toggle action:', { isFavorite, likeId });
-
-    if (isFavorite && likeId) {
-      // Unlike: we have the like ID from the server
-      handleDeleteFavorite(likeId);
-    } else if (!isFavorite) {
-      // Like: create new favorite
-      handleCreateFavorite();
+    // Clear existing debounce timer
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
-  }, DEBOUNCE_DELAY);
-}, [
-  isFavorite,
-  profile?._id,
-  profile?.likes,
-  handleCreateFavorite,
-  handleDeleteFavorite,
-]);
+
+    // Debounce to prevent rapid clicks (spam protection)
+    debounceRef.current = setTimeout(() => {
+      // Find the like ID where the current user (createdBy) has liked this profile (likedItem)
+      const likeId = profile?.likes?.find(
+        like => like.createdBy === user?._id
+      )?._id;
+
+   
+      if (isFavorite && likeId) {
+        // Unlike: we have the like ID from the server
+        handleDeleteFavorite(likeId);
+      } else if (!isFavorite) {
+        // Like: create new favorite
+        handleCreateFavorite();
+      }
+    }, DEBOUNCE_DELAY);
+  }, [
+    isFavorite,
+    profile?._id,
+    profile?.likes,
+    handleCreateFavorite,
+    handleDeleteFavorite,
+  ]);
   /**
    * Navigate to chat room with the freelancer
    */
@@ -268,7 +266,7 @@ export default function FreelancerProfile() {
   if (isLoadingProfile || isLoadingReviews) {
     return (
       <ScreenWrapper safeEdges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
-         <FreelancerSkeleton/>
+        <FreelancerSkeleton />
       </ScreenWrapper>
     );
   }
@@ -333,37 +331,38 @@ export default function FreelancerProfile() {
   // =================================================================
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
-        <View className="bg-surface flex-row items-center justify-between w-full">
-          <Header_back
-            text={t('freelancer_profile.header_back_text', 'Profile')}
-            onPress={handleGoBack}
-            iconColor="#3B82F6"
-            backgroundColor="bg-surface"
-          />
+      <View className="bg-surface flex-row items-center justify-between w-full">
+        <Header_back
+          text={t('freelancer_profile.header_back_text', 'Profile')}
+          onPress={handleGoBack}
+          iconColor="#3B82F6"
+          backgroundColor="bg-surface"
+        />
+        
+        
+        {/* Favorite Button - Only shown to authenticated users */}
+        {isAuthenticated && !isOwnProfile && (
+          <View className="flex-row mr-8 items-center gap-8 ">
+            <TouchableOpacity
+              onPress={handleFavoriteToggle}
+              disabled={isLoadingFavorite}
+              className="mr-2 p-2" // Added padding for better touch target
+              activeOpacity={0.7}
+              accessibilityLabel={isFavorite ? 'Unlike profile' : 'Like profile'}
+              accessibilityRole="button"
 
-          {/* Favorite Button - Only shown to authenticated users */}
-          {isAuthenticated && !isOwnProfile && (
-            <View className="flex-row mr-8 items-center gap-8 ">
-              <TouchableOpacity
-                onPress={handleFavoriteToggle}
-                disabled={isLoadingFavorite}
-                className="mr-2 p-2" // Added padding for better touch target
-                activeOpacity={0.7}
-                accessibilityLabel={isFavorite ? 'Unlike profile' : 'Like profile'}
-                accessibilityRole="button"
-                
-              >
-                {isLoadingFavorite ? (
-                  <ActivityIndicator size="small" color="#3B82F6" />
-                ) : isFavorite ? (
-                  <Ionicons name="heart" size={28} color="#EF4444" />
-                ) : (
-                  <Ionicons name="heart-outline" size={28} color="#3b82f6" />
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
+            >
+              {isLoadingFavorite ? (
+                <ActivityIndicator size="small" color="#3B82F6" />
+              ) : isFavorite ? (
+                <Ionicons name="heart" size={28} color="#EF4444" />
+              ) : (
+                <Ionicons name="heart-outline" size={28} color="#3b82f6" />
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
       <Animated.ScrollView
         className="bg-white flex-1"
         showsVerticalScrollIndicator={false}
@@ -400,13 +399,13 @@ export default function FreelancerProfile() {
         />
 
         {/* ===== VIDEO PROMOTION ===== */}
-   
+
         {profile.videoPromote && <VDOPromote video={profile.videoPromote} context="profile" scrollY={scrollY} isScreenFocused={isFocused} />}
 
         {/* ===== TABBED PROFILE SECTION ===== */}
         <TabbedProfileSection profile={profile} stylepadd="" />
 
-        
+
 
         {/* ===== WHAT TO EXPECT ===== */}
         <WhatExpected profile={profile} />

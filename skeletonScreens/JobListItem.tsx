@@ -44,12 +44,16 @@ const JobListItem: React.FC = () => {
 
         {/* Job Listings Skeleton */}
         {[1, 2,3,4,5,6].map((index: number) => (
-          <View key={index} className="bg-white rounded-2xl p-4 mb-4 border border-border">
+          <View key={index} className="bg-white rounded-2xl p-4 mb-1 border border-border">
             <View className="flex-row justify-between items-start mb-3">
               <View className="flex-1">
                 <PulseView className="w-4/5 h-5 bg-gray-300 rounded mb-2" />
                 <PulseView className="w-full h-3 bg-gray-300 rounded mb-3" />
                 
+                <View className="flex-row justify-between items-center">
+                  <PulseView className="w-15 h-5 bg-gray-300 rounded" />
+                  <PulseView className="w-20 h-3 bg-gray-300 rounded" />
+                </View>
                 <View className="flex-row justify-between items-center">
                   <PulseView className="w-15 h-5 bg-gray-300 rounded" />
                   <PulseView className="w-20 h-3 bg-gray-300 rounded" />

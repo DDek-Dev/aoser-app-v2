@@ -5,7 +5,7 @@ import { GetFavorite, Job } from 'types';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
-import {  formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
 import { useDeleteFavorite } from 'hooks/useFreelancer';
 import { useTranslation } from 'react-i18next';
 import JobDetailBottomSheet from 'components/publicwork/JobDetailModal';
@@ -156,7 +156,7 @@ const PublicWorkCardList = ({ data, refetch }: Props) => {
 
                 <Text >{t('postWork.work_type')} : </Text>
                 <Text className="text-caption text-text bg-surface p-2 rounded-full  ">
-                  {item.likedItem?.kindOfWork === "ONLINE" ? "Online" : "Offline"}
+                  {item.likedItem?.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
                 </Text>
               </View>
               {item.likedItem?.budgetType === 'OFFERING' ? (
@@ -206,7 +206,7 @@ const PublicWorkCardList = ({ data, refetch }: Props) => {
 
               }
 
-              {item.likedItem.address.village !== '' && item.likedItem.address.district !== ''&& item.likedItem?.address.province !== '' &&
+              {item.likedItem.address.village !== '' && item.likedItem.address.district !== '' && item.likedItem?.address.province !== '' &&
 
                 <View className="flex-row mt-3 items-center">
                   {/* <Text>{t('workDetail.deadline')} : </Text> */}
@@ -223,16 +223,27 @@ const PublicWorkCardList = ({ data, refetch }: Props) => {
                   </View>
                 </View>
               }
+              {item.likedItem?.place && (
+
+                <View className="flex-row mt-3 items-center">
+                  <Text>{t('postWork.address_manually')}: </Text>
+
+                  <View className="flex-row gap-2 items-center">
+                    <Ionicons name="business-outline" size={18} color="#F59E0B" />
+
+                    <Text className="text-sm text-textSecondary">
+                      {item.likedItem?.place}
+                    </Text>
+                  </View>
+                </View>
+
+              )}
             </View>
           </Pressable>
         )
       })}
 
-
-
       {selectedJob && jobDetailVisible && (
-
-
         <JobDetailBottomSheet
 
           visible={jobDetailVisible}

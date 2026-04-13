@@ -3,6 +3,7 @@ import { notificationApi } from "api/notificationApi";
 import { useAuth } from "./useAuth";
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import type { Notifications as AppNotification } from "types";
 
 import { Alert, PermissionsAndroid, Platform, } from 'react-native';
 import { use, useEffect, useRef, useState } from "react";
@@ -13,7 +14,9 @@ export interface PushNotificationState {
     expoPushToken?: Notifications.ExpoPushToken
 }
 
-export const usePushNotifications = (): PushNotificationState => {
+export const usePushNotifications =  (
+    onNotificationTapped?: (response: Notifications.NotificationResponse) => void
+): PushNotificationState => {
     Notifications.setNotificationHandler({
         handleNotification: async () => ({
             shouldPlaySound: true,
@@ -110,6 +113,10 @@ export const usePushNotifications = (): PushNotificationState => {
         };
     }, [tokens?.accessToken]);
 
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+        console.log('👆 Notification tapped:', response);
+        onNotificationTapped?.(response); // 👈 call the callback
+    });
     return {
         expoPushToken,
         notification,
@@ -120,7 +127,7 @@ export const usePushNotifications = (): PushNotificationState => {
 
 export const useNotifications = () => {
     const { tokens } = useAuth();
-    return useQuery({
+    return useQuery<AppNotification[]>({
         queryKey: ['notifications'],
         queryFn: () => notificationApi.getAllnotifications(tokens?.accessToken || ''),
         enabled: !!tokens?.accessToken,

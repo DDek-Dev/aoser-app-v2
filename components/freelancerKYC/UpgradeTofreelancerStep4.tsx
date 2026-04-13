@@ -144,7 +144,7 @@ const UpgradeToFreelancerStep4 = ({
           }
         </View>
 
-        <View className="flex-row justify-between mb-4 items-end ">
+        <View className="flex-row justify-between mb-4 ">
           <View className="flex-1 mr-2">
             <FormInput
               label={t('kyc.step4.expiryDate.label')}
@@ -172,7 +172,7 @@ const UpgradeToFreelancerStep4 = ({
               setTempFromDate(fromDate || new Date());
               setShowFromPicker(true);
             }}
-            className="w-24 bg-blue-200 mt-1 flex justify-center items-center rounded-xl py-3.5"
+            className="w-24 bg-blue-200 mt-1 flex justify-center items-center rounded-2xl "
           >
             <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
           </TouchableOpacity>

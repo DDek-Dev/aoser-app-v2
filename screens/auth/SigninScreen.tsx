@@ -316,10 +316,14 @@ function PasswordInput({
               secureTextEntry={!showPassword}
               onChangeText={onChange}
               value={value}
+             
               placeholderTextColor="#999"
+
+
               editable={!disabled}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
+              className='text-text'
             />
             <TouchableOpacity
               style={{

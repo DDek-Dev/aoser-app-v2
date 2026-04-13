@@ -616,7 +616,7 @@ const UpgradeToFreelancer = () => {
 
         // ── Step 4: ID Card Info ─────────────────────────────────────────────
         if (step === 4) {
-            const newErrors = { cardType: cardType === null, cardID: cardID.trim() === '', fromDate: fromDate === null };
+            const newErrors = { cardType: cardType === null, cardID: cardID.trim() === '', fromDate: fromDate === null || fromDate < new Date() };
             setErrorsStep4(newErrors);
             if (Object.values(newErrors).some(Boolean)) return;
 
@@ -822,9 +822,9 @@ const UpgradeToFreelancer = () => {
                 if (finalData.videoPromote == null || finalData.videoPromote === '') delete finalData.videoPromote;
                 if (finalData.jobs == null) delete finalData.jobs;
                 if (finalData.certificates == null) delete finalData.certificates;
-                if(isRejectedRegistration) {
-                    finalData.registrationStatus = 'PENDING'
-                }
+                // if(isRejectedRegistration) {
+                //     finalData.registrationStatus = 'PENDING'
+                // }
                 // ── Choose create vs update based on registration status ─────
                 const onSuccess = async (response: any) => {
                     const profilePayload: Record<string, string> = {
@@ -859,7 +859,7 @@ const UpgradeToFreelancer = () => {
                     queryClient.removeQueries({ queryKey: ['freelancerReview'] });
                     await queryClient.invalidateQueries({ queryKey: ['myProfile'] });
                     await queryClient.refetchQueries({ queryKey: ['myProfile'] });
-                    navigation.replace('FreelancerRoleGate');
+                    navigation.popTo('FreelancerRoleGate');
                     setIsSubmitting(false);
                 };
 
@@ -869,7 +869,7 @@ const UpgradeToFreelancer = () => {
                     setIsSubmitting(false);
                 };
 
-                // console.log('finalData', JSON.stringify(finalData,null, 2))
+               
 
                 if (isRejectedRegistration) {
                     // ✅ Re-submission: UPDATE existing profile PENDING
@@ -940,7 +940,7 @@ const UpgradeToFreelancer = () => {
                                 <ActivityIndicator color="white" size="small" />
                             ) : (
                                 <Text className="text-white text-base font-semibold">
-                                    {step === 8 ? t('kyc.buttons.submit') : t('kyc.buttons.next')}
+                                    {step === 8 ? t('kyc.buttons.go_live') : t('kyc.buttons.next')}
                                 </Text>
                             )}
                         </TouchableOpacity>

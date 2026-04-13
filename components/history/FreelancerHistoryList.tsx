@@ -36,7 +36,7 @@ const FreelancerHistoryList = ({ data, onRehire }: Props) => {
           {/* Image */}
           <Image
             source={{ uri: BASE_IMAGE + item?.bannerImage }}
-            className="w-[40%] h-44 rounded-xl mr-3"
+            className="w-[40%] h-48 rounded-xl mr-3"
             resizeMode="cover"
           />
 

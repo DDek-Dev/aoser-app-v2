@@ -24,6 +24,7 @@ import { Job } from 'types';
 import { formatDate } from 'utils/dateFormatter';
 import { useAuth } from 'hooks/useAuth';
 import { useMyProfile } from 'hooks/useFreelancer';
+import { useTranslation } from 'react-i18next';
 
 
 interface JobDetailModalProps {
@@ -41,7 +42,7 @@ const FreelancerJobDetail = ({ visible, onClose, job, refetch, onUserPress }: Jo
     const insets = useSafeAreaInsets();
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const [currentIndex, setCurrentIndex] = useState(-1);
-    const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const animationTimeoutRef = useRef<any>(null);
     const [showProfile, setShowProfile] = useState(false);
 
 
@@ -155,7 +156,11 @@ const FreelancerJobDetail = ({ visible, onClose, job, refetch, onUserPress }: Jo
     const jobDescription = job?.description || 'No description available';
     const subwork = job?.subWorkDetails || [];
     const currentLanguage = 'en';
+    const { t } = useTranslation();
 
+
+
+    // console.log(data.businessType);
      if (isLoading) return <ActivityIndicator />;
      if (error) return <Text>Error fetching freelancee </Text>;
    
@@ -208,7 +213,7 @@ const FreelancerJobDetail = ({ visible, onClose, job, refetch, onUserPress }: Jo
                 <View className="flex-row items-center mb-4 gap-2">
                     <MaterialIcons name="donut-small" size={24} color="gray" />
                     <View className="bg-blue-50 px-3 py-1 rounded-full">
-                        <Text className="text-primary text-body">{jobType === "ONLINE" ? "Online" : "Offline"}</Text>
+                        <Text className="text-primary text-body">{jobType === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}</Text>
                     </View>
                 </View>
 

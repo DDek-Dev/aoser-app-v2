@@ -41,6 +41,7 @@ export type FreelancerStackParamList = {
   FreelancerWorkHistory: undefined;
   UserIdScreen: { userId: UserProfile };
   RecommendUser: undefined;
+  WalletScreen: { userId: string };
 
 
   // aoser peofile setting
@@ -64,6 +65,8 @@ export type FreelancerStackParamList = {
   ChatScreen: undefined;
   RoomChat: { userId: string };
   ChatStack: undefined
+  NewsScreen: undefined
+  News: {newsId: string};
 
 
   // Aoser profile favorite 

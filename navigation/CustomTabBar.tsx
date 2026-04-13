@@ -141,7 +141,7 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
       case 'Home':
         return focused ? 'home' : 'home-outline';
       case 'Works':
-        return focused ? 'briefcase' : 'briefcase-outline';
+        return focused ? 'grid' : 'grid-outline';
       case 'New work':
         return focused ? 'add-circle' : 'add-circle-outline';
       case 'Notifications':
@@ -185,10 +185,10 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
   return (
     <View
       style={{
-        zIndex: 1000, 
+        zIndex: 1000,
       }}
     >
-    
+
       <View className="bg-white">
         <View className="flex-row border-t border-border px-1 py-2">
           {state.routes.map((route: any, index: number) => {
@@ -241,54 +241,84 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
               >
                 {/* ===== TAB ICON CONTAINER WITH ANIMATION ===== */}
                 <Animated.View
-                  className={`${isPostWork ? 'p-1 bg-slate-400' : 'p-1'
-                    } rounded-full ${isFocused ? 'bg-primary/10' : 'bg-transparent'
-                    }`}
                   style={{
                     transform: [{ scale: scaleAnims[index] }],
-                    position: 'relative', 
-                    ...(isPostWork && isFocused && {
-                      shadowColor: '#3B82F6',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 4,
-                      elevation: 6,
-                    }),
+                    position: 'relative',
                   }}
                 >
-                  {/* Icon */}
-                  <Ionicons
-                    name={getIconName(route.name, isFocused)}
-                    size={getIconSize(route.name)}
-                    color={isFocused ? '#3B82F6' : '#6B7280'}
-                  />
-
-                  {/* ===== NOTIFICATION BADGE ===== */}
-                  {isNotifications && (
-                    <NotificationBadge
-                      count={unreadCount}
-                      isVisible={shouldShowBadge}
-                    />
+                  {isPostWork ? (
+                    // Custom [+] button for New Work
+                    <View
+                      style={{
+                        // width: 48,
+                        // height: 48,
+                        // borderRadius: 14,
+                        // backgroundColor: isFocused ? '#3B82F6' : '#64748B',
+                        // alignItems: 'center',
+                        // justifyContent: 'center',
+                        // borderWidth: 2.5,
+                        // borderColor: isFocused ? '#93C5FD' : '#94A3B8',
+                        // ...(isFocused && {
+                        //   shadowColor: '#3B82F6',
+                        //   shadowOffset: { width: 0, height: 2 },
+                        //   shadowOpacity: 0.4,
+                        //   shadowRadius: 6,
+                        //   elevation: 8,
+                        // }),
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: isFocused ? '#3B82F6' : '#6B7280',
+                          fontSize: 26,
+                          fontWeight: isFocused ? '400' : '300',
+                          lineHeight: 30,
+                          marginTop: -2,
+                        }}
+                      >
+                       [ + ]
+                      </Text>
+                    </View>
+                  ) : (
+                    // Normal icon for other tabs
+                    <View
+                      className={`p-1 rounded-full ${isFocused ? 'bg-primary/10' : 'bg-transparent'}`}
+                    >
+                      <Ionicons
+                        name={getIconName(route.name, isFocused)}
+                        size={getIconSize(route.name)}
+                        color={isFocused ? '#3B82F6' : '#6B7280'}
+                      />
+                      {/* ===== NOTIFICATION BADGE ===== */}
+                      {isNotifications && (
+                        <NotificationBadge
+                          count={unreadCount}
+                          isVisible={shouldShowBadge}
+                        />
+                      )}
+                    </View>
                   )}
                 </Animated.View>
 
                 {/* ===== TAB LABEL ===== */}
-                <Text
-                  className={`text-caption mt-1 text-center font-bold ${isFocused ? 'text-primary font-semibold' : 'text-textSecondary'
-                    }`}
-                  numberOfLines={1}
-                >
-                  {getTabLabel(route.name)}
-                </Text>
+                {!isPostWork && (
+                  <Text
+                    className={`text-caption mt-1 text-center font-bold ${isFocused ? 'text-primary font-semibold' : 'text-textSecondary'
+                      }`}
+                    numberOfLines={1}
+                  >
+                    {getTabLabel(route.name)}
+                  </Text>
+                )}
 
-             
+
               </TouchableOpacity>
             );
           })}
         </View>
       </View>
 
-    
+
     </View>
   );
 }

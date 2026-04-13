@@ -37,7 +37,7 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   const scale = useRef(new Animated.Value(1)).current;
   
   const [isDragging, setIsDragging] = useState(false);
-  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeTimeoutRef = useRef<any>(null);
   const pressLockRef = useRef(false);
   
   // Keep track of gesture

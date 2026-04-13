@@ -26,7 +26,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
     // console.log('Projects:', projects);
 
     const { user } = useAuth();
-    if (!projects.offeringWorkId) {
+    if (!projects.offeringWorkId || !projects) {
         return <ActivityIndicator />;
     }
     if (!user) {
@@ -60,6 +60,9 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
         )
 
     }
+
+    console.log('Work Data:', workData);
+    console.log('Conversation ID:', projects.conversation);
     const handleAccept = () => {
         setShowAcceptModal(false);
 
@@ -72,7 +75,29 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
             requestStatus: "CONFIRM"
         });
 
+    
         setIsAccepted(true);
+
+        navigation.navigate('PaymentScreen', {
+            workId: workData?._id,
+            budget: workData?.updateData.budget,
+            currency: projects.work?.workCode || '',
+            terminalid: projects.work?.workCode || '',
+            workCode: projects.work?.workCode,
+            invoiceType: "APPEND_WORK",
+        });
+
+
+
+        //    navigation.navigate('PaymentScreen', {
+        //     workId: appendWork?._id,
+        //     budget: appendWork?.budget,
+        //     currency: appendWork?.currency,
+        //     terminalid: data?.workCode,
+        //     workCode: data?.workCode,
+        //     invoiceType: "APPEND_WORK",
+        //   });
+
         console.log('Offering accepted');
     };
 
@@ -106,7 +131,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                         </View>
                         {/* <View className="bg-blue-500 rounded-full px-2.5 py-1">
                             <Text className="text-white text-xs font-medium">
-                                {workData.workId.kindOfWork === "ONLINE" ? "Online" : "Offline"}
+                                {workData.workId.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
                             </Text>
                         </View> */}
                     </View>
@@ -126,10 +151,10 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     </Text>
 
                     <View className="my-2">
-                        <Text className="text-caption font-semibold text-gray-400 uppercase mb-2 tracking-wide">
+                        <Text className="text-caption font-semibold text-gray-400  mb-2 tracking-wide">
                             {t('chat.offer.original_terms') || 'Original Terms'}
                         </Text>
-                        <View className=" bg-gray-50 rounded-xl p-3">
+                        <View className=" bg-gray-50 rounded-xl ">
                             <View className="flex-row items-center flex-1 mb-2">
                                 <View className="bg-gray-200 rounded-lg p-2 mr-3">
                                     <Ionicons name="wallet-outline" size={18} color="#6B7280" />
@@ -157,7 +182,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                 </TouchableOpacity>
 
                 {/* Comparison Section */}
-                <View className="px-4 py-4">
+                <View className="px-1 py-1">
                     {/* Original Terms */}
 
 
@@ -170,7 +195,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
 
                     {/* New Offering */}
                     <View className="mb-2">
-                        <Text className="text-caption font-semibold text-primary uppercase mb-2 tracking-wide">
+                        <Text className="text-caption font-semibold text-primary mb-2 tracking-wide">
                             {t('chat.offer.new_terms') || ' Proposed Terms'}
                         </Text>
                         <View className=" bg-blue-50 rounded-xl p-3 border-2 border-blue-200">
@@ -234,14 +259,16 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     {/* Show rejected message */}
                     {(workData.requestStatus === "REJECTED" || isRejected) && (
                         <View className="flex-row gap-2">
-                            <Text className='text-warning'>{t('chat.offer.reject_offering')}</Text>
+                            <Text className='text-error p-2'>{t('chat.offer.reject_offering')}</Text>
                         </View>
                     )}
 
                     {/* Show confirmed message */}
                     {(workData.requestStatus === "CONFIRM" || isAccepted) && (
                         <View className="flex-row gap-2">
-                            <Text className='text-secondary'>{t('chat.offer.comfirm_offering')}</Text>
+                            <Text className='text-secondary font-bold'>{t('chat.offer.comfirm_offering')}</Text>
+                            <Ionicons name="checkmark-outline" size={24} color="#10B981" />
+
                         </View>
                     )}
                 </View>
@@ -263,7 +290,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                     <View className="bg-green-400 rounded-full p-2 mr-3">
                                         <Ionicons name="checkmark-circle" size={24} color="white" />
                                     </View>
-                                    <Text className="text-white text-lg font-bold flex-1">
+                                    <Text className="text-white text-body font-bold flex-1">
                                         {t('chat.offer.accept_confirmation') || 'Accept Offering'}
                                     </Text>
                                 </View>
@@ -278,7 +305,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
 
                         {/* Modal Content */}
                         <View className="px-5 py-5">
-                            <Text className="text-gray-700 text-sm leading-6 mb-4">
+                            <Text className="text-gray-700 text-body leading-6 mb-4">
                                 {t('chat.offer.accept_message') ||
                                     'By accepting, the following changes will take effect immediately:'}
                             </Text>
@@ -290,13 +317,13 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                         <Ionicons name="cash" size={14} color="white" />
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-gray-800 font-medium mb-1 text-sm">{t('chat.offer.budget_update_label')}</Text>
+                                        <Text className="text-gray-800 font-medium mb-1 text-caption">{t('chat.offer.budget_update_label')}</Text>
                                         <View className="flex-row items-center flex-wrap">
-                                            <Text className="text-gray-500 line-through text-xs">
+                                            <Text className="text-gray-500 line-through text-caption">
                                                 {new Intl.NumberFormat().format(workData.workId.budget)} {workData.workId.currency}
                                             </Text>
                                             <Ionicons name="arrow-forward" size={12} color="#10B981" className="mx-2" />
-                                            <Text className="text-green-600 font-bold text-xs">
+                                            <Text className="text-green-600 font-bold text-caption">
                                                 {new Intl.NumberFormat().format(workData.updateData.budget)} {workData.updateData.currency}
                                             </Text>
                                         </View>
@@ -308,8 +335,8 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                         <Ionicons name="calendar" size={14} color="white" />
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-gray-800 font-medium mb-1 text-sm">{t('chat.offer.deadline_extended')}</Text>
-                                        <Text className="text-green-600 font-semibold text-xs">
+                                        <Text className="text-gray-800 font-medium mb-1 text-caption">{t('chat.offer.deadline_extended')}</Text>
+                                        <Text className="text-green-600 font-semibold text-caption">
                                             {formatDisplayDateTime(workData.updateData.deadLine as string)}
                                         </Text>
                                     </View>
@@ -320,8 +347,8 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                         <Ionicons name="rocket" size={14} color="white" />
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-gray-800 font-medium mb-1 text-sm">{t('chat.offer.auto_hire')}</Text>
-                                        <Text className="text-gray-600 text-xs">
+                                        <Text className="text-gray-800 font-medium mb-1 text-caption">{t('chat.offer.auto_hire')}</Text>
+                                        <Text className="text-gray-600 text-caption">
                                             {t('chat.offer.auto_hire_description')}
                                         </Text>
                                     </View>
@@ -331,7 +358,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                             <View className="bg-amber-50 rounded-xl p-3 border border-amber-200 mb-5">
                                 <View className="flex-row items-start">
                                     <Ionicons name="warning" size={16} color="#F59E0B" />
-                                    <Text className="text-amber-800 text-xs ml-2 flex-1">
+                                    <Text className="text-amber-800 text-caption ml-2 flex-1">
                                         {t('chat.offer.accept_warning') ||
                                             'This action is permanent and cannot be undone'}
                                     </Text>
@@ -345,7 +372,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                     className="flex-1 bg-gray-100 rounded-xl py-3.5 items-center"
                                     activeOpacity={0.7}
                                 >
-                                    <Text className="text-gray-700 font-semibold text-sm">
+                                    <Text className="text-gray-700 font-semibold text-body">
                                         {t('common.cancel') || 'Cancel'}
                                     </Text>
                                 </TouchableOpacity>
@@ -355,7 +382,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                     className="flex-1 bg-green-600 rounded-xl py-3.5 items-center"
                                     activeOpacity={0.8}
                                 >
-                                    <Text className="text-white font-bold text-sm">
+                                    <Text className="text-white font-bold text-body">
                                         {t('common.confirm') || 'Confirm Accept'}
                                     </Text>
                                 </TouchableOpacity>
@@ -381,8 +408,8 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                     <View className="bg-red-400 rounded-full p-2 mr-3">
                                         <Ionicons name="close-circle" size={24} color="white" />
                                     </View>
-                                    <Text className="text-white text-lg font-bold flex-1">
-                                        {t('chat.offer.reject_confirmation') || 'Decline Offering'}
+                                    <Text className="text-white text-body font-bold flex-1">
+                                        {t('chat.offer.reject_confirmation') || 'Reject Offer'}
                                     </Text>
                                 </View>
                                 <TouchableOpacity
@@ -396,9 +423,9 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
 
                         {/* Modal Content */}
                         <View className="px-5 py-5">
-                            <Text className="text-gray-700 text-sm leading-6 mb-4">
+                            <Text className="text-textSecondary text-body leading-6 mb-4">
                                 {t('chat.offer.reject_message') ||
-                                    'Are you sure you want to decline this offering?'}
+                                    'Are you sure you want to reject this offer?'}
                             </Text>
 
                             {/* Info List */}
@@ -408,8 +435,8 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                         <Ionicons name="notifications" size={14} color="white" />
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-gray-800 font-medium mb-1 text-sm">{t('chat.offer.freelancer_notified')}</Text>
-                                        <Text className="text-gray-600 text-xs">
+                                        <Text className="text-text font-medium mb-1 text-sm">{t('chat.offer.freelancer_notified')}</Text>
+                                        <Text className="text-gray-600 text-caption">
                                             {t('chat.offer.freelancer_notified_description')}
                                         </Text>
                                     </View>
@@ -420,8 +447,8 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                         <Ionicons name="document-text" size={14} color="white" />
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-gray-800 font-medium mb-1 text-sm">{t('chat.offer.original_terms_kept')}</Text>
-                                        <Text className="text-gray-600 text-xs">
+                                        <Text className="text-text font-medium mb-1 text-sm">{t('chat.offer.original_terms_kept')}</Text>
+                                        <Text className="text-gray-600 text-caption">
                                             {t('chat.offer.original_terms_kept_description')}
                                         </Text>
                                     </View>
@@ -432,8 +459,8 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                         <Ionicons name="refresh" size={14} color="white" />
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-gray-800 font-medium mb-1 text-sm">{t('chat.offer.can_negotiate')}</Text>
-                                        <Text className="text-gray-600 text-xs">
+                                        <Text className="text-text font-medium mb-1 text-sm">{t('chat.offer.can_negotiate')}</Text>
+                                        <Text className="text-gray-600 text-caption">
                                             {t('chat.offer.can_negotiate_description')}
                                         </Text>
                                     </View>
@@ -443,7 +470,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                             <View className="bg-blue-50 rounded-xl p-3 border border-blue-200 mb-5">
                                 <View className="flex-row items-start">
                                     <Ionicons name="information-circle" size={16} color="#3B82F6" />
-                                    <Text className="text-primary text-xs ml-2 flex-1">
+                                    <Text className="text-primary text-caption ml-2 flex-1">
                                         {t('chat.offer.reject_warning') ||
                                             'The freelancer may submit a revised offering later'}
                                     </Text>
@@ -457,7 +484,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                     className="flex-1 bg-gray-100 rounded-xl py-3.5 items-center"
                                     activeOpacity={0.7}
                                 >
-                                    <Text className="text-gray-700 font-semibold text-sm">
+                                    <Text className="text-gray-700 font-semibold text-body">
                                         {t('common.cancel') || 'Cancel'}
                                     </Text>
                                 </TouchableOpacity>
@@ -467,8 +494,8 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                     className="flex-1 bg-red-600 rounded-xl py-3.5 items-center"
                                     activeOpacity={0.8}
                                 >
-                                    <Text className="text-white font-bold text-sm">
-                                        {t('common.confirm') || 'Confirm Decline'}
+                                    <Text className="text-white font-bold text-body">
+                                        {t('chat.offer.reject') || 'Confirm Decline'}
                                     </Text>
                                 </TouchableOpacity>
                             </View>

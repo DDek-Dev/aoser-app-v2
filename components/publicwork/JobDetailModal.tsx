@@ -5,27 +5,32 @@ import {
   TouchableOpacity,
   Animated,
   Platform,
-  InteractionManager,
-  TouchableWithoutFeedback,
   StyleSheet,
   ActivityIndicator,
   Pressable,
   BackHandler,
+  KeyboardAvoidingView,
+
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import ProfileOn_Interested from 'components/profile/ProfileOn_Interested';
+// import ProfileOn_Interested from 'components/profile/ProfileOn_Interested';
 import { useNavigation } from '@react-navigation/native';
-import ProfileInCommand from './ProfileInCommand';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 
 import { Job, Favorite } from 'types';
-import { formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime } from 'utils/dateFormatter';
 import { useCreateFavorite, useDeleteFavorite, useMyProfile } from 'hooks/useFreelancer';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'hooks/useAuth';
+import BudgetInput from 'components/ui/BudgetInput';
+import TextArea from 'components/ui/TextArea';
+import { useFreelancerApplyWork, useFreeLRequestUpdateW } from 'hooks/usePublicWork';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+
+
 
 interface JobDetailModalProps {
   visible: boolean;
@@ -41,27 +46,46 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
   const navigator = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [showProfile, setShowProfile] = useState(false);
+  // const [showProfile, setShowProfile] = useState(false);
   const [isFavorite, setIsFavorite] = useState<boolean>();
   const [close, setClose] = useState<boolean>(true);
   const [favoriteId, setFavoriteId] = useState<string | null>(
     job?._id || null
   );
+  // form reason 
+  const [isApplyLoading, setIsApplyLoading] = useState(false);
+  const [reason, setReason] = useState('');
+  const [budget_offer, setBudget_offer] = useState(0);
+  const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
+  const [error_offer, serError_offer] = useState({
+    reason: false,
+    budget: false,
+  })
+  const freeLRequestUpdateWMutation = useFreeLRequestUpdateW();
+  const applyWorkMutation = useFreelancerApplyWork();
+  // process
   const [isProcessing, setIsProcessing] = useState(false);
   // Add debounce ref to prevent rapid clicks
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<any>(null);
   const isFirstLoad = useRef(true);
   const [totalLikes, setTotalLikes] = useState(job?.totalLikes || 0);
   const { data, isLoading, isError, error } = useMyProfile();
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+
+  const isOwner = !!(data?._id && job?.createdBy?._id && data._id === job.createdBy._id);
+  const hasApplied = !!job?.workApplicants?.some(app => app.applicant === data?._id);
+  const canApply =
+    !!job &&
+    data?.businessType === 'FREELANCER' &&
+    data?.registrationStatus === 'APPROVED_COMPLETE' &&
+    !isOwner;
+
   // Single animation value for both show/hide and position adjustment
   const footerAnim = useRef(new Animated.Value(200)).current;
 
   const snapPoints = useMemo(() => ['100%'], []);
-
+  const scrollViewRef = useRef(null);
   // Calculate base positions
   const basePosition70 = 564
   const basePosition100 = 164
@@ -69,35 +93,35 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
   const creatFavorite = useCreateFavorite();
   const deleteFavorite = useDeleteFavorite();
   // Reset state when modal closes
+  // useEffect(() => {
+  //   if (!visible) {
+  //     setShowProfile(false);
+  //   }
+  // }, [visible]);
+
+
+  // Show/hide bottom sheet quickly (avoid extra delays)
   useEffect(() => {
     if (!visible) {
-      setShowProfile(false);
+      bottomSheetModalRef.current?.dismiss();
+      return;
     }
+
+    const raf = requestAnimationFrame(() => {
+      bottomSheetModalRef.current?.present();
+    });
+
+    return () => cancelAnimationFrame(raf);
   }, [visible]);
 
-
-  // Show/hide modal with proper timing
+  // Reset offering inputs when opening a new job
   useEffect(() => {
-
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
-    }
-    animationTimeoutRef.current = setTimeout(() => {
-      InteractionManager.runAfterInteractions(() => {
-        if (visible && job) {
-          bottomSheetModalRef.current?.present();
-        } else {
-          bottomSheetModalRef.current?.dismiss();
-        }
-      });
-    }, 50);
-
-    return () => {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-    };
-  }, [visible, job]);
+    if (!visible || !job) return;
+    setReason('');
+    setBudget_offer(0);
+    setBudgetCurrency(job.currency || 'LAK');
+    serError_offer({ reason: false, budget: false });
+  }, [visible, job?._id]);
 
   // Handle Android hardware back button
   useEffect(() => {
@@ -118,7 +142,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
 
   const handleSheetChanges = (index: number) => {
-    setCurrentIndex(index);
+
 
     // Calculate target position based on snap point
     let targetPosition;
@@ -138,8 +162,9 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
     }).start();
   };
 
+
   const handleDismiss = () => {
-    setCurrentIndex(-1);
+
     Animated.timing(footerAnim, {
       toValue: 100,
       duration: 200,
@@ -259,62 +284,99 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
     }, 100); // 100ms debounce
   }, [isFavorite, favoriteId, job?.myLike?.[0]?._id, handleCreateFavorite, handleDeleteFavorite, isProcessing]);
 
+
+
+
   // Loading state
   const isLoadingFavorite = creatFavorite.isPending || deleteFavorite.isPending || isProcessing;
-
-  if (!visible || !job) return null;
 
   // Safe property access with fallbacks
   const jobBudget = job?.budget || 0;
   const jobType = job?.kindOfWork || 'Unknown Type';
-  const jobDeadline = job?.deadLine || ' Unknown Deadline';
   const jobDescription = job?.description || 'No description available';
   const subwork = job?.subWorkDetails || [];
-  const currentLanguage = getCurrentLanguage();
+  const handleApply = async () => {
+    if (!job?._id) return;
+    const trimmedReason = reason.trim();
+    const hasReason = trimmedReason.length > 0;
+    const hasBudget = (budget_offer || 0) > 0;
+
+    // Validation: both empty is OK (no offering). If one is provided, require both.
+    if ((hasReason && !hasBudget) || (!hasReason && hasBudget)) {
+      serError_offer({
+        reason: !hasReason,
+        budget: !hasBudget,
+      });
+      return;
+    }
+
+    serError_offer({ reason: false, budget: false });
+
+    try {
+      setIsApplyLoading(true);
 
 
+      // Only send offering when both values are provided
+      if (hasReason && hasBudget) {
+        const updateDatas = {
+          reason: trimmedReason,
+          updateData: {
 
-  // console.log(data.businessType);
-  if (isLoading) return <ActivityIndicator />;
-  // if (!error) return <Text>{t('works.error.couldnot_load')}</Text>;
-  if (error) {
-    return (
+            budget: budget_offer,
+            currency: budgetCurrency,
+          }
 
-      <View className="flex-row justify-center items-center p-2 bg-background">
-        <View>
+        };
+        await freeLRequestUpdateWMutation.mutateAsync({
+          id: job._id,
+          data: updateDatas
+        });
+      }
+      await applyWorkMutation.mutateAsync({
+        workId: job._id,
+      });
+      await refetch();
+      // onClose();
 
-          <Text className="text-caption text-textSecondary text-start">
-            {t('works.error.couldnot_load')}
-          </Text>
-          <Text className="text-caption text-textSecondary text-start ">
-            {t('works.error.if_the_problem')}
-          </Text>
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('common.success') || 'Success',
+      });
+    } catch (applyError: any) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('common.error') || 'Failed',
+        textBody:
 
-        </View>
-
-
-      </View>
-
-    );
-  }
-
+          t('profile_in_command.apply_failed') ||
+          'Failed to apply for this work. Please try again.',
+      });
+    } finally {
+      setIsApplyLoading(false);
+    }
+  };
   return (
     <BottomSheetModal
       ref={bottomSheetModalRef}
       index={0}
       snapPoints={snapPoints}
-      onChange={handleSheetChanges}
+      // onChange={handleSheetChanges}
       onDismiss={handleDismiss}
       enablePanDownToClose={true}
-      backgroundStyle={styles.modalBackground}
-      handleIndicatorStyle={styles.handleIndicator}
+      // backgroundStyle={styles.modalBackground}
+      // handleIndicatorStyle={styles.handleIndicator}
       topInset={insets.top}
       android_keyboardInputMode="adjustResize"
-      backdropComponent={({ style }) => (
-        <TouchableWithoutFeedback onPress={handleDismiss}>
-          <View style={[style, styles.backdrop]} />
-        </TouchableWithoutFeedback>
-      )}
+
+      // backdropComponent={({ style }) => (
+      //   <TouchableWithoutFeedback onPress={handleDismiss}>
+      //     <View style={[style, styles.backdrop]} />
+      //   </TouchableWithoutFeedback>
+      // )}
+      keyboardBehavior="interactive"        // ← add this
+      keyboardBlurBehavior="restore"
+      enableDynamicSizing={false}
+
     >
       {/* Header */}
 
@@ -347,78 +409,95 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       {/* Content */}
 
 
-      <BottomSheetScrollView
-        className="flex-1 px-4 bg-surface"
-        showsVerticalScrollIndicator={false}
-        bounces={true}
-        contentContainerStyle={{ paddingBottom: 200 }}
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 60 : 0}
       >
-        {/* Job Title */}
-        <Text className="text-xl font-bold text-text my-6 ">
-          {job?.workTitle}
-        </Text>
+        <BottomSheetScrollView
+          ref={scrollViewRef}
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          contentContainerStyle={{
+            paddingBottom: canApply && !hasApplied
+              ? insets.bottom + 100
+              : insets.bottom + 24,
+          }}
+        >
 
-        {/* Key Info Cards */}
-        <View className=" rounded-2xl p-4 mb-6">
-          {/* Budget - Most Important Info First */}
-          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
-            <View className="flex-row items-center gap-3">
-              <View className="bg-primary/10 p-2 rounded-lg">
-                <MaterialIcons name="wallet" size={24} color="#3b82f6" />
-              </View>
-              <Text className="text-body text-text">{t('postWork.budget')}</Text>
-            </View>
-            <View className="flex-row items-baseline gap-1">
-              <Text className="text-2xl font-bold text-primary">
-                {new Intl.NumberFormat().format(jobBudget)}
-              </Text>
-              <Text className="text-body font-semibold text-warning">{job?.currency}</Text>
-            </View>
-          </View>
 
-          {/* Work Type */}
-          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
-            <View className="flex-row items-center gap-3">
-              <View className="bg-primary/10 p-2 rounded-lg">
-                <MaterialIcons name="donut-small" size={24} color="#3b82f6" />
-              </View>
-              <Text className="text-body text-text">{t('workDetail.kind_of_work')}</Text>
-            </View>
-            <View className={`px-4 py-2 rounded-full ${jobType === "ONLINE" ? "bg-green-100" : "bg-purple-100"
-              }`}>
-              <Text className={`text-sm font-semibold ${jobType === "ONLINE" ? "text-green-700" : "text-purple-700"
-                }`}>
-                {jobType === "ONLINE" ? "Online" : "Offline"}
-              </Text>
-            </View>
-          </View>
 
-          {/* Deadline */}
-          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
-            <View className="flex-row items-center gap-3">
-              <View className="bg-primary/10 p-2 rounded-lg">
-                <MaterialIcons name="date-range" size={24} color="#3b82f6" />
-              </View>
-              <Text className="text-body text-text">{t('postWork.from')}</Text>
-            </View>
-            <Text className="text-sm font-semibold text-text">
-              {formatDisplayDateTime(job?.startDate as string)}
+          <View className="px-2">
+
+
+            {/* Job Title */}
+            <Text className="text-xl font-bold text-text my-6 ">
+              {job?.workTitle}
             </Text>
-          </View>
-          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
-            <View className="flex-row items-center gap-3">
-              <View className="bg-primary/10 p-2 rounded-lg">
-                <MaterialIcons name="date-range" size={24} color="#3b82f6" />
-              </View>
-              <Text className="text-body text-text">{t('postWork.to')}</Text>
-            </View>
-            <Text className="text-sm font-semibold text-text">
-              {formatDisplayDateTime(job?.deadLine as string)}
-            </Text>
-          </View>
 
-          {/* Interested Freelancers */}
-          <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+            {/* Key Info Cards */}
+            <View className=" rounded-2xl p-4 mb-6">
+              {/* Budget - Most Important Info First */}
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="wallet" size={24} color="#3b82f6" />
+                  </View>
+                  <Text className="text-body text-text">{t('postWork.budget')}</Text>
+                </View>
+                <View className="flex-row items-baseline gap-1">
+                  <Text className="text-2xl font-bold text-primary">
+                    {new Intl.NumberFormat().format(jobBudget)}
+                  </Text>
+                  <Text className="text-body font-semibold text-warning">{job?.currency}</Text>
+                </View>
+              </View>
+
+              {/* Work Type */}
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="donut-small" size={24} color="#3b82f6" />
+                  </View>
+                  <Text className="text-body text-text">{t('workDetail.kind_of_work')}</Text>
+                </View>
+                <View className={`px-4 py-2 rounded-full bg-primary`}>
+                  <Text className={`text-sm font-semibold text-surface`}>
+                    {jobType === "ONLINE" ? t('editWork.workType.online') : t('editWork.workType.offline')}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Deadline */}
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="date-range" size={24} color="#3b82f6" />
+                  </View>
+                  <Text className="text-body text-text">{t('postWork.from')}</Text>
+                </View>
+                <Text className="text-sm font-semibold text-text">
+                  {formatDisplayDateTime(job?.startDate as string)}
+                </Text>
+              </View>
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="date-range" size={24} color="#3b82f6" />
+                  </View>
+                  <Text className="text-body text-text">{t('postWork.to')}</Text>
+                </View>
+                <Text className="text-sm font-semibold text-text">
+                  {formatDisplayDateTime(job?.deadLine as string)}
+                </Text>
+              </View>
+
+              {/* Interested Freelancers */}
+              {/* <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
             <View className="flex-row items-center gap-3">
               <View className="bg-primary/10 p-2 rounded-lg">
                 <MaterialIcons name="person" size={24} color="#3b82f6" />
@@ -432,131 +511,246 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
                 {job?.workApplicants?.length || 0}
               </Text>
             </View>
-          </View>
+          </View> */}
 
-          {job.address &&
-            <View className="flex-row mt-3 items-center  pb-4 border-b border-border">
-              <View className="flex-row items-center">
-                <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
-                  <Ionicons name="location-outline" size={24} color="#F59E0B" />
-                </View>
+              {job?.address &&
+                job?.address.village !== '' &&
+                job?.address.district !== '' &&
+                job?.address.province !== '' &&
+                <View className="flex-row mt-3 items-center  pb-4 border-b border-border">
+                  <View className="flex-row items-center">
+                    <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
+                      <Ionicons name="location-outline" size={24} color="#F59E0B" />
+                    </View>
 
-                <View className="flex-1">
-                  {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
+                    <View className="flex-1">
+                      {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
 
-                  <Text className="text-body text-text ">
-                    {job.address.village}, {job.address.district}, {job.address.province}
+                      <Text className="text-body text-text ">
+                        {job.address.village}, {job.address.district}, {job.address.province}
 
-                  </Text>
-                </View>
-
-
-              </View>
-            </View>
-          }
-        </View>
-
-        {/* Work Detail Section Header */}
-        <View className="flex-row items-center gap-3 mb-4">
-          <Text className="text-lg font-bold text-text">
-            {t('workDetail.work_detail')}
-          </Text>
-          <View className="flex-1 h-px bg-gray-300" />
-        </View>
-
-        <View className='bg-blue-100 p-4 rounded-2xl mb-4'>
+                      </Text>
+                    </View>
 
 
-          <View className="bg-background p-4 rounded-2xl mb-6">
-            <Text className="text-textSecondary leading-6">
-              {jobDescription}
-            </Text>
-          </View>
-
-          {subwork.map((section, sectionIndex) => (
-            <View key={sectionIndex} className="mb-4 p-3 bg-blue-50 rounded-xl border border-border">
-              {/* Section Header */}
-              <Text className="text-body font-semibold text-primary mb-2">
-                {section.sectionTitle}
-              </Text>
-
-              {/* Subtasks */}
-              {section.subTask.map((task, taskIndex) => (
-                <View key={taskIndex} className="flex-row items-center mb-1 ml-4">
-                  <Text className="text-caption mr-1">•</Text>
-                  <Text className="flex-1 text-body text-text">
-                    {task.title}
-                  </Text>
-                  <View className={`px-2 py-1 rounded-full ${task.subWorkStatus === 'TODO' ? 'bg-gray-200' :
-                    task.subWorkStatus === 'DOING' ? 'bg-blue-200' :
-                      task.subWorkStatus === 'DONE' ? 'bg-green-200' :
-                        task.subWorkStatus === 'DELAY' ? 'bg-yellow-200' :
-                          'bg-red-200'
-                    }`}>
-                    <Text className="text-caption text-text">
-                      {task.subWorkStatus}
-                    </Text>
                   </View>
+                </View>
+              }
+
+              {job?.place && (
+
+
+
+                <View className="flex-row mt-3 items-center  pb-4 border-b border-border">
+                  <View className="flex-row items-center">
+                    <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
+                      <Ionicons name="business-outline" size={24} color="#F59E0B" />
+                    </View>
+
+                    <View className="flex-1">
+                      {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
+
+                      <Text className="text-body text-text ">
+                        {job?.place}
+
+                      </Text>
+                    </View>
+
+
+                  </View>
+                </View>
+
+              )}
+            </View>
+
+            {/* Work Detail Section Header */}
+            <View className="flex-row items-center gap-3 mb-4">
+
+              <Text className="text-lg font-bold text-text">
+                {t('postWork.work_description')}
+              </Text>
+              <View className="flex-1 h-px bg-gray-300" />
+            </View>
+
+            <View className='bg-blue-100 p-4 rounded-2xl mb-4'>
+
+
+              <View className="bg-background p-4 rounded-2xl mb-6">
+                <Text className="text-textSecondary leading-6">
+                  {jobDescription}
+                </Text>
+              </View>
+
+              {subwork.map((section, sectionIndex) => (
+                <View key={sectionIndex} className="mb-4 p-3 bg-blue-50 rounded-xl border border-border">
+                  {/* Section Header */}
+                  <Text className="text-body font-semibold text-primary mb-2">
+                    {section.sectionTitle}
+                  </Text>
+
+                  {/* Subtasks */}
+                  {section.subTask.map((task, taskIndex) => (
+                    <View key={taskIndex} className="flex-row items-center mb-1 ml-4">
+                      <Text className="text-caption mr-1">•</Text>
+                      <Text className="flex-1 text-body text-text">
+                        {task.title}
+                      </Text>
+                      <View className={`px-2 py-1 rounded-full ${task.subWorkStatus === 'TODO' ? 'bg-gray-200' :
+                        task.subWorkStatus === 'DOING' ? 'bg-blue-200' :
+                          task.subWorkStatus === 'DONE' ? 'bg-green-200' :
+                            task.subWorkStatus === 'DELAY' ? 'bg-yellow-200' :
+                              'bg-red-200'
+                        }`}>
+                        <Text className="text-caption text-text">
+                          {task.subWorkStatus}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
               ))}
             </View>
-          ))}
-        </View>
-        <View className='bg-gray-200 w-full h-[1px] mb-4' />
-        <Text className='text-body font-bold text-text'>{t('workDetail.interested_freelancers')}</Text>
-        {job?.workApplicants?.length > 0 && (
-          <ProfileOn_Interested
-            job={job}
-            handleUserProfileNavigation={onUserPress}
-            onClose={handleDismiss}
-          />
-        )}
-      </BottomSheetScrollView>
-
-      {job?.workApplicants && !job.workApplicants.some(app => app.applicant === data?._id) && (
 
 
-        <Animated.View
-          className="absolute bottom-[10rem] left-4 right-4 rounded-2xl items-center "
-        >
-          {data?.businessType === "FREELANCER" && data?.registrationStatus === 'APPROVED_COMPLETE' && data?._id !== job.createdBy._id && (
+            {canApply && (
+              <>
+                {/* Offering form */}
+                <View className="flex-row items-center gap-3 mb-4">
+                  <View className="flex-1 h-px bg-gray-300" />
+
+                  <Text className="text-lg font-bold text-text">
+                    {t('chat.offer.your_offering')}
+                  </Text>
+                  <View className="flex-1 h-px bg-gray-300" />
+                </View>
+
+                {!hasApplied ? (
+                  <View>
+                    <BudgetInput
+                      label={t('postWork.budget')}
+                      value={budget_offer}
+                      onChange={(value) => {
+                        setBudget_offer(value);
+                        serError_offer(prev => ({ ...prev, budget: false }));
+                      }}
+                      currency={budgetCurrency}
+                      onCurrencyChange={setBudgetCurrency}
+                      error={error_offer.budget}
+                      isValidate={error_offer.budget ? t('postWork.budget_required') : ''}
+                    />
+
+                    <View className="mt-2">
+                      <TextArea
+                        label={t('postWork.work_description')}
+                        placeholder={t('postWork.work_description_placeholder')}
+                        value={reason}
+                        onChangeText={(text) => {
+                          setReason(text);
+                          serError_offer(prev => ({ ...prev, reason: false }));
+                        }}
+                        inputClassName={`${error_offer.reason ? 'border-error' : 'border-border'}`}
+                        isValidate={`${error_offer.reason ? `${t('postWork.work_description_required')}` : ''}`}
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <View className="bg-blue-50 border border-border rounded-xl p-4 mb-2">
+                    <Text className="text-body text-text">
+                      {t('workDetail.already_applied') || 'You already applied for this job.'}
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+          {/* {isOwner && job?.workApplicants?.length > 0 && (
+          <>
+            <ProfileOn_Interested
+              job={job}
+              handleUserProfileNavigation={onUserPress}
+              onClose={handleDismiss}
+            />
+          </>
+        )} */}
+
+
+
+
+
+
+        </BottomSheetScrollView>
+
+        {canApply && !hasApplied && (
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: insets.bottom + 24,
+              backgroundColor: 'transparent',
+            }}
+          >
             <TouchableOpacity
-              onPress={() => setShowProfile(true)}
-              className="bg-primary p-6 rounded-full shadow-md -rotate-45"
-              style={styles.blueShadow}
+              onPress={handleApply}
+              disabled={isApplyLoading}
+              className={`bg-primary p-4 mx-4 rounded-full shadow-md ${isApplyLoading ? 'opacity-60' : ''}`}
+            // style={styles.blueShadow}
+            // style={{ marginBottom: insets.bottom}}
             >
-              <Ionicons name="send" size={24} color="white" />
+              {isApplyLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <View className='flex-row gap-2 items-center justify-center'>
+                  <Text className='text-surface'>{t('workDetail.apply_now')}</Text>
+
+                  {/* <Ionicons name="send" size={24} color="white" className='-rotate-45' /> */}
+                </View>
+              )}
             </TouchableOpacity>
-          )}
+          </View>
+        )}
+      </KeyboardAvoidingView>
 
-          {data?.businessType !== "FREELANCER"&& data?.registrationStatus !== 'APPROVED_COMPLETE' && data?._id !== job.createdBy._id && (
-            <View className="bg-surface p-4 rounded-2xl items-center shadow-lg w-[100%]" style={styles.blueShadow}>
-              <View className="bg-blue-100 p-3 rounded-full mb-3">
-                <Ionicons name="rocket-outline" size={28} color="#2563eb" />
-              </View>
-              <Text className="text-body font-bold text-primary mb-1 text-center">
-                {t('workDetail.become_freelancer_role')}
-              </Text>
-              <Text className="text-caption text-textSecondary text-center mb-3">
-                {t('workDetail.set_up_freelancer_role')}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  handleDismiss();
-                  navigator.navigate('FreelancerRoleGate');
-                }}
-                className="bg-primary px-6 py-3 rounded-xl flex-row items-center space-x-2"
 
+      {job?.workApplicants && !hasApplied && (
+
+        <>
+          <Animated.View
+            pointerEvents="box-none"
+            className="absolute bottom-[10rem] left-4 right-4 rounded-2xl items-center "
+          >
+
+            {data?.businessType !== "FREELANCER" && data?.registrationStatus !== 'APPROVED_COMPLETE' && data?._id !== job?.createdBy?._id && (
+              <View
+                pointerEvents="box-none"
+                className="bg-surface p-4 rounded-2xl items-center shadow-lg w-[100%]"
+                style={styles.blueShadow}
               >
-                <Text className="text-surface font-bold text-caption">{t('workDetail.start_freelancer_role')}</Text>
-                <Ionicons name="arrow-forward" size={18} color="white" />
-              </TouchableOpacity>
-            </View>
-          )}
+                <View className="bg-blue-100 p-3 rounded-full mb-3">
+                  <Ionicons name="rocket-outline" size={28} color="#2563eb" />
+                </View>
+                <Text className="text-body font-bold text-primary mb-1 text-center">
+                  {t('workDetail.become_freelancer_role')}
+                </Text>
+                <Text className="text-caption text-textSecondary text-center mb-3">
+                  {t('workDetail.set_up_freelancer_role')}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleDismiss();
+                    navigator.navigate('FreelancerRoleGate');
+                  }}
+                  className="bg-primary px-6 py-3 rounded-xl flex-row items-center space-x-2"
 
-          {data?.businessType === 'FREELANCER' && data?.registrationStatus === 'REJECTED' && close && (
-            
-              <View className="flex-1 items-center justify-center p-4 bg-primary rounded-2xl">
+                >
+                  <Text className="text-surface font-bold text-caption">{t('workDetail.start_freelancer_role')}</Text>
+                  <Ionicons name="arrow-forward" size={18} color="white" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {data?.businessType === 'FREELANCER' && data?.registrationStatus === 'REJECTED' && close && (
+
+              <View pointerEvents="box-none" className="flex-1 items-center justify-center p-4 bg-primary rounded-2xl">
 
                 <Pressable
                   onPress={() => setClose(false)}
@@ -605,18 +799,19 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
               </View>
             )}
 
-        </Animated.View>
+          </Animated.View>
+        </>
       )}
 
 
-      {showProfile && (
+      {/* {showProfile && (
         <ProfileInCommand
           jobId={job._id}
           visible={showProfile}
           onClose={() => setShowProfile(false)}
           refetch={refetch}
         />
-      )}
+      )} */}
     </BottomSheetModal>
   );
 };

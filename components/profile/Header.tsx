@@ -81,7 +81,7 @@ const imageUri = isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundIma
         </Pressable>
 
         {isme ? (
-          <ProfileStatusPopup workStatus={status} isme />
+          <ProfileStatusPopup workStatus={status} isme userId ={userId} />
 
         ) : (
           <View className="absolute right-4 top-12  flex-row items-center gap-8">

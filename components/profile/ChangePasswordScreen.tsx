@@ -48,7 +48,7 @@ const ChangePasswordScreen = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<any>(null);
   const otpInputRef = useRef<RNTextInput>(null);
 
   const {

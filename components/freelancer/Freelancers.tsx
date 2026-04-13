@@ -38,7 +38,7 @@ export default function Freelancers({
 }: FreelancersProps) {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const containerRef = useRef<View>(null);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadingTimeoutRef = useRef<any>(null);
   const isLoadingMoreRef = useRef(false);
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();

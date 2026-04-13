@@ -34,7 +34,10 @@ export const chatApi = {
         } catch (error: any) {
             // Axios error handling
             if (error.response) {
-                console.log('Error fetching chat room: status=', error.response.status, 'data=', error.response.data);
+                // Avoid spamming logs for rate limits; callers can handle 429 gracefully.
+                if (error.response.status !== 429) {
+                    console.log('Error fetching chat room: status=', error.response.status, 'data=', error.response.data);
+                }
             } else if (error.request) {
                 console.log('Error fetching chat room: no response, request sent', error.message);
             } else {

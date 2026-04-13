@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -36,7 +36,171 @@ const ITEMS_PER_PAGE = 15;
 const ANIMATION_DURATION = 300;
 const SCROLL_THRESHOLD = 0.8; // Load more when 80% scrolled
 const currentLanguage = getCurrentLanguage();
+const numberFormatter = new Intl.NumberFormat();
 const BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
+
+const iconComponentCache = new Map<string, any>();
+const convertToPascalCase = (str: string): string => {
+  return str
+    .replace(/[-_]/g, ' ')
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('');
+};
+
+const getIconComponent = (iconName?: string) => {
+  if (!iconName) return Icons.Code;
+
+  const cached = iconComponentCache.get(iconName);
+  if (cached) return cached;
+
+  const pascalName = convertToPascalCase(iconName);
+  const IconComponent = (Icons as any)[pascalName] || Icons.Code;
+  iconComponentCache.set(iconName, IconComponent);
+  return IconComponent;
+};
+
+const JobItem = React.memo(
+  ({ item, onPress, t }: { item: Job; onPress: (job: Job) => void; t: any }) => {
+    const IconComponent = getIconComponent(item?.serviceType?.icon);
+    const handlePress = useCallback(() => onPress(item), [onPress, item]);
+
+    return (
+      <Pressable
+        onPress={handlePress}
+        className="bg-white rounded-2xl border border-gray-200 px-4 py-4 mb-1"
+      >
+        {/* profile of create by1 */}
+        <View className="">
+          <View className="flex-row justify-between px-1">
+            <View className="flex-row gap-2 items-center">
+              <Image
+                source={
+                  item.createdBy.userProfileImage
+                    ? { uri: BASE_URL + item.createdBy.userProfileImage }
+                    : profileImage
+                }
+                className="w-10 h-10 rounded-full"
+              />
+              <Text>
+                {item.createdBy.firstName} {item.createdBy.lastName}
+              </Text>
+            </View>
+            <View>
+              <Text className="text-caption text-textSecondary">
+                {formatRelativeTime(item.createdAt, currentLanguage)}
+              </Text>
+            </View>
+          </View>
+
+          <View className="h-[1px] bg-border my-2" />
+        </View>
+        <View className="flex-row justify-between items-start mb-2">
+          <View className="flex-1 mr-3 ">
+            <Text className="text-body font-semibold text-gray-900" numberOfLines={2}>
+              {item.workTitle}
+            </Text>
+          </View>
+          <View className="w-6 mr-3 ">
+            <IconComponent size={24} color={item.serviceType.color || 'black'} strokeWidth={2} />
+          </View>
+        </View>
+
+        <Text className="text-body text-gray-500 mb-3" numberOfLines={3}>
+          {item.description}
+        </Text>
+
+        <View className="bg-background px-2 rounded-2xl p-2">
+          <View className=" flex-row items-center  ">
+            <Text>{t('postWork.work_type')} : </Text>
+            <Text className="text-caption text-surface bg-primary px-2 py-1 rounded-full  ">
+              {item.kindOfWork === 'ONLINE'
+                ? t('editWork.workType.online')
+                : t('editWork.workType.offline')}
+            </Text>
+          </View>
+          {item.budgetType === 'OFFERING' ? (
+            <View className="">
+              <Text className="text-lg text-primary font-bold mr-2">
+                {t('workDetail.offering_price')}
+              </Text>
+            </View>
+          ) : (
+            <View className="flex-row items-center">
+              <Text>{t('postWork.budget')} : </Text>
+              <Text className="font-bold text-body text-warning ml-2">{item.currency} </Text>
+              <Text className="font-bold text-body text-primary">
+                {numberFormatter.format(item.budget)}
+              </Text>
+            </View>
+          )}
+
+          {item.startDate !== undefined && (
+            <View className="flex-row mt-3 items-center">
+              <Text>{currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'} : </Text>
+
+              <View className="flex-row gap-2 items-center">
+                <Ionicons name="time-outline" size={18} color="#F59E0B" />
+                <Text className="text-sm text-textSecondary">
+                  {formatDisplayDateTime(item.startDate as string)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {item.deadLine !== undefined && (
+            <View className="flex-row mt-3 items-center">
+              <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+
+              <View className="flex-row gap-2 items-center">
+                <Ionicons name="time-outline" size={18} color="#F59E0B" />
+
+                <Text className="text-sm text-textSecondary">
+                  {formatDisplayDateTime(item.deadLine as string)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {item.address &&
+            item.address.village !== '' &&
+            item.address.district !== '' &&
+            item.address.province !== '' && (
+              <View className="flex-row mt-3 items-center">
+                <Text>{t('payment_success.address')}: </Text>
+
+                <View className="flex-row gap-2 items-center">
+                  <Ionicons name="location-outline" size={18} color="#F59E0B" />
+
+                  <Text className="text-sm text-textSecondary">
+                    {item.address.village}, {item.address.district}, {item.address.province}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+          {item.place && (
+
+            <View className="flex-row mt-3 items-center">
+              <Text>{t('postWork.address_manually')}: </Text>
+
+              <View className="flex-row gap-2 items-center">
+                <Ionicons name="business-outline" size={18} color="#F59E0B" />
+
+                <Text className="text-sm text-textSecondary">
+                  {item.place}
+                </Text>
+              </View>
+            </View>
+
+          )}
+        </View>
+      </Pressable>
+    );
+  }
+);
+JobItem.displayName = 'JobItem';
+
 const WorkFeedScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
   const navigations = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
@@ -73,223 +237,81 @@ const WorkFeedScreen = () => {
     refetchOnWindowFocus: false,
     refetchOnMount: true,
   });
-  const selectedJob = jobs?.find(j => j._id === selectedJobId) ?? null;
-
-  const convertToPascalCase = (str: string): string => {
-    return str
-      .replace(/[-_]/g, ' ')
-      .split(' ')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join('');
-  };
-
-  const getIcon = (iconName?: string) => {
-    if (!iconName) return Icons.Code;
-
-    const pascalName = convertToPascalCase(iconName);
-    const IconComponent = (Icons as any)[pascalName];
-
-    return IconComponent || Icons.Code;
-  };
-
-
-  // console.log ("data", JSON.stringify(dat, null, 2));
-
-  // Memoized JobItem component
-  const JobItem = React.memo(({ item, onPress }: { item: Job; onPress: (job: Job) => void }) => {
-
-
-    const IconComponent = getIcon(item?.serviceType?.icon);
-
-
-    return (
-
-
-      <Pressable
-        onPress={() => onPress(item)}
-        className="bg-white rounded-2xl border border-gray-200 px-4 py-4 mb-1"
-      // activeOpacity={0.7}
-      >
-
-        {/* profile of create by1 */}
-        <View className=''>
-
-          <View className='flex-row justify-between px-1'>
-
-            <View className="flex-row gap-2 items-center">
-              <Image
-                source={item.createdBy.userProfileImage ? { uri: BASE_URL + item.createdBy.userProfileImage } : profileImage}
-                className="w-10 h-10 rounded-full"
-              />
-              <Text>{item.createdBy.firstName} {item.createdBy.lastName}</Text>
-            </View>
-            <View>
-              {/* <Text className="mb-1">{t('works.post_on')}</Text> */}
-              <Text className="text-caption text-textSecondary">
-                {formatRelativeTime(item.createdAt, currentLanguage)}
-              </Text>
-            </View>
-          </View>
-
-          <View className='h-[1px] bg-border my-2' />
-        </View>
-        <View className="flex-row justify-between items-start mb-2">
-          <View className="flex-1 mr-3 ">
-            <Text className="text-body font-semibold text-gray-900" numberOfLines={2}>
-              {item.workTitle}
-            </Text>
-
-          </View>
-          <View className="w-6 mr-3 ">
-            {/* <Text className="text-body font-semibold text-gray-900" numberOfLines={2}>
-            ICON
-          </Text> */}
-
-            <IconComponent
-              size={24}
-              color={item.serviceType.color || 'black'}
-              strokeWidth={2}
-            />
-
-          </View>
-
-        </View>
-
-        <Text className="text-body text-gray-500 mb-3" numberOfLines={3}>
-          {item.description}
-        </Text>
-
-
-
-        <View className='bg-background px-2 rounded-2xl p-2'>
-
-
-          <View className=" flex-row items-center  ">
-
-            <Text >{t('postWork.work_type')} : </Text>
-            <Text className="text-caption text-text bg-surface p-2 rounded-full  ">
-              {item.kindOfWork === "ONLINE" ? "Online" : "Offline"}
-            </Text>
-          </View>
-          {item.budgetType === 'OFFERING' ? (
-            <View className=''>
-              <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
-            </View>
-          ) : (
-
-            <View className="flex-row items-center">
-              <Text>{t('postWork.budget')} : </Text>
-              <Text className="font-bold text-body text-warning ml-2">{item.currency} </Text>
-              <Text className="font-bold text-body text-primary">
-                {new Intl.NumberFormat().format(item.budget)}
-              </Text>
-            </View>
-
-          )}
-
-
-          {item.startDate !== undefined && 
-
-            <View className="flex-row mt-3 items-center">
-              <Text>{currentLanguage === 'la' ? 'ເລີ່ມ' : 'Start'} : </Text>
-
-              <View className="flex-row gap-2 items-center">
-                <Ionicons name="time-outline" size={18} color="#F59E0B" />
-                <Text className="text-sm text-textSecondary">
-                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-                  {formatDisplayDateTime(item.startDate as string)}
-                </Text>
-              </View>
-            </View>
-          }
-
-          {item.deadLine !== undefined &&
-            <View className="flex-row mt-3 items-center">
-              {/* <Text>{t('workDetail.deadline')} : </Text> */}
-              <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
-
-              <View className="flex-row gap-2 items-center">
-                <Ionicons name="time-outline" size={18} color="#F59E0B" />
-
-                <Text className="text-sm text-textSecondary">
-                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-
-                  {formatDisplayDateTime(item.deadLine as string)}
-                </Text>
-              </View>
-            </View>
-
-          }
-
-          {item.address && item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
-
-            <View className="flex-row mt-3 items-center">
-              {/* <Text>{t('workDetail.deadline')} : </Text> */}
-              <Text>{t('payment_success.address')}:  </Text>
-
-              <View className="flex-row gap-2 items-center">
-                <Ionicons name="location-outline" size={18} color="#F59E0B" />
-
-                <Text className="text-sm text-textSecondary">
-                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-
-                  {item.address.village}, {item.address.district}, {item.address.province}
-                </Text>
-              </View>
-            </View>
-          }
-
-        </View>
-
-
-
-      </Pressable>
-
-    )
-  });
+  const selectedJob = useMemo(
+    () => jobs?.find((j) => j._id === selectedJobId) ?? null,
+    [jobs, selectedJobId]
+  );
 
   // Animation interpolations
-  const bannerTextOpacity = scrollY.interpolate({
-    inputRange: [0, 180],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  const bannerTextOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [-20, 200],
+        outputRange: [1, 10],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
 
-  const bannerBgColor = scrollY.interpolate({
-    inputRange: [0, 400],
-    outputRange: ['#2B68F2', '#FFFFFF'],
-    extrapolate: 'clamp',
-  });
+  const bannerBgColor = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, 400],
+        outputRange: ['#2B68F2', '#FFFFFF'],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
 
-  const bannerHeight = scrollY.interpolate({
-    inputRange: [0, 380],
-    // outputRange: [150, 110],
-    outputRange: [140 + insets.top, 90 + insets.top],
-    extrapolate: 'clamp',
-  });
+  const bannerHeight = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, 480],
+        outputRange: [120 + insets.top, 75 + insets.top],
+        extrapolate: 'clamp',
+      }),
+    [scrollY, insets.top]
+  );
 
-  const bannerRadius = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [24, 0],
-    extrapolate: 'clamp',
-  });
+  const bannerRadius = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, 100],
+        outputRange: [24, 0],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
 
-  const searchBarTranslateY = scrollY.interpolate({
-    inputRange: [0, 400],
-    outputRange: [0, -60],
-    extrapolate: 'clamp',
-  });
-  const categoryTranslateY = scrollY.interpolate({
-    inputRange: [0, 400],
-    outputRange: [0, -15],
-    extrapolate: 'clamp',
-  });
+  const searchBarTranslateY = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, 400],
+        outputRange: [0, -40],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
 
-  const startBoxVisibility = scrollY.interpolate({
-    inputRange: [0, 500],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
+  const categoryTranslateY = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, 400],
+        outputRange: [0, -20],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
+
+  const startBoxVisibility = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, 500],
+        outputRange: [1, 0],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
 
   // Initialize jobs data
   useEffect(() => {
@@ -421,7 +443,10 @@ const WorkFeedScreen = () => {
   }, []);
 
   // Get visible jobs
-  const visibleJobs = displayedJobs.slice(0, visibleJobsCount);
+  const visibleJobs = useMemo(
+    () => displayedJobs.slice(0, visibleJobsCount),
+    [displayedJobs, visibleJobsCount]
+  );
   const hasMoreJobs = visibleJobsCount < displayedJobs.length;
 
   // Loading state
@@ -481,65 +506,65 @@ const WorkFeedScreen = () => {
 
   return (
     <>
-      <View className="bg-white">
-        <Animated.View
+      <Animated.View
+        style={[
+          styles.banner,
+          {
+            paddingHorizontal: 16,
+            paddingBottom: 12,
+            // ✅ ใช้ insets.top แทน paddingTop: 30
+            paddingTop: insets.top + 12,
+          },
+          {
+            backgroundColor: bannerBgColor,
+            height: bannerHeight,
+            borderBottomLeftRadius: bannerRadius,
+            borderBottomRightRadius: bannerRadius,
+
+          },
+        ]}
+      >
+        <Animated.Text
           style={[
-            styles.banner,
+            styles.bannerText,
             {
-              paddingHorizontal: 16,
-              paddingBottom: 12,
-              // ✅ ใช้ insets.top แทน paddingTop: 30
-              paddingTop: insets.top + 12,
-            },
-            {
-              backgroundColor: bannerBgColor,
-              height: bannerHeight,
-              borderBottomLeftRadius: bannerRadius,
-              borderBottomRightRadius: bannerRadius,
+              fontSize: 28,
+              opacity: bannerTextOpacity,
+              lineHeight: 40,
 
             },
           ]}
         >
-          <Animated.Text
-            style={[
-              styles.bannerText,
-              {
-                marginTop: 10,
-                fontSize: 28,
-                opacity: bannerTextOpacity,
-                lineHeight: 40,
+          {t('works.lets_find_work')}
+        </Animated.Text>
 
-              },
-            ]}
-          >
-            {t('works.lets_find_work')}
-          </Animated.Text>
-
-          <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }] }}>
-            <View className="flex-row items-center bg-white rounded-full border border-gray-300 px-4 mb-4">
-              <Ionicons name="search-outline" size={20} color="#3B82F6" />
-              <TextInput
-                value={searchText}
-                onChangeText={handleSearch}
-                className="ml-2 text-base text-gray-600 flex-1 py-4"
-                placeholder={t('works.search_work')}
-                placeholderTextColor="#999"
-                returnKeyType="search"
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-              />
-              {searchText ? (
-                <TouchableOpacity onPress={() => handleSearch('')}>
-                  <Ionicons name="close-circle" size={20} color="#999" />
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          </Animated.View>
+        <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }] }}>
+          <View className="flex-row items-center bg-white rounded-full border border-gray-300 px-4 ">
+            <Ionicons name="search-outline" size={20} color="#3B82F6" />
+            <TextInput
+              value={searchText}
+              onChangeText={handleSearch}
+              className="ml-2 text-base text-gray-600 flex-1 py-4"
+              placeholder={t('works.search_work')}
+              placeholderTextColor="#999"
+              returnKeyType="search"
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+            />
+            {searchText ? (
+              <TouchableOpacity onPress={() => handleSearch('')}>
+                <Ionicons name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
         </Animated.View>
+      </Animated.View>
 
-        <Animated.View className="px-4 py-1 bg-surface" style={{ transform: [{ translateY: categoryTranslateY }] }} >
-          <SortByCategory data={originalJobs} onCategoryFilter={handleCategoryFilter} />
-        </Animated.View>
+      {/* <Animated.View className="px-4 py-1 bg-surface" style={{ transform: [{ translateY: categoryTranslateY }] }} >
+      </Animated.View> */}
+      <View className='pl-2 pb-1 bg-surface'>
+
+        <SortByCategory data={originalJobs} onCategoryFilter={handleCategoryFilter} />
       </View>
 
       <Animated.ScrollView
@@ -565,13 +590,13 @@ const WorkFeedScreen = () => {
               opacity: startBoxVisibility,
               height: startBoxVisibility.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 144],
+                outputRange: [0, 134],
               }),
               overflow: 'hidden',
               marginHorizontal: 16,
               marginVertical: startBoxVisibility.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 16],
+                outputRange: [0, 5],
               }),
               padding: startBoxVisibility.interpolate({
                 inputRange: [0, 1],
@@ -615,6 +640,7 @@ const WorkFeedScreen = () => {
                 <JobItem
                   key={job._id}
                   item={job}
+                  t={t}
                   onPress={
                     user && user._id === job.createdBy._id
                       ? handleWorkPress

@@ -60,7 +60,7 @@ export const formatRelativeTime = (dateString: string, language: Language = 'en'
     return formatDate(dateString, language);
   } catch (error) {
     console.log('Error formatting date:', error);
-    return language === 'en' ? 'Invalid date' : 'ວັນທີບໍ່ຖືກຕ້ອງ';
+    return language === 'en' ? '' : '';
   }
 };
 
@@ -95,7 +95,7 @@ export const formatRelativeTimeWithTime = (dateString: string, language: Languag
     }
   } catch (error) {
     console.log('Error formatting date:', error);
-    return language === 'en' ? 'Invalid date' : 'ວັນທີບໍ່ຖືກຕ້ອງ';
+    return language === 'en' ? '' : '';
   }
 };
 
@@ -117,7 +117,7 @@ export const formatDate = (dateString: string, language: Language = 'en'): strin
     }
   } catch (error) {
     console.log('Error formatting date:', error);
-    return language === 'en' ? 'Invalid date' : 'ວັນທີບໍ່ຖືກຕ້ອງ';
+    return language === 'en' ? '' : '';
   }
 };
 
@@ -139,7 +139,7 @@ export const formatTime = (date: Date, language: Language = 'en'): string => {
     }
   } catch (error) {
     console.log('Error formatting time:', error);
-    return language === 'en' ? 'Invalid time' : 'ເວລາບໍ່ຖືກຕ້ອງ';
+    return language === 'en' ? '' : '';
   }
 };
 

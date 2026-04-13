@@ -417,9 +417,12 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
           // Prepare the updateData object
           const updateData = {
-            deadLine: formattedDeadline,
-            currency: projectData.currency,
-            budget: projectData.newBudget
+            updateData: {
+              deadLine: formattedDeadline,
+              currency: projectData.currency,
+              budget: projectData.newBudget
+            }
+
           };
 
 
@@ -615,7 +618,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
             <Text >{t('postWork.work_type')} : </Text>
             <Text className="text-caption text-text bg-surface p-2 rounded-full  ">
-              {item.kindOfWork === "ONLINE" ? "Online" : "Offline"}
+              {item.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
             </Text>
           </View>
           {item.budgetType === 'OFFERING' ? (
@@ -662,7 +665,10 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
             </View>
           </View>
 
-          {item?.createdBy?.address &&
+         {item.address &&
+            item.address.village !== '' &&
+            item.address.district !== '' &&
+            item.address.province !== '' && (
 
 
             <View className="flex-row mt-3 items-center">
@@ -675,11 +681,28 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
                 <Text className="text-sm text-textSecondary">
                   {/* {formatDate(item.deadLine as string, currentLanguage)} */}
 
-                  {item.createdBy.address.village}, {item.createdBy.address.district}, {item.createdBy.address.province}
+                  {item?.address.village}, {item?.address.district}, {item?.address.province}
                 </Text>
               </View>
             </View>
+            )
           }
+
+          {item.place && (
+          
+                      <View className="flex-row mt-3 items-center">
+                        <Text>{t('postWork.address_manually')}: </Text>
+          
+                        <View className="flex-row gap-2 items-center">
+                          <Ionicons name="business-outline" size={18} color="#F59E0B" />
+          
+                          <Text className="text-sm text-textSecondary">
+                            {item.place}
+                          </Text>
+                        </View>
+                      </View>
+          
+                    )}
 
         </View>
 
@@ -740,7 +763,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
           <View className="flex-row items-center">
             <Text>{t('postWork.work_type')} : </Text>
             <Text className="text-caption text-text bg-surface p-2 rounded-full">
-              {item.kindOfWork === "ONLINE" ? "Online" : "Offline"}
+              {item.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
             </Text>
           </View>
 
@@ -853,140 +876,140 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
           {/* Deadline Input - NOW REQUIRED */}
           <View className="flex-row gap-2 items-end">
-          
-
-              <View className='flex-1'>
-
-                <FormInput
-                  label={`${currentLanguage === 'la' ? 'ຫາ' : 'Deadline'}`}
-                  placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'dd/mm/yy'}
-                  value={currentToDateString}
-                  inputClassName={deadlineError ? 'border-error' : 'border-border'}
-                  // isDateTime={true}
-
-                  onChangeText={(text) => {
-                    // Update date string
-                    setDateStrings(prev => ({
-                      ...prev,
-                      [item._id]: text
-                    }));
-
-                    // Clear deadline error
-                    setErrors(prev => {
-                      const newErrors = { ...prev };
-                      delete newErrors[`${item._id}_deadline`];
-                      return newErrors;
-                    });
-
-                    if (text.trim().length === 0) {
-                      setProjectUpdates(prev => {
-                        const existing = prev.find(u => u.projectId === item._id);
-                        if (existing) {
-                          return prev.map(u =>
-                            u.projectId === item._id
-                              ? { ...u, newDeadline: '' }
-                              : u
-                          );
-                        }
-                        return prev;
-                      });
-                      return;
-                    }
 
 
+            <View className='flex-1'>
 
-                    // Try to parse the datetime
-                    const parsedDate = parseDateTime(text);
+              <FormInput
+                label={`${currentLanguage === 'la' ? 'ຫາວັນທີສະເໜີ' : 'Deadline'}`}
+                placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປ' : 'dd/mm/yy'}
+                value={currentToDateString}
+                inputClassName={deadlineError ? 'border-error' : 'border-border'}
+                // isDateTime={true}
 
-                    if (!parsedDate) {
-                      return;
-                    }
+                onChangeText={(text) => {
+                  // Update date string
+                  setDateStrings(prev => ({
+                    ...prev,
+                    [item._id]: text
+                  }));
 
-                    // If user typed a full time and it was clamped, normalize display
-                    if (text.length >= 16) {
-                      setDateStrings(prev => ({
-                        ...prev,
-                        [item._id]: formatDateTimeForDisplay(parsedDate)
-                      }));
-                    }
+                  // Clear deadline error
+                  setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors[`${item._id}_deadline`];
+                    return newErrors;
+                  });
 
-                    // Update project updates with parsed date (keep time)
+                  if (text.trim().length === 0) {
                     setProjectUpdates(prev => {
                       const existing = prev.find(u => u.projectId === item._id);
                       if (existing) {
                         return prev.map(u =>
                           u.projectId === item._id
-                            ? { ...u, newDeadline: parsedDate.toISOString() }
+                            ? { ...u, newDeadline: '' }
                             : u
                         );
                       }
-                      return [...prev, {
-                        projectId: item._id,
-                        newBudget: 0,
-                        newDeadline: parsedDate.toISOString(),
-                        currency: item.currency
-                      }];
+                      return prev;
                     });
-                  }}
-                />
-              </View>
+                    return;
+                  }
 
-              <View className="w-24">
-                <FormInput
-                  // label=""
-                  placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
-                  value={timeStrings[item._id] || ''}
-                  inputClassName={'border-border'}
-                  isTime={true}
-                  onChangeText={(text) => {
-                    // Update time string
-                    setTimeStrings(prev => ({
+
+
+                  // Try to parse the datetime
+                  const parsedDate = parseDateTime(text);
+
+                  if (!parsedDate) {
+                    return;
+                  }
+
+                  // If user typed a full time and it was clamped, normalize display
+                  if (text.length >= 16) {
+                    setDateStrings(prev => ({
                       ...prev,
-                      [item._id]: text
+                      [item._id]: formatDateTimeForDisplay(parsedDate)
                     }));
+                  }
 
-                    // Parse and validate time format (HH:MM)
-                    const timeRegex = /^([0-1]?[0-9]|2[0-3]):?([0-5][0-9])?$/;
-                    if (text && timeRegex.test(text)) {
-                      const timeParts = text.split(':');
-                      let hours = parseInt(timeParts[0], 10);
-                      let minutes = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
-
-                      // Validate time bounds
-                      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-                        return;
-                      }
-
-                      // Get the current date from projectUpdates or use today
-                      const updateData = projectUpdates.find(u => u.projectId === item._id);
-                      let dateToUse = updateData?.newDeadline ? new Date(updateData.newDeadline) : new Date();
-
-                      // Create new date with updated time
-                      dateToUse.setHours(hours, minutes, 0, 0);
-
-                      // Update project updates with new date+time
-                      setProjectUpdates(prev => {
-                        const existing = prev.find(u => u.projectId === item._id);
-                        if (existing) {
-                          return prev.map(u =>
-                            u.projectId === item._id
-                              ? { ...u, newDeadline: dateToUse.toISOString() }
-                              : u
-                          );
-                        } else {
-                          return [...prev, {
-                            projectId: item._id,
-                            newBudget: 0,
-                            newDeadline: dateToUse.toISOString(),
-                            currency: item.currency
-                          }];
-                        }
-                      });
+                  // Update project updates with parsed date (keep time)
+                  setProjectUpdates(prev => {
+                    const existing = prev.find(u => u.projectId === item._id);
+                    if (existing) {
+                      return prev.map(u =>
+                        u.projectId === item._id
+                          ? { ...u, newDeadline: parsedDate.toISOString() }
+                          : u
+                      );
                     }
-                  }}
-                />
-              </View>
-        
+                    return [...prev, {
+                      projectId: item._id,
+                      newBudget: 0,
+                      newDeadline: parsedDate.toISOString(),
+                      currency: item.currency
+                    }];
+                  });
+                }}
+              />
+            </View>
+
+            <View className="w-24">
+              <FormInput
+                // label=""
+                placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                value={timeStrings[item._id] || ''}
+                inputClassName={'border-border'}
+                isTime={true}
+                onChangeText={(text) => {
+                  // Update time string
+                  setTimeStrings(prev => ({
+                    ...prev,
+                    [item._id]: text
+                  }));
+
+                  // Parse and validate time format (HH:MM)
+                  const timeRegex = /^([0-1]?[0-9]|2[0-3]):?([0-5][0-9])?$/;
+                  if (text && timeRegex.test(text)) {
+                    const timeParts = text.split(':');
+                    let hours = parseInt(timeParts[0], 10);
+                    let minutes = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
+
+                    // Validate time bounds
+                    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+                      return;
+                    }
+
+                    // Get the current date from projectUpdates or use today
+                    const updateData = projectUpdates.find(u => u.projectId === item._id);
+                    let dateToUse = updateData?.newDeadline ? new Date(updateData.newDeadline) : new Date();
+
+                    // Create new date with updated time
+                    dateToUse.setHours(hours, minutes, 0, 0);
+
+                    // Update project updates with new date+time
+                    setProjectUpdates(prev => {
+                      const existing = prev.find(u => u.projectId === item._id);
+                      if (existing) {
+                        return prev.map(u =>
+                          u.projectId === item._id
+                            ? { ...u, newDeadline: dateToUse.toISOString() }
+                            : u
+                        );
+                      } else {
+                        return [...prev, {
+                          projectId: item._id,
+                          newBudget: 0,
+                          newDeadline: dateToUse.toISOString(),
+                          currency: item.currency
+                        }];
+                      }
+                    });
+                  }
+                }}
+              />
+            </View>
+
 
 
             {/* Calendar Button */}

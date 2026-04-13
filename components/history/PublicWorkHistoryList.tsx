@@ -23,7 +23,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
   const currentLanguage = getCurrentLanguage();
 
   const { t } = useTranslation();
-  
+
   return (
     <View className="space-y-3">
       {data.map((item) => {
@@ -42,7 +42,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
             activeOpacity={0.9}
             // onPress={() => onViewPress?.(item)}
             onPress={() => navigator.navigate('FreelancerWorkDetail', { workId: item._id })}
-            className="bg-surface rounded-2xl border border-border px-4 py-4 mb-2"
+            className="bg-surface rounded-2xl border border-border px-4 py-4 mb-1"
           >
 
 
@@ -62,7 +62,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
 
                   </View> */}
                   <Text className="text-caption mt-1 text-center text-textSecondary">
-                   {t('works.post_on')} {formatRelativeTime(item.createdAt, currentLanguage)}
+                    {t('works.post_on')} {formatRelativeTime(item.createdAt, currentLanguage)}
                   </Text>
                 </View>
                 <View >
@@ -98,7 +98,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
 
                 <Text >{t('postWork.work_type')} : </Text>
                 <Text className="text-caption text-text bg-surface p-2 rounded-full  ">
-                  {item.kindOfWork === "ONLINE" ? "Online" : "Offline"}
+                  {item.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
                 </Text>
               </View>
               {item.budgetType === 'OFFERING' ? (
@@ -169,12 +169,27 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
                 </View>
               }
 
+              {item.place && (
+
+                <View className="flex-row mt-3 items-center">
+                  <Text>{t('postWork.address_manually')}: </Text>
+
+                  <View className="flex-row gap-2 items-center">
+                    <Ionicons name="business-outline" size={18} color="#F59E0B" />
+
+                    <Text className="text-sm text-textSecondary">
+                      {item.place}
+                    </Text>
+                  </View>
+                </View>
+
+              )}
+
             </View>
 
           </TouchableOpacity>
         );
       })}
-
 
     </View>
   );

@@ -62,6 +62,7 @@ export const publiceWorkApi = {
     },
     updateWorkById: async (id: string, data: any, token: string): Promise<Job> => {
 
+        console.log("API called with id:", id, "and data:", JSON.stringify(data, null, 2));  
 
         try {
 
@@ -142,9 +143,8 @@ export const publiceWorkApi = {
     updateSubworkStatus: async (id: string, data: SubWorkDetail[], token: string): Promise<SubWorkDetail[]> => {
 
         try {
-            const res = await networkCheck.put(
-                `${API_BASE_URL}/worker/freelancer-work/${id}`,
-                data,
+            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-work/${id}`,
+                data, 
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -314,10 +314,11 @@ export const publiceWorkApi = {
         }
 
     },
-    freeLRequestUpdateW: async (id: string, data: any, token: string): Promise<Job[]> => {
+    freeLRequestUpdateW: async (id: string, data: any, token: string): Promise<any> => {
 
+        console.log("API called with id:", id, "and data:", data);
         try {
-            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, { updateData: data }, {
+            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, data , {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,

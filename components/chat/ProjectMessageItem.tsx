@@ -81,7 +81,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
   }
 
   const workData = projects.work as Job;
-  const creatorAddress = workData?.createdBy?.address;
+  const workAddress = workData.address;
 
   const IconComponent = getIcon(workData?.serviceType?.icon);
   return (
@@ -95,10 +95,10 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
               <Ionicons name="document-text" size={16} color="white" />
             </View>
             <Text className="text-white font-bold text-sm">
-              {t('tab.works') || 'Work'}
+              {t('chat.chatroom.task') || 'Task'}
             </Text>
           </View>
-          
+
         </View>
       </View>
       <Pressable
@@ -143,7 +143,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
 
             <Text >{t('postWork.work_type')} : </Text>
             <Text className="text-caption text-text bg-surface p-2 rounded-full  ">
-              {workData.kindOfWork === "ONLINE" ? "Online" : "Offline"}
+              {workData.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
             </Text>
           </View>
           {workData.budgetType === 'OFFERING' ? (
@@ -177,7 +177,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
           </View>
           <View className="flex-row mt-3 items-center">
             {/* <Text>{t('workDetail.deadline')} : </Text> */}
-            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
 
             <View className="flex-row gap-2 items-center">
               <Ionicons name="time-outline" size={18} color="#F59E0B" />
@@ -190,7 +190,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
             </View>
           </View>
 
-          {creatorAddress &&
+          {workAddress &&
 
 
             <View className="flex-row mt-3 items-center">
@@ -203,11 +203,29 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
                 <Text className="text-sm text-textSecondary" numberOfLines={1}>
                   {/* {formatDate(item.deadLine as string, currentLanguage)} */}
 
-                  {creatorAddress.village}, {creatorAddress.district}, {creatorAddress.province} ajs fdjs djs djs djs d sjd
+                  {workAddress.village}, {workAddress.district}, {workAddress.province}
                 </Text>
               </View>
             </View>
           }
+          {workData.place && (
+
+            <View className="flex-row mt-3 items-center">
+              <Text>{t('postWork.address_manually')}: </Text>
+
+              <View className="flex-row gap-2 items-center">
+                <Ionicons name="business-outline" size={18} color="#F59E0B" />
+
+                <Text className="text-sm text-textSecondary">
+                  {workData.place}
+                </Text>
+              </View>
+            </View>
+
+          )}
+
+          
+
         </View>
       </Pressable>
     </View>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert, TextInput as RNTextInput, ScrollView, Pressable, Modal, Linking, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
@@ -9,14 +9,12 @@ import { FreelancerStackParamList } from 'types/navigation';
 import ReviewModal from 'components/freelancer/ReviewModal';
 
 import { useAcceptAppendWork, useAcceptWork, useCompleteWork, usePublicWorkById, useSubmitWork, useUpdateAppendWorkById, useUpdateSubworkStatus, useUpdateWorkById } from 'hooks/usePublicWork';
-import LoadingScreen from 'screens/Loading/LoadingScreen';
 import { SubWorkDetail, SubTask, ExampleWork, } from 'types';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
-import { formatDisplayDateTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime } from 'utils/dateFormatter';
 import { useAuth } from 'hooks/useAuth';
 import InterestedFreelancer from './InterestedFreelancer';
 import { useTranslation } from 'react-i18next';
-import { profileImage } from 'assets';
 import BudgetInput from 'components/ui/BudgetInput';
 import WorkDetailSkenleton from 'skeletonScreens/WorkDetailSkenleton';
 
@@ -25,7 +23,9 @@ type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'Freel
 type Props = {
   route: AuthFreelancerProfileRouteProp;
 };
-
+type ApplicantLike = {
+  applicant?: { _id?: string } | string;
+};
 type SubWorkStatus = 'TODO' | 'DOING' | 'DONE' | 'DELAY' | 'FAILED';
 
 export default function FreelancerWorkDetail({ route }: Props) {
@@ -33,10 +33,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const params = route.params;
-  const language = getCurrentLanguage();
   const { user } = useAuth();
   const { t } = useTranslation();
-  const IMAGE_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
   // State hooks
   const [activeTab, setActiveTab] = useState<'overview' | 'subwork'>('overview');
@@ -95,6 +93,10 @@ export default function FreelancerWorkDetail({ route }: Props) {
   // Constants
   const statusOptions: SubWorkStatus[] = ['TODO', 'DOING', 'DONE', 'DELAY', 'FAILED'];
   const data = workData?.work;
+
+  console.log(`Work data for workId ${params.workId}:`, JSON.stringify(data, null, 2));
+
+  const isCompleted = data?.workStatus === 'COMPLETED';
 
   // ============= EFFECTS =============
   // Refetch work data when screen comes into focus
@@ -378,6 +380,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
     setSubWorkItems(updatedSubWorkItems);
     setNewSectionTitle('');
+    console.log(`Updated subWorkItems after ${params.workId} adding section:`, JSON.stringify(updatedSubWorkItems, null, 2));
 
     try {
       await updateStatusMutation.mutateAsync({
@@ -637,12 +640,12 @@ export default function FreelancerWorkDetail({ route }: Props) {
         workId: params.workId
       };
 
-   
+
       if (!workId) {
         console.log('Missing workId parameter');
         return;
       }
-   
+
       await acceptAppendWork.mutateAsync({
         id: workId,
         data: formData
@@ -657,6 +660,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
   // ==================== APPENDWORK SECTION EDITING ====================
 
   const handleAppendWorkAddSection = async (appendWorkId: string) => {
+    console.log('Adding section to append work:', appendWorkId);
     const edit = getAppendWorkEdit(appendWorkId, []);
     if (!edit.newSectionTitle.trim()) return;
 
@@ -671,6 +675,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
       newSectionTitle: ''
     });
 
+    console.log('Updated subWorkItems for append work:', updatedSubWorkItems);
 
     try {
       await updateAppendWorkById.mutateAsync({
@@ -860,7 +865,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
       Toast.show({
         type: ALERT_TYPE.SUCCESS,
         title: `${t('workDetail.success')}`,
-        textBody: `${t('workDetail.textBody_of_sucess')}`,
+        textBody: `${t('workDetail.textBody_of_success')}`,
       });
 
     } catch (error) {
@@ -869,7 +874,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
       Toast.show({
         type: ALERT_TYPE.DANGER,
         title: 'Error!',
-        textBody: 'Failed to submit work. Please try again.',
+        textBody: t('workDetail.fail_submit_work'),
       });
       setSubmitState('error');
       setTimeout(() => {
@@ -878,14 +883,28 @@ export default function FreelancerWorkDetail({ route }: Props) {
     }
   };
 
+  const getApplicantId = (applicant: ApplicantLike) => {
+    const value = applicant?.applicant;
+    if (!value) return undefined;
+    return typeof value === "string" ? value : value._id;
+  };
+
+  const hasApplied = useMemo(() => {
+    const userId = user?._id;
+    const list = workData?.applicant;
+    if (!userId || !Array.isArray(list)) return false;
+    return list.some((a: any) => getApplicantId(a) === userId);
+  }, [workData?.applicant, user?._id]);
+
+
   // ============= EARLY RETURN AFTER ALL HOOKS =============
   if (!data || isLoading || !user || !workData?.work) {
     return (
-      <ScreenWrapper safeEdges={[ 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
-        <WorkDetailSkenleton/>
+      <ScreenWrapper safeEdges={['bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
+        <WorkDetailSkenleton />
       </ScreenWrapper>
     )
- 
+
   }
 
   // ============= RENDER COMPONENTS =============
@@ -1177,7 +1196,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     <View className='flex-row'>
 
                       <Text className="text-caption text-text font-medium mb-0.5">
-                        {t('postWork.budget_type')}
+                        {t('postWork.budget')}
                       </Text>
                       {/* Budget type badge */}
                       <View className="bg-white/60 backdrop-blur px-3 py-1.5 rounded-full self-start">
@@ -1299,6 +1318,25 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 </View>
               </View>
             }
+            {data?.place && (
+              <View className="flex-row mt-3 items-center">
+                <View className="flex-row items-center">
+                  <View className="w-8 h-8 rounded-full bg-error/10 items-center justify-center mr-3">
+                    <Ionicons name="business-outline" size={16} color="#F59E0B" />
+                  </View>
+
+                  <View className="flex-1">
+                    <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text>
+
+                    <Text className="text-body text-text ">
+                      {data?.place}
+                    </Text>
+                  </View>
+
+
+                </View>
+              </View>
+            )}
           </View>
 
         </View>
@@ -1347,8 +1385,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
                   </Text>
                 )}
                 {appendWork.status === 'CONFIRMED' && user?._id === appendWork?.createdBy && (
-                  <Text className="text-primary text-body">
-                    {t('workDetail.accepted')} {t('workDetail.please_payment')}
+                  <Text className="text-success text-body">
+                    {t('workDetail.please_payment')}
                   </Text>
                 )}
                 {appendWork.status === 'PAYMENT_COMPLETED' && user?._id === appendWork?.createdBy && (
@@ -1388,9 +1426,26 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
             {/* Content */}
             <View className="p-4">
+
+              {/* Description Card */}
+              <View className="mb-4">
+                <View className="flex-row items-center gap-2 mb-2">
+                  <View className="w-1 h-5 bg-primary rounded-full" />
+                  <Text className="text-body text-text font-bold">
+                    {t('workDetail.description')}
+                  </Text>
+                </View>
+                <View className="bg-background rounded-2xl p-4 ">
+                  <Text className="text-body text-text leading-6">
+                    {appendWork?.description}
+                  </Text>
+                </View>
+              </View>
+
+
               {/* Budget Section */}
               <View className="bg-white rounded-2xl p-4 mb-2 border border-blue-100">
-                <Text className="text-caption text-textSecondary mb-2 uppercase tracking-wider font-bold">
+                <Text className="text-caption text-textSecondary mb-2 tracking-wider font-bold">
                   {t('postWork.budget_type')}
                 </Text>
                 <View className="flex-row items-center gap-2">
@@ -1407,7 +1462,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
               {/* Deadline Section */}
               <View className="bg-white rounded-2xl p-4 mb-3 border border-border ">
-                <Text className="text-body text-text mb-2 uppercase tracking-wider font-bold">
+                <Text className="text-body text-text mb-2  tracking-wider font-bold">
                   {t('postWork.to')}
                 </Text>
                 <View className="flex-row items-center gap-2">
@@ -1468,6 +1523,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                 onPress={() => toggleExpandAppendItem(expandKey)}
                                 onLongPress={() => handleAppendWorkSectionTitleLongPress(appendWork._id, idx, section.sectionTitle)}
                                 className="flex-1"
+                      disabled={isCompleted? true : false}
+
                               >
                                 <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
                               </TouchableOpacity>
@@ -1483,6 +1540,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                             size={20}
                             color="#6B7280"
                             onPress={() => toggleExpandAppendItem(expandKey)}
+                            disabled={isCompleted? true : false}
                           />
                         </View>
 
@@ -1508,6 +1566,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                     <TouchableOpacity
                                       onLongPress={() => canEdit && handleAppendWorkSubTaskTitleLongPress(appendWork._id, idx, subTaskIndex, subTask.title)}
                                       className="flex-1"
+                      disabled={isCompleted? true : false}
+
                                     >
                                       <Text className="text-body text-text">{subTask.title}</Text>
                                     </TouchableOpacity>
@@ -1518,11 +1578,12 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                     </Text>
                                   </View> */}
 
-                                  {canUpdateAppendStatus ? (
+                                  {canUpdateAppendStatus && !isCompleted ? (
                                     <TouchableOpacity
                                       className="px-3 py-1 rounded-full flex-row items-center"
                                       style={{ backgroundColor: statusColors.bg }}
                                       onPress={() => setShowStatusDropdown(showStatusDropdown === dropdownKey ? null : dropdownKey)}
+                                      disabled={isCompleted? true : false}
                                     >
                                       <Text className="text-caption font-medium mr-1" style={{ color: statusColors.text }}>
                                         {currentStatus}
@@ -1558,6 +1619,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                                 appendWork.subWorkDetails
                                               )
                                             }
+                                            disabled={isCompleted? true : false}
                                           >
                                             <View className="flex-row items-center">
                                               <View className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: optionColors.bg }} />
@@ -1572,18 +1634,19 @@ export default function FreelancerWorkDetail({ route }: Props) {
                               );
                             })}
 
-                            {canEdit && (
+                            {canEdit && !isCompleted && (
                               <View className="flex-row mt-2 items-center justify-between border border-border px-3 py-1 rounded-full bg-gray-50">
                                 <TextInput
-                                  placeholder="Add new subtask..."
+                                  placeholder={t('workDetail.add_sub_task')}
                                   value={edit.newSubTitles[String(idx)] || ''}
                                   onChangeText={(text) => updateAppendWorkEdit(appendWork._id, {
                                     newSubTitles: { ...edit.newSubTitles, [String(idx)]: text }
                                   })}
                                   className="flex-1 text-body text-text"
-
+                                  placeholderTextColor="#6B7280"
+                                  
                                 />
-                                <TouchableOpacity onPress={() => handleAppendWorkAddSubTask(appendWork._id, idx)}>
+                                <TouchableOpacity onPress={() => handleAppendWorkAddSubTask(appendWork._id, idx)} disabled={isCompleted? true : false}>
                                   <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
                                 </TouchableOpacity>
                               </View>
@@ -1605,10 +1668,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 return canAddSection ? (
                   <View className="mt-4 px-3 py-2 bg-gray-50 border border-border rounded-full flex-row items-center justify-between">
                     <TextInput
-                      placeholder="Add new section..."
+                      placeholder={t('workDetail.add_new_section')}
                       value={edit.newSectionTitle}
                       onChangeText={(text) => updateAppendWorkEdit(appendWork._id, { newSectionTitle: text })}
                       className="flex-1 text-body text-text"
+                      placeholderTextColor="#6B7280"
                     />
                     <TouchableOpacity onPress={() => handleAppendWorkAddSection(appendWork._id)}>
                       <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
@@ -1621,13 +1685,14 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 const isFreelancer = data?.assignedTo?._id === user?._id;
                 const canAddSection = isFreelancer && appendWork.status === 'PAYMENT_COMPLETED';
 
-                return canAddSection ? (
+                return canAddSection && !isCompleted ? (
                   <View className="mt-4 px-3 py-2 bg-gray-50 border border-border rounded-full flex-row items-center justify-between">
                     <TextInput
-                      placeholder="Add new section..."
+                      placeholder={t('workDetail.add_new_section')}
                       value={edit.newSectionTitle}
                       onChangeText={(text) => updateAppendWorkEdit(appendWork._id, { newSectionTitle: text })}
                       className="flex-1 text-body text-text"
+                      placeholderTextColor="#6B7280"
                     />
                     <TouchableOpacity onPress={() => handleAppendWorkAddSection(appendWork._id)}>
                       <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
@@ -1767,13 +1832,25 @@ export default function FreelancerWorkDetail({ route }: Props) {
                       onPress={() => toggleExpand(idx)}
                       onLongPress={() => handleSectionTitleLongPress(idx, section.sectionTitle)}
                       className="flex-1"
+                      disabled={isCompleted? true : false}
                     >
                       <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
                     </TouchableOpacity>
                   ) : (
-                    <View className="flex-1">
+                    <>
+                      {/* <View className="flex-1">
                       <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
-                    </View>
+                    </View> */}
+                      <TouchableOpacity
+                        onPress={() => toggleExpand(idx)}
+                        onLongPress={() => handleSectionTitleLongPress(idx, section.sectionTitle)}
+                        className="flex-1"
+                      disabled={isCompleted? true : false}
+
+                      >
+                        <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
+                      </TouchableOpacity>
+                    </>
                   )
                 )}
 
@@ -1810,6 +1887,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                 <TouchableOpacity
                                   onLongPress={() => handleSubTaskTitleLongPress(idx, subTaskIndex, subTask.title)}
                                   className="flex-row items-center flex-1"
+                      disabled={isCompleted? true : false}
+
                                 >
                                   <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
                                   <Text className="text-body text-text ml-2">{subTask.title}</Text>
@@ -1827,7 +1906,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                               </>
                             ) : (
                               <>
-                                <View className="flex-row items-center flex-1">
+                                {/* <View className="flex-row items-center flex-1">
                                   <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
                                   <Text className="text-body text-text ml-2">{subTask.title}</Text>
                                 </View>
@@ -1839,7 +1918,27 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                     {currentStatus}
                                   </Text>
                                   <Ionicons name="chevron-down" size={12} color={statusColors.text} />
-                                </View>
+                                </View> */}
+
+                                <TouchableOpacity
+                                  onLongPress={() => handleSubTaskTitleLongPress(idx, subTaskIndex, subTask.title)}
+                                  className="flex-row items-center flex-1"
+                      disabled={isCompleted? true : false}
+
+                                >
+                                  <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
+                                  <Text className="text-body text-text ml-2">{subTask.title}</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  className="px-3 py-1 rounded-full flex-row items-center"
+                                  style={{ backgroundColor: statusColors.bg }}
+                                  onPress={() => setShowStatusDropdown(showStatusDropdown === dropdownKey ? null : dropdownKey)}
+                                >
+                                  <Text className="text-caption font-medium mr-1" style={{ color: statusColors.text }}>
+                                    {currentStatus}
+                                  </Text>
+                                  <Ionicons name="chevron-down" size={12} color={statusColors.text} />
+                                </TouchableOpacity>
                               </>
                             )}
                           </View>
@@ -1873,10 +1972,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
                       <View className="flex-row items-center flex-1">
                         <Ionicons name="arrow-forward" size={16} color="#3B7280" />
                         <TextInput
-                          placeholder="Add sub task..."
+                          placeholder={t('workDetail.add_new_subtask')}
                           value={newSubTitles[String(idx)] || ''}
                           onChangeText={(text) => setNewSubTitles(prev => ({ ...prev, [String(idx)]: text }))}
                           className="ml-2 flex-1 text-body text-text"
+                          placeholderTextColor="#6B7280"
                         />
                       </View>
                       <TouchableOpacity onPress={() => addSubTask(idx)}>
@@ -1894,10 +1994,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
       {shouldShowAddButton() && (
         <View className="mt-4 px-3 py-2 bg-gray-50 border border-border rounded-full flex-row items-center justify-between">
           <TextInput
-            placeholder="Add new section..."
+            placeholder={t('workDetail.add_new_section')}
             value={newSectionTitle}
             onChangeText={setNewSectionTitle}
             className="flex-1 text-body text-text"
+            placeholderTextColor="#6B7280"
           />
           <TouchableOpacity onPress={addNewSection}>
             <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
@@ -1927,66 +2028,16 @@ export default function FreelancerWorkDetail({ route }: Props) {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         {/* Header */}
         <View className='bg-primary px-4 pt-12 pb-4 flex-row items-center justify-between' >
-          {data?.workStatus === "PUBLISHED" || data?.workStatus === "PRIVATE" ? (
-            <View className="flex-row items-center">
-              <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
-                <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
-              <View>
-                <Text className="text-white font-semibold text-subheading">{t('workDetail.work_detail')}</Text>
-                <Text className="text-white text-caption opacity-80">{t('workDetail.look_all_details')}</Text>
-              </View>
+          <View className="flex-row items-center">
+            <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
+              <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View>
+              <Text className="text-white font-semibold text-subheading">{t('workDetail.work_detail')}</Text>
+              <Text className="text-white text-caption opacity-80">{t('workDetail.look_all_details')}</Text>
             </View>
-          ) : (
-            <>
-              {data?.createdBy?._id === user?._id ? (
-                <View className="flex-row items-center">
-                  <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                  </TouchableOpacity>
-                  {/* <Image
-                    source={{ uri: data?.assignedTo?.userProfileImage ? IMAGE_BASE_URL + data?.assignedTo?.userProfileImage : profileImage }}
-                    className="w-10 h-10 rounded-full mr-3"
-                  /> */}
-                  <Image
-                    source={
-                      data?.assignedTo?.userProfileImage
-                        ? { uri: IMAGE_BASE_URL + data?.assignedTo?.userProfileImage }
-                        : profileImage  // local asset: pass directly, NOT inside { uri: ... }
-                    }
-                    className="w-10 h-10 rounded-full mr-3"
-                  />
-                  <View>
-                    <Text className="text-white font-semibold text-base">{data?.assignedTo?.firstName}</Text>
-                    <Text className="text-white text-caption opacity-80">{data?.assignedTo?.lastName}</Text>
-                  </View>
-                </View>
-              ) : (
-                <View className="flex-row items-center">
-                  <TouchableOpacity onPress={() => navigation.goBack()} className='mr-4'>
-                    <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
-                  </TouchableOpacity>
-                  {/* <Image
-                    source={{ uri: data?.createdBy?.userProfileImage ? IMAGE_BASE_URL + data?.createdBy?.userProfileImage : profileImage }}
-                    className="w-10 h-10 rounded-full mr-3"
-                  /> */}
+          </View>
 
-                  <Image
-                    source={
-                      data?.createdBy?.userProfileImage
-                        ? { uri: IMAGE_BASE_URL + data?.createdBy?.userProfileImage }
-                        : profileImage  // same fix here
-                    }
-                    className="w-10 h-10 rounded-full mr-3"
-                  />
-                  <View>
-                    <Text className="text-white font-semibold text-base">{data?.createdBy?.firstName}</Text>
-                    <Text className="text-white text-caption opacity-80">{data?.createdBy?.lastName}</Text>
-                  </View>
-                </View>
-              )}
-            </>
-          )}
 
           {data?.createdBy?._id === user?._id &&
             (data?.workStatus === "PUBLISHED" ||
@@ -2077,8 +2128,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
         {/* Bottom Action Bar */}
         <View className="flex-row justify-evenly items-center px-6 py-4 border-t border-border bg-white">
           {data?.createdBy?._id === user?._id && data?.workStatus !== 'PUBLISHED' && data?.assignedTo && (
-            <TouchableOpacity className="bg-blue-100 p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.assignedTo?._id })}>
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#3B82F6" />
+            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.assignedTo?._id })}>
+              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
             </TouchableOpacity>
           )}
 
@@ -2091,11 +2142,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </TouchableOpacity>
           )}
 
-          {data?.createdBy?._id !== user?._id && (
-            <TouchableOpacity className="bg-blue-100 p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id })}>
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#3B82F6" />
+          {/* {data?.createdBy?._id !== user?._id && (
+            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id })}>
+              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
             </TouchableOpacity>
-          )}
+          )} */}
 
           {/* Action Buttons Based on Work Status */}
           {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id === user?._id && (
@@ -2103,11 +2154,20 @@ export default function FreelancerWorkDetail({ route }: Props) {
               <Text className="text-surface text-base font-semibold items-center">{t('workDetail.interested_freelancers')}</Text>
             </TouchableOpacity>
           )}
-          {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id !== user?._id && (
+          {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id !== user?._id && !hasApplied && (
             <TouchableOpacity onPress={() => handleApplicantPress()} className="bg-primary py-4 px-16 rounded-full flex-row items-center justify-center">
-              <Text className="text-surface text-base font-semibold items-center">{t('workDetail.interested_freelancers')}</Text>
+              <Text className="text-surface text-base font-semibold items-center">{t('workDetail.make_an_apply')}</Text>
             </TouchableOpacity>
           )}
+          {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id !== user?._id && hasApplied && (
+            <View className="bg-blue-50 border border-border rounded-xl p-4 mb-2 mx-4">
+              <Text className="text-body text-text">
+                {t("workDetail.already_applied") || "You already applied for this job."}
+              </Text>
+            </View>
+          )}
+
+
 
           {data?.workStatus === 'PRIVATE' && data?.createdBy?._id === user?._id && (
             <TouchableOpacity className="bg-border py-4 px-16 rounded-full flex-row items-center justify-center">
@@ -2168,14 +2228,14 @@ export default function FreelancerWorkDetail({ route }: Props) {
               className={`py-3 px-16 rounded-full z-10 ${submitState === 'submitted' ? 'bg-green-600' : submitState === 'submitting' ? 'bg-primary/50' : 'bg-primary'}`}
               // onPress={handleSubmitWork}
               onPress={() =>
-                  openActionConfirm({
-                    title: t('workDetail.confirm'),
-                    message: t('workDetail.confirm_work.message_send'),
-                    actionText: t('chat.chatroom.send'),
-                    variant: 'primary',
-                    onConfirm: handleSubmitWork,
-                  })
-                }
+                openActionConfirm({
+                  title: t('workDetail.confirm'),
+                  message: t('workDetail.confirm_work.message_send'),
+                  actionText: t('chat.chatroom.send'),
+                  variant: 'primary',
+                  onConfirm: handleSubmitWork,
+                })
+              }
               disabled={submitState === 'submitted' || submitState === 'submitting'}
             >
               <Text className="text-surface text-base font-semibold">
@@ -2190,29 +2250,29 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 className="bg-primary py-3 px-20 rounded-full"
                 onPress={() =>
                   openActionConfirm({
-                    title: t('workDetail.confirm'),
+                    title: t('workDetail.confirm_submit'),
                     message: t('workDetail.confirm_work.message_comfirm'),
-                    actionText: t('workDetail.confirm'),
+                    actionText: t('kyc.buttons.submit'),
                     variant: 'primary',
                     onConfirm: handleConfirmWork,
                   })
                 }
               >
-                <Text className="text-surface text-base font-semibold">{t('workDetail.confirm')}</Text>
+                <Text className="text-surface text-base font-semibold">{t('workDetail.confirm_submit')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                className="border mt-3 border-error py-2 px-20 rounded-full"
+                className="border mt-3 border-error py-2  rounded-full"
                 onPress={() =>
                   openActionConfirm({
-                    title: t('profile.cancel'),
+                    title: t('workDetail.request_revision'),
                     message: t('workDetail.confirm_work.message_cancel'),
-                    actionText: t('workDetail.confirm'),
+                    actionText: t('workDetail.request'),
                     variant: 'warning',
                     onConfirm: handleCancel,
                   })
                 }
               >
-                <Text className="text-error text-base font-semibold">{t('profile.cancel')}</Text>
+                <Text className="text-error text-base self-center font-semibold">{t('workDetail.request_revision')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -2224,8 +2284,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
           )}
 
           {data?.workStatus === 'COMPLETED' && data?.createdBy?._id !== user?._id && (
-            <View className="bg-primary/50 py-4 px-16 rounded-full flex-row items-center justify-center">
-              <Ionicons name='checkmark-circle' size={24} color='white' />
+            <View className=" px-16">
+              <Ionicons name='checkmark-outline' size={32} color='#10B981' />
             </View>
           )}
 
@@ -2239,6 +2299,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
       {/* Modals */}
       <ReviewModal
+        // visible={showReviewModal}
         visible={showReviewModal}
         onClose={() => setShowReviewModal(false)}
         freelancer={data}
@@ -2254,18 +2315,18 @@ export default function FreelancerWorkDetail({ route }: Props) {
         <View className="flex-1 bg-black/40 justify-center items-center px-6">
           <View className="w-full bg-white rounded-2xl p-5 border border-border">
             <View className="flex-row items-center mb-3">
-              {confirmModalVariant === 'primary'? 
-              
-              <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
-                <Ionicons name="checkbox" size={20} color="#F59E0B" />
-              </View>
-             :
-             
-              <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
-              </View>
-             
-             }
+              {confirmModalVariant === 'primary' ?
+
+                <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
+                  <Ionicons name="checkbox" size={20} color="#F59E0B" />
+                </View>
+                :
+
+                <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-3">
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </View>
+
+              }
               <Text className="text-base font-semibold text-text flex-1">{deleteConfirmTitle}</Text>
             </View>
 
@@ -2278,11 +2339,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
                 onPress={closeDeleteConfirm}
                 className="px-4 py-2 rounded-full border border-border"
               >
-                <Text className="text-textSecondary font-medium">{t('common.cancel') || 'Cancel'}</Text>
+                <Text className="text-textSecondary font-medium">{t('kyc.buttons.back') || 'back'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={confirmDelete}
-                className={`px-5 py-2 rounded-full ${confirmModalVariant ==='primary' ? "bg-primary" : "bg-error" }`}
+                className={`px-5 py-2 rounded-full ${confirmModalVariant === 'primary' ? "bg-primary" : "bg-error"}`}
               >
                 <Text className="text-white font-semibold">
                   {confirmModalActionText || t('workDetail.delete')}
@@ -2300,6 +2361,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
         refetch={refetch}
         onUserPress={handleUserProfileNavigation}
         isFreelancer={isFreelancer}
+        user={user}
       />
 
       <View style={{ height: insets.bottom + 20 }} />

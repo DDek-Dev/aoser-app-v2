@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View, Animated, ScrollView as RNScrollView } from 'react-native';
+import { View, Animated, ScrollView as RNScrollView, Pressable } from 'react-native';
 import Header from 'components/profile/Header';
 import InfoStats from 'components/profile/InfoStats';
 import Reviews from 'components/profile/Reviews';
@@ -8,7 +8,6 @@ import VDOPromote from 'components/profile/VDOPromote';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
 
 
-import LoadingScreen from 'screens/Loading/LoadingScreen';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import Header_back from 'components/ui/Header_back';
@@ -17,6 +16,8 @@ import { FreelancerStackParamList } from 'types/navigation';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import FreelancerSkeleton from 'screens/freelancer/FreelancerSkeleton';
+import { Ionicons } from '@expo/vector-icons';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'AuthFreelancerProfile'>;
 
@@ -33,9 +34,9 @@ export default function AuthFreelancerProfile({ route }: Props) {
   const { user } = useAuth();
   const { t } = useTranslation()
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const opacity = useRef(new Animated.Value(0.3)).current;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<any>(null);
 
 
   const handleScroll = () => {
@@ -80,15 +81,24 @@ export default function AuthFreelancerProfile({ route }: Props) {
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']} >
 
+      <View className="flex-row items-center justify-between px-4 py-2 bg-surface">
 
-      <Header_back
-        text={t('profile.freelancer_profile')}
-        // textStyle='text-primary'
-        onPress={() => navigation.goBack()}
-        iconColor='#3B82F6'
-        backgroundColor='bg-surface w-full'
+        <Header_back
+          text={t('profile.freelancer_profile')}
+          // textStyle='text-primary'
+          onPress={() => navigation.goBack()}
+          iconColor='#3B82F6'
+          backgroundColor='bg-surface'
 
-      />
+        />
+
+        <View>
+          <Pressable onPress={() => navigation.navigate('AuthFreelancerSetting')} className="bg-border p-3 rounded-full">
+            <Ionicons name="settings-outline" size={24} color="#3B82F6" />
+          </Pressable>
+        </View>
+      </View>
+
       {/* <View style={{ height: insets.top }} className="bg-white" /> */}
 
       {/* ✅ Fixed Back Button with Animated Opacity */}

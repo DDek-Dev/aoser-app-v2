@@ -17,6 +17,14 @@ export const useChatRoom = (userId: string) => {
     queryKey: ['chatRoom', userId],
     queryFn: () => chatApi.getChatroom(tokens?.accessToken || '', userId),
     enabled: !!userId && !!tokens?.accessToken,
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+    retry: (failureCount: number, error: any) => {
+      const status = error?.response?.status;
+      if (status === 429) return false;
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 8000),
   });
 };
 export const useUnreadChats = () => {

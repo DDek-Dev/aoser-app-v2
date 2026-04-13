@@ -1,16 +1,16 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, Pressable } from 'react-native';
+import { View, Text, Image, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useAuth } from 'hooks/useAuth';
 import { useAdminID, useMyProfile } from 'hooks/useFreelancer';
-import { UserProfile } from 'types/profile';
+
 import { useTranslation } from 'react-i18next';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import LogoutModal from 'components/ui/LogoutModal';
 import Constants from 'expo-constants';
-import { ref } from 'yup';
+
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -81,10 +81,14 @@ const settings = useMemo(() => [
 
   // Component sections
   const ProfileHeader = () => (
-    <View className="bg-primary px-4 pt-12 pb-6 rounded-b-3xl">
+    <View className="bg-primary px-4 pt-12 pb-6 rounded-b-3xl flex-row justify-between items-center">
       <View className="flex-row justify-between items-center mt-4">
         <Text className="text-heading font-bold text-white">{t('profile.profile')}</Text>
       </View>
+      <Pressable onPress={()=> navigation.navigate('NewsScreen')} className="flex-row justify-between items-center mt-4 gap-2">
+        <Text className="text-body font-bold text-white">News</Text>
+        <Ionicons name="newspaper-outline" size={20} color="#FFFFFF" />
+      </Pressable>
     </View>
   );
 
@@ -135,7 +139,7 @@ const settings = useMemo(() => [
       // activeOpacity={0.8}
       >
         <Text className="text-primary font-semibold text-body text-center">
-          {t('loginScreen.signup')} ?
+          {t('loginScreen.signup')} 
         </Text>
       </Pressable>
     </View>

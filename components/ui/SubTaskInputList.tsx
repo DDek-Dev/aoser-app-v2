@@ -17,9 +17,10 @@ type SubWorkDetail = {
 type Props = {
   subWorkDetails: SubWorkDetail[];
   setSubWorkDetails: React.Dispatch<React.SetStateAction<SubWorkDetail[]>>;
+  isReq?: boolean;
 };
 
-const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
+const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails, isReq }: Props) => {
   const [newSectionTitle, setNewSectionTitle] = useState('');
   const [newSubTaskTitles, setNewSubTaskTitles] = useState<{ [key: number]: string }>({});
   const sectionInputRef = useRef<TextInput>(null);
@@ -85,22 +86,22 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
   };
 
   return (
-    <View className="bg-blue-50 p-4 rounded-2xl mb-6">
-      <Text className="text-body mb-1 text-text font-bold">{t('postWork.sub_work_details')}</Text>
-      <Text className="text-caption text-textSecondary mb-4">
-        {t('postWork.add_sections')}
+    <View className="bg-blue-50 p-4 rounded-2xl mb-2">
+      <Text className="text-body mb-1 text-text font-bold">{isReq ? t('postWork.sub_work_details_req') : t('postWork.sub_work_details')}</Text>
+      <Text className="text-caption text-textSecondary ">
+        {isReq ? t('postWork.add_sections_req'): t('postWork.add_sections')}
       </Text>
 
       <View>
         {subWorkDetails.map((section, sectionIndex) => (
-          <View key={sectionIndex} className="mb-6 p-2 bg-white rounded-2xl border border-border">
+          <View key={sectionIndex} className="mb-2 p-2 bg-white rounded-2xl border border-border">
             {/* Section Header */}
             <View className="flex-row items-center mb-3">
               <TextInput
 
                 value={section.sectionTitle}
                 onChangeText={(text) => handleUpdateSectionTitle(sectionIndex, text)}
-                placeholder={t('workDetail.add_new_section')}
+                placeholder={ isReq ? t('workDetail.add_new_section_req') : t('workDetail.add_new_section')}
 
                 placeholderTextColor="#6B7280"
                 className="flex-1 text-body font-semibold border-b text-text border-border"
@@ -182,7 +183,7 @@ const SubWorkDetailsInput = ({ subWorkDetails, setSubWorkDetails }: Props) => {
         {/* Add New Section */}
         <View className="flex-row items-center mt-4">
           <TextInput
-            placeholder={t('workDetail.add_new_section')}
+            placeholder={ isReq ? t('workDetail.add_new_section_req') : t('workDetail.add_new_section') }
             value={newSectionTitle}
             onChangeText={setNewSectionTitle}
             className="flex-1 border border-border bg-white text-text px-3 rounded-2xl"

@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import ProfileOn_Interested from 'components/profile/ProfileOn_Interested';
-import {  RouteProp, useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation } from '@react-navigation/native';
 import ProfileInCommand from './ProfileInCommand';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -25,6 +25,7 @@ import { Job, Favorite } from 'types';
 import { formatDate, getCurrentLanguage } from 'utils/dateFormatter';
 import { useCreateFavorite, useDeleteFavorite, useMyProfile } from 'hooks/useFreelancer';
 import { usePublicWorkById } from 'hooks/usePublicWork';
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -39,28 +40,28 @@ interface JobDetailModalProps {
 }
 
 
-const ViewFormNotification = ({ workId , visible, onClose }: JobDetailModalProps) => {
-   console.log("job id: ", workId);
-    const { data: dataWork, refetch } = usePublicWorkById(workId);
+const ViewFormNotification = ({ workId, visible, onClose }: JobDetailModalProps) => {
+  console.log("job id: ", workId);
+  const { data: dataWork, refetch } = usePublicWorkById(workId);
 
-    const job = dataWork?.work;
-    console.log("job: ", job);
-    
+  const job = dataWork?.work;
+  console.log("job: ", job);
+
   const navigator = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const [currentIndex, setCurrentIndex] = useState(-1);
-  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const animationTimeoutRef = useRef<any>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [isFavorite, setIsFavorite] = useState<boolean>();
 
   const [isProcessing, setIsProcessing] = useState(false);
   // Add debounce ref to prevent rapid clicks
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<any>(null);
   const isFirstLoad = useRef(true);
   const [totalLikes, setTotalLikes] = useState(job?.totalLikes || 0);
 
-    
+
   const { data, isLoading, isError, error } = useMyProfile();
 
   const [favoriteId, setFavoriteId] = useState<string | null>(
@@ -167,7 +168,7 @@ const ViewFormNotification = ({ workId , visible, onClose }: JobDetailModalProps
         favoriteId !== (job?.myLike?.[0]?._id || null) ||
         totalLikes !== (job?.totalLikes || 0)) {
 
-          setIsFavorite(job?.isLiked || false);
+        setIsFavorite(job?.isLiked || false);
         setFavoriteId(job?.myLike?.[0]?._id || null);
         setTotalLikes(job?.totalLikes || 0);
         isFirstLoad.current = false;
@@ -289,6 +290,7 @@ const ViewFormNotification = ({ workId , visible, onClose }: JobDetailModalProps
   const subwork = job?.subWorkDetails || [];
   const currentLanguage = getCurrentLanguage();
 
+  const { t } = useTranslation();
 
 
 
@@ -368,7 +370,7 @@ const ViewFormNotification = ({ workId , visible, onClose }: JobDetailModalProps
         <View className="flex-row items-center mb-4 gap-2">
           <MaterialIcons name="donut-small" size={24} color="gray" />
           <View className="bg-blue-50 px-3 py-1 rounded-full">
-            <Text className="text-primary text-body">{jobType === "ONLINE" ? "Online" : "Offline"}</Text>
+            <Text className="text-primary text-body">{jobType === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}</Text>
           </View>
         </View>
 
@@ -461,10 +463,10 @@ const ViewFormNotification = ({ workId , visible, onClose }: JobDetailModalProps
               className="bg-primary p-6 rounded-full shadow-md -rotate-45"
               style={styles.blueShadow}
             >
-              <Ionicons name="send" size={24} color="white"/>
+              <Ionicons name="send" size={24} color="white" />
             </TouchableOpacity>
-          )} 
-          
+          )}
+
           {data?.businessType !== "FREELANCER" && data?._id !== job.createdBy._id && (
             <View className="bg-surface p-4 rounded-2xl items-center shadow-lg" style={styles.blueShadow}>
               <View className="bg-blue-100 p-3 rounded-full mb-3">
@@ -482,7 +484,7 @@ const ViewFormNotification = ({ workId , visible, onClose }: JobDetailModalProps
                   navigator.navigate('FreelancerRoleGate');
                 }}
                 className="bg-primary px-6 py-3 rounded-xl flex-row items-center space-x-2"
-                
+
               >
                 <Text className="text-surface font-bold text-caption">Start Freelancer Role</Text>
                 <Ionicons name="arrow-forward" size={18} color="white" />

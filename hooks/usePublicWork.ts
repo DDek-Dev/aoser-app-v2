@@ -1,6 +1,6 @@
 
 
-import { BookingFormData, Job, SubWorkDetail, WorkById } from "types";
+import { BookingFormData, Job, SubWorkDetail, WorkById, WalletData } from "types";
 // hooks/usePublicWork.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { publiceWorkApi } from "api/publicWork";
@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 // Query keys
 export const publicWorkKeys = {
   all: ['publicWork'] as const,
-  mywork:['mywork'] as const,
+  mywork: ['mywork'] as const,
   workinChat: ['workinChat'] as const,
   lists: () => [...publicWorkKeys.all, 'list'] as const,
   list: (filters: any) => [...publicWorkKeys.lists(), { filters }] as const,
@@ -37,7 +37,7 @@ export const usePublicWork = (options?: {
   });
 };
 
-export const usegetAllMyWork= () => {
+export const usegetAllMyWork = () => {
   const { tokens } = useAuth();
 
   return useQuery({
@@ -48,15 +48,15 @@ export const usegetAllMyWork= () => {
 
 // Hook to get a specific public work by ID
 export const usePublicWorkById = (id: string) => {
- return useQuery<WorkById>({
-  queryKey: publicWorkKeys.detail(id as any),
+  return useQuery<WorkById>({
+    queryKey: publicWorkKeys.detail(id as any),
     queryFn: () => publiceWorkApi.getPublicWorkById(id),
     enabled: !!id,
-    
+
     // ✅ CACHE FOREVER - Never refetch automatically
     staleTime: Infinity, // Data never becomes stale
     gcTime: Infinity, // Keep in cache forever (never garbage collect)
-    
+
     // ✅ PREVENT ALL AUTO-REFETCHING
     refetchOnMount: false, // Don't refetch when component mounts
     refetchOnWindowFocus: false, // Don't refetch when app comes to foreground
@@ -66,7 +66,7 @@ export const usePublicWorkById = (id: string) => {
 };
 
 export const useUpdateWorkById = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const { tokens } = useAuth();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => { // Change Job[] to any
@@ -86,14 +86,14 @@ export const useUpdateWorkById = () => {
       console.log('Update error:', error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
-       title: t('editWork.toast.error'),
+        title: t('editWork.toast.error'),
         textBody: t('editWork.toast.text_error'),
       })
     }
   });
 }
 export const useUpdateAppendWorkById = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const { tokens } = useAuth();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => { // Change Job[] to any
@@ -114,14 +114,14 @@ export const useUpdateAppendWorkById = () => {
       console.log('Update error:', error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
-       title: t('editWork.toast.error'),
+        title: t('editWork.toast.error'),
         textBody: t('editWork.toast.text_error'),
       })
     }
   });
 }
 export const useAppendOwnerWork = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const { tokens } = useAuth();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => { // Change Job[] to any
@@ -141,14 +141,14 @@ export const useAppendOwnerWork = () => {
       console.log('Update error:', error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
-       title: t('editWork.toast.error'),
+        title: t('editWork.toast.error'),
         textBody: t('editWork.toast.text_error'),
       })
     }
   });
 }
 export const useAcceptAppendWork = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const { tokens } = useAuth();
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => { // Change Job[] to any
@@ -161,14 +161,14 @@ export const useAcceptAppendWork = () => {
       Toast.show({
         type: ALERT_TYPE.SUCCESS,
         title: t('editWork.toast.success'),
-        textBody: t('editWork.toast.text_success'),
+        // textBody: t('editWork.toast.text_success'),
       })
     },
     onError: (error) => {
       console.log('Update error:', error);
       Toast.show({
         type: ALERT_TYPE.DANGER,
-       title: t('editWork.toast.error'),
+        title: t('editWork.toast.error'),
         textBody: t('editWork.toast.text_error'),
       })
     }
@@ -177,7 +177,7 @@ export const useAcceptAppendWork = () => {
 // Hooks - Use useMutation instead of useQuery
 export const useUpdateSubworkStatus = () => {
   const { tokens } = useAuth();
-  
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: SubWorkDetail[] }) => {
       return publiceWorkApi.updateSubworkStatus(id, data, tokens?.accessToken || '');
@@ -187,19 +187,19 @@ export const useUpdateSubworkStatus = () => {
 export const useAcceptWork = () => {
   const { tokens } = useAuth();
   return useMutation({
-    mutationFn: ({ id ,data}: { id: string; data: any}) => {
-      return publiceWorkApi.acceptWork(id, data , tokens?.accessToken || '');
+    mutationFn: ({ id, data }: { id: string; data: any }) => {
+      return publiceWorkApi.acceptWork(id, data, tokens?.accessToken || '');
     }
- 
+
   });
 };
 export const useCompleteWork = () => {
   const { tokens } = useAuth();
   return useMutation({
-    mutationFn: ({ id ,data}: { id: string; data: any}) => {
-      return publiceWorkApi.completetWork(id, data , tokens?.accessToken || '');
+    mutationFn: ({ id, data }: { id: string; data: any }) => {
+      return publiceWorkApi.completetWork(id, data, tokens?.accessToken || '');
     }
- 
+
   });
 };
 
@@ -236,8 +236,8 @@ export const useFreelancerApplyWork = () => {
   const queryClient = useQueryClient();
   const { tokens } = useAuth();
   return useMutation({
-    mutationFn: ({workId}: {workId: string}) => {
-      return publiceWorkApi.freelancerApplyWork(workId, tokens?.accessToken || '' );
+    mutationFn: ({ workId }: { workId: string }) => {
+      return publiceWorkApi.freelancerApplyWork(workId, tokens?.accessToken || '');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: publicWorkKeys.lists() });
@@ -256,12 +256,12 @@ export const useGetAllAppliedWork = () => {
     enabled: !!tokens?.accessToken
   });
 }
-export const useGetAllsingleCustomerWork = (workStatus: string , customerId: string) => {
+export const useGetAllsingleCustomerWork = (workStatus: string, customerId: string) => {
   const { tokens } = useAuth();
 
   return useQuery({
-    queryKey: ['singleCustomerWork' , customerId , workStatus],
-    queryFn: () => publiceWorkApi.getAllsingleCustomerWork(tokens?.accessToken || '' ,workStatus , customerId ),
+    queryKey: ['singleCustomerWork', customerId, workStatus],
+    queryFn: () => publiceWorkApi.getAllsingleCustomerWork(tokens?.accessToken || '', workStatus, customerId),
     enabled: !!tokens?.accessToken && !!customerId,
   });
 }
@@ -269,8 +269,8 @@ export const useGetAllsingleCustomerWork = (workStatus: string , customerId: str
 export const useFreeLRequestUpdateW = () => {
   const { tokens } = useAuth();
   return useMutation({
-    mutationFn: ({ id ,data}: { id: string; data: any}) => {
-      return publiceWorkApi.freeLRequestUpdateW(id, data , tokens?.accessToken || '');
+    mutationFn: ({ id, data }: { id: string; data: any }) => {
+      return publiceWorkApi.freeLRequestUpdateW(id, data, tokens?.accessToken || '');
     },
     onError: (error) => {
       console.log("error in APIL = ", error);
@@ -302,7 +302,7 @@ export const useDeletePublicWork = () => {
 
 
 
-export const useGetHiredFreelancers = ()=>{
+export const useGetHiredFreelancers = () => {
   const { tokens } = useAuth();
   return useQuery({
     // use a dedicated query key to avoid colliding with public work queries
@@ -311,5 +311,16 @@ export const useGetHiredFreelancers = ()=>{
     enabled: !!tokens?.accessToken,
   });
 }
+
+export const useGetWallet = (userId?: string) => {
+  const { tokens, user } = useAuth();
+  const resolvedUserId = userId ?? user?._id;
+
+  return useQuery<WalletData>({
+    queryKey: ["wallet", resolvedUserId],
+    queryFn: () => workerApi.getWallet(resolvedUserId!, tokens?.accessToken!),
+    enabled: !!tokens?.accessToken && !!resolvedUserId,
+  });
+};
 
 

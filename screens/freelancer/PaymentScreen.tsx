@@ -4,7 +4,7 @@
 // PaymentScreen.tsx
 import { Ionicons } from '@expo/vector-icons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-import { useGenerateOnepayQRcode} from 'hooks/usePayment';
+import { useGenerateOnepayQRcode } from 'hooks/usePayment';
 import { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -26,7 +26,7 @@ import QRCode from 'react-native-qrcode-svg';
 import SocketService from 'service/soctketService';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useAuth } from 'hooks/useAuth';
-import {  aoserlogo_no_bg_blue, lao_qr } from 'assets';
+import { aoserlogo_no_bg_blue, lao_qr } from 'assets';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { useTranslation } from 'react-i18next';
@@ -60,7 +60,7 @@ const PaymentScreen = ({ route }: any) => {
   const { mutateAsync, isSuccess, data } = useGenerateOnepayQRcode();
   const { tokens, user } = useAuth();
   const qrRef = useRef<ViewShot>(null);
-const { t } = useTranslation();
+  const { t } = useTranslation();
   const language = "en"
   let desc = "";
   if (language == "en") {
@@ -80,7 +80,7 @@ const { t } = useTranslation();
         terminalid: terminalid,
         paymentFor: workId,
         desc: desc,
-     
+
       } as Payment;
 
       console.log('Generating QR with data:', formData);
@@ -207,7 +207,7 @@ const { t } = useTranslation();
     };
   }, [invoiceId]);
 
-  console.log("Work id in Payment Screen:", workId);
+  console.log("Work id in Payment Screen:", invoiceType);
 
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']}>
@@ -217,16 +217,16 @@ const { t } = useTranslation();
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         {/* QR Code Section with Enhanced Design */}
         <View className="items-center">
-          
+
 
           {/* QR Code Card with Gradient Background */}
           <ViewShot
             ref={qrRef}
             options={{ format: 'png', quality: 1.0 }}
-         
+
           >
 
- 
+
             <View className="p-8">
 
               <View className='bg-white/95 rounded-3xl px-8 pb-4 shadow-lg border-2 border-blue-100 '>
@@ -241,16 +241,16 @@ const { t } = useTranslation();
                   />
 
                   {invoiceType === "WORK" && (
-                    
-                  <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForWork')}</Text>
+
+                    <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForWork')}</Text>
                   )}
                   {invoiceType === "APPEND_WORK" && (
 
-                  <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForAppendWork')}</Text>
+                    <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForAppendWork')}</Text>
                   )}
-                  {invoiceType === "USER_RECOMEND__STAR" && (
-                    
-                  <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForStar')}</Text>
+                  {invoiceType === "USER_RECOMMEND_STAR" && (
+
+                    <Text className="text-lg font-bold text-gray-800">{t('payment.paymentForStar')}</Text>
                   )}
 
                 </View>
@@ -290,19 +290,19 @@ const { t } = useTranslation();
                 </View>
 
                 {/* Invoice ID */}
-                  <View className="mt-4 pt-4 border-t border-gray-200">
-                {invoiceId && (
+                <View className="mt-4 pt-4 border-t border-gray-200">
+                  {invoiceId && (
                     <Text className="text-xs mb-2 text-gray-500 text-center">
                       Invoice ID: {invoiceId}
                     </Text>
-                )}
-                {workCode && (
+                  )}
+                  {workCode && (
                     <Text className="text-xs mb-2 text-gray-500 text-center">
                       Work Code: {workCode}
                     </Text>
-                )}
-              
-                  </View>
+                  )}
+
+                </View>
               </View>
             </View>
 
@@ -349,21 +349,35 @@ const { t } = useTranslation();
             <View className="bg-blue-100 rounded-full p-2">
               <Ionicons name="information-circle" size={24} color="#3B82F6" />
             </View>
-            <View className="flex-1 ml-4">
-              <Text className="text-base text-blue-900 font-semibold mb-2">
-                {t('payment.unlockPotential')}
-              </Text>
-              <Text className="text-sm text-gray-700 leading-5">
-                 {t('payment.upgradeFee')}
-              </Text>
-            </View>
+            {invoiceType === "APPEND_WORK" || invoiceType === "WORK" && (
+              <View className="flex-1 ml-4">
+                <Text className="text-base text-blue-900 font-semibold mb-2">
+                  {t('payment.unlockPotential')}
+                </Text>
+                <Text className="text-sm text-gray-700 leading-5">
+                  {t('payment.upgradeFee')}
+                </Text>
+              </View>
+            )}
+            {invoiceType === "USER_RECOMMEND_STAR" && (
+
+              //USER_RECOMMEND_STAR
+              <View className="flex-1 ml-4">
+                <Text className="text-base text-blue-900 font-semibold mb-2">
+                  {t('payment.unlockPotential_star')}
+                </Text>
+                <Text className="text-sm text-gray-700 leading-5">
+                  {t('payment.upgradeFee_star')}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
         {/* Payment Instructions */}
         <View className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-200">
           <Text className="text-lg font-semibold text-gray-800 mb-4">
-             {t('payment.howToPay')}
+            {t('payment.howToPay')}
           </Text>
 
           <View className="space-y-3">
@@ -372,7 +386,7 @@ const { t } = useTranslation();
                 <Text className="text-blue-600 font-bold">1</Text>
               </View>
               <Text className="flex-1 text-gray-700 mt-1">
-                  {t('payment.step1')}
+                {t('payment.step1')}
               </Text>
             </View>
 
@@ -381,7 +395,7 @@ const { t } = useTranslation();
                 <Text className="text-blue-600 font-bold">2</Text>
               </View>
               <Text className="flex-1 text-gray-700 mt-1">
-                 {t('payment.step2')}
+                {t('payment.step2')}
               </Text>
             </View>
 
@@ -390,7 +404,7 @@ const { t } = useTranslation();
                 <Text className="text-blue-600 font-bold">3</Text>
               </View>
               <Text className="flex-1 text-gray-700 mt-1">
-                 {t('payment.step3')}
+                {t('payment.step3')}
               </Text>
             </View>
 
@@ -399,7 +413,7 @@ const { t } = useTranslation();
                 <Text className="text-blue-600 font-bold">4</Text>
               </View>
               <Text className="flex-1 text-gray-700 mt-1">
-                 {t('payment.step4')}
+                {t('payment.step4')}
               </Text>
             </View>
           </View>
@@ -420,7 +434,7 @@ const { t } = useTranslation();
         {/* Success Popup */}
         <PaymentSuccessPopup
           visible={showSuccessPopup}
-        
+
           onClose={() => handlePopupClose()}
           paymentData={paymentResult}
         />

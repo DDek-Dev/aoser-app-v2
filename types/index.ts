@@ -59,6 +59,7 @@ export interface Job {
   applicant: UserProfile[];
   workApplicants: WorkApplicant[];
   address: Address;
+  place: string;
   appendWorks: AppendWork[];
 
 }
@@ -66,7 +67,8 @@ export interface Job {
 export type WorkById = {
   work: Job;
   applicant: Applicant[];
-  totalApplicant: number
+  totalApplicant: number,
+
 }
 
 export type Applicant = {
@@ -76,6 +78,16 @@ export type Applicant = {
   applicationStatus: 'PENDING' | 'APPROVED' | 'REJECTED'; // Add other possible statuses
   createdAt: string; // or Date if you want to use Date objects
   updatedAt: string; // or Date
+  offeringUpdate: {
+    _id: string;
+    reason: string;
+    requestStatus: "PENDING" | "CONFIRM" | "REJECTED";
+    updateData: {
+      deadLine: string;
+      budget: number;
+      currency: "LAK" | "USD";
+    }
+  }
 }
 
 export type TabType = 'mywork' | 'customerwork';
@@ -160,12 +172,13 @@ export type BookingFormData = {
   serviceType: string;
   assignedTo?: string;
   jobs?: string[];
-  address?:{
+  address?: {
     country: string;
     province: string;
     district: string;
     village: string;
-  }
+  };
+  place: string;
 };
 export type CategoryOption = {
   name: string;
@@ -174,9 +187,10 @@ export type CategoryOption = {
 };
 
 
-export type AppendWork ={
-  _id:string;
+export type AppendWork = {
+  _id: string;
   createdBy: string;
+  description: string;
   workId: string;
   subWorkDetails: SubWorkDetail[];
   currency: 'LAK' | 'USD';
@@ -243,9 +257,9 @@ export type IOfferingWorkUpdate = {
 }
 
 export interface NewOfferData {
-    conversationId: string,
-    offeringWorkId: string
-    requestStatus: "PENDING" | "CONFIRM" | "REJECTED"
+  conversationId: string,
+  offeringWorkId: string
+  requestStatus: "PENDING" | "CONFIRM" | "REJECTED"
 }
 export interface OptimisticMessage extends Omit<Message, '_id' | 'createdAt'> {
   _id?: string;
@@ -496,6 +510,25 @@ export interface JobpopularData {
 
 export type NotificationType = "Like" | "Work" | "Review" | "Message" | "PaymentHistory" | "PostComment" | "UserProfile" | "News";
 
+export type NotifyAbout =
+  | "ADMING_PAYMENT_CLAIM_TO_WORKER"
+  | "ADMIN_UPDATE_WORK_DATA"
+  | "FREELANCER_SUBMIT_WORK"
+  | "FREELANCER_EXCEPT_ASIGNED_WORK"
+  | "FREELANCER_EXCEPTION_APPEND_WORK"
+  | "FREELANCER_APPLY_WORK"
+  | "OWNER_APPEND_WORK"
+  | "CONFIRMATION_WORK"
+  | "UPDATE_WORK_DATA"
+  | "CREATE_WORK_AND_ASSIGNED_WORKER"
+  | "CREATE_PUBLIC_WORK"
+  | "CREATE_REVIEW"
+  | "AOSER_ADMIN_UPDATE_NEWS"
+  | "AOSER_ADMIN_CREATE_NEWS"
+  | "UPDATE_FREELANCER_DATA"
+  | "UPDATE_FREELANCER_KYC"
+  | "CREATE_FREELANCER_KYC";
+
 export interface Notifications {
   _id: string;
   recipient: UserProfile;
@@ -507,14 +540,62 @@ export interface Notifications {
   isRead: boolean;
   relatedPost?: string;
   relatedChat?: string;
-  relatedFreelancer?: string; 
+  relatedFreelancer?: string;
   createdAt: string;
   updatedAt: string;
-  notifyAbout: ["ADMING_PAYMENT_CLAIM_TO_WORKER", "ADMIN_UPDATE_WORK_DATA", "FREELANCER_SUBMIT_WORK", "FREELANCER_EXCEPT_ASIGNED_WORK", "FREELANCER_EXCEPTION_APPEND_WORK", "FREELANCER_APPLY_WORK","OWNER_APPEND_WORK", "CONFIRMATION_WORK","UPDATE_WORK_DATA","CREATE_WORK_AND_ASSIGNED_WORKER","CREATE_PUBLIC_WORK","CREATE_REVIEW","AOSER_ADMIN_UPDATE_NEWS","AOSER_ADMIN_CREATE_NEWS","UPDATE_FREELANCER_DATA","UPDATE_FREELANCER_KYC","CREATE_FREELANCER_KYC"]
+  notifyAbout: NotifyAbout;
 }
 
 
 export type UreadNotification = {
   isViewed: boolean;
   notificationUnreadCount: number;
+}
+
+export type WalletData = {
+  earnings: {
+    LAK: {
+      currency: "LAK";
+      totalWorkCost: number;
+      totalAppendWorkCost: number;
+      totalAwaitingClaimWorkCost: number;
+      totalAwaitingClaimAppendWorkCost: number;
+      totalClaimCompleteWorkCost: number;
+      totalClaimCompleteAppendWorkCost: number;
+      totalRevenue: number;
+      totalAwaitingClaimCost: number;
+      totalClaimCompleteCost: number;
+      totalProcessingWorkCost: number;
+    };
+    USD: {
+      currency: "USD";
+      totalWorkCost: number;
+      totalAppendWorkCost: number;
+      totalAwaitingClaimWorkCost: number;
+      totalAwaitingClaimAppendWorkCost: number;
+      totalClaimCompleteWorkCost: number;
+      totalClaimCompleteAppendWorkCost: number;
+      totalRevenue: number;
+      totalAwaitingClaimCost: number;
+      totalClaimCompleteCost: number;
+      totalProcessingWorkCost: number;
+    }
+  };
+  totalWorks: number;
+  totalCompletedWork: number;
+  totalProcessingWork: number;
+  totalAwaitingClaimWork: number;
+  totalClaimCompleteWork: number
+}
+
+export type NewsType = {
+  _id: string;
+  title: string;
+  detail: string;
+  image: string;
+  isPublished: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+
 }

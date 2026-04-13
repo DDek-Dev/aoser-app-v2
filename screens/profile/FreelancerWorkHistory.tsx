@@ -210,7 +210,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
 
                         <Text >{t('postWork.work_type')} : </Text>
                         <Text className="text-caption text-text bg-surface p-2 rounded-full  ">
-                            {item.kindOfWork === "ONLINE" ? "Online" : "Offline"}
+                            {item.kindOfWork === 'ONLINE' ? t('editWork.workType.online') : t('editWork.workType.offline')}
                         </Text>
                     </View>
                     {item.budgetType === 'OFFERING' ? (

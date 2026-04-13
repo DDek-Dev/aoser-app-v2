@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -47,7 +47,7 @@ export default function EditWorkById({ route }: Props) {
     const [category, setCategory] = useState('');
     const [nameOfWork, setNameOfWork] = useState('');
     const [workDetail, setWorkDetail] = useState('');
-    const [budget, setBudget] = useState<number | 0>(0);
+    const [budget, setBudget] = useState<number | null>(0);
     const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
     const fromInputRef = useRef<TextInput>(null);
     const toInputRef = useRef<TextInput>(null);
@@ -69,6 +69,15 @@ export default function EditWorkById({ route }: Props) {
     const [toDateString, setToDateString] = useState('');
     const [toTimeString, setToTimeString] = useState('');
 
+    const initialWorkRef = useRef<{
+        budget?: number;
+        startDate?: string;
+        deadLine?: string;
+        subWorkDetails?: SubWorkDetail[];
+        jobs?: string[];
+        address?: any;
+    }>({});
+
 
 
     // (moved above) date/time strings
@@ -76,15 +85,19 @@ export default function EditWorkById({ route }: Props) {
     const [errors, setErrors] = useState({
         nameOfWork: false,
         workDetail: false,
-        budget: false,
+        // budget: false,
         category: false,
-        dateInvalid: false,
+        // dateInvalid: false,
         // subcategories: false
+        toDate: false,
     });
+    const [toDateErrorMessage, setToDateErrorMessage] = useState('');
+
     const { data: addressData } = useSelectAddress();
     const [selectedProvince, setSelectedProvince] = useState<any>(undefined);
     const [selectedDistrict, setSelectedDistrict] = useState<any>(undefined);
     const [village, setVillage] = useState('');
+    const [place, setPlace] = useState('');
 
     const currentLanguage: Language = getCurrentLanguage();
     const params = route?.params;
@@ -121,6 +134,19 @@ export default function EditWorkById({ route }: Props) {
     // Populate form with current data
     useEffect(() => {
         if (data) {
+            initialWorkRef.current = {
+                budget: typeof data.budget === 'number' ? data.budget : undefined,
+                startDate: data.startDate || undefined,
+                deadLine: data.deadLine || undefined,
+                subWorkDetails: Array.isArray(data.subWorkDetails) ? data.subWorkDetails : undefined,
+                jobs: Array.isArray(data.jobs)
+                    ? data.jobs
+                        .map((job: any) => (typeof job === 'string' ? job : job?._id))
+                        .filter(Boolean)
+                    : undefined,
+                address: data.address || undefined,
+            };
+
             setNameOfWork(data.workTitle);
             setWorkDetail(data.description);
             setBudget(data.budget);
@@ -282,12 +308,26 @@ export default function EditWorkById({ route }: Props) {
 
     const updateFromDate = (dateStr: string, timeStr: string) => {
         const combined = combineDateAndTime(dateStr, timeStr);
-        setFromDate(combined);
+        if (combined) {
+            setFromDate(combined);
+            return;
+        }
+
+        if (dateStr.trim() === '' && timeStr.trim() === '') {
+            setFromDate(null);
+        }
     };
 
     const updateToDate = (dateStr: string, timeStr: string) => {
         const combined = combineDateAndTime(dateStr, timeStr);
-        setToDate(combined);
+        if (combined) {
+            setToDate(combined);
+            return;
+        }
+
+        if (dateStr.trim() === '' && timeStr.trim() === '') {
+            setToDate(null);
+        }
     };
 
     const formatTimeForDisplay = (date: Date | null): string => {
@@ -296,13 +336,24 @@ export default function EditWorkById({ route }: Props) {
         const minutes = date.getMinutes().toString().padStart(2, '0');
         return `${hours}:${minutes}`;
     };
-    const handleSubmit = useCallback(async () => {
+    const handleSubmit = async () => {
         const currentState = formStateRef.current;
-        const dateInvalid = hasDeadline && (
-            !fromDate ||
-            !toDate ||
-            (fromDate && toDate && toDate < fromDate)
-        );
+        const hasToDateInput =
+            toDateString.trim() !== '' ||
+            toTimeString.trim() !== '' ||
+            Boolean(toDate);
+        let dateInvalid = false;
+        let dateValidationMessage = '';
+
+        if (hasToDateInput) {
+            if (!fromDate || !toDate) {
+                dateInvalid = true;
+                dateValidationMessage = t('postWork.select_both_dates');
+            } else if (toDate <= fromDate) {
+                dateInvalid = true;
+                dateValidationMessage = t('postWork.end_date_after_start');
+            }
+        }
 
         const newErrors = {
             nameOfWork: currentState.nameOfWork.trim() === '',
@@ -310,39 +361,74 @@ export default function EditWorkById({ route }: Props) {
             budget: currentState.budget === 0,
             category: currentState.category.trim() === '',
             // subcategories: currentState.subcategories.length === 0,
-            dateInvalid,
+            toDate: dateInvalid,
+
         };
         setErrors(newErrors);
-         if (currentState.budget === 0 || currentState.budget === null) {
+        setToDateErrorMessage(dateValidationMessage);
+
+        if (currentState.budget === 0 || currentState.budget === null) {
             setBudgetType('OFFERING');
         }
 
-        const cleanedSubWorkDetails = currentState.subWorkDetails.map(section => ({
-            sectionTitle: section.sectionTitle,
-            subTask: section.subTask.map(task => ({
-                title: task.title,
-                subWorkStatus: task.subWorkStatus
+        const cleanedSubWorkDetails = Array.isArray(currentState.subWorkDetails)
+            ? currentState.subWorkDetails.map(section => ({
+                sectionTitle: section.sectionTitle,
+                subTask: (section.subTask || []).map(task => ({
+                    title: task.title,
+                    subWorkStatus: task.subWorkStatus
+                }))
             }))
-        }));
+            : null;
 
-       
+
 
         try {
-            const formData = {
+            const formData: any = {
                 workTitle: currentState.nameOfWork,
                 description: currentState.workDetail,
-                budget: currentState.budget,
                 kindOfWork: currentState.workType,
-                deadLine: currentState.hasDeadline ? currentState.toDate?.toISOString() : null,
-                startDate: currentState.fromDate?.toISOString() || null,
-                subWorkDetails: cleanedSubWorkDetails,
                 currency: currentState.budgetCurrency,
                 budgetType: currentState.budgetType,
                 serviceType: currentState.category,
-                jobs: currentState.subcategories,
-                address: currentState.address,
             };
-           
+
+            // updateWorkById uses PUT, so omitting fields can overwrite them with null on backend.
+            // Preserve existing values when current form state is null/undefined.
+            if (place) formData.place = place;
+
+            const budgetToSend = currentState.budget ?? initialWorkRef.current.budget;
+            if (budgetToSend !== null && budgetToSend !== undefined) {
+                formData.budget = budgetToSend;
+            }
+
+            const startDateToSend =
+                currentState.fromDate?.toISOString() ?? initialWorkRef.current.startDate;
+            if (startDateToSend) {
+                formData.startDate = startDateToSend;
+            }
+
+            const deadLineToSend =
+                currentState.toDate?.toISOString() ?? initialWorkRef.current.deadLine;
+            if (deadLineToSend) {
+                formData.deadLine = deadLineToSend;
+            }
+
+            const subWorkDetailsToSend = cleanedSubWorkDetails ?? initialWorkRef.current.subWorkDetails;
+            if (subWorkDetailsToSend) {
+                formData.subWorkDetails = subWorkDetailsToSend;
+            }
+
+            const jobsToSend = currentState.subcategories ?? initialWorkRef.current.jobs;
+            if (jobsToSend) {
+                formData.jobs = jobsToSend;
+            }
+
+            const addressToSend = currentState.address ?? initialWorkRef.current.address;
+            if (addressToSend) {
+                formData.address = addressToSend;
+            }
+
 
             if (!params?.workId) {
                 console.log('Missing workId parameter22');
@@ -358,7 +444,7 @@ export default function EditWorkById({ route }: Props) {
         } catch (error) {
             console.log('Failed to update work:', error);
         }
-    }, []);
+    };
 
     // Show loading state while data is being fetched
     if (isLoading) {
@@ -387,7 +473,7 @@ export default function EditWorkById({ route }: Props) {
         <>
             <ScreenWrapper safeEdges={['top', 'bottom']} style={{ backgroundColor: 'white' }}>
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }} className='rounded-lg'>
-                    <View className='px-4 flex-row justify-between items-center mb-4'>
+                    <View className='px-4 flex-row justify-between items-center '>
                         <TouchableOpacity onPress={() => navigation.goBack()} className='mr-3'>
                             <Ionicons name="chevron-back" size={24} color="#3B82F6" />
                         </TouchableOpacity>
@@ -411,11 +497,11 @@ export default function EditWorkById({ route }: Props) {
                         contentContainerStyle={{ paddingBottom: insets.bottom + 10 }}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={false}
-                        className='p-4'
+                        className='p-2'
                     >
-                        <View className='bg-blue-50 p-4 rounded-2xl mb-6'>
+                        <View className='bg-blue-50 p-2 rounded-2xl mb-2'>
 
-                            <View className='bg-blue-50 rounded-2xl mb-4'>
+                            <View className='bg-blue-50 rounded-2xl mb-2'>
                                 <SelectInput
                                     label={t('editWork.serviceType.label')}
                                     value={category}
@@ -442,17 +528,17 @@ export default function EditWorkById({ route }: Props) {
                                 isValidate={errors.nameOfWork ? t('editWork.workTitle.error') : ''}
                             />
 
-                            <Text className="text-caption text-text my-1 font-bold">{t('editWork.workType.label')}</Text>
-                            <View className="flex-row mb-4 space-x-4 gap-2">
+                            <Text className="text-body text-text my-1 font-bold">{t('editWork.workType.label')}</Text>
+                            <View className="flex-row mb-2 space-x-4 gap-2">
                                 {['ONLINE', 'OFFLINE'].map((type) => (
                                     <TouchableOpacity
                                         key={type}
                                         onPress={() => setWorkType(type as 'ONLINE' | 'OFFLINE')}
-                                        className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary' : 'border-border'}`}
+                                        className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary bg-primary' : 'border-border'}`}
                                     >
                                         <View className="flex-row items-center">
-                                            {workType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
-                                            <Text className="text-caption text-text capitalize ml-1">
+                                            {workType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                                            <Text className={`${workType === type ? 'text-white' : 'text-text'} text-caption capitalize ml-1`}>
                                                 {type === "ONLINE" ? t('editWork.workType.online') : t('editWork.workType.offline')}
                                             </Text>
                                         </View>
@@ -479,18 +565,18 @@ export default function EditWorkById({ route }: Props) {
 
 
 
-                        <View className="bg-blue-50 p-4 rounded-2xl mb-4">
+                        <View className="bg-blue-50 p-2 rounded-2xl mb-2">
                             <Text className="text-body mb-2 text-text font-bold">{t('editWork.budgetType.label')}</Text>
-                            <View className="flex-row space-x-4 gap-2 mb-6">
+                            <View className="flex-row space-x-4 gap-2 mb-2">
                                 {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
                                     <TouchableOpacity
                                         key={type}
                                         onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
-                                        className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-blue-50' : 'border-border'}`}
+                                        className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-primary' : 'border-border'}`}
                                     >
                                         <View className="flex-row items-center gap-2">
-                                            {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />}
-                                            <Text className="text-caption text-text">
+                                            {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                                            <Text className={`${budgetType === type ? 'text-surface' : 'text-text'} text-caption`}>
                                                 {type === 'FIXED_PRICE'
                                                     ? `${t('postWork.fixed_price')}`
                                                     : type === 'HOURLY'
@@ -504,7 +590,7 @@ export default function EditWorkById({ route }: Props) {
                             </View>
 
                             {budgetType === 'OFFERING' ? (
-                                <View className='flex-row mb-4'>
+                                <View className='flex-row mb-2'>
                                     <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
                                 </View>
                             ) : (
@@ -514,7 +600,7 @@ export default function EditWorkById({ route }: Props) {
                                     onChange={setBudget}
                                     currency={budgetCurrency}
                                     onCurrencyChange={setBudgetCurrency}
-                                    error={errors.budget}
+                                // error={errors.budget}
                                 // isValidate={errors.budget ? t('editWork.budget.error') : ''}
                                 // required
                                 />
@@ -523,121 +609,105 @@ export default function EditWorkById({ route }: Props) {
 
                         </View>
 
-                        <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
+                        <View className='bg-blue-50 p-2 rounded-2xl mb-2'>
                             <Text className="text-body mb-1 text-text font-bold">{t('editWork.deadline.label')}</Text>
-                            <View className="flex-row mb-4 space-x-4 gap-2">
-                                {[true, false].map((option) => (
+
+
+
+                            <View className="">
+                                <View className="flex-row items-end gap-2">
+                                    <View className="flex-1">
+                                        <FormInput
+                                            label={t('editWork.deadline.from')}
+                                            placeholder={t('editWork.deadline.fromPlaceholder')}
+                                            value={fromDateString}
+                                            inputClassName={'border-border'}
+
+                                            ref={fromInputRef}
+                                            isDate={true}
+                                            onChangeText={(text) => {
+                                                setFromDateString(text);
+                                                updateFromDate(text, fromTimeString);
+                                            }}
+                                        />
+                                    </View>
+
+                                    <View className="w-24">
+                                        <FormInput
+                                            placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                                            value={fromTimeString}
+                                            inputClassName={'border-border'}
+                                            isTime={true}
+                                            onChangeText={(text) => {
+                                                setFromTimeString(text);
+                                                updateFromDate(fromDateString, text);
+                                            }}
+                                        />
+                                    </View>
+
                                     <TouchableOpacity
-                                        key={option ? 'yes' : 'no'}
-                                        onPress={() => setHasDeadline(option)}
-                                        className={`flex-1 border py-4 rounded-xl items-center ${hasDeadline === option ? 'border-primary' : 'border-gray-300'}`}
+                                        onPress={() => {
+                                            setTempFromDate(fromDate || new Date());
+                                            setShowFromPicker(true);
+                                        }}
+                                        className="bg-blue-200 flex justify-center items-center rounded-full p-2"
                                     >
-                                        <View className="flex-row items-center">
-                                            {hasDeadline === option && <Ionicons name="checkmark-circle" size={16} color="#2563EB" />}
-                                            <Text className="text-sm ml-1">
-                                                {option ? t('editWork.deadline.yes') : t('editWork.deadline.no')}
-                                            </Text>
-                                        </View>
+                                        <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
                                     </TouchableOpacity>
-                                ))}
+                                </View>
                             </View>
 
-                            {hasDeadline && (
-                                <>
-                                    <View className="mb-2">
-                                        <View className="flex-row items-end gap-2">
-                                            <View className="flex-1">
-                                                <FormInput
-                                                    label={t('editWork.deadline.from')}
-                                                    placeholder={t('editWork.deadline.fromPlaceholder')}
-                                                    value={fromDateString}
-                                                    inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                                                    ref={fromInputRef}
-                                                    isDate={true}
-                                                    onChangeText={(text) => {
-                                                        setFromDateString(text);
-                                                        updateFromDate(text, fromTimeString);
-                                                    }}
-                                                />
-                                            </View>
+                            <View className="mb-2">
+                                <View className="flex-row items-end gap-2">
+                                    <View className="flex-1">
+                                        <FormInput
+                                            label={t('editWork.deadline.to')}
+                                            placeholder={t('editWork.deadline.toPlaceholder')}
+                                            value={toDateString}
+                                            inputClassName={'border-border'}
 
-                                            <View className="w-24">
-                                                <FormInput
-                                                    placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
-                                                    value={fromTimeString}
-                                                    inputClassName={'border-border'}
-                                                    isTime={true}
-                                                    onChangeText={(text) => {
-                                                        setFromTimeString(text);
-                                                        updateFromDate(fromDateString, text);
-                                                    }}
-                                                />
-                                            </View>
+                                            ref={toInputRef}
+                                            isDate={true}
+                                            onChangeText={(text) => {
+                                                setToDateString(text);
+                                                updateToDate(text, toTimeString);
+                                            }}
 
-                                            <TouchableOpacity
-                                                onPress={() => {
-                                                    setTempFromDate(fromDate || new Date());
-                                                    setShowFromPicker(true);
-                                                }}
-                                                className="bg-blue-200 flex justify-center items-center rounded-full p-4"
-                                            >
-                                                <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                                            </TouchableOpacity>
-                                        </View>
+                                        />
                                     </View>
 
-                                    <View className="mb-4">
-                                        <View className="flex-row items-end gap-2">
-                                            <View className="flex-1">
-                                                <FormInput
-                                                    label={t('editWork.deadline.to')}
-                                                    placeholder={t('editWork.deadline.toPlaceholder')}
-                                                    value={toDateString}
-                                                    inputClassName={errors.dateInvalid ? 'border-error' : 'border-border'}
-                                                    ref={toInputRef}
-                                                    isDate={true}
-                                                    onChangeText={(text) => {
-                                                        setToDateString(text);
-                                                        updateToDate(text, toTimeString);
-                                                    }}
-                                                />
-                                            </View>
-
-                                            <View className="w-24">
-                                                <FormInput
-                                                    placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
-                                                    value={toTimeString}
-                                                    inputClassName={'border-border'}
-                                                    isTime={true}
-                                                    onChangeText={(text) => {
-                                                        setToTimeString(text);
-                                                        updateToDate(toDateString, text);
-                                                    }}
-                                                />
-                                            </View>
-
-                                            <TouchableOpacity
-                                                onPress={() => {
-                                                    setTempToDate(toDate || new Date());
-                                                    setShowToPicker(true);
-                                                }}
-                                                className="bg-blue-200 flex justify-center items-center rounded-full p-4 "
-                                            >
-                                                <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                                            </TouchableOpacity>
-                                        </View>
+                                    <View className="w-24">
+                                        <FormInput
+                                            placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                                            value={toTimeString}
+                                            inputClassName={'border-border'}
+                                            isTime={true}
+                                            onChangeText={(text) => {
+                                                setToTimeString(text);
+                                                updateToDate(toDateString, text);
+                                            }}
+                                        />
                                     </View>
 
-                                    {errors.dateInvalid && (
-                                        <Text className="text-error text-caption mb-2">
-                                            {!fromDate || !toDate
-                                                ? t('editWork.deadline.errorBothDates')
-                                                : t('editWork.deadline.errorEndDate')
-                                            }
-                                        </Text>
-                                    )}
-                                </>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setTempToDate(toDate || new Date());
+                                            setShowToPicker(true);
+                                        }}
+                                        className="bg-blue-200 flex justify-center items-center rounded-full p-2 "
+                                    >
+                                        <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {errors.toDate && (
+                                <Text className="text-error text-caption mt-1">
+                                    {toDateErrorMessage}
+                                </Text>
                             )}
+
+
 
                             {/* Date Picker Modals */}
                             {showFromPicker && (
@@ -681,40 +751,55 @@ export default function EditWorkById({ route }: Props) {
                             )}
                         </View>
 
-                        <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
-                            <Text className="text-body text-text font-bold mb-2">{t('customerProfile.locationInfo')}</Text>
+                        {/* Address section */}
 
-                            <View className='bg-blue-50 rounded-2xl'>
-                                <Dropdown
-                                    label={t('kyc.step4.location.province.label')}
-                                    value={selectedProvince?.province_la}
-                                    placeholder={t('kyc.step4.location.province.placeholder')}
-                                    options={provinceOptions}
-                                    onSelect={handleProvinceSelect}
-                                />
+                        {workType === "ONLINE" && (
+
+                            <View className='bg-blue-50 p-2 rounded-2xl mb-2'>
+                                <Text className="text-body text-text font-bold mb-2">{t('customerProfile.locationInfo')}</Text>
+
+                                <View className='bg-blue-50 rounded-2xl'>
+                                    <Dropdown
+                                        label={t('kyc.step4.location.province.label')}
+                                        value={selectedProvince?.province_la}
+                                        placeholder={t('kyc.step4.location.province.placeholder')}
+                                        options={provinceOptions}
+                                        onSelect={handleProvinceSelect}
+                                    />
+                                </View>
+
+                                <View className=''>
+                                    <Dropdown
+                                        label={t('kyc.step4.location.district.label')}
+                                        value={selectedDistrict?.district_la}
+                                        placeholder={t('kyc.step4.location.district.placeholder')}
+                                        options={districtOptions}
+                                        onSelect={handleDistrictSelect}
+                                        disabled={!selectedProvince}
+                                    />
+                                </View>
+
+                                <View className=''>
+                                    <FormInput
+                                        label={t('kyc.step4.location.village.label')}
+                                        value={village}
+                                        onChangeText={setVillage}
+                                        placeholder={t('kyc.step4.location.village.placeholder')}
+                                        inputClassName={selectedDistrict ? 'border-border' : 'border-gray-200'}
+                                    />
+                                </View>
+                                <View className=''>
+                                    <FormInput
+                                        label={t('postWork.address_manually')}
+                                        value={place}
+                                        onChangeText={setPlace}
+                                        placeholder={t('postWork.placeholder_address_manually')}
+                                        inputClassName={'border-border'}
+                                    />
+                                </View>
                             </View>
 
-                            <View className='mt-3'>
-                                <Dropdown
-                                    label={t('kyc.step4.location.district.label')}
-                                    value={selectedDistrict?.district_la}
-                                    placeholder={t('kyc.step4.location.district.placeholder')}
-                                    options={districtOptions}
-                                    onSelect={handleDistrictSelect}
-                                    disabled={!selectedProvince}
-                                />
-                            </View>
-
-                            <View className='mt-3'>
-                                <FormInput
-                                    label={t('kyc.step4.location.village.label')}
-                                    value={village}
-                                    onChangeText={setVillage}
-                                    placeholder={t('kyc.step4.location.village.placeholder')}
-                                    inputClassName={selectedDistrict ? 'border-border' : 'border-gray-200'}
-                                />
-                            </View>
-                        </View>
+                        )}
 
                         {workType === 'ONLINE' && (
                             <SubWorkDetailsInput

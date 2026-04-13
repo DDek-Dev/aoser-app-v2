@@ -13,16 +13,18 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 const FreelancerRoleGate = () => {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const { data, refetch, isLoading } = useMyProfile();
+  const { data, refetch, isLoading  , isRefetching} = useMyProfile();
 
-
-   // Refetch profile data when screen comes into focus
+useEffect(() => {
+  refetch();
+}, []);
+  // Refetch profile data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       refetch();
     }, [refetch])
   );
- // Check if user is already approved and redirect
+  // Check if user is already approved and redirect
   useEffect(() => {
     if (data?.businessType === 'FREELANCER' && data?.registrationStatus === 'APPROVED_COMPLETE') {
       navigation.replace('AuthFreelancerProfile', { userId: data._id });
@@ -39,7 +41,7 @@ const FreelancerRoleGate = () => {
   const canStartRegistration =
     data?.businessType === 'CUSTOMER' && data?.registrationStatus === "";
 
-  if (isLoading) {
+  if (isLoading || isRefetching) {
     return (
       <SafeAreaView className="flex-1 bg-background justify-center items-center">
         <ActivityIndicator size="large" color="#3B82F6" />
@@ -86,7 +88,7 @@ const FreelancerRoleGate = () => {
 
           {/* Action Buttons */}
           <View className="w-full gap-3">
-            
+
 
             <TouchableOpacity
               onPress={() => navigation.popToTop()}
@@ -124,9 +126,9 @@ const FreelancerRoleGate = () => {
           </Text>
 
           {/* Subtitle */}
-          <Text className="text-body text-textSecondary text-center mb-8 max-w-sm">
+          {/* <Text className="text-body text-textSecondary text-center mb-8 max-w-sm">
             {t('freelancerRoleGate.rejectedSubtitle')}
-          </Text>
+          </Text> */}
 
           {/* Reason Card */}
           <View className="bg-red-50 border border-error/20 rounded-xl p-4 mb-8 w-full">
@@ -169,7 +171,7 @@ const FreelancerRoleGate = () => {
               </Text>
             </TouchableOpacity>
 
-            
+
 
             <TouchableOpacity
               onPress={() => navigation.popToTop()}

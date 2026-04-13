@@ -1,6 +1,6 @@
 
 
-import { UreadNotification } from 'types';
+import type { Notifications as AppNotification, UreadNotification } from 'types';
 import networkCheck from './networkCheck';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -29,7 +29,7 @@ export const notificationApi = {
             throw error;
         }
     },
-    getAllnotifications: async (token: string): Promise<Notification[]> => {
+    getAllnotifications: async (token: string): Promise<AppNotification[]> => {
         try {
             const response = await networkCheck.get(`${API_BASE_URL}/notification/notifications`, {
                 headers: {
@@ -43,7 +43,7 @@ export const notificationApi = {
             throw error;
         }
     },
-    readNotification: async (token: string, notificationId: string): Promise<Notification[]> => {
+    readNotification: async (token: string, notificationId: string): Promise<AppNotification[]> => {
 
         try {
             const response = await networkCheck.put(`${API_BASE_URL}/notification/read/${notificationId}`, {}, {

@@ -40,7 +40,6 @@ const HistoryScreen = () => {
         if (!freelancerData || freelancerData.length === 0) {
           return (
             <HistoryNoResult title={t('history.history_no_result.no_history_freelancer')} desc={t('history.history_no_result.items_will_appear_here_freelancer')} />
-
           );
         }
 

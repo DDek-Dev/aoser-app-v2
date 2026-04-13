@@ -41,7 +41,7 @@ export default function AppendOwnerWork({ route }: Props) {
     const [budget, setBudget] = useState<number | null>(null);
     const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
     const [subWorkDetails, setSubWorkDetails] = useState<SubWorkDetail[]>([]);
-
+    const [additionalDescription, setAdditionalDescription] = useState('');
     // Original work data (read-only reference)
     const [originalWorkType, setOriginalWorkType] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
     const [originalDescription, setOriginalDescription] = useState('');
@@ -67,6 +67,7 @@ export default function AppendOwnerWork({ route }: Props) {
     const [errors, setErrors] = useState({
         budget: false,
         dateInvalid: false,
+        additionalDescription: false,
     });
 
     const currentLanguage: Language = getCurrentLanguage();
@@ -126,6 +127,7 @@ export default function AppendOwnerWork({ route }: Props) {
         budgetCurrency,
         toDate,
         subWorkDetails,
+        additionalDescription,
     });
 
     // Update the ref whenever state changes
@@ -137,6 +139,7 @@ export default function AppendOwnerWork({ route }: Props) {
          
             toDate,
             subWorkDetails,
+            additionalDescription,
         };
     }, [ budget, budgetCurrency,  toDate, subWorkDetails]);
 
@@ -204,6 +207,7 @@ export default function AppendOwnerWork({ route }: Props) {
         const newErrors = {
             budget: !currentState.budget || currentState.budget === 0,
             dateInvalid,
+            additionalDescription: !currentState.additionalDescription,
 
         };
         setErrors(newErrors);
@@ -221,13 +225,15 @@ export default function AppendOwnerWork({ route }: Props) {
 
         try {
             const formData = {
-                // additionalDescription: currentState.additionalDescription,
+                // description: currentState.additionalDescription,
                 budget: currentState.budget,
                 currency: currentState.budgetCurrency,
                 // budgetType: currentState.budgetType,
                 deadLine: currentState.toDate?.toISOString() || null,
                 subWorkDetails: cleanedSubWorkDetails,
             };
+
+            // console.log('Submitting form with data:', JSON.stringify(formData, null, 2));
 
             if (!params?.workId) {
                 console.log('Missing workId parameter');
@@ -288,7 +294,7 @@ export default function AppendOwnerWork({ route }: Props) {
                             onPress={handleSubmit}
                             className="bg-primary py-3 px-5 rounded-xl items-center justify-center"
                         >
-                            <Text className="text-white font-semibold text-body">{t('tab.newWork')}</Text>
+                            <Text className="text-white font-semibold text-body">{t('appendownerwork.comfirm_task')}</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -349,7 +355,7 @@ export default function AppendOwnerWork({ route }: Props) {
 
                         {/* Append Work Section */}
                         <Text className="text-body font-bold text-text mb-4">{t('editWork.appendNewWork') || 'Add More Work'}</Text>
-                        {/* <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
+                        <View className='bg-blue-50 p-4 rounded-2xl mb-4'>
 
                             <TextArea
                                 label={t('editWork.workDescription.label')}
@@ -360,7 +366,7 @@ export default function AppendOwnerWork({ route }: Props) {
                                 required
                                 isValidate={errors.additionalDescription ? t('editWork.workDescription.error') : ''}
                             />
-                        </View> */}
+                        </View>
 
                         <View className="bg-blue-50 p-4 rounded-2xl mb-4">
                             {/* <Text className="text-body mb-2 text-text font-bold">{t('editWork.budgetType.label')}</Text>

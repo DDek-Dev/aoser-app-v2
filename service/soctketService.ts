@@ -199,6 +199,8 @@ class SocketService {
   // Inside your SocketService class
 updateOfferingWork(data: NewOfferData) {
     if (this.socket) {
+
+      console.log('Emitting updateOfferingWork event with data:', data);
         // Must match the backend listener string exactly
         this.socket.emit('message:update:offeringWork', data, (response: any) => {
             if (response.ok) {

@@ -62,6 +62,19 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
   const isAtBottomRef = useRef(true);
   const prevMessagesLengthRef = useRef(0);
   const isLoadingMoreRef = useRef(false);
+  const isFetchingMoreRef = useRef(false);
+  const lastLoadMoreAtRef = useRef(0);
+  const initializedRef = useRef(false);
+  const skipRef = useRef(skip);
+  const hasMoreRef = useRef(hasMore);
+
+  useEffect(() => {
+    skipRef.current = skip;
+  }, [skip]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
 
   // Decide which message source to use
   const sourceMessages = internalMessages !== null ? internalMessages : messages;
@@ -194,14 +207,33 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
     prevMessagesLengthRef.current = currentLength;
   }, [sortedMessages, currentUserId]);
 
-  // Load initial page if onFetchPage is provided
+  const countServerMessages = useCallback((list: Message[]): number => {
+    // Only count messages that likely exist on the server (exclude optimistic/pending).
+    return (list || []).filter((m: any) => !!m?._id && !m?.pending).length;
+  }, []);
+
+  // Initialize internalMessages once: prefer the already-fetched `messages` prop (smooth, no extra request).
   useEffect(() => {
+    if (initializedRef.current) return;
+
+    if (Array.isArray(messages) && messages.length > 0) {
+      initializedRef.current = true;
+      setInternalMessages(messages);
+      const serverCount = countServerMessages(messages);
+      setSkip(serverCount);
+      setHasMore(serverCount >= pageSize);
+      return;
+    }
+
     if (typeof onFetchPage !== 'function') return;
+
     let mounted = true;
+    initializedRef.current = true;
     (async () => {
       try {
         setIsLoadingMore(true);
         isLoadingMoreRef.current = true;
+        isFetchingMoreRef.current = true;
         const first = await onFetchPage(0, pageSize);
         if (!mounted) return;
         setInternalMessages(first || []);
@@ -212,14 +244,18 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
       } finally {
         if (mounted) {
           setIsLoadingMore(false);
-          isLoadingMoreRef.current = false;
+          isFetchingMoreRef.current = false;
+          setTimeout(() => {
+            isLoadingMoreRef.current = false;
+          }, 300);
         }
       }
     })();
+
     return () => {
       mounted = false;
     };
-  }, [onFetchPage, pageSize]);
+  }, [messages, onFetchPage, pageSize, countServerMessages]);
 
   // Merge live external messages into internalMessages
   useEffect(() => {
@@ -297,14 +333,31 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
   // Load more older messages
   const handleLoadMore = async () => {
     if (typeof onFetchPage !== 'function' || internalMessages === null) return;
-    if (isLoadingMore || !hasMore) return;
+    if (isFetchingMoreRef.current) return;
+    if (isLoadingMoreRef.current) return;
+    if (!hasMoreRef.current) return;
+
+    const now = Date.now();
+    if (now - lastLoadMoreAtRef.current < 800) return;
+    lastLoadMoreAtRef.current = now;
 
     try {
       setIsLoadingMore(true);
       isLoadingMoreRef.current = true;
-      const next = await onFetchPage(skip, pageSize);
+      isFetchingMoreRef.current = true;
+      const next = await onFetchPage(skipRef.current, pageSize);
       if (next && next.length > 0) {
-        setInternalMessages(prev => [...(prev || []), ...(next || [])]);
+        setInternalMessages(prev => {
+          const existing = prev || [];
+          const existingIds = new Set(existing.map((m: any) => String(m?._id || '')).filter(Boolean));
+          const dedupedNext = (next || []).filter((m: any) => {
+            const id = m?._id ? String(m._id) : '';
+            return id ? !existingIds.has(id) : true;
+          });
+          if (dedupedNext.length === 0) return existing;
+          return [...existing, ...dedupedNext];
+        });
+
         setSkip(prev => prev + next.length);
         if (next.length < pageSize) setHasMore(false);
       } else {
@@ -314,6 +367,7 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
       console.warn('ChatListContainer load more failed', e);
     } finally {
       setIsLoadingMore(false);
+      isFetchingMoreRef.current = false;
       // Add a small delay before allowing auto-scroll again
       setTimeout(() => {
         isLoadingMoreRef.current = false;

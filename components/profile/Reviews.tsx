@@ -36,11 +36,11 @@ export default function Reviews({ reviews }: ReviewsProps) {
   // Guard against undefined reviews
   const safeReviews = reviews || [];
 
-  console.log('reviews', JSON.stringify);
+
 
   const visibleReviews = safeReviews.slice(0, visibleCount);
   const showSeeMore = safeReviews.length > visibleCount;
-console.log(JSON.stringify(visibleReviews, null, 2))
+
   const avgRating = safeReviews.length
     ? (safeReviews.reduce((sum, review) => sum + review.rating, 0) / safeReviews.length).toFixed(1)
     : '0.0';

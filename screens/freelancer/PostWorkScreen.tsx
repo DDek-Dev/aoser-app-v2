@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { RouteProp, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { FreelancerStackParamList } from 'types/navigation';
 import FormInput from 'components/ui/Input';
 import TextArea from 'components/ui/TextArea';
@@ -22,7 +22,7 @@ import { useSelectAddress } from 'hooks/useSelectAddress';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import BudgetInput from 'components/ui/BudgetInput';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-import {  getCurrentLanguage, Language } from 'utils/dateFormatter';
+import { getCurrentLanguage, Language } from 'utils/dateFormatter';
 import SubWorkDetailsInput from 'components/ui/SubTaskInputList';
 import { SubWorkDetail } from 'types';
 import { useTranslation } from 'react-i18next';
@@ -43,8 +43,8 @@ export default function PostWorkScreen() {
   const [workDetail, setWorkDetail] = useState('');
   const [budget, setBudget] = useState<number | null>(null);
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
-  const fromInputRef = useRef<TextInput>(null);
-  const toInputRef = useRef<TextInput>(null);
+  // const fromInputRef = useRef<TextInput>(null);
+  // const toInputRef = useRef<TextInput>(null);
   // const categoryRef = useRef<{ focus: () => void }>(null);
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>('FIXED_PRICE');
@@ -69,7 +69,7 @@ export default function PostWorkScreen() {
     workDetail: false,
     // budget: false,
     category: false,
-    toDate:false,
+    toDate: false,
   });
   const [toDateErrorMessage, setToDateErrorMessage] = useState('');
 
@@ -78,6 +78,7 @@ export default function PostWorkScreen() {
   const [selectedProvince, setSelectedProvince] = useState<any>(undefined);
   const [selectedDistrict, setSelectedDistrict] = useState<any>(undefined);
   const [village, setVillage] = useState('');
+  const [place, setPlace] = useState('');
 
   const currentLanguage: Language = getCurrentLanguage();
 
@@ -354,18 +355,15 @@ export default function PostWorkScreen() {
       return;
     }
 
-    const formData = {
+    const formData: any = {
       workTitle: nameOfWork,
       description: workDetail,
       budget,
       kindOfWork: workType,
-      deadLine: toDate?.toISOString() || null,
-      startDate: fromDate?.toISOString() || null,
       subWorkDetails,
       currency: budgetCurrency,
       budgetType,
       serviceType: category,
-      jobs: subcategories,
       address: {
         country: selectedProvince ? "Laos" : '',
         province: selectedProvince?.province_la || '',
@@ -373,6 +371,14 @@ export default function PostWorkScreen() {
         village: village.trim() || '',
       }
     };
+
+    // Only add if not null
+    if (place) formData.place = place;
+    if (toDate) formData.deadLine = toDate.toISOString();
+    if (fromDate) formData.startDate = fromDate.toISOString();
+    if (subcategories && subcategories.length > 0) {
+      formData.jobs = subcategories;
+    }
 
     // Include address only if user selected any address fields (optional)
     if (selectedProvince) {
@@ -390,307 +396,297 @@ export default function PostWorkScreen() {
 
   return (
     <>
-      <ScreenWrapper safeEdges={['top']} style={{ backgroundColor: 'white'}}>
-       
-          <View className='px-4 flex-row justify-between items-center mb-4'>
-            <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">
-              <View className="flex-1">
-                <Text className="font-semibold text-primary text-heading">{t('postWork.public_work')}</Text>
-                <Text className="text-primary text-body">{t('postWork.posting_public_work')}</Text>
-              </View>
-            </View>
+      <ScreenWrapper safeEdges={['top']} style={{ backgroundColor: 'white' }}>
 
-            <TouchableOpacity
-              onPress={handleSubmit}
-              className="bg-primary py-3 px-5 rounded-xl items-center justify-center"
-            >
-              <Text className="text-white font-semibold text-body">{t('postWork.next')}</Text>
-            </TouchableOpacity>
+        <View className='px-4 flex-row justify-between items-center '>
+          <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">
+            <View className="flex-1">
+              <Text className="font-semibold text-primary text-heading">{t('postWork.public_work')}</Text>
+              <Text className="text-primary text-body">{t('postWork.posting_public_work')}</Text>
+            </View>
           </View>
 
-          <KeyboardAwareScrollView
-          
-            contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            className='p-4'
+          <TouchableOpacity
+            onPress={handleSubmit}
+            className="bg-primary py-3 px-5 rounded-xl items-center justify-center"
           >
-            <View className='bg-blue-50 p-4 rounded-2xl mb-2'>
-              <View className='bg-blue-50 rounded-2xl'>
-                <SelectInput
-                  label={t('postWork.service_type')}
-                  value={category}
-                  initialSubcategories={subcategories}
-                  onSelect={(serviceTypeId, jobIds) => {
-                    setCategory(serviceTypeId);
-                    setSubcategories(jobIds);
-                  }}
-                  inputClassName={errors.category ? 'border-error' : 'border-border'}
-                  // ref={categoryRef}
-                />
-              </View>
+            <Text className="text-white font-semibold text-body">{t('postWork.next')}</Text>
+          </TouchableOpacity>
+        </View>
 
-              <FormInput
-                label={t('postWork.work_title')}
-                value={nameOfWork}
-                onChangeText={setNameOfWork}
-                inputClassName={errors.nameOfWork ? 'border-error' : 'border-border'}
-                required
-                isValidate={`${errors.nameOfWork ? `${t('postWork.work_title_required')}` : ''}`}
-              />
+        <KeyboardAwareScrollView
 
-              <Text className="text-body text-text my-1 font-bold mt-2">{t('postWork.work_type')}</Text>
-              <View className="flex-row mb-4 space-x-4 gap-2">
-                {['ONLINE', 'OFFLINE'].map((type) => (
-                  <Pressable
-                    key={type}
-                    onPress={() => setWorkType(type as 'ONLINE' | 'OFFLINE')}
-                    className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary bg-primary' : 'border-border'}`}
-                  >
-                    <View className="flex-row items-center">
-                      {workType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
-                      <Text className={`${workType === type ? 'text-white' : 'text-text'} text-caption capitalize ml-1`}>
-                        {type === "ONLINE" ? `${t('postWork.online')}` : `${t('postWork.offline')}`}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
+          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          className='p-2'
+        >
+          <View className='bg-blue-50 px-2 pt-2 rounded-2xl mb-1'>
+            <View className='bg-blue-50 rounded-2xl'>
+              <SelectInput
+                label={t('postWork.service_type')}
+                value={category}
 
-              <TextArea
-                label={t('postWork.work_description')}
-                placeholder={t('postWork.work_description_placeholder')}
-                value={workDetail}
-                onChangeText={setWorkDetail}
-                inputClassName={errors.workDetail ? 'border-error' : 'border-border'}
-                required
-                isValidate={`${errors.workDetail ? `${t('postWork.work_description_required')}` : ''}`}
+                initialSubcategories={subcategories}
+                onSelect={(serviceTypeId, jobIds) => {
+                  setCategory(serviceTypeId);
+                  setSubcategories(jobIds);
+                }}
+                inputClassName={errors.category ? 'border-error' : 'border-border'}
+              // ref={categoryRef}
               />
             </View>
 
-            <View className="bg-blue-50 p-4 rounded-2xl mb-2">
-              <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
-              <View className="flex-row space-x-4 gap-2 mb-6">
-                {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
-                    className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-primary' : 'border-border'}`}
-                  >
-                    <View className="flex-row items-center gap-2">
-                      {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
-                      <Text className={`${budgetType === type ? 'text-surface' : 'text-text'} text-caption`}>
-                        {type === 'FIXED_PRICE'
-                          ? `${t('postWork.fixed_price')}`
-                          : type === 'HOURLY'
-                            ? `${t('postWork.hourly')}`
-                            : `${t('postWork.offering')}`
-                        }
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
+            <FormInput
+              label={t('postWork.work_title')}
+              value={nameOfWork}
+              onChangeText={setNameOfWork}
+              inputClassName={errors.nameOfWork ? 'border-error' : 'border-border'}
+              required
+              placeholder={t('postWork.work_title_placeholder')}
+              isValidate={`${errors.nameOfWork ? `${t('postWork.work_title_required')}` : ''}`}
+            />
 
-              {budgetType === 'OFFERING' ? (
-                <View className='flex-row mb-4'>
-                  <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
-                </View>
-              ) : (
-                <BudgetInput
-                  label={t('postWork.budget')}
-                  value={budget}
-                  onChange={setBudget}
-                  currency={budgetCurrency}
-                  onCurrencyChange={setBudgetCurrency}
-                  // error={errors.budget}
-                  // isValidate={`${errors.budget ? `${t('postWork.budget_required')}` : ''}`}
-                  required
-                  
-                />
-              )}
+            <Text className="text-body text-text my-1 font-bold mt-2">{t('postWork.work_type')}</Text>
+            <View className="flex-row mb-4 space-x-4 gap-2">
+              {['ONLINE', 'OFFLINE'].map((type) => (
+                <Pressable
+                  key={type}
+                  onPress={() => setWorkType(type as 'ONLINE' | 'OFFLINE')}
+                  className={`flex-1 border py-4 rounded-xl items-center ${workType === type ? 'border-primary bg-primary' : 'border-border'}`}
+                >
+                  <View className="flex-row items-center">
+                    {workType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                    <Text className={`${workType === type ? 'text-white' : 'text-text'} text-caption capitalize ml-1`}>
+                      {type === "ONLINE" ? `${t('postWork.online')}` : `${t('postWork.offline')}`}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
             </View>
 
-            <View className='bg-blue-50 p-4 rounded-2xl mb-2'>
-              <Text className="text-body mb-1 text-text font-bold">{t('postWork.deadline_requirement')}</Text>
-              {/* <View className="flex-row mb-4 space-x-4 gap-2">
-                {[true, false].map((option) => (
-                  <Pressable
-                    key={option ? 'yes' : 'no'}
-                    onPress={() => setHasDeadline(option)}
-                    className={`flex-1 border py-4 rounded-xl items-center ${hasDeadline === option ? 'bg-primary border-primary' : 'border-border'}`}
-                  >
-                    <View className="flex-row items-center">
-                      {hasDeadline === option && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
-                      <Text className={`${hasDeadline === option ? 'text-surface' : 'text-text'} text-caption ml-1`}>
-                        {option ? `${t('postWork.yes')}` : `${t('postWork.no')}`}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </View> */}
+            <TextArea
+              label={t('postWork.work_description')}
+              placeholder={t('postWork.work_description_placeholder')}
+              value={workDetail}
+              onChangeText={setWorkDetail}
+              inputClassName={errors.workDetail ? 'border-error' : 'border-border'}
+              required
+              isValidate={`${errors.workDetail ? `${t('postWork.work_description_required')}` : ''}`}
+            />
+          </View>
 
-            
-                <View>
-                  {/* Start Date & Time */}
-                  <View className="mb-2">
-                    {/* <Text className="text-body text-text font-bold">
+          <View className="bg-blue-50 p-2 rounded-2xl mb-2">
+            <Text className="text-body mb-2 text-text font-bold">{t('postWork.budget_type')}</Text>
+            <View className="flex-row space-x-4 gap-2 mb-2">
+              {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
+                  className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-primary' : 'border-border'}`}
+                >
+                  <View className="flex-row items-center gap-2">
+                    {budgetType === type && <Ionicons name="checkmark-circle" size={16} color="#fff" />}
+                    <Text className={`${budgetType === type ? 'text-surface' : 'text-text'} text-caption`}>
+                      {type === 'FIXED_PRICE'
+                        ? `${t('postWork.fixed_price')}`
+                        : type === 'HOURLY'
+                          ? `${t('postWork.hourly')}`
+                          : `${t('postWork.offering')}`
+                      }
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {budgetType === 'OFFERING' ? (
+              <View className='flex-row mb-4'>
+                <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+              </View>
+            ) : (
+              <BudgetInput
+                label={t('postWork.budget')}
+                value={budget}
+                onChange={setBudget}
+                currency={budgetCurrency}
+                onCurrencyChange={setBudgetCurrency}
+                // error={errors.budget}
+                // isValidate={`${errors.budget ? `${t('postWork.budget_required')}` : ''}`}
+                required
+
+              />
+            )}
+          </View>
+
+          <View className='bg-blue-50 p-2 rounded-2xl mb-2'>
+            <Text className="text-body mb-1 text-text font-bold">{t('postWork.deadline_requirement')}</Text>
+
+
+
+            <View>
+              {/* Start Date & Time */}
+              <View className="">
+                {/* <Text className="text-body text-text font-bold">
                       {currentLanguage === 'la' ? 'ວັນທີ ແລະ ເວລາເລີ່ມຕົ້ນ' : 'Start Date & Time'}
                     </Text> */}
-                    <View className="flex-row items-end gap-2">
-                      <View className="flex-1">
-                        <FormInput
-                          label={t('editWork.deadline.from')}
-                          placeholder={t('editWork.deadline.toPlaceholder')}
-                          value={fromDateString}
-                          inputClassName={'border-border'}
-                          ref={fromInputRef}
-                          isDate={true}
-                          // onChangeText={(text) => {
-                          //   setFromDateString(text);
-                          //   updateFromDate(text, fromTimeString);
-                          // }}
-                          onChangeText={handleFromDateChange}
-                          onBlur={handleFromDateBlur}
-                        />
-                      </View>
-
-                      <View className="w-24">
-                        <FormInput
-                          // label=""
-                          placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
-                          value={fromTimeString}
-                          inputClassName={'border-border'}
-                          isTime={true}
-                          // onChangeText={(text) => {
-                          //   setFromTimeString(text);
-                          //   updateFromDate(fromDateString, text);
-                          // }}
-
-                          onChangeText={handleFromTimeChange}
-                          onBlur={handleFromTimeBlur}
-                        />
-                      </View>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          setTempFromDate(fromDate || new Date());
-                          setShowFromPicker(true);
-                        }}
-                        className="bg-blue-200 flex justify-center items-center rounded-full p-4"
-                      >
-                        <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                      </TouchableOpacity>
-                    </View>
+                <View className="flex-row items-end gap-2">
+                  <View className="flex-1">
+                    <FormInput
+                      label={t('editWork.deadline.from')}
+                      placeholder={t('editWork.deadline.toPlaceholder')}
+                      value={fromDateString}
+                      inputClassName={'border-border'}
+                      // ref={fromInputRef}
+                      isDate={true}
+                      // onChangeText={(text) => {
+                      //   setFromDateString(text);
+                      //   updateFromDate(text, fromTimeString);
+                      // }}
+                      onChangeText={handleFromDateChange}
+                      onBlur={handleFromDateBlur}
+                    />
                   </View>
 
-                  {/* End Date & Time */}
-                  <View className="mb-4">
+                  <View className="w-24">
+                    <FormInput
+                      // label=""
+                      placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                      value={fromTimeString}
+                      inputClassName={'border-border'}
+                      isTime={true}
+                      // onChangeText={(text) => {
+                      //   setFromTimeString(text);
+                      //   updateFromDate(fromDateString, text);
+                      // }}
 
-                    <View className="flex-row items-end gap-2">
-                      <View className="flex-1">
-                        <FormInput
-                          label={t('editWork.deadline.to')}
-                          placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປປປປ' : 'dd/mm/yy'}
-                          value={toDateString}
-                          inputClassName={'border-border'}
-                          ref={toInputRef}
-                          isDate={true}
-                          // onChangeText={(text) => {
-                          //   setToDateString(text);
-                          //   updateToDate(text, toTimeString);
-                          // }}
-
-                          onChangeText={handleToDateChange}
-                          onBlur={handleToDateBlur}
-
-                        />
-                      </View>
-
-                      <View className="w-24">
-                        <FormInput
-                          label=""
-                          placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
-                          value={toTimeString}
-                          inputClassName={'border-border'}
-                          isTime={true}
-                          // onChangeText={(text) => {
-                          //   setToTimeString(text);
-                          //   updateToDate(toDateString, text);
-                          // }}
-
-                          onChangeText={handleToTimeChange}
-                          onBlur={handleToTimeBlur}
-                          // isValidate='date is less than start'
-                        />
-                      </View>
-                    
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          setTempToDate(toDate || new Date());
-                          setShowToPicker(true);
-                        }}
-                        className="bg-blue-200 flex justify-center items-center rounded-full p-4 "
-                      >
-                        <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
-                      </TouchableOpacity>
-                    </View>
-                    {errors.toDate && 
-                    
-                      <View>
-                        <Text className='text-caption text-error mt-1'>{toDateErrorMessage}</Text>
-                      </View>
-                    
-                    }
+                      onChangeText={handleFromTimeChange}
+                      onBlur={handleFromTimeBlur}
+                    />
                   </View>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setTempFromDate(fromDate || new Date());
+                      setShowFromPicker(true);
+                    }}
+                    className="bg-blue-200 flex justify-center items-center rounded-full p-4"
+                  >
+                    <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
+                  </TouchableOpacity>
                 </View>
-            
+              </View>
 
-              {/* Date Picker Modals */}
-              {showFromPicker && (
-                <DatePicker
-                  visible={showFromPicker}
-                  date={fromDate}
-                  tempDate={tempFromDate}
-                  setTempDate={setTempFromDate}
-                  mode="datetime"
-                  setDate={(date: Date) => {
-                    setFromDate(date);
-                    setFromDateString(formatDateForDisplay(date));
-                    setFromTimeString(formatTimeForDisplay(date));
-                    setErrors(prev => ({ ...prev, toDate: false }));
-                    setToDateErrorMessage('');
-                  }}
-                  onClose={() => {
-                    setShowFromPicker(false);
-                  }}
-                />
-              )}
+              {/* End Date & Time */}
+              <View className="">
 
-              {showToPicker && (
-                <DatePicker
-                  visible={showToPicker}
-                  date={toDate}
-                  tempDate={tempToDate}
-                  setTempDate={setTempToDate}
-                  mode="datetime"
-                  setDate={(date: Date) => {
-                    setToDate(date);
-                    setToDateString(formatDateForDisplay(date));
-                    setToTimeString(formatTimeForDisplay(date));
-                    setErrors(prev => ({ ...prev, toDate: false }));
-                    setToDateErrorMessage('');
-                  }}
-                  onClose={() => {
-                    setShowToPicker(false);
-                  }}
-                />
-              )}
+                <View className="flex-row items-end gap-2">
+                  <View className="flex-1">
+                    <FormInput
+                      label={t('editWork.deadline.to')}
+                      placeholder={currentLanguage === 'la' ? 'ວ/ດ/ປປປປ' : 'dd/mm/yy'}
+                      value={toDateString}
+                      inputClassName={'border-border'}
+                      // ref={toInputRef}
+                      isDate={true}
+                      // onChangeText={(text) => {
+                      //   setToDateString(text);
+                      //   updateToDate(text, toTimeString);
+                      // }}
+
+                      onChangeText={handleToDateChange}
+                      onBlur={handleToDateBlur}
+
+                    />
+                  </View>
+
+                  <View className="w-24">
+                    <FormInput
+                      label=""
+                      placeholder={currentLanguage === 'la' ? 'ຊມ:ນທ' : 'HH:MM'}
+                      value={toTimeString}
+                      inputClassName={'border-border'}
+                      isTime={true}
+                      // onChangeText={(text) => {
+                      //   setToTimeString(text);
+                      //   updateToDate(toDateString, text);
+                      // }}
+
+                      onChangeText={handleToTimeChange}
+                      onBlur={handleToTimeBlur}
+                    // isValidate='date is less than start'
+                    />
+                  </View>
+
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      setTempToDate(toDate || new Date());
+                      setShowToPicker(true);
+                    }}
+                    className="bg-blue-200 flex justify-center items-center rounded-full p-4 "
+                  >
+                    <MaterialIcons name="calendar-month" size={24} color="#2563EB" />
+                  </TouchableOpacity>
+                </View>
+                {errors.toDate &&
+
+                  <View>
+                    <Text className='text-caption text-error mt-1'>{toDateErrorMessage}</Text>
+                  </View>
+
+                }
+              </View>
             </View>
 
-            {/* Optional Address Selection */}
-            <View className='bg-blue-50 p-4 rounded-2xl mb-2'>
+
+            {/* Date Picker Modals */}
+            {showFromPicker && (
+              <DatePicker
+                visible={showFromPicker}
+                date={fromDate}
+                tempDate={tempFromDate}
+                setTempDate={setTempFromDate}
+                mode="datetime"
+                setDate={(date: Date) => {
+                  setFromDate(date);
+                  setFromDateString(formatDateForDisplay(date));
+                  setFromTimeString(formatTimeForDisplay(date));
+                  setErrors(prev => ({ ...prev, toDate: false }));
+                  setToDateErrorMessage('');
+                }}
+                onClose={() => {
+                  setShowFromPicker(false);
+                }}
+              />
+            )}
+
+            {showToPicker && (
+              <DatePicker
+                visible={showToPicker}
+                date={toDate}
+                tempDate={tempToDate}
+                setTempDate={setTempToDate}
+                mode="datetime"
+                setDate={(date: Date) => {
+                  setToDate(date);
+                  setToDateString(formatDateForDisplay(date));
+                  setToTimeString(formatTimeForDisplay(date));
+                  setErrors(prev => ({ ...prev, toDate: false }));
+                  setToDateErrorMessage('');
+                }}
+                onClose={() => {
+                  setShowToPicker(false);
+                }}
+              />
+            )}
+          </View>
+
+
+          {/* Optional Address Selection */}
+          {workType === "ONLINE" && (
+
+            <View className='bg-blue-50 p-2 rounded-2xl mb-2'>
               <Text className="text-body text-text font-bold mb-2">{t('customerProfile.locationInfo')}</Text>
 
               <View className='bg-blue-50 rounded-2xl'>
@@ -703,7 +699,7 @@ export default function PostWorkScreen() {
                 />
               </View>
 
-              <View className='mt-3'>
+              <View className=''>
                 <Dropdown
                   label={t('kyc.step4.location.district.label')}
                   value={selectedDistrict?.district_la}
@@ -714,7 +710,7 @@ export default function PostWorkScreen() {
                 />
               </View>
 
-              <View className='mt-3'>
+              <View className=''>
                 <FormInput
                   label={t('kyc.step4.location.village.label')}
                   value={village}
@@ -723,16 +719,27 @@ export default function PostWorkScreen() {
                   inputClassName={selectedDistrict ? 'border-border' : 'border-gray-200'}
                 />
               </View>
+              <View className=''>
+                <FormInput
+                  label={t('postWork.address_manually')}
+                  value={place}
+                  onChangeText={setPlace}
+                  placeholder={t('postWork.placeholder_address_manually')}
+                  inputClassName={'border-border'}
+                />
+              </View>
             </View>
 
-            {workType === 'ONLINE' && (
-              <SubWorkDetailsInput
-                subWorkDetails={subWorkDetails}
-                setSubWorkDetails={setSubWorkDetails}
-              />
-            )}
-          </KeyboardAwareScrollView>
-   
+          )}
+
+          {workType === 'ONLINE' && (
+            <SubWorkDetailsInput
+              subWorkDetails={subWorkDetails}
+              setSubWorkDetails={setSubWorkDetails}
+            />
+          )}
+        </KeyboardAwareScrollView>
+
       </ScreenWrapper>
     </>
   );

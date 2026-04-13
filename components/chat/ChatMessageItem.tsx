@@ -206,7 +206,6 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
 
 const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   item,
-
   onUpdateMessage,
   onCopyMessage,
   onReplyToMessage,
@@ -632,7 +631,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                               width: '100%',
                               height: '100%',
                             }}
-                            resizeMode="contain"
+                            resizeMode="cover"
                           />
                           {/* <View style={{
                             position: 'absolute',
@@ -675,14 +674,17 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                             borderTopColor: isFromUser ? 'rgba(255,255,255,0.2)' : '#f3f4f6',
                             flexDirection: 'row',
                             alignItems: 'center',
-                            justifyContent: 'space-between'
-                          }}>
+                            
+                          }}
+                          className={`${isFromUser ? 'self-end' : 'self-start'} px-4`}
+                          >
                             <Text style={{
                               color: isFromUser ? '#fff' : '#3B82F6',
                               fontWeight: '600',
                               fontSize: 13
                             }}>
-                              {t('chat.chatroom.view_on_map')} {(item as any).location?.latitude}
+                              {t('chat.chatroom.view_on_map')} 
+                              {/* {(item as any).location?.latitude} */}
                             </Text>
                             <Ionicons
                               name="chevron-forward"
@@ -711,9 +713,9 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                     )}
 
                     {/* Timestamp and Status */}
-                    <View className="flex-row items-center gap-2 mt-1">
+                    <View className={`flex-row items-center gap-2 mt-1 ${isFromUser ? 'self-end' : 'self-start'} `}>
                       <Text
-                        className={`text-xs ${!isFromUser ? 'text-textSecondary' : 'text-border'
+                        className={`text-xs  ${!isFromUser ? 'text-textSecondary ' : 'text-border '
                           }`}
                       >
                         {formatTime(item.createdAt || '')}

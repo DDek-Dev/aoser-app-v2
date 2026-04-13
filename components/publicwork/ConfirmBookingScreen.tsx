@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { FreelancerStackParamList, TabParamList } from 'types/navigation';
@@ -27,6 +27,7 @@ const ConfirmBookingScreen = () => {
     const [localFormData, setLocalFormData] = useState(params?.formData || {});
     const { t } = useTranslation();
 
+    // console.log('ConfirmBookingScreen received formData:', JSON.stringify(params?.formData, null, 2));
     const handleConfirm = async () => {
         try {
             setIsLoading(true);
@@ -50,7 +51,7 @@ const ConfirmBookingScreen = () => {
                 workTitle: '',
                 description: '',
                 budget: null,
-                category: '',
+              
                 kindOfWork: 'ONLINE',
                 deadLine: null,
                 startDate: null,
@@ -64,7 +65,8 @@ const ConfirmBookingScreen = () => {
                     province: '',
                     district: '',
                     village: '',
-                }
+                },
+                place:'',
             });
 
 
@@ -75,7 +77,7 @@ const ConfirmBookingScreen = () => {
             });
 
             if (params.isBook) {
-                navigation2.navigate('HistoryScreen');
+                navigation2.replace('HistoryScreen');
 
             } else {
 
@@ -90,6 +92,7 @@ const ConfirmBookingScreen = () => {
                 });
             }
         } catch (error) {
+            setIsLoading(false);
             console.log('Error:', error);
             // Handle error (show toast, etc.)
         }
@@ -134,13 +137,13 @@ const ConfirmBookingScreen = () => {
                     </View>
                 </View>
 
-                <TouchableOpacity
+                <Pressable
                     onPress={handleConfirm}
                     className="bg-primary mt-auto py-4 rounded-xl "
                 >
                     {isLoading ? <Text className="text-white font-semibold text-base text-center">{t('postWork.confirm.confirming')}</Text> :
                         <Text className="text-white font-semibold text-base text-center">{t('postWork.confirm.confirm_submit')}</Text>}
-                </TouchableOpacity>
+                </Pressable>
             </ScrollView>
 
         </ScreenWrapper>

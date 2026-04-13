@@ -91,8 +91,8 @@ const RoomChat = () => {
   // Refs
   const textInputRef = useRef<TextInput>(null);
   const flatListRef = useRef<FlatList>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const remoteTypingTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const typingTimeoutRef = useRef<any>(null);
+  const remoteTypingTimeoutsRef = useRef<Record<string, any>>({});
   const initializedConversationRef = useRef<string | null>(null);
   const { t } = useTranslation();
   const {
@@ -100,6 +100,24 @@ const RoomChat = () => {
     // handleReplyToMessage,
     handleAIResponse,
   } = useMessageActions();
+
+  const fetchMessagesPage = useCallback(
+    async (skip: number, limit: number) => {
+      try {
+        if (!tokens?.accessToken || !partnerId) return [];
+        const res = await chatApi.getChatroom(tokens.accessToken, partnerId, skip, limit);
+        return res?.conversationMessages || [];
+      } catch (e: any) {
+        // Avoid noisy logs for expected rate limiting; let the UI keep existing data.
+        const status = e?.response?.status;
+        if (status !== 429) {
+          console.log('Failed to fetch messages:', e);
+        }
+        return [];
+      }
+    },
+    [tokens?.accessToken, partnerId]
+  );
 
 
   const handleReplyToMessage = useCallback((message: Message) => {
@@ -978,6 +996,9 @@ const RoomChat = () => {
   }
 
   // console.log('all nedia:', allMedia);
+  const displayMessages = (messages && messages.length > 0)
+    ? messages
+    : (chat?.conversationMessages || []);
 
   return (
     <ScreenWrapper safeEdges={[ 'bottom']} style={{flex: 1}}>
@@ -1028,7 +1049,7 @@ const RoomChat = () => {
 
           {/* Chat List */}
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
             style={{ flex: 1 }}
           >
             <Animated.View
@@ -1036,32 +1057,21 @@ const RoomChat = () => {
                 flex: 1,
                 opacity: chatFadeAnim,
                 
-                paddingBottom: keyboardHeight > 0 ? 20 : 0,
+                // paddingBottom: keyboardHeight > 0 ? 20 : 0,
+                marginBottom:Platform.OS === 'ios' ? 24 : 20,
               }}
               className={'bg-black/5'}
             >
               <ChatListContainer
-                messages={messages}
+                key={chat?.conversation?._id || partnerId}
+                messages={displayMessages}
                 onUpdateMessages={handleUpdateMessage}
                 onCopyMessage={handleCopyMessage}
                 onReplyToMessage={handleReplyToMessage}
                 onAIResponse={handleAIResponse}
                 keyboardHeight={keyboardHeight}
                 flatListRef={flatListRef}
-                onFetchPage={async (skip: number, limit: number) => {
-                  try {
-                    if (!tokens?.accessToken || (!partnerId && !chat?.userProfile?._id)) {
-                      return [];
-                    }
-                    const userIdForFetch = partnerId || chat.userProfile._id;
-                    const res = await chatApi.getChatroom(tokens.accessToken, userIdForFetch, skip, limit);
-                    const list = res?.conversationMessages || [];
-                    return list;
-                  } catch (e: any) {
-                    console.log('Failed to fetch messages:', e);
-                    return [];
-                  }
-                }}
+                onFetchPage={fetchMessagesPage}
                 pageSize={20}
 
               />
@@ -1256,7 +1266,7 @@ const RoomChat = () => {
 
               <TextInput
                 ref={textInputRef}
-                className="flex-1 bg-background px-4 py-3 rounded-2xl text-body text-text"
+                className="flex-1 bg-background px-4  rounded-2xl text-body text-text"
                 placeholder={t('chat.chatroom.typeMessage')}
                 placeholderTextColor="#9CA3AF"
                 value={message}
@@ -1269,11 +1279,11 @@ const RoomChat = () => {
                 editable={true}  // ✅ Ensure it's editable
                 keyboardType="default"
                 style={{
-                  minHeight: 44,
+                  minHeight: 53,
                   maxHeight: 120,
                   lineHeight: 20,
-                  paddingTop: Platform.OS === 'ios' ? 12 : 8,
-                  paddingBottom: Platform.OS === 'ios' ? 12 : 8,
+                  paddingTop: Platform.OS === 'ios' ? 12 : 12,
+                  paddingBottom: Platform.OS === 'ios' ? 12 : 12,
                 }}
                 autoFocus={false}
                 onFocus={() => {

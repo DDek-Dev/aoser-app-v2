@@ -43,8 +43,8 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <View className="mb-4">
-      <Text className="text-body font-medium text-text mb-2">{label}</Text>
+    <View className="mb-2">
+      <Text className="text-body font-bold text-text mb-2">{label}</Text>
       
       {/* Dropdown Trigger Button */}
       <TouchableOpacity
@@ -110,7 +110,7 @@ const Dropdown: React.FC<DropdownProps> = ({
               {/* Header */}
               <View className="flex-row items-center justify-between p-4 border-b border-gray-200">
                 <View className="flex-1">
-                  <Text className="text-lg font-semibold text-gray-800">
+                  <Text className="text-body text-text">
                     {t('customerProfile.select')} {label}
                   </Text>
                   <Text className="text-sm text-gray-500 mt-1">

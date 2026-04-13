@@ -41,7 +41,7 @@ export default function OtpRequestScreen({ navigation }: any) {
   const [formData, setFormData] = useState<any>(null);
   const [countdown, setCountdown] = useState(60);
   const [isResending, setIsResending] = useState(false);
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<any>(null);
 
   const { otpVerifyLoading, signupWithOTP } = useAuth();
 

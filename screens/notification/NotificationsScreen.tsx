@@ -32,13 +32,13 @@ const NotificationItem = ({ item, onPress }: { item: Notifications, onPress: (no
   const { name, color } = getIconByType(item.notificationType);
   return (
     <Pressable onPress={() => onPress(item)}>
-      <View className="flex-row items-start bg-white px-4 py-4 h-28 mb-2 rounded-xl border border-border">
+      <View className="flex-row items-start bg-white px-4 py-4 h-28 mb-1 rounded-2xl border border-border">
         <View className="w-10 h-10 bg-background rounded-full justify-center items-center mr-3">
           <Ionicons name={name as any} size={20} color={color} />
         </View>
         <View className="flex-1">
           <Text className="text-body text-text font-semibold">{item.title}</Text>
-          <Text className="text-caption text-textSecondary">{item.message}</Text>
+          <Text className="text-body text-text" numberOfLines={3}>{item.message}</Text>
         </View>
         <View className="items-end">
           <Text className="text-caption text-textSecondary mb-1">{formatRelativeTime(item.createdAt, currentLanguage)}</Text>
@@ -87,14 +87,19 @@ const NotificationsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
 
 
-  // console.log('data notifications: ', JSON.stringify(data, null, 2))
+  console.log('data notifications: ', JSON.stringify(data?.slice(-3), null, 2))
   React.useEffect(() => {
-    if (data) setLocalNotifications(data as any);
+    if (data) setLocalNotifications(data);
   }, [data]);
 
   const { t } = useTranslation();
 
   const handleNavigationByType = (notification: Notifications) => {
+    if (notification.notifyAbout === "UPDATE_FREELANCER_KYC") {
+      navigation.navigate('FreelancerRoleGate');
+      return;
+    }
+
     // Navigate based on notification type
     switch (notification.notificationType) {
       case 'Like':
@@ -161,7 +166,7 @@ const NotificationsScreen = () => {
         // Navigate to news detail
         if (notification.notificationType === "News") {
           console.log("NewsDetail")
-          // navigation.navigate('NewsDetail', { newsId: notification.aboutNotification });
+          navigation.navigate('News', { newsId: notification.aboutNotification });
         } else {
           console.log("News")
           // navigation.navigate('News');
@@ -214,7 +219,7 @@ const NotificationsScreen = () => {
     <ScreenWrapper safeEdges={['top']}>
       <View className="flex-1 bg-background">
         {/* Header */}
-        <View className='px-4 flex-row justify-between items-center mb-4'>
+        <View className='px-4 flex-row justify-between items-center mb-1'>
           <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">
             <View className="flex-1">
               <Text className="font-semibold text-primary text-heading">{t('notification.notification')}</Text>
@@ -228,9 +233,9 @@ const NotificationsScreen = () => {
           keyExtractor={(item, index) => item._id + index}
           renderItem={({ item }) => <NotificationItem item={item} onPress={handleNotificationPress} />}
           renderSectionHeader={({ section: { title } }) => (
-            <Text className="text-caption text-text font-semibold mb-2 mt-4">{title}</Text>
+            <Text className="text-caption text-text font-semibold mb-2 mt-2">{title}</Text>
           )}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: 8 }}
           showsVerticalScrollIndicator={false}
           refreshing={isLoading}
           refreshControl={

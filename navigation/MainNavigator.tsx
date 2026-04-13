@@ -1,5 +1,5 @@
 import { Platform, View, } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { NavigationContainerRef, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -58,7 +58,11 @@ import CustomerProfile from 'screens/profile/CustomerProfile';
 import AppendOwnerWork from 'components/publicwork/AppendOwnerWork';
 import TopFreelancerList from 'components/freelancer/TopFreelancerList';
 import ConfirmPostjob from 'components/publicwork/ConfirmPostjob';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import WalletScreen from 'components/profile/WalletScreen';
+import NewsScreen from 'screens/profile/NewsScreen';
+import News from 'screens/profile/News';
+
 
 
 
@@ -129,6 +133,7 @@ function TabNavigator() {
 
 export default function MainNavigator() {
   const { expoPushToken, notification } = usePushNotifications();
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
 
   useEffect(() => {
@@ -147,7 +152,7 @@ export default function MainNavigator() {
   const { t } = useTranslation();
 
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const insets = useSafeAreaInsets();
+
   return (
     <View style={{ flex: 1 }}>
 
@@ -296,6 +301,22 @@ export default function MainNavigator() {
               onSignUpPress={() => navigation.navigate('SignUp')}
             >
               <AuthFreelancerSetting />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen name="WalletScreen"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          {() => (
+            <ProtectedRoute
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <WalletScreen />
             </ProtectedRoute>
           )}
         </RootStack.Screen>
@@ -467,6 +488,42 @@ export default function MainNavigator() {
               onSignUpPress={() => navigation.navigate('SignUp')}
             >
               <RoomChat />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen
+          name="NewsScreen"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          {() => (
+            <ProtectedRoute
+              backicon={true}
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <NewsScreen />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen
+          name="News"
+          options={{
+            headerShown: false,
+            animation: 'fade',
+          }}
+        >
+          {() => (
+            <ProtectedRoute
+              backicon={true}
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <News />
             </ProtectedRoute>
           )}
         </RootStack.Screen>

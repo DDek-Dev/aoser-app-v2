@@ -1,155 +1,3 @@
-// import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-// import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-// import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-// import { FreelancerStackParamList, TabParamList } from 'types/navigation';
-// import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-// import ScreenWrapper from 'components/ui/ScreenWrapper';
-// import { useCreatePublicWork } from 'hooks/usePublicWork';
-// import { useState } from 'react';
-// import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
-// import Header_back from 'components/ui/Header_back';
-// import { useTranslation } from 'react-i18next';
-
-
-// type ConfirmBookingRouteProp = RouteProp<FreelancerStackParamList, 'ConfirmPostjob'>;
-
-// const ConfirmPostjob = () => {
-
-//     const createPublicWorkMutation = useCreatePublicWork();
-//     const [isLoading, setIsLoading] = useState(false);
-
-//     const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
-//     const navigation2 = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-
-
-//     const route = useRoute<ConfirmBookingRouteProp>();
-//     const { params } = route;
-//     const [localFormData, setLocalFormData] = useState(params?.formData || {});
-//     const { t } = useTranslation();
-
-//     const handleConfirm = async () => {
-//         try {
-//             setIsLoading(true);
-
-//             const result = await createPublicWorkMutation.mutateAsync(localFormData);
-
-//             if (result?.error) {
-//                 Toast.show({
-//                     type: ALERT_TYPE.DANGER,
-//                     title: `${t('postWork.confirm.error')}`,
-//                     textBody: result.error,
-//                 });
-//                 setIsLoading(false);
-//                 return;
-//             }
-
-//             setIsLoading(false);
-
-//             // Navigate on success
-//             setLocalFormData({
-//                 workTitle: '',
-//                 description: '',
-//                 budget: null,
-//                 category: '',
-//                 kindOfWork: 'ONLINE',
-//                 deadLine: null,
-//                 startDate: null,
-//                 subWorkDetails: [],
-//                 currency: 'LAK',
-//                 budgetType: 'FIXED_PRICE',
-//                 serviceType: '',
-//                 jobs: [],
-//                 address: {
-//                     country: "Laos",
-//                     province: '',
-//                     district: '',
-//                     village: '',
-//                 }
-//             });
-
-
-//             Toast.show({
-//                 type: ALERT_TYPE.SUCCESS,
-//                 title: `${t('postWork.confirm.success')}`,
-//                 textBody: `${t('postWork.confirm.work_created_successfully')}`,
-//             });
-
-
-
-//                 navigation.reset({
-//                     index: 0,
-//                     routes: [{
-//                         name: 'MainTabs' as keyof TabParamList,
-//                         state: {
-//                             routes: [{ name: 'Works' }]
-//                         }
-//                     }],
-//                 });
-
-//         } catch (error) {
-//             console.log('Error:', error);
-//             // Handle error (show toast, etc.)
-//         }
-//     };
-
-
-//     return (
-//         <ScreenWrapper safeEdges={['bottom', 'top']} >
-
-//             <Header_back text={t('postWork.public_confirm.confirm')} iconColor='#3B82F6' onPress={() => navigation.goBack()} />
-//             <ScrollView
-//                 contentContainerStyle={{ padding: 20, flexGrow: 1 }}
-//                 showsVerticalScrollIndicator={false}
-//             >
-//                 <Text className="text-body text-text font-semibold mb-4">
-//                     {t('postWork.public_confirm.confirm_message')}
-//                 </Text>
-
-//                 <View className="bg-blue-50 border border-border p-4 rounded-xl mb-4">
-//                     <View className="flex-row items-start">
-//                         <Ionicons name="information-circle" size={20} color="#2563EB" className="mt-1" />
-//                         <View className="ml-2 flex-1">
-//                             <Text className="text-primary font-semibold mb-1">{t('postWork.public_confirm.complete_job_details')}</Text>
-//                             <Text className="text-body text-text">
-//                                 {t('postWork.public_confirm.system_review_description')}
-//                             </Text>
-//                         </View>
-//                     </View>
-//                 </View>
-
-//                 <View className="bg-red-50 border border-red-200 p-4 rounded-xl mb-4">
-//                     <View className="flex-row items-start">
-//                         <MaterialIcons name="error-outline" size={20} color="#DC2626" className="mt-1" />
-//                         <View className="ml-2 flex-1">
-//                             <Text className="text-red-600 font-semibold mb-1">{t('postWork.public_confirm.important_notice')}</Text>
-//                             <Text className="text-body text-error">
-//                                 {t('postWork.public_confirm.important_notice_description1')}
-//                             </Text>
-//                             <Text className="text-body text-error">
-//                                 {t('postWork.public_confirm.important_notice_description2')}
-//                             </Text>
-//                             <Text className="text-body text-red-500 font-semibold mt-1">
-//                                 {t('postWork.public_confirm.ensure_clear_post')}                            </Text>
-//                         </View>
-//                     </View>
-//                 </View>
-
-//                 <TouchableOpacity
-//                     onPress={handleConfirm}
-//                     className="bg-primary mt-auto py-4 rounded-xl "
-//                 >
-//                     {isLoading ? <Text className="text-white font-semibold text-base text-center">{t('postWork.public_confirm.confirming')}</Text> :
-//                         <Text className="text-white font-semibold text-base text-center">{t('postWork.public_confirm.confirm_submit')}</Text>}
-//                 </TouchableOpacity>
-//             </ScrollView>
-
-//         </ScreenWrapper>
-//     );
-// };
-
-// export default ConfirmPostjob;
-
-
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
@@ -174,7 +22,6 @@ const ConfirmPostjob = () => {
     const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
-    const navigation2 = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const route = useRoute<ConfirmBookingRouteProp>();
     const { params } = route;
     const [localFormData, setLocalFormData] = useState(params?.formData || {});
@@ -187,7 +34,7 @@ const ConfirmPostjob = () => {
         };
     }, []);
 
-    console.log('localFormData', JSON.stringify(localFormData, null, 2))
+    
     const startSlowTimer = () => {
         slowToastShownRef.current = false;
         slowTimerRef.current = setTimeout(() => {
@@ -209,69 +56,6 @@ const ConfirmPostjob = () => {
         }
     };
 
-    // const handleConfirm = async () => {
-    //     try {
-    //         setIsLoading(true);
-    //         startSlowTimer();
-
-    //         const result = await createPublicWorkMutation.mutateAsync(localFormData);
-
-    //         clearSlowTimer();
-
-    //         if (result?.error) {
-    //             Toast.show({
-    //                 type: ALERT_TYPE.DANGER,
-    //                 title: t('postWork.confirm.error'),
-    //                 textBody: result.error,
-    //             });
-    //             setIsLoading(false);
-    //             return;
-    //         }
-
-    //         setIsLoading(false);
-
-    //         setLocalFormData({
-    //             workTitle: '',
-    //             description: '',
-    //             budget: null,
-    //             kindOfWork: 'ONLINE',
-    //             deadLine: null,
-    //             startDate: null,
-    //             subWorkDetails: [],
-    //             currency: 'LAK',
-    //             budgetType: 'FIXED_PRICE',
-    //             serviceType: '',
-    //             jobs: [],
-    //             address: { country: 'Laos', province: '', district: '', village: '' },
-    //         });
-
-    //         Toast.show({
-    //             type: ALERT_TYPE.SUCCESS,
-    //             title: t('postWork.confirm.success'),
-    //             textBody: t('postWork.confirm.work_created_successfully'),
-    //         });
-
-    //         navigation.reset({
-    //             index: 0,
-    //             routes: [{
-    //                 name: 'MainTabs' as keyof TabParamList,
-    //                 state: { routes: [{ name: 'Works' }] },
-    //             }],
-    //         });
-
-    //     } catch (error) {
-    //         clearSlowTimer();
-    //         setIsLoading(false);
-    //         Toast.show({
-    //             type: ALERT_TYPE.DANGER,
-    //             title: t('postWork.confirm.error'),
-    //             textBody: t('postWork.confirm.network_error'), // 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'
-    //         });
-    //         console.log('Error:', error);
-    //     }
-    // };
-
-
     const handleConfirm = async () => {
         try {
             setIsLoading(true);
@@ -287,6 +71,8 @@ const ConfirmPostjob = () => {
                 currency: raw.currency,
                 budgetType: raw.budgetType,
                 serviceType: raw.serviceType,
+                place: raw.place,
+
             };
 
             // budget — ส่งเฉพาะมีค่า (ไม่ใช่ null/0)
@@ -321,6 +107,9 @@ const ConfirmPostjob = () => {
                     village: addr.village || '',
                 };
             }
+            if (raw.place) {
+                payload.place = raw.place;
+            }
             // ────────────────────────────────────────────────────────────
 
             const result = await createPublicWorkMutation.mutateAsync(payload);
@@ -344,6 +133,7 @@ const ConfirmPostjob = () => {
                 subWorkDetails: [], currency: 'LAK', budgetType: 'FIXED_PRICE',
                 serviceType: '', jobs: [],
                 address: { country: 'Laos', province: '', district: '', village: '' },
+                place: '',
             });
 
             Toast.show({

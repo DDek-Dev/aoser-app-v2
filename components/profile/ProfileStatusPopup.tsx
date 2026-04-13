@@ -24,11 +24,12 @@ import { UserProfile } from 'types/profile';
 type Props = {
     workStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
     isme: boolean;
+    userId: string;
 }
 
 type PopupAnchor = { x: number; y: number; width: number; height: number };
 
-const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
+const ProfileStatusPopup = ({ workStatus, isme, userId }: Props) => {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const [showPopup, setShowPopup] = useState(false);
     const [popupAnchor, setPopupAnchor] = useState<PopupAnchor | null>(null);
@@ -131,6 +132,9 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
 
     return (
         <View className="absolute right-4 top-12 z-50 flex-row items-center gap-4">
+
+
+
             {isme && (
 
                 <Pressable onPress={() => navigation.navigate('FreelancerWorkHistory')} >
@@ -140,7 +144,11 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
                     </View>
                 </Pressable>
             )}
-
+            {isme && (
+                <Pressable onPress={() => navigation.navigate('WalletScreen', {userId: userId})} className="bg-border p-3 rounded-full">
+                    <Ionicons name="wallet-outline" size={24} color="#3B82F6" />
+                </Pressable>
+            )}
             <View ref={statusButtonWrapperRef}>
                 <Pressable onPress={openPopup} className="p-1 bg-blue-50 rounded-full w-[100px]">
                     <View className="p-3 bg-gray-200 rounded-full">
@@ -181,11 +189,7 @@ const ProfileStatusPopup = ({ workStatus, isme }: Props) => {
                 </Pressable>
             </Modal>
 
-            {isme && (
-                <Pressable onPress={() => navigation.navigate('AuthFreelancerSetting')} className="bg-border p-3 rounded-full">
-                    <Ionicons name="settings-outline" size={24} color="#3B82F6" />
-                </Pressable>
-            )}
+
 
             {/* ✅ Centered Modal for Busy Date */}
             <Modal transparent visible={showBusyDateInput} animationType="fade">

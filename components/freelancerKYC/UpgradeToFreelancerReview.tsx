@@ -46,7 +46,7 @@ export default function UpgradeToFreelancerReview() {
   })();
   const isLoading = isLoadingLocal || (!localProfile && (isLoadingMyProfile || (!!currentUserId && isLoadingDb)));
 
-  console.log("profile", profile?.userProfileImage);
+  console.log("profile", profile.videoPromote);
   const { t } = useTranslation();
   if (isLoading) return <LoadingScreen />;
   if (!profile) return null;
@@ -88,7 +88,8 @@ export default function UpgradeToFreelancerReview() {
       {profile.videoPromote ?
         <VDOPromote
           video={profile.videoPromote}
-          isReview={isLocalDraft}
+          // isReview={isLocalDraft}
+          isReview={false}
           context="profile"
           isScreenFocused={true}
         />

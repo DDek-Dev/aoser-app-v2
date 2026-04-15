@@ -13,13 +13,15 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aoser.app",
       "googleServicesFile": "./GoogleService-Info.plist",
-
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow Aceer to save QR codes to your photo library",
+        "NSPhotoLibraryUsageDescription": "Allow Aoser to save QR codes to your photo library",
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleURLTypes": [ 
           {
@@ -29,7 +31,7 @@
           }
         ]
       },
-      "buildNumber": "1"
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -44,8 +46,7 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO"
-      ],
-      "versionCode": 1
+      ]
     },
     "web": {
       "favicon": "./assets/aoser_logo_no_bg_blue.png"

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
 
+// import {Grid2x2}  from 'lucide-react-native';
+
 
 interface CustomTabBarProps {
   state: any;

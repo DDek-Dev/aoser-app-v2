@@ -86,7 +86,7 @@ const settings = useMemo(() => [
         <Text className="text-heading font-bold text-white">{t('profile.profile')}</Text>
       </View>
       <Pressable onPress={()=> navigation.navigate('NewsScreen')} className="flex-row justify-between items-center mt-4 gap-2">
-        <Text className="text-body font-bold text-white">News</Text>
+        <Text className="text-body font-bold text-white">{t('news.title')}</Text>
         <Ionicons name="newspaper-outline" size={20} color="#FFFFFF" />
       </Pressable>
     </View>

@@ -4,9 +4,10 @@ import {
   Animated,
   StyleSheet,
   Text,
-
   RefreshControl,
   Pressable,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 
 import CategoryTabs from 'components/freelancer/CategoryTabs';
@@ -19,8 +20,12 @@ import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useTranslation } from 'react-i18next';
 import { useGetTopfreelancers, useRecommendedFreelancers } from 'hooks/useFreelancer';
 import TopFreelancers from 'components/freelancer/TopFreelancers';
-import NetworkErrorPopup from 'components/ui/NetworkErrorPopup';
+// import NetworkErrorPopup from 'components/ui/NetworkErrorPopup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const HIDE_THRESHOLD = 100;  // must scroll down this many px to hide
+const SHOW_THRESHOLD = 100;  // must scroll up this many px to show
+const MIN_SCROLL_Y = 10;    // don't hide when near the very top
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -34,11 +39,19 @@ export default function HomeScreen() {
   const translateXAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // For hide/show search bar on scroll
+  const lastScrollY = useRef(0);
+  const bannerVisible = useRef(new Animated.Value(1)).current;
+  const bannerState = useRef<'shown' | 'hidden'>('shown');
+  const scrollAccumulator = useRef(0);
+
   type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'SearchBar'>;
   const navigation = useNavigation<SearchBarNavigationProp>();
   const { t } = useTranslation();
-const insets = useSafeAreaInsets(); 
-  // Fetch freelancers with current category filter
+  const insets = useSafeAreaInsets();
+
+  const BANNER_FULL_HEIGHT = insets.top + 12 + 12; // paddingTop + search bar height + paddingBottom
+
   const {
     data,
     isLoading,
@@ -50,7 +63,8 @@ const insets = useSafeAreaInsets();
     isFetchingNextPage,
     refetch,
     isRefetching,
-  } = useRecommendedFreelancers(selectedCategoryId || '');
+  } = useRecommendedFreelancers(selectedCategoryId || '', undefined);
+
   const {
     data: topFreelancers = [],
     isLoading: isTopFreelancersLoading,
@@ -60,12 +74,10 @@ const insets = useSafeAreaInsets();
     refetch: refetchTopFreelancers,
   } = useGetTopfreelancers();
 
-  // Flatten all pages efficiently
   const allFreelancers = useMemo(() => {
     return data?.pages.flatMap(page => page) || [];
   }, [data?.pages]);
 
-  // Handle pull-to-refresh
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
@@ -78,14 +90,11 @@ const insets = useSafeAreaInsets();
 
   const isLikelyNetworkError = (error: unknown): boolean => {
     if (!error) return false;
-
     const maybeError = error as any;
     const code = maybeError?.code;
     const message = String(maybeError?.message || '').toLowerCase();
-
     if (maybeError?.isAxiosError && !maybeError?.response) return true;
     if (code === 'ERR_NETWORK' || code === 'ERR_INTERNET_DISCONNECTED' || code === 'ECONNABORTED') return true;
-
     return (
       message.includes('network') ||
       message.includes('internet') ||
@@ -134,17 +143,75 @@ const insets = useSafeAreaInsets();
     }
   }, [isRetryingNetwork, refetch, refetchTopFreelancers]);
 
-  // Banner animations
-  const bannerTextOpacity = scrollY.interpolate({
-    inputRange: [0, 180],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
+  // Combined scroll handler: updates scrollY for other animations + handles banner hide/show
+  const handleScroll = useCallback(
+    Animated.event(
+      [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+      {
+        useNativeDriver: false,
+        listener: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          const currentY = event.nativeEvent.contentOffset.y;
+          const diff = currentY - lastScrollY.current;
+          lastScrollY.current = currentY;
+
+          // Always show banner when near the top
+          if (currentY <= MIN_SCROLL_Y) {
+            if (bannerState.current !== 'shown') {
+              bannerState.current = 'shown';
+              scrollAccumulator.current = 0;
+              Animated.spring(bannerVisible, {
+                toValue: 1,
+                useNativeDriver: false,
+                bounciness: 0,
+                speed: 20,
+              }).start();
+            }
+            return;
+          }
+
+          // Accumulate scroll in the same direction, reset on direction change
+          if (
+            (diff > 0 && scrollAccumulator.current < 0) ||
+            (diff < 0 && scrollAccumulator.current > 0)
+          ) {
+            scrollAccumulator.current = 0; // direction changed, reset
+          }
+          scrollAccumulator.current += diff;
+
+          // Only act when accumulated scroll crosses the threshold
+          if (scrollAccumulator.current > HIDE_THRESHOLD && bannerState.current !== 'hidden') {
+            bannerState.current = 'hidden';
+            scrollAccumulator.current = 0;
+            Animated.spring(bannerVisible, {
+              toValue: 0,
+              useNativeDriver: false,
+              bounciness: 0,
+              speed: 20,
+            }).start();
+          } else if (scrollAccumulator.current < -SHOW_THRESHOLD && bannerState.current !== 'shown') {
+            bannerState.current = 'shown';
+            scrollAccumulator.current = 0;
+            Animated.spring(bannerVisible, {
+              toValue: 1,
+              useNativeDriver: false,
+              bounciness: 0,
+              speed: 20,
+            }).start();
+          }
+        },
+      }
+    ),
+    []
+  );
+
+  const bannerHeightAnimated = bannerVisible.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, BANNER_FULL_HEIGHT],
   });
 
-  const bannerHeight = scrollY.interpolate({
-    inputRange: [0, 380],
-    outputRange: [110, 0],
-    extrapolate: 'clamp',
+  const bannerOpacity = bannerVisible.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
   });
 
   const bannerRadius = scrollY.interpolate({
@@ -153,18 +220,11 @@ const insets = useSafeAreaInsets();
     extrapolate: 'clamp',
   });
 
-  const searchBarTranslateY = scrollY.interpolate({
-    inputRange: [0, 1000],
-    outputRange: [0, 0],
-    extrapolate: 'clamp',
-  });
-
   const handleCategoryChange = useCallback((category: string, index: number, categoryId?: string) => {
     setSelectedIndex(index);
     setSelectedCategory(category);
     setSelectedCategoryId(categoryId || null);
 
-    // Trigger smooth fade animation
     const direction = index > selectedIndex ? 1 : -1;
 
     fadeAnim.setValue(0);
@@ -185,29 +245,28 @@ const insets = useSafeAreaInsets();
   }, [selectedIndex, fadeAnim, translateXAnim]);
 
   return (
-    <ScreenWrapper safeEdges={[]} style={{ flex: 1 }}>
+    <ScreenWrapper safeEdges={['top']} style={{ flex: 1 }}>
       {/* Search Banner */}
       <Animated.View
         style={[
           styles.banner,
           {
             zIndex: 99,
-            // height: bannerHeight,
+            height: bannerHeightAnimated,
+            opacity: bannerOpacity,
+            overflow: 'hidden',
             borderBottomLeftRadius: bannerRadius,
             borderBottomRightRadius: bannerRadius,
-            paddingTop: insets.top + 8,
           },
         ]}
       >
-        <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }]}} >
-          <Pressable
-            onPress={() => navigation.navigate('SearchBar', { text: '', focus: true })}
-            className="flex-row items-center bg-surface rounded-full border border-gray-300 px-4 py-4 "
-          >
-            <Ionicons name="search-outline" size={20} color="#3B82F6" />
-            <Text className="ml-2 text-base text-[#999]">{t('home.search_freelancer')}</Text>
-          </Pressable>
-        </Animated.View>
+        <Pressable
+          onPress={() => navigation.navigate('SearchBar', { text: '', focus: true })}
+          className="flex-row items-center bg-surface rounded-full border border-gray-300 px-4 py-4"
+        >
+          <Ionicons name="search-outline" size={20} color="#3B82F6" />
+          <Text className="ml-2 text-base text-[#999]">{t('home.search_freelancer')}</Text>
+        </Pressable>
       </Animated.View>
 
       {/* Category Tabs */}
@@ -225,10 +284,7 @@ const insets = useSafeAreaInsets();
         alwaysBounceVertical
         overScrollMode="always"
         contentContainerStyle={{ flexGrow: 1 }}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
+        onScroll={handleScroll}
         keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
@@ -241,7 +297,6 @@ const insets = useSafeAreaInsets();
           />
         }
       >
-        {/* Freelancers List */}
         <Animated.View
           style={{
             paddingTop: 8,
@@ -256,7 +311,6 @@ const insets = useSafeAreaInsets();
               freelancers={topFreelancers}
               isLoading={isTopFreelancersLoading}
               isFetching={isTopFreelancersFetching}
-  
             />
           )}
 
@@ -293,7 +347,7 @@ const insets = useSafeAreaInsets();
 const styles = StyleSheet.create({
   banner: {
     paddingHorizontal: 16,
-    // paddingTop: 30,
     paddingBottom: 12,
+    backgroundColor: 'white',
   },
 });

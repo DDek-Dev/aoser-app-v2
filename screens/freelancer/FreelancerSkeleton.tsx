@@ -29,13 +29,16 @@ const FreelancerSkeleton = () => {
     }, [pulseAnim]);
 
     return (
-        <View >
+        <View className=''>
+            <View className='px-4 py-2 bg-surface'>
+
             <Header_back
                 text={t('freelancer_profile.header_back_text', 'Profile')}
                 onPress={() => navigation.goBack()}
                 iconColor="#3B82F6"
                 backgroundColor="bg-surface"
             />
+            </View>
 
 
             {/* Header Image Area */}

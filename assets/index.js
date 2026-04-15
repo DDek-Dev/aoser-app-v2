@@ -40,3 +40,6 @@ export { default as selfie_with_card_png } from './selfie_with_card_png.png';
 // Payment 
 
 export { default as lao_qr } from './lao_qr.png';
+
+//icons
+export { default as checklist } from './icons/checklist.png';

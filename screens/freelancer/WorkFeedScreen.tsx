@@ -247,7 +247,16 @@ const WorkFeedScreen = () => {
     () =>
       scrollY.interpolate({
         inputRange: [-20, 200],
-        outputRange: [1, 10],
+        outputRange: [1, 0],
+        extrapolate: 'clamp',
+      }),
+    [scrollY]
+  );
+  const searchOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [-20, 100],
+        outputRange: [1, 0],
         extrapolate: 'clamp',
       }),
     [scrollY]
@@ -257,7 +266,7 @@ const WorkFeedScreen = () => {
     () =>
       scrollY.interpolate({
         inputRange: [0, 400],
-        outputRange: ['#2B68F2', '#FFFFFF'],
+        outputRange: ['#3B82F6', '#FFFFFF'],
         extrapolate: 'clamp',
       }),
     [scrollY]
@@ -267,7 +276,7 @@ const WorkFeedScreen = () => {
     () =>
       scrollY.interpolate({
         inputRange: [0, 480],
-        outputRange: [120 + insets.top, 75 + insets.top],
+        outputRange: [110 + insets.top, 0],
         extrapolate: 'clamp',
       }),
     [scrollY, insets.top]
@@ -287,7 +296,7 @@ const WorkFeedScreen = () => {
     () =>
       scrollY.interpolate({
         inputRange: [0, 400],
-        outputRange: [0, -40],
+        outputRange: [-20, -100],
         extrapolate: 'clamp',
       }),
     [scrollY]
@@ -511,9 +520,9 @@ const WorkFeedScreen = () => {
           styles.banner,
           {
             paddingHorizontal: 16,
-            paddingBottom: 12,
+            // paddingBottom: 12,
             // ✅ ใช้ insets.top แทน paddingTop: 30
-            paddingTop: insets.top + 12,
+            // paddingTop: insets.top,
           },
           {
             backgroundColor: bannerBgColor,
@@ -530,15 +539,24 @@ const WorkFeedScreen = () => {
             {
               fontSize: 28,
               opacity: bannerTextOpacity,
-              lineHeight: 40,
+              lineHeight:40,
 
             },
+           
           ]}
+          className='p-4'
         >
           {t('works.lets_find_work')}
         </Animated.Text>
 
-        <Animated.View style={{ transform: [{ translateY: searchBarTranslateY }] }}>
+        <Animated.View
+          style={[
+            { transform: [{ translateY: searchBarTranslateY }] },
+            { opacity: searchOpacity },
+          ]}
+        >
+    
+        
           <View className="flex-row items-center bg-white rounded-full border border-gray-300 px-4 ">
             <Ionicons name="search-outline" size={20} color="#3B82F6" />
             <TextInput

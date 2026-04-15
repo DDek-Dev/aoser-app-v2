@@ -416,7 +416,7 @@ export default function FreelancerProfile() {
         </View>
 
         {/* ===== SIMILAR FREELANCERS ===== */}
-        <FamiliarFreelancers title={t('freelancer_profile.similar_Freelancer')} scrollY={scrollY} />
+        <FamiliarFreelancers title={t('freelancer_profile.similar_Freelancer')} scrollY={scrollY} serviceType={profile.serviceType} exceptedIds={profile._id} />
 
         {/* Bottom Spacing for Floating Buttons */}
         <View className="mb-32" />

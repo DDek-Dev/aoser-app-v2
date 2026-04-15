@@ -171,8 +171,6 @@ export const useUpdateFreelancerProfile = () => {
 
 export const useGetFlHistory = () => {
   const { tokens } = useAuth();
-  console.log("tokens = ", tokens);
-  console.log("tokens?.accessToken = ", API_BASE_URL);
 
   return useQuery<Job[]>({
     queryKey: ['freelancer-history'],
@@ -182,7 +180,6 @@ export const useGetFlHistory = () => {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Aoser ${tokens?.accessToken}`,
-            // 'Authorization': `Aoser eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4OWY0YjlhM2E2YmRjY2VhYTIyNTUzOSIsInJvbGUiOiJXT1JLRVIiLCJpYXQiOjE3NjUwNDA1NjgsImV4cCI6MTc2NzYzMjU2OH0.YXEYVTVKz_RGoiZ53DBZfssGyVT3-dttY3XBARudljE`,
           }
         })
 
@@ -303,15 +300,16 @@ export const useGetTopfreelancers = () => {
  * Hook for fetching recommended freelancers with infinite scroll
  * Implements automatic background refetching and cache management
  */
-export const useRecommendedFreelancers = (serviceTypeId: string) => {
+export const useRecommendedFreelancers = (serviceTypeId: string, exceptedIds: string | undefined) => {
   const { tokens } = useAuth();
 
   return useInfiniteQuery<Freelancer[]>({
-    queryKey: ['recommended-freelancers', serviceTypeId],
+    queryKey: ['recommended-freelancers', serviceTypeId, exceptedIds],
     queryFn: ({ pageParam = 0 }) =>
       workerApi.getRecommandFreelancers(
         tokens?.accessToken || '',
         serviceTypeId,
+        exceptedIds || '',
         pageParam as number,
         10
       ),

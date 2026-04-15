@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     Modal,
     useWindowDimensions,
+    Image,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import DatePicker from 'components/ui/DatePicker';
@@ -20,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 // import { getProfileBusyDateFromDB } from 'your-data-fetching-saource'; // TODO: you implement this
 import { useUpdateFreelancerProfile } from 'hooks/useFreelancer';
 import { UserProfile } from 'types/profile';
+import { checklist, lao_qr } from 'assets';
 
 type Props = {
     workStatus: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
@@ -139,8 +141,10 @@ const ProfileStatusPopup = ({ workStatus, isme, userId }: Props) => {
 
                 <Pressable onPress={() => navigation.navigate('FreelancerWorkHistory')} >
 
-                    <View className="bg-border p-3 rounded-full">
-                        <Ionicons name="bag-handle-sharp" size={24} color="#3B82F6" />
+                    <View className="bg-border p-2 rounded-full">
+                        {/* <Ionicons name="bag-handle-sharp" size={24} color="#3B82F6" /> */}
+
+                        <Image source={checklist} style={{ width: 32, height: 32 }} />
                     </View>
                 </Pressable>
             )}

@@ -87,7 +87,7 @@ const NotificationsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
 
 
-  console.log('data notifications: ', JSON.stringify(data?.slice(-3), null, 2))
+  // console.log('data notifications: ', JSON.stringify(data?.slice(-3), null, 2))
   React.useEffect(() => {
     if (data) setLocalNotifications(data);
   }, [data]);

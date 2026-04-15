@@ -70,14 +70,18 @@ export default function AuthFreelancerProfile({ route }: Props) {
   const isOwnProfile = user?._id === profile?._id;
   if (isLoading) return (
     <ScreenWrapper safeEdges={['top', 'bottom']}>
+      <View>
+
       <FreelancerSkeleton />
+
+      </View>
     </ScreenWrapper>
 
   )
   if (!profile) return null;
 
 
-  console.log('profile', JSON.stringify(profile, null, 2))
+  // console.log('profile', JSON.stringify(profile, null, 2))
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']} >
 
@@ -95,6 +99,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
         <View>
           <Pressable onPress={() => navigation.navigate('AuthFreelancerSetting')} className="bg-border p-3 rounded-full">
             <Ionicons name="settings-outline" size={24} color="#3B82F6" />
+
           </Pressable>
         </View>
       </View>

@@ -2,7 +2,7 @@
 
 import { BookingFormData, Job, SubWorkDetail, WorkById, WalletData } from "types";
 // hooks/usePublicWork.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { publiceWorkApi } from "api/publicWork";
 import { useAuth } from "./useAuth";
 import { ALERT_TYPE, Toast } from "react-native-alert-notification";
@@ -45,6 +45,22 @@ export const usegetAllMyWork = () => {
     queryFn: () => publiceWorkApi.getAllMyWork(tokens?.accessToken || ''),
   });
 }
+
+export const useGetAllMyWorkInfinite = (pageSize = 15) => {
+  const { tokens } = useAuth();
+
+  return useInfiniteQuery({
+    queryKey: [...publicWorkKeys.mywork, 'infinite', { pageSize }] as const,
+    initialPageParam: 0,
+    enabled: !!tokens?.accessToken,
+    queryFn: ({ pageParam }) =>
+      publiceWorkApi.getMyWorkPage(tokens?.accessToken || '', pageParam, pageSize),
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (!Array.isArray(lastPage)) return undefined;
+      return lastPage.length === pageSize ? lastPageParam + lastPage.length : undefined;
+    },
+  });
+};
 
 // Hook to get a specific public work by ID
 export const usePublicWorkById = (id: string) => {

@@ -1378,6 +1378,14 @@
         "retry_button": "ລອງໃໝ່",
         "retrying_button": "ກຳລັງລອງໃໝ່..."
     },
+    "news": {
+    "title": "ຂ່າວສານ",
+    "errorLoading": "ໂຫລດຂໍ້ມູນຂ່າວສານບໍ່ສຳເລັດ",
+    "errorLoadingDetail": "ໂຫລດຂໍ້ມູນຂ່າວສານບໍ່ສຳເລັດ",
+    "invalidId": "ຂໍ້ມູນຂ່າວສານບໍ່ຖືກຕ້ອງ",
+    "publishedAt": "",
+    "lastUpdated": "ອັບເດດຫຼ້າສຸດ: "
+  },
     "wallet": {
         "title": "ກະເປົ໋າເງິນ",
         "totalRevenue": "ຍອດຮັບທັງໝົດ",

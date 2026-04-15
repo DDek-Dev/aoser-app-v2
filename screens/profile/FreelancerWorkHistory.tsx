@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, Pressable, ActivityIndicator } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, Pressable, ScrollView } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,6 +39,30 @@ interface WorkItemCardProps {
 // =============================================================================
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
+
+type WorkStatusFilter = 'ALL' | Job['workStatus'];
+
+const WORK_STATUS_I18N_KEY: Record<Job['workStatus'], string> = {
+    PUBLISHED: 'published',
+    PRIVATE: 'private',
+    ASSIGNED_WORKER: 'assigned',
+    ASSIGNED_AWAIT_PAYMENT: 'awaiting_payment',
+    DOING: 'in_progress',
+    AWAITING_COMPLETED: 'pending_review',
+    COMPLETED: 'completed',
+    DELAY: 'delayed',
+};
+
+const WORK_STATUS_FILTERS: WorkStatusFilter[] = [
+    'ALL',
+    'PUBLISHED',
+    'ASSIGNED_WORKER',
+    'ASSIGNED_AWAIT_PAYMENT',
+    'DOING',
+    'AWAITING_COMPLETED',
+    'COMPLETED',
+    'DELAY',
+];
 
 // =============================================================================
 // STATUS TAG COMPONENT
@@ -314,6 +338,21 @@ const FreelancerWorkHistory: React.FC = () => {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const { t } = useTranslation();
     const { data, isLoading, error } = useGetFlHistory();
+    const [statusFilter, setStatusFilter] = useState<WorkStatusFilter>('ALL');
+
+    const filteredData = useMemo(() => {
+        if (!Array.isArray(data)) return [];
+        if (statusFilter === 'ALL') return data;
+        return data.filter((item) => item.workStatus === statusFilter);
+    }, [data, statusFilter]);
+
+    const statusFilterLabel = useCallback(
+        (filterId: WorkStatusFilter) => {
+            if (filterId === 'ALL') return 'All';
+            return t(`postWork.status.${WORK_STATUS_I18N_KEY[filterId]}`);
+        },
+        [t]
+    );
 
     /**
      * Navigate to work detail screen
@@ -433,16 +472,44 @@ const FreelancerWorkHistory: React.FC = () => {
                     {/* Project Count Badge */}
                     <View className="bg-primary px-3 py-1 rounded-3xl">
                         <Text className="text-white text-caption font-semibold">
-                            {data?.length || 0} {t('profile.freelancer_workHistory.projects_count')}
+                            {filteredData.length} {t('profile.freelancer_workHistory.projects_count')}
                         </Text>
                     </View>
                 </View>
             </View>
 
+            {/* ===== STATUS FILTER (Chips) ===== */}
+            <View className="bg-white px-4 pb-3 border-b border-border">
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 8, paddingVertical: 6 }}
+                >
+                    {WORK_STATUS_FILTERS.map((filterId) => {
+                        const isActive = filterId === statusFilter;
+                        return (
+                            <Pressable
+                                key={filterId}
+                                onPress={() => setStatusFilter(filterId)}
+                                className={`px-3 py-2 rounded-full border ${isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
+                                    }`}
+                            >
+                                <Text
+                                    className={`text-sm font-medium ${isActive ? 'text-white' : 'text-textSecondary'
+                                        }`}
+                                >
+                                    {statusFilterLabel(filterId)}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
+                </ScrollView>
+            </View>
+
             {/* ===== CONTENT - WORK LIST ===== */}
             <View className="flex-1 bg-background">
                 <FlatList
-                    data={data || []}
+                    data={filteredData}
                     keyExtractor={keyExtractor}
                     renderItem={renderWorkItem}
                     ListEmptyComponent={renderEmptyState}

@@ -6,6 +6,10 @@ import networkCheck from './networkCheck';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
+let myWorksPaginationSupported: boolean | null = null;
+let myWorksCache: Job[] | null = null;
+let myWorksCacheToken: string | null = null;
+
 export const publiceWorkApi = {
     getPublicWork: async (token: string): Promise<Job[]> => {
 
@@ -40,6 +44,52 @@ export const publiceWorkApi = {
         } catch (error) {
             console.log("ERROR : ", error);
             throw error;
+        }
+    },
+
+    getMyWorkPage: async (token: string, skip: number, limit: number): Promise<Job[]> => {
+        if (myWorksPaginationSupported === false && myWorksCacheToken === token && Array.isArray(myWorksCache)) {
+            return myWorksCache.slice(skip, skip + limit);
+        }
+
+        try {
+            const res = await networkCheck.get(
+                `${API_BASE_URL}/worker/my-works?skip=${skip}&limit=${limit}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Aoser ${token}`,
+                    },
+                }
+            );
+            const items: Job[] = res.data.data || [];
+
+            // If backend ignores skip/limit and returns a big list, fallback to cached slicing.
+            if (items.length > limit) {
+                myWorksPaginationSupported = false;
+                myWorksCache = items;
+                myWorksCacheToken = token;
+                return items.slice(skip, skip + limit);
+            }
+
+            myWorksPaginationSupported = true;
+            return items;
+        } catch (error) {
+            // Fallback: fetch all once, then slice client-side.
+            myWorksPaginationSupported = false;
+
+            if (!myWorksCache || myWorksCacheToken !== token) {
+                const res = await networkCheck.get(`${API_BASE_URL}/worker/my-works`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Aoser ${token}`,
+                    },
+                });
+                myWorksCache = res.data.data || [];
+                myWorksCacheToken = token;
+            }
+
+            return (myWorksCache || []).slice(skip, skip + limit);
         }
     },
 

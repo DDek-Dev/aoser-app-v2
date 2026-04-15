@@ -399,7 +399,7 @@ export default function PostWorkScreen() {
       <ScreenWrapper safeEdges={['top']} style={{ backgroundColor: 'white' }}>
 
         <View className='px-4 flex-row justify-between items-center '>
-          <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">
+          <View className="flex-row items-center bg-surface px-3 py-1 rounded-2xl flex-1 mr-3">
             <View className="flex-1">
               <Text className="font-semibold text-primary text-heading">{t('postWork.public_work')}</Text>
               <Text className="text-primary text-body">{t('postWork.posting_public_work')}</Text>

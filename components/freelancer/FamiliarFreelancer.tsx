@@ -20,11 +20,12 @@ type TopFreelancersProps = {
     serviceType?: string | null;
     title?: string;
     scrollY?: any;
+    exceptedIds?: string;
 };
 
 
 
-export default function FamiliarFreelancers({ title, serviceType, scrollY }: TopFreelancersProps) {
+export default function FamiliarFreelancers({ title, serviceType, scrollY, exceptedIds }: TopFreelancersProps) {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const containerRef = useRef<View>(null);
     const hasTriggeredLoad = useRef(false);
@@ -36,7 +37,7 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage
-    } = useRecommendedFreelancers(serviceType ? serviceType : '');
+    } = useRecommendedFreelancers(serviceType ? serviceType : '', exceptedIds);
     const { user, isAuthenticated } = useAuth();
 
     // Flatten all pages into a single array
@@ -115,6 +116,11 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
 
         }
     }
+
+    if(data?.pages.length === 0 || allFreelancers?.length === 0) {
+        return <NoResults title={`${t('freelancer_profile.no_freelancer_fimiliar')}`} subtitle={`${t('freelancer_profile.no_freelancer_fimiliar_dec')}`} isShow={false} />;
+    }
+
     // Main render with data
     return (
 

@@ -46,10 +46,7 @@
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO"
-      ],
-      "extra": {
-        "adi-registration.properties": "CRY7QPUH7BWGKAAAAAAAAAAAAA"
-      }
+      ]
     },
     "web": {
       "favicon": "./assets/aoser_logo_no_bg_blue.png"
@@ -57,7 +54,8 @@
     "extra": {
       "eas": {
         "projectId": "d60f7004-fd5e-42fa-ab00-fdf08bfc6a94"
-      }
+      },
+      "adiRegistrationSnippet": "CRY7QPUH7BWGKAAAAAAAAAAAAA"
     },
     "owner": "aosers",
     "plugins": [
@@ -67,7 +65,8 @@
       "expo-web-browser",
       "expo-notifications",
       "expo-dev-client",
-      "expo-image-picker"
+      "expo-image-picker",
+      "./plugins/withAdiRegistrationToken"
     ]
   }
 }

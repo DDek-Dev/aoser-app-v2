@@ -37,6 +37,11 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
         ? null
         : projects.offeringWorkId;
 
+    // console.log('Work Data in Offering Message:', workData?.workId);
+    // Hide component if offering was accepted
+    if (isAccepted || isRejected) {
+        return null;
+    }
 
     if (!workData?.workId || !workData?.updateData) {
         return (
@@ -45,9 +50,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     <Text className="text-primary font-semibold text-body">
                         {t('chat.offer.new_offering') || 'New Work Offering'}
                     </Text>
-                    <Text className="text-gray-500 text-caption mt-1">
-                        {t('chat.offer.syncing') || 'Offering sent. Details are syncing...'}
-                    </Text>
+                    <ActivityIndicator className="mt-4" size="small" color="#3B82F6" />
                 </View>
             </View>
         );
@@ -61,13 +64,21 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
 
     }
 
-    console.log('Work Data:', workData);
-    console.log('Conversation ID:', projects.conversation);
+    // console.log('Work Data:', workData);
+    // console.log('Conversation ID:', projects.conversation);
     const handleAccept = () => {
         setShowAcceptModal(false);
 
         // acceptOfferingMutation.mutate(workData._id);
 
+        navigation.navigate('PaymentScreen', {
+            workId: workData?.workId?._id,
+            budget: workData?.updateData.budget,
+            currency: workData.updateData?.currency || '',
+            terminalid: workData.workId?.workCode || '',
+            workCode: workData.workId?.workCode,
+            invoiceType: "WORK",
+        });
 
         socketCall({
             conversationId: projects.conversation, // Use conversation field, not message _id
@@ -75,28 +86,10 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
             requestStatus: "CONFIRM"
         });
 
-    
         setIsAccepted(true);
 
-        navigation.navigate('PaymentScreen', {
-            workId: workData?._id,
-            budget: workData?.updateData.budget,
-            currency: projects.work?.workCode || '',
-            terminalid: projects.work?.workCode || '',
-            workCode: projects.work?.workCode,
-            invoiceType: "APPEND_WORK",
-        });
 
 
-
-        //    navigation.navigate('PaymentScreen', {
-        //     workId: appendWork?._id,
-        //     budget: appendWork?.budget,
-        //     currency: appendWork?.currency,
-        //     terminalid: data?.workCode,
-        //     workCode: data?.workCode,
-        //     invoiceType: "APPEND_WORK",
-        //   });
 
         console.log('Offering accepted');
     };
@@ -228,7 +221,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     {workData.workId?.createdBy?._id === user._id && (
                         <>
                             {/* Show buttons only when PENDING and not yet locally accepted/rejected */}
-                            {workData.requestStatus === "PENDING" && !isAccepted && !isRejected && (
+                            {workData.requestStatus === "PENDING" && !isAccepted && !isRejected  && (
                                 <View className="flex-row gap-2">
                                     <TouchableOpacity
                                         onPress={() => setShowRejectModal(true)}
@@ -264,7 +257,30 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     )}
 
                     {/* Show confirmed message */}
-                    {(workData.requestStatus === "CONFIRM" || isAccepted) && (
+                   
+                    {((workData.requestStatus === "CONFIRM" || isAccepted) && workData.workId.workStatus === "ASSIGNED_AWAIT_PAYMENT") && workData.workId?.createdBy?._id === user._id && (
+                        <TouchableOpacity
+                            className="py-4 px-16 rounded-full flex-row items-center justify-center bg-warning"
+                            onPress={() => {
+                                navigation.navigate('PaymentScreen', {
+                                    workId: workData?.workId?._id,
+                                    budget: workData?.updateData.budget,
+                                    currency: workData.updateData?.currency || '',
+                                    terminalid: workData.workId?.workCode || '',
+                                    workCode: workData.workId?.workCode,
+                                    invoiceType: "WORK",
+                                });
+                            }}
+                        >
+                            <Text className="text-surface text-base font-semibold items-center">{t('workDetail.make_payment')}</Text>
+                        </TouchableOpacity>
+                    )}
+                    {((workData.requestStatus === "CONFIRM" || isAccepted) && workData.workId.workStatus === "ASSIGNED_AWAIT_PAYMENT") && workData.workId?.createdBy?._id !== user._id && (
+                        <Text className='text-warning'>
+                            {t('postWork.status.awaiting_payment') || 'Awaiting Payment'}
+                        </Text>
+                    )}
+                    {((workData.requestStatus === "CONFIRM" || isAccepted) && workData.workId.workStatus === "DOING") && (
                         <View className="flex-row gap-2">
                             <Text className='text-secondary font-bold'>{t('chat.offer.comfirm_offering')}</Text>
                             <Ionicons name="checkmark-outline" size={24} color="#10B981" />

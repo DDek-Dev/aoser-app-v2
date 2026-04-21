@@ -6,7 +6,6 @@ import { useGetBillData } from 'hooks/usePayment'; // Adjust path
 import { useTranslation } from 'react-i18next';
 
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate, formatDisplayDateTime } from 'utils/dateFormatter';
 import { aoserlogo_no_bg_blue, bcelone, pal } from 'assets';
 import { useNavigation } from '@react-navigation/native';
 type Props = {
@@ -113,7 +112,6 @@ const PaymentDetail_Id = ({ route }: Props) => {
         createdAt: paymentCreatedAt,
         payTo
     } = payment as any;
-
 
     if (!payment.createdBy) {
         return (
@@ -241,7 +239,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
                         <View className="flex-row justify-between py-3 border-b border-border">
                             <Text className="text-text">{t('payment_success.payment_type')}</Text>
                             <Text className="text-text font-semibold text-body">
-                                {invoiceType === 'WORK' && t('tab.works')}
+                                {invoiceType === 'WORK' && t('postWork.book_freelancer')}
                                 {invoiceType === 'APPEND_WORK' && t('editWork.appendNewWork')}
                                 {invoiceType === 'USER_RECOMMEND_STAR' && t('profile.buyStar.stars_plural')}
                             </Text>

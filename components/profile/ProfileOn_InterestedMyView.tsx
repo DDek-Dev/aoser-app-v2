@@ -37,6 +37,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
   //   const userIds = useMemo(() => job.applicant.likes, [job.likes]);
   const currentLanguage = getCurrentLanguage();
 
+  console.log('Job data in ProfileOn_InterestedMyView:', JSON.stringify(job, null, 2));
   const handleProfilePress = (userId: string) => {
     try {
       handleUserProfileNavigation(userId);
@@ -46,35 +47,51 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
   };
 
 
-  const handleHire = async (workId: string, applicantId: string) => {
+  const handleHire = async (workId: string, applicantId: string, offerID: string, budget: number) => {
     try {
       // Step 1: Update the work assignment on backend
       await updateWorkById.mutateAsync({
         id: workId,
         data: {
-          workStatus: 'ASSIGNED_WORKER',
-          assignedTo: applicantId
-        }
+         
+          assignedTo: applicantId,
+          budget: budget, // Use the updated budget
+          requestStatus: "CONFIRM",
+          offeringId: offerID
+        },
+
+      });
+
+      if (refetch) {
+        await refetch();
+        console.log('✅ Work data refetched');
+      }
+       // Step 3: Close the modal
+      if (onClose) {
+        onClose();
+      }
+
+      navigation.navigate('PaymentScreen', {
+        workId: workId,
+        budget: budget,
+        currency: job.work.currency,
+        terminalid: job.work.workCode,
+        workCode: job.work.workCode,
+        invoiceType: "WORK",
       });
 
       console.log('✅ Work Hired successfully - Assignment created');
 
       // Step 2: Refetch the work data to get fresh applicants list and assignment
-      if (refetch) {
-        await refetch();
-        console.log('✅ Work data refetched');
-      }
+      
 
-      // Step 3: Close the modal
-      if (onClose) {
-        onClose();
-      }
+     
 
       // Step 4: Navigate to work detail (with a small delay to allow modal to close smoothly)
-      setTimeout(() => {
-        console.log('🔄 Navigating to FreelancerWorkDetail');
-        navigation.navigate('FreelancerWorkDetail', { workId });
-      }, 300);
+      // setTimeout(() => {
+      //   console.log('🔄 Navigating to FreelancerWorkDetail');
+      //   navigation.navigate('FreelancerWorkDetail', { workId });
+      // }, 300);
 
     } catch (error) {
       console.log('❌ Error Hiring work:', error);
@@ -94,7 +111,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
 
 
         <View key={item._id} className="border border-border rounded-lg  mt-4">
-          <Pressable onPress={() => handleProfilePress(item._id)} className='p-4'>
+          <Pressable onPress={() => handleProfilePress(item.applicant._id)} className='p-4'>
             <View className="flex-row items-center gap-4">
               <Image
                 source={
@@ -128,12 +145,13 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
 
 
                 <View className="flex-row items-center mb-2">
-                  <Text className='text-bold'>{t('postWork.budget')} : </Text>
+                  <Text className='font-bold text-body text-text'>{t('postWork.budget')} : </Text>
                   <Text className="font-bold text-body text-warning ml-2">{item?.offeringUpdate?.updateData?.currency} </Text>
                   <Text className="font-bold text-body text-primary">
                     {new Intl.NumberFormat().format(item?.offeringUpdate?.updateData?.budget)}
                   </Text>
                 </View>
+                <Text className='py-4 font-bold text-body text-text'>{t('workDetail.freelancer_offering_reason')}</Text>
                 <View className='bg-blue-50 rounded-2xl px-2 py-6 mb-4'>
 
                   <Text>{item?.offeringUpdate?.reason}</Text>
@@ -150,7 +168,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
             {!isFreelancer &&
 
               <Pressable
-                onPress={() => handleHire(job.work._id, item.applicant._id)}
+                onPress={() => handleHire(job.work._id, item.applicant._id, item?.offeringUpdate?._id, item?.offeringUpdate?.updateData?.budget)}
                 className={`px-4 py-3 rounded-full mt-4 ${updateWorkById.isPending ? 'bg-gray-400' : 'bg-primary'}`}
                 disabled={updateWorkById.isPending}
               >

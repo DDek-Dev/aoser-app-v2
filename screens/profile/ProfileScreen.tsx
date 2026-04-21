@@ -1,4 +1,4 @@
-import { View, Text, Image, Pressable } from 'react-native';
+import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,6 +19,7 @@ const ProfileScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { loading, logout, isAuthenticated } = useAuth();
   const { data, isLoading, isError, refetch } = useMyProfile();
+  const [isLogout, setIsLogout] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { data: adminID, isLoading: adminIdLoading } = useAdminID();
 
@@ -38,12 +39,14 @@ const settings = useMemo(() => [
   const handleLogout = () => setShowLogoutModal(true);
 
   const confirmLogout = async () => {
+    setIsLogout(true);
     await logout();
     setShowLogoutModal(false);
     navigation.reset({
       index: 0,
       routes: [{ name: 'MainTabs' }],
     });
+    setIsLogout(false);
   };
 
   useFocusEffect(
@@ -244,8 +247,15 @@ const settings = useMemo(() => [
               className="flex-row justify-between bg-surface border border-border rounded-full px-4 items-center py-3"
             >
               <View className="flex-row items-center gap-3">
-                <Ionicons name="log-out-outline" size={18} color="#3B82F6" />
-                <Text className="text-body text-error">{t('profile.logout')}</Text>
+                {!isLogout ? (
+                  <>
+                  
+                  <Ionicons name="log-out-outline" size={18} color="#3B82F6" />
+                    <Text className="text-body text-error">{t('profile.logout')}</Text>
+                  </>
+                ):(
+                  <ActivityIndicator size="small" color="#EF4444" />
+                )}
               </View>
             </Pressable>
           </View>

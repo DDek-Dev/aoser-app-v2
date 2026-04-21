@@ -175,7 +175,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
                   <Text>{t('postWork.address_manually')}: </Text>
 
                   <View className="flex-row gap-2 items-center">
-                    <Ionicons name="business-outline" size={18} color="#F59E0B" />
+                    <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
                     <Text className="text-sm text-textSecondary">
                       {item.place}

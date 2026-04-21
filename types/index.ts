@@ -53,7 +53,7 @@ export interface Job {
   createdAt: string;
   updatedAt: string;
   workCode: string;
-  invoiceType: ["WORK", "USER_RECOMMEND_STAR"]
+  invoiceType: ["WORK", "USER_RECOMMEND_STAR", "APPEND_WORK"];
   budget_type: string;
   myLike: Mylike[];
   applicant: UserProfile[];

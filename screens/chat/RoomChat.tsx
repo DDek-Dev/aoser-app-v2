@@ -1255,12 +1255,13 @@ const RoomChat = () => {
                 className={`mr-3 mb-2 w-10 h-10 rounded-full items-center justify-center border ${fileOptionsVisible ? 'bg-primary border-primary' : 'border-gray-300'
                   }`}
               >
-                <Text
+                {/* <Text
                   className={`text-body font-bold ${fileOptionsVisible ? 'text-white' : 'text-primary'
                     }`}
                 >
                   +
-                </Text>
+                </Text> */}
+                <Ionicons name='add-outline' size={24} color={fileOptionsVisible ? '#fff' : '#3B82F6'}/>
               </Pressable>
 
 

@@ -64,6 +64,7 @@
     "firstName_required": "First name is required",
     "lastName_required": "Last name is required",
     "email_invalid": "Invalid email",
+    "email_holder":"Please enter your email",
     "email_required": "Email is required",
     "password_min": "Password must be number and characters",
     "password_required": "Password is required",
@@ -248,7 +249,9 @@
     "online": "Remote",
     "offline": "On-site",
     "work_description": "Task Details",
+    "work_description_reason": "Task Details",
     "work_description_placeholder": "Describe your task...",
+    "work_description_placeholder_reason": "Describe your task...",
     "work_description_req": "Request Details",
     "work_description_placeholder_req": "Describe your request...",
     "work_description_required": "Task details is required",
@@ -338,7 +341,7 @@
     "header_back_text": "Provider Profile",
     "loading": "Loading profile...",
     "no_profile_title": "Provider Not Found",
-    "no_profile_description": "We could not load this provider profile. This might be due to a network issue or the profile may no longer be available.",
+    "no_profile_description": "We could not load this provider's profile. This may be due to a network issue or the profile is no longer available.",
     "retry": "Try Again",
     "go_back": "Go Back",
     "active": "Active",
@@ -468,7 +471,9 @@
     },
     "already_applied": "You already applied for this task.",
     "apply_now": "Apply Now",
-    "freelancer_offering": "Provider Offering"
+    "freelancer_offering": "Provider Offering",
+    "freelancer_offering_reason": "Reasons of applying the service fee"
+
   },
   "editWork": {
     "title": "Edit Task",
@@ -1221,6 +1226,7 @@
       "selectMethod": "Select Payment Method",
       "BCEL": "BCEL One"
     },
+    "qrLoadFailed": "Failed to load QR code",
     "errors": {
       "permissionRequired": "Permission Required",
       "permissionMessage": "Please grant permission to save images",

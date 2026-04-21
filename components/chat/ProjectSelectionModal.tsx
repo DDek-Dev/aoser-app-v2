@@ -103,7 +103,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
     const hours = dateObj.getHours().toString().padStart(2, '0');
     const minutes = dateObj.getMinutes().toString().padStart(2, '0');
 
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return `${day}/${month}/${year} `;
   };
 
   // Helper function to parse datetime string - MORE FLEXIBLE VERSION
@@ -694,7 +694,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
                         <Text>{t('postWork.address_manually')}: </Text>
           
                         <View className="flex-row gap-2 items-center">
-                          <Ionicons name="business-outline" size={18} color="#F59E0B" />
+                          <Ionicons name="location-outline" size={18} color="#F59E0B" />
           
                           <Text className="text-sm text-textSecondary">
                             {item.place}

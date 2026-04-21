@@ -348,7 +348,7 @@ const FreelancerWorkHistory: React.FC = () => {
 
     const statusFilterLabel = useCallback(
         (filterId: WorkStatusFilter) => {
-            if (filterId === 'ALL') return 'All';
+            if (filterId === 'ALL') return t('categoryTabs.all');
             return t(`postWork.status.${WORK_STATUS_I18N_KEY[filterId]}`);
         },
         [t]

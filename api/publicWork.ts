@@ -112,7 +112,7 @@ export const publiceWorkApi = {
     },
     updateWorkById: async (id: string, data: any, token: string): Promise<Job> => {
 
-        console.log("API called with id:", id, "and data:", JSON.stringify(data, null, 2));  
+        // console.log("API called with id:", id, "and data:", JSON.stringify(data, null, 2));  
 
         try {
 

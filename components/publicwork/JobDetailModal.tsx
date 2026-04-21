@@ -544,7 +544,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
                 <View className="flex-row mt-3 items-center  pb-4 border-b border-border">
                   <View className="flex-row items-center">
                     <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
-                      <Ionicons name="business-outline" size={24} color="#F59E0B" />
+                      <Ionicons name="location-outline" size={24} color="#F59E0B" />
                     </View>
 
                     <View className="flex-1">
@@ -641,8 +641,8 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
                     <View className="mt-2">
                       <TextArea
-                        label={t('postWork.work_description')}
-                        placeholder={t('postWork.work_description_placeholder')}
+                        label={t('postWork.work_description_reason')}
+                        placeholder={t('postWork.work_description_placeholder_reason')}
                         value={reason}
                         onChangeText={(text) => {
                           setReason(text);
@@ -654,7 +654,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
                     </View>
                   </View>
                 ) : (
-                  <View className="bg-blue-50 border border-border rounded-xl p-4 mb-2">
+                  <View className="bg-blue-50 border border-primary rounded-xl p-4 mb-2">
                     <Text className="text-body text-text">
                       {t('workDetail.already_applied') || 'You already applied for this job.'}
                     </Text>

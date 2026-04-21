@@ -185,7 +185,7 @@ const JobItem = React.memo(
               <Text>{t('postWork.address_manually')}: </Text>
 
               <View className="flex-row gap-2 items-center">
-                <Ionicons name="business-outline" size={18} color="#F59E0B" />
+                <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
                 <Text className="text-sm text-textSecondary">
                   {item.place}
@@ -608,7 +608,7 @@ const WorkFeedScreen = () => {
               opacity: startBoxVisibility,
               height: startBoxVisibility.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 134],
+                outputRange: [0, 104],
               }),
               overflow: 'hidden',
               marginHorizontal: 16,
@@ -618,10 +618,10 @@ const WorkFeedScreen = () => {
               }),
               padding: startBoxVisibility.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 16],
+                outputRange: [0, 8],
               }),
               backgroundColor: 'rgb(59 130 246)',
-              borderRadius: 16,
+              borderRadius: 8,
             }}
           >
             <Text className="text-white font-bold text-body">

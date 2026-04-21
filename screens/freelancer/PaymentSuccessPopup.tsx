@@ -316,7 +316,7 @@ const PaymentSuccessPopup: React.FC<PaymentSuccessPopupProps> = ({
                       {t('payment_success.payment_type')}
                     </Text>
                     <Text className="text-gray-800 font-semibold text-sm">
-                      { invoiceType === 'WORK' && t('tab.works') }
+                      { invoiceType === 'WORK' && t('postWork.book_freelancer') }
                       { invoiceType === 'APPEND_WORK' && t('editWork.appendNewWork') }
                       { invoiceType === 'USER_RECOMMEND_STAR' && t('profile.buyStar.stars_plural') }
                     </Text>

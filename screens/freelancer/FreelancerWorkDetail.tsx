@@ -94,8 +94,6 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const statusOptions: SubWorkStatus[] = ['TODO', 'DOING', 'DONE', 'DELAY', 'FAILED'];
   const data = workData?.work;
 
-  console.log(`Work data for workId ${params.workId}:`, JSON.stringify(data, null, 2));
-
   const isCompleted = data?.workStatus === 'COMPLETED';
 
   // ============= EFFECTS =============
@@ -106,6 +104,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     }, [refetch])
   );
 
+  console.log('Work data in FreelancerWorkDetail:', JSON.stringify(data, null, 2));
   // Update local state when data changes
   useEffect(() => {
     if (data?.subWorkDetails) {
@@ -1322,7 +1321,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
               <View className="flex-row mt-3 items-center">
                 <View className="flex-row items-center">
                   <View className="w-8 h-8 rounded-full bg-error/10 items-center justify-center mr-3">
-                    <Ionicons name="business-outline" size={16} color="#F59E0B" />
+                    <Ionicons name="location-outline" size={16} color="#F59E0B" />
                   </View>
 
                   <View className="flex-1">
@@ -2142,11 +2141,11 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </TouchableOpacity>
           )}
 
-          {/* {data?.createdBy?._id !== user?._id && (
+          {data?.createdBy?._id !== user?._id && (
             <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id })}>
               <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
             </TouchableOpacity>
-          )} */}
+          )}
 
           {/* Action Buttons Based on Work Status */}
           {data?.workStatus === 'PUBLISHED' && data?.createdBy?._id === user?._id && (

@@ -111,7 +111,7 @@ const HistoryScreen = () => {
 
   const statusFilterLabel = useCallback(
     (filterId: PublicWorkStatusFilter) => {
-      if (filterId === 'ALL') return 'All';
+      if (filterId === 'ALL') return t('categoryTabs.all');
       return t(`postWork.status.${PUBLIC_WORK_STATUS_I18N_KEY[filterId]}`);
     },
     [t]

@@ -88,7 +88,7 @@ const PaymentScreen = ({ route }: any) => {
       try {
         setIsLoading(true);
         const result = await mutateAsync({ data: formData });
-        console.log('QR generated:', result);
+        
 
         if (result && typeof result === 'object') {
           const paymentResponse = result as PaymentResponse;
@@ -182,12 +182,45 @@ const PaymentScreen = ({ route }: any) => {
     }
   };
 
+
+  // Add a refresh handler function (place this before the return statement)
+const handleRefreshQR = async () => {
+  const formData = {
+    amount: budget,
+    currency: currency,
+    invoiceType: invoiceType,
+    terminalid: terminalid,
+    paymentFor: workId,
+    desc: desc,
+  } as Payment;
+
+  try {
+    setIsLoading(true);
+    const result = await mutateAsync({ data: formData });
+
+    if (result && typeof result === 'object') {
+      const paymentResponse = result as PaymentResponse;
+      const qrcValue = paymentResponse.data?.qrc || result;
+      const invoiceIdValue = paymentResponse.invoiceId || null;
+      setQrString(qrcValue);
+      setInvoiceId(invoiceIdValue);
+    } else {
+      setQrString(result);
+    }
+
+    setIsLoading(false);
+  } catch (error) {
+    console.log("QR generation error:", error);
+    setIsLoading(false);
+  }
+};
   const handlePopupClose = () => {
     setShowSuccessPopup(false);
     navigation.popTo('FreelancerWorkDetail', { workId: workId });
   };
 
   const currentQrString = qrString;
+  // console.log('Current QR String:', currentQrString);
 
   // Listen for payment callback when we have an invoiceId
   useEffect(() => {
@@ -207,7 +240,7 @@ const PaymentScreen = ({ route }: any) => {
     };
   }, [invoiceId]);
 
-  console.log("Work id in Payment Screen:", invoiceType);
+
 
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']}>
@@ -256,25 +289,43 @@ const PaymentScreen = ({ route }: any) => {
                 </View>
 
                 {/* QR Code Container with Decorative Border */}
-                <View className="bg-white rounded-2xl p-6 border-2 border-primary shadow-inner items-center justify-center mb-4">
-                  {isLoading ? (
-                    <View className="w-48 h-48 items-center justify-center">
-                      <ActivityIndicator size="large" color="#3B82F6" />
-                    </View>
-                  ) : (
-                    <QRCode
-                      value={currentQrString || data}
-                      size={192}
-                      color="#1F2937"
-                      backgroundColor="#ffffff"
-                      logo={lao_qr}
-                      logoMargin={2}
-                      ecl="M"
-                      enableLinearGradient={false}
-                      quietZone={4}
-                    />
-                  )}
-                </View>
+                {/* QR Code Container with Decorative Border */}
+<View className="bg-white rounded-2xl p-6 border-2 border-primary shadow-inner items-center justify-center mb-4">
+  {isLoading ? (
+    <View className="w-48 h-48 items-center justify-center">
+      <ActivityIndicator size="large" color="#3B82F6" />
+    </View>
+  ) : !currentQrString ? (
+    // ✅ Show refresh button when QR string is null/undefined
+    <View className="w-48 h-48 items-center justify-center gap-3">
+      <Ionicons name="wifi-outline" size={48} color="#9CA3AF" />
+      <Text className="text-gray-500 text-sm text-center">
+        {t('payment.qrLoadFailed')}
+      </Text>
+      <TouchableOpacity
+        onPress={handleRefreshQR}
+        className="flex-row items-center bg-blue-600 px-4 py-2 rounded-xl"
+      >
+        <Ionicons name="refresh-outline" size={18} color="#ffffff" />
+        <Text className="text-white font-semibold text-sm ml-1">
+          {t('works.error.refresh')}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  ) : (
+    <QRCode
+      value={currentQrString}
+      size={192}
+      color="#1F2937"
+      backgroundColor="#ffffff"
+      logo={lao_qr}
+      logoMargin={2}
+      ecl="M"
+      enableLinearGradient={false}
+      quietZone={4}
+    />
+  )}
+</View>
 
                 {/* Amount Display */}
                 <View className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 items-center">

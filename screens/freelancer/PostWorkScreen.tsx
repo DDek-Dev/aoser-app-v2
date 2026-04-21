@@ -684,7 +684,7 @@ export default function PostWorkScreen() {
 
 
           {/* Optional Address Selection */}
-          {workType === "ONLINE" && (
+          {workType === "OFFLINE" && (
 
             <View className='bg-blue-50 p-2 rounded-2xl mb-2'>
               <Text className="text-body text-text font-bold mb-2">{t('customerProfile.locationInfo')}</Text>

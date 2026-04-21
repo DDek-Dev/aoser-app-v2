@@ -477,6 +477,7 @@ type EmailInputProps = {
 };
 
 function EmailInput({ control, error, disabled }: EmailInputProps) {
+  const { t } = useTranslation();
 
   return (
     <Controller
@@ -491,7 +492,7 @@ function EmailInput({ control, error, disabled }: EmailInputProps) {
             style={{ minHeight: 52 }}
           >
             <TextInput
-              placeholder="Aoser@example.com"
+              placeholder={t('signUpScreen.email_holder')}
               keyboardType="email-address"
               autoCapitalize="none"
               className='flex-1 text-text'

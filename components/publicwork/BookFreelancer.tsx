@@ -692,7 +692,7 @@ const BookFreelancer = ({ route }: Props) => {
                   />
                 )}
               </View>
-              {workType === "ONLINE" && (
+              {workType === "OFFLINE" && (
 
 
                 <View className="bg-blue-50 p-2 rounded-2xl mb-2">

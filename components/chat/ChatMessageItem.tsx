@@ -133,7 +133,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
     adjustedY = adjustedY - menuHeight - 20;
   }
 
-
+// console.log("message: ", item)
 
   return (
 
@@ -210,7 +210,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   onCopyMessage,
   onReplyToMessage,
   onAIResponse,
-  // onDeleteMessage,
+  onDeleteMessage,
   isDeleteMode = false,
   isSelected = false,
   onToggleSelect,

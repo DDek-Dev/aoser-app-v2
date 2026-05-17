@@ -30,6 +30,7 @@
     "dayjs": "^1.11.19",
     "eventemitter3": "^5.0.4",
     "expo": "~54.0.33",
+    "expo-apple-authentication": "~8.0.8",
     "expo-av": "~16.0.8",
     "expo-blur": "~15.0.8",
     "expo-checkbox": "~5.0.8",

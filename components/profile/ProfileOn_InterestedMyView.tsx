@@ -145,7 +145,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
 
 
                 <View className="flex-row items-center mb-2">
-                  <Text className='font-bold text-body text-text'>{t('postWork.budget')} : </Text>
+                  <Text className='font-bold text-body text-text'>{t('chat.offer.price')} : </Text>
                   <Text className="font-bold text-body text-warning ml-2">{item?.offeringUpdate?.updateData?.currency} </Text>
                   <Text className="font-bold text-body text-primary">
                     {new Intl.NumberFormat().format(item?.offeringUpdate?.updateData?.budget)}
@@ -173,7 +173,7 @@ export default function ProfileOn_InterestedMyView({ job, handleUserProfileNavig
                 disabled={updateWorkById.isPending}
               >
                 <Text className="text-white text-center">
-                  {updateWorkById.isPending ? t('workDetail.hiring') : t('workDetail.hire')}
+                  {updateWorkById.isPending ? t('workDetail.hiring') : t('workDetail.choose')}
                 </Text>
               </Pressable>
             }

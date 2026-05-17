@@ -5,7 +5,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useGenerateOnepayQRcode } from 'hooks/usePayment';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -30,7 +30,7 @@ import { aoserlogo_no_bg_blue, lao_qr } from 'assets';
 import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { useTranslation } from 'react-i18next';
-
+import { AppState, AppStateStatus } from 'react-native';
 interface PaymentSuccessPopupProps {
   visible: boolean;
   onClose: () => void;
@@ -56,6 +56,10 @@ const PaymentScreen = ({ route }: any) => {
   const [qrString, setQrString] = useState<string | null>(null);
   const [invoiceId, setInvoiceId] = useState<string | null>(null);
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const [appStateVisible, setAppStateVisible] = useState(AppState.currentState);
+
+
   const [isDownloading, setIsDownloading] = useState(false);
   const { mutateAsync, isSuccess, data } = useGenerateOnepayQRcode();
   const { tokens, user } = useAuth();
@@ -69,6 +73,52 @@ const PaymentScreen = ({ route }: any) => {
     desc = "ສໍາລັບວຽກ"
   }
   const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
+
+  // ✅ Extract the payment listener setup into a reusable function
+  const setupPaymentListener = useCallback(() => {
+  if (!invoiceId || !tokens || !user) return;
+
+  console.log('[PaymentScreen] Setting up payment listener for invoice:', invoiceId);
+
+  // ✅ Use reconnect() if already has credentials, connect() for fresh start
+  if (SocketService.isConnected()) {
+    console.log('[PaymentScreen] Socket already connected, re-registering listener');
+  } else {
+    SocketService.connect(SERVER_URL, tokens.accessToken, user._id);
+  }
+
+  SocketService.onPaymentCallback(invoiceId, (payment: any) => {
+    console.log('[PaymentScreen] received payment callback', payment);
+    setIsPaymentProcessing(false);
+    setPaymentResult(payment);
+    setShowSuccessPopup(true);
+  });
+}, [invoiceId, tokens, user, SERVER_URL]);
+
+
+// ✅ Listen for app state changes (background → foreground)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        // App came back to foreground — reconnect socket and re-register listener
+        console.log('[PaymentScreen] App returned to foreground, reconnecting socket...');
+        setupPaymentListener();
+      }
+
+      appState.current = nextAppState;
+      setAppStateVisible(nextAppState);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [setupPaymentListener]);
+
+
 
   // Generate QR code on component mount
   useEffect(() => {
@@ -223,23 +273,32 @@ const handleRefreshQR = async () => {
   // console.log('Current QR String:', currentQrString);
 
   // Listen for payment callback when we have an invoiceId
-  useEffect(() => {
-    if (!invoiceId || !tokens || !user) return;
-    SocketService.connect(SERVER_URL, tokens.accessToken, user._id)
-    const handlePaymentCallback = (payment: any) => {
-      console.log('[PaymentScreen] received payment callback', payment);
-      setIsPaymentProcessing(false);
-      setPaymentResult(payment);
-      setShowSuccessPopup(true);
-    };
+  // useEffect(() => {
+  //   if (!invoiceId || !tokens || !user) return;
+  //   SocketService.connect(SERVER_URL, tokens.accessToken, user._id)
+  //   const handlePaymentCallback = (payment: any) => {
+  //     console.log('[PaymentScreen] received payment callback', payment);
+  //     setIsPaymentProcessing(false);
+  //     setPaymentResult(payment);
+  //     setShowSuccessPopup(true);
+  //   };
 
-    SocketService.onPaymentCallback(invoiceId, handlePaymentCallback);
+  //   SocketService.onPaymentCallback(invoiceId, handlePaymentCallback);
+
+  //   return () => {
+  //     SocketService.removePaymentCallback(invoiceId);
+  //   };
+  // }, [invoiceId]);
+  // ✅ Replace your existing invoiceId useEffect with this
+  useEffect(() => {
+    setupPaymentListener();
 
     return () => {
-      SocketService.removePaymentCallback(invoiceId);
+      if (invoiceId) {
+        SocketService.removePaymentCallback(invoiceId);
+      }
     };
-  }, [invoiceId]);
-
+  }, [setupPaymentListener]);
 
 
   return (

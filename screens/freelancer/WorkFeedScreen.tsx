@@ -68,7 +68,7 @@ const JobItem = React.memo(
     return (
       <Pressable
         onPress={handlePress}
-        className="bg-white rounded-2xl border border-gray-200 px-4 py-4 mb-1"
+        className="bg-white rounded-2xl border border-gray-200 px-4 py-4 mb-1 "
       >
         {/* profile of create by1 */}
         <View className="">
@@ -110,7 +110,7 @@ const JobItem = React.memo(
           {item.description}
         </Text>
 
-        <View className="bg-background px-2 rounded-2xl p-2">
+        <View className="bg-background px-2 rounded-2xl p-2 overflow-hidden">
           <View className=" flex-row items-center  ">
             <Text>{t('postWork.work_type')} : </Text>
             <Text className="text-caption text-surface bg-primary px-2 py-1 rounded-full  ">
@@ -121,7 +121,7 @@ const JobItem = React.memo(
           </View>
           {item.budgetType === 'OFFERING' ? (
             <View className="">
-              <Text className="text-lg text-primary font-bold mr-2">
+              <Text className="text-body text-primary font-bold mr-2">
                 {t('workDetail.offering_price')}
               </Text>
             </View>
@@ -150,7 +150,7 @@ const JobItem = React.memo(
 
           {item.deadLine !== undefined && (
             <View className="flex-row mt-3 items-center">
-              <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+              <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
 
               <View className="flex-row gap-2 items-center">
                 <Ionicons name="time-outline" size={18} color="#F59E0B" />
@@ -162,38 +162,36 @@ const JobItem = React.memo(
             </View>
           )}
 
-          {item.address &&
-            item.address.village !== '' &&
-            item.address.district !== '' &&
-            item.address.province !== '' && (
-              <View className="flex-row mt-3 items-center">
-                <Text>{t('payment_success.address')}: </Text>
+          <View className="flex-row row-auto items-center" >
+            {item.address &&
 
-                <View className="flex-row gap-2 items-center">
+              <View className="flex-row mt-3 items-center">
+                {/* <Text>{t('payment_success.address')}: </Text> */}
+
+                <View className="flex-row gap-2 items-start">
                   <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-                  <Text className="text-sm text-textSecondary">
-                    {item.address.village}, {item.address.district}, {item.address.province}
-                  </Text>
+                  <View>
+
+
+                    {item.address.village !== '' &&
+                      item.address.district !== '' &&
+                      item.address.province !== '' && (
+
+                        <Text className="text-sm text-textSecondary">
+                          {item.address.village}, {item.address.district}, {item.address.province}.
+                        </Text>
+                      )}
+                    {item.place && (
+                      <Text className="text-sm text-textSecondary">
+                        {item.place}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               </View>
-            )}
-
-          {item.place && (
-
-            <View className="flex-row mt-3 items-center">
-              <Text>{t('postWork.address_manually')}: </Text>
-
-              <View className="flex-row gap-2 items-center">
-                <Ionicons name="location-outline" size={18} color="#F59E0B" />
-
-                <Text className="text-sm text-textSecondary">
-                  {item.place}
-                </Text>
-              </View>
-            </View>
-
-          )}
+            }
+          </View>
         </View>
       </Pressable>
     );
@@ -256,7 +254,7 @@ const WorkFeedScreen = () => {
     () =>
       scrollY.interpolate({
         inputRange: [-20, 100],
-        outputRange: [1, 0],
+        outputRange: [3, 0],
         extrapolate: 'clamp',
       }),
     [scrollY]
@@ -539,10 +537,10 @@ const WorkFeedScreen = () => {
             {
               fontSize: 28,
               opacity: bannerTextOpacity,
-              lineHeight:40,
+              lineHeight: 40,
 
             },
-           
+
           ]}
           className='p-4'
         >
@@ -555,8 +553,6 @@ const WorkFeedScreen = () => {
             { opacity: searchOpacity },
           ]}
         >
-    
-        
           <View className="flex-row items-center bg-white rounded-full border border-gray-300 px-4 ">
             <Ionicons name="search-outline" size={20} color="#3B82F6" />
             <TextInput

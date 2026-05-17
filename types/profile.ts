@@ -104,7 +104,7 @@ export interface UserProfile {
   freelancerType: string;
   userProfileImage: string;
   bannerImage: string;
-  videoPromote: string;
+  videoPromote?: string;
   workerStatus: "ACTIVE" | "INACTIVE";
   customerStatus: "NORMAL" | "BANNED" | "REPORTED" | "PUSHED";
   points: number;

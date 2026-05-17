@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as AppleAuthentication from 'expo-apple-authentication';
+
 import {
   authApi,
 } from '../api/authApi';
@@ -19,6 +20,8 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import { UserProfile } from 'types/profile';
 import { clearStaleKycDataForOtherUsers } from 'utils/kycStorage';
+import axios from 'axios';
+import { auth } from 'firebaceConfig';
 
 
 
@@ -103,7 +106,7 @@ export const useAuth = () => {
       // Update cache
       queryClient.setQueryData(AUTH_KEYS.tokens, newTokens);
       queryClient.setQueryData(AUTH_KEYS.user, data.data.userProfile);
-      const isUserProfileSetup = data.data.userProfile.gender && data.data.userProfile.firstName && data.data.userProfile.lastName && data.data.userProfile.phone && data.data.userProfile.address;
+      const isUserProfileSetup = data.data.userProfile.gender && data.data.userProfile.firstName && data.data.userProfile.lastName && data.data.userProfile.phone ;
       if (isUserProfileSetup) {
         replace('MainTabs');
       } else {
@@ -143,12 +146,82 @@ export const useAuth = () => {
     }
   };
 
+
+  const appleUrlMutation = useMutation({
+    mutationFn: authApi.handleApplelogin,
+    onSuccess: async (data) => {
+
+      const newTokens = {
+        accessToken: data.data.accessToken,
+        refreshToken: data.data.refreshToken,
+      };
+      // console.log( "New daTa in Google Login API : ", { newTokens });
+
+      await clearStaleKycDataForOtherUsers(data.data.userProfile?._id || '');
+      await storeTokens(newTokens);
+      await storeUser(data.data.userProfile);
+
+      // Update cache
+      queryClient.setQueryData(AUTH_KEYS.tokens, newTokens);
+      queryClient.setQueryData(AUTH_KEYS.user, data.data.userProfile);
+      const isUserProfileSetup = 
+    data.data.userProfile.gender &&
+    data.data.userProfile.firstName &&
+    data.data.userProfile.lastName &&
+    data.data.userProfile.phone &&
+    data.data.userProfile.userProfileImage;
+      if (isUserProfileSetup) {
+        replace('MainTabs');
+      } else {
+        navigate('ProfileSetup');
+      }
+      // ทำสิ่งที่ต้องทำต่อ เช่น เก็บ Token หรือนำทางไปหน้า Home
+    },
+    onError: (error) => {
+      console.log('Login Error:', error);
+    }
+  });
+
+  const appleLogin = async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      const payload = {
+        idToken: credential.identityToken,
+        firstName: credential.fullName?.givenName || "",
+        lastName: credential.fullName?.familyName || ""
+      };
+
+      // ส่งไปที่ Backend
+      await appleUrlMutation.mutate(payload as any);
+
+    } catch (err) {
+      console.log('❌ Apple login failed:', err);
+    }
+  };
+
   // OTP signup mutations
   const sendOTPMutation = useMutation({
     mutationFn: authApi.sendSignupOTP,
 
     onError: (error) => {
       console.log('Send OTP failed:', error);
+    },
+  });
+
+  const useDeleteAccount = useMutation({
+    mutationFn: (token: string) => authApi.deleteAccount(token),
+    onSuccess: async (data) => {
+      console.log('Account deletion successful:', data);
+      await clearTokens();
+      navigate('MainTabs');
+    },
+    onError: (error) => {
+      console.log('Delete account failed:', error);
     },
   });
 
@@ -222,6 +295,7 @@ export const useAuth = () => {
   });
 
 
+
   // Token refresh mutation
   const refreshTokenMutation = useMutation({
     mutationFn: authApi.refreshToken,
@@ -286,6 +360,7 @@ export const useAuth = () => {
     login,
     logout: logoutMutation.mutate,
     googleLogin,
+    appleLogin,
     // handleGoogleCallback,
     signupOTPRequest,
     signupWithOTP,
@@ -294,11 +369,14 @@ export const useAuth = () => {
 
     resetPassword: resetPasswordMutation.mutate,
     refreshToken: refreshTokenMutation.mutate,
-
+    useDeleteAccount,
+    deletingAccount: useDeleteAccount.isPending,
     // Loading states
     loading: loginMutation.isPending, // Keep for backward compatibility
     loginLoading: loginMutation.isPending,
     googleloading: googleUrlMutation.isPending,
+    appleleloading: appleUrlMutation.isPending,
+    appleError: appleUrlMutation.error,
     otpSendLoading: sendOTPMutation.isPending,
     otpVerifyLoading: verifyOTPMutation.isPending,
     forgotPwIsLoading: forgotOTPMutation.isPending,

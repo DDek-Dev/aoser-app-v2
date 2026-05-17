@@ -30,6 +30,9 @@ import { profileImage } from 'assets';
 import { useTranslation } from 'react-i18next';
 import PhoneInput from 'components/ui/PhoneInput';
 import { useSelectAddress } from 'hooks/useSelectAddress';
+import Checkbox from 'expo-checkbox';
+import Constants from 'expo-constants';
+import Header_back from 'components/ui/Header_back';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -38,7 +41,7 @@ const ProfileSetup = () => {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
 
     // Form state
-    const [gender, setGender] = useState('');
+    // const [gender, setGender] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
@@ -46,9 +49,10 @@ const ProfileSetup = () => {
     const [profileImg, setProfileImg] = useState<string>('');
     const [profileImageFile, setProfileImageFile] = useState<FileWithType | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [genderModalVisible, setGenderModalVisible] = useState(false);
+    // const [genderModalVisible, setGenderModalVisible] = useState(false);
     const [imageActionModalVisible, setImageActionModalVisible] = useState(false);
     const [deleteConfirmationModalVisible, setDeleteConfirmationModalVisible] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
 
     // address
@@ -56,20 +60,20 @@ const ProfileSetup = () => {
     const [selectedProvince, setSelectedProvince] = useState<Province | undefined>(undefined);
     const [selectedDistrict, setSelectedDistrict] = useState<District | undefined>(undefined);
     const [village, setVillage] = useState('');
-    const [addressInfo, setAddressInfo] = useState<SelectedAddress>({
-        province: undefined,
-        district: undefined,
-        village: '',
-        longitude: 0,
-        latitude: 0
-    });
+    // const [addressInfo, setAddressInfo] = useState<SelectedAddress>({
+    //     province: undefined,
+    //     district: undefined,
+    //     village: '',
+    //     longitude: 0,
+    //     latitude: 0
+    // });
     const { data: addressData, isLoading: add_isLoading, error } = useSelectAddress();
 
 
     // Validation errors
 
     const [errors, setErrors] = useState({
-        gender: false,
+        // gender: false,
         firstName: false,
         lastName: false,
         phone: false,
@@ -91,7 +95,7 @@ const ProfileSetup = () => {
     // Load existing profile data
     useEffect(() => {
         if (data) {
-            setGender(data.gender || '');
+            // setGender(data.gender || '');
             setFirstName(data.firstName || '');
             setLastName(data.lastName || '');
             setEmail(data.user.email || '');
@@ -113,24 +117,26 @@ const ProfileSetup = () => {
 
     const validateForm = () => {
         const newErrors = {
-            gender: !gender.trim(),
+            // gender: !gender.trim(),
             firstName: !firstName.trim(),
             lastName: !lastName.trim(),
             phone: !phone.trim(),
             profileImage: !profileImg,
-            province: !selectedProvince,
-            district: !selectedDistrict,
-            village: !village
+            // province: !selectedProvince,
+            // district: !selectedDistrict,
+            // village: !village
         };
 
         setErrors(newErrors);
-        return !newErrors.gender && !newErrors.firstName && !newErrors.lastName && !newErrors.phone && !newErrors.profileImage 
+        return  !newErrors.firstName && !newErrors.lastName && !newErrors.phone && !newErrors.profileImage
     };
 
-
+ const handleAgree = (value: boolean) => {
+    setAgreed(value);
+  };
     //address
     const handleAddressChange = (address: SelectedAddress) => {
-        setAddressInfo(address);
+        // setAddressInfo(address);
         setSelectedProvince(address.province);
         setSelectedDistrict(address.district);
         // setVillage(address.village);
@@ -237,11 +243,13 @@ const ProfileSetup = () => {
             }
 
             const profileData = {
-                gender: gender.trim(),
+                // gender: gender.trim(),
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
                 phone: phone.trim(),
                 userProfileImage: finalProfileImage,
+                privacyException: agreed,
+                privacyVersion:Constants.expoConfig?.version
                 // address: {
                 //     province: selectedProvince?.province_la,
                 //     district: selectedDistrict?.district_la,
@@ -413,7 +421,7 @@ const ProfileSetup = () => {
     }
 
     const isProcessing = isUpdating || isUploading;
-    const displayGender = GENDER_OPTIONS.find((opt) => opt.value === gender)?.label || t('signUpScreen.selectGender');
+    // const displayGender = GENDER_OPTIONS.find((opt) => opt.value === gender)?.label || t('signUpScreen.selectGender');
     const hasImage = !!profileImg; // Check if image exists
 
     return (
@@ -424,6 +432,8 @@ const ProfileSetup = () => {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
+                <Header_back text={t('protectedRoute.back')}  onPress={() => navigation.replace('MainTabs')}
+                iconColor='#3B82F6' />
                 {/* Scrollable Content */}
                 <ScrollView
                     showsVerticalScrollIndicator={false}
@@ -631,7 +641,7 @@ const ProfileSetup = () => {
                         </Modal>
 
                         {/* Gender Dropdown */}
-                        <View className="mb-4">
+                        {/* <View className="mb-4">
                             <Text className="text-text mb-2 font-bold text-body">{t('signUpScreen.gender')}</Text>
                             <Pressable
                                 onPress={() => !isProcessing && setGenderModalVisible(true)}
@@ -647,10 +657,10 @@ const ProfileSetup = () => {
                             {errors.gender && (
                                 <Text className="text-error text-caption mt-1">{t('signUpScreen.gender_required')}</Text>
                             )}
-                        </View>
+                        </View> */}
 
                         {/* Gender Selection Modal */}
-                        <Modal
+                        {/* <Modal
                             visible={genderModalVisible}
                             transparent
                             animationType="fade"
@@ -690,7 +700,7 @@ const ProfileSetup = () => {
                                     </View>
                                 </TouchableWithoutFeedback>
                             </TouchableOpacity>
-                        </Modal>
+                        </Modal> */}
 
                         {/* First Name & Last Name Section */}
                         <View className='flex-row'>
@@ -705,6 +715,7 @@ const ProfileSetup = () => {
                             <View
                                 className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.firstName ? 'border border-error' : 'border border-border'
                                     }`}
+                                    style={{ height: 52, minHeight: 52 }}
                             >
                                 <TextInput
                                     placeholder={t('signUpScreen.firstName')}
@@ -718,6 +729,7 @@ const ProfileSetup = () => {
                                     }}
                                     placeholderTextColor="#999"
                                     editable={!isProcessing}
+
                                 />
                             </View>
                             {errors.firstName && (
@@ -732,6 +744,7 @@ const ProfileSetup = () => {
                             <View
                                 className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.lastName ? 'border border-error' : 'border border-border'
                                     }`}
+                                style={{ height: 52, minHeight: 52 }}
                             >
                                 <TextInput
                                     placeholder={t('signUpScreen.lastName')}
@@ -759,7 +772,7 @@ const ProfileSetup = () => {
                             {t('signUpScreen.email')}
                         </Text>
                         <View className="mb-4">
-                            <View className="flex-row items-center px-4 py-2 rounded-2xl border border-border bg-gray-100">
+                            <View style={{ height: 52, minHeight: 52 }} className="flex-row items-center px-4 py-2 rounded-2xl border border-border bg-gray-100">
                                 <TextInput
                                     placeholder="aoser@example.com"
                                     className="flex-1 text-gray-500"
@@ -772,7 +785,7 @@ const ProfileSetup = () => {
                         </View>
 
                         {/* Phone Number Section */}
-                        <View className="mb-4">
+                        <View className="mb-4" style={{ height: 52, minHeight: 52 }}>
                             <PhoneInput
                                 label={t('kyc.step4.phoneNumber.label')}
                                 value={phone}
@@ -842,6 +855,31 @@ const ProfileSetup = () => {
 
 
                         </View> */}
+
+                        
+              <View className="px-5 pb-6 mt-6">
+                <TouchableOpacity
+                  
+                  className="flex-row items-center"
+                  activeOpacity={0.8}
+                >
+                  <Checkbox
+                    value={agreed}
+                    onValueChange={handleAgree}
+                    color={agreed ? '#3B82F6' : '#999'}
+                  />
+                  <Text className="ml-2 text-body text-text flex-1">
+                    {t('kyc.step7.agreement.text')}{' '}
+                    <Text
+                      className="text-primary underline"
+                      onPress={() => navigation.navigate('PrivacyPolicyScreen')}
+                    >
+                      {t('kyc.step7.agreement.policy')}
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+               
+              </View>
                     </View>
                 </ScrollView>
 
@@ -850,7 +888,8 @@ const ProfileSetup = () => {
                     <Pressable
                         onPress={handleUpdate}
                         className={`${isProcessing ? 'bg-gray-400' : 'bg-primary'} py-4 rounded-2xl items-center justify-center`}
-                        disabled={isProcessing}
+                        disabled={isProcessing || !agreed}
+                        
                     >
                         {isProcessing ? (
                             <View className="flex-row items-center">

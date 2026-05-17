@@ -29,6 +29,7 @@ import BudgetInput from 'components/ui/BudgetInput';
 import TextArea from 'components/ui/TextArea';
 import { useFreelancerApplyWork, useFreeLRequestUpdateW } from 'hooks/usePublicWork';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import ReportModal from 'components/ui/ReportModal';
 
 
 
@@ -52,6 +53,8 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
   const [favoriteId, setFavoriteId] = useState<string | null>(
     job?._id || null
   );
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+
   // form reason 
   const [isApplyLoading, setIsApplyLoading] = useState(false);
   const [reason, setReason] = useState('');
@@ -355,6 +358,8 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       setIsApplyLoading(false);
     }
   };
+
+
   return (
     <BottomSheetModal
       ref={bottomSheetModalRef}
@@ -401,7 +406,16 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
               </View>
             </TouchableOpacity>
-
+            {/* Report Button */}
+            <TouchableOpacity
+              onPress={() => setReportModalVisible(true)}
+              className="p-2"
+              activeOpacity={0.7}
+              accessibilityLabel="Report profile"
+              accessibilityRole="button"
+            >
+              <Ionicons name="information-circle" size={28} color="#000" />
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -449,12 +463,28 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
                   </View>
                   <Text className="text-body text-text">{t('postWork.budget')}</Text>
                 </View>
-                <View className="flex-row items-baseline gap-1">
+
+                {job?.budgetType === 'OFFERING' ? (
+                  <View className=''>
+                    <Text className="text-body text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                  </View>
+                ) : (
+
+                  <View className="flex-row items-center">
+                    {/* <Text>{t('postWork.budget')} : </Text> */}
+                    <Text className="font-bold text-body text-primary">
+                      {new Intl.NumberFormat().format(jobBudget)}
+                    </Text>
+                    <Text className="font-bold text-body text-warning ml-2">{job?.currency} </Text>
+                  </View>
+
+                )}
+                {/* <View className="flex-row items-baseline gap-1">
                   <Text className="text-2xl font-bold text-primary">
                     {new Intl.NumberFormat().format(jobBudget)}
                   </Text>
                   <Text className="text-body font-semibold text-warning">{job?.currency}</Text>
-                </View>
+                </View> */}
               </View>
 
               {/* Work Type */}
@@ -514,22 +544,39 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
           </View> */}
 
               {job?.address &&
-                job?.address.village !== '' &&
-                job?.address.district !== '' &&
-                job?.address.province !== '' &&
-                <View className="flex-row mt-3 items-center  pb-4 border-b border-border">
-                  <View className="flex-row items-center">
+
+                <View className="flex-row mt-3 items-center overflow-hidden  pb-4 border-b border-border">
+                  <View className="flex-row items-start gap-1">
                     <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
                       <Ionicons name="location-outline" size={24} color="#F59E0B" />
                     </View>
 
-                    <View className="flex-1">
+                    <View>
+
+
                       {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
+                      {job?.address.village !== '' &&
+                        job?.address.district !== '' &&
+                        job?.address.province !== '' && (
 
-                      <Text className="text-body text-text ">
-                        {job.address.village}, {job.address.district}, {job.address.province}
 
-                      </Text>
+                          <Text className="text-body text-text ">
+                            {job.address.village}, {job.address.district}, {job.address.province}.
+
+                          </Text>
+                        )}
+
+                      {job?.place && (
+
+
+
+                        <Text className="text-body text-text ">
+                          {job?.place}
+
+                        </Text>
+
+
+                      )}
                     </View>
 
 
@@ -537,30 +584,9 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
                 </View>
               }
 
-              {job?.place && (
 
 
 
-                <View className="flex-row mt-3 items-center  pb-4 border-b border-border">
-                  <View className="flex-row items-center">
-                    <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
-                      <Ionicons name="location-outline" size={24} color="#F59E0B" />
-                    </View>
-
-                    <View className="flex-1">
-                      {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
-
-                      <Text className="text-body text-text ">
-                        {job?.place}
-
-                      </Text>
-                    </View>
-
-
-                  </View>
-                </View>
-
-              )}
             </View>
 
             {/* Work Detail Section Header */}
@@ -627,7 +653,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
                 {!hasApplied ? (
                   <View>
                     <BudgetInput
-                      label={t('postWork.budget')}
+                      label={t('chat.offer.price')}
                       value={budget_offer}
                       onChange={(value) => {
                         setBudget_offer(value);
@@ -655,8 +681,8 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
                   </View>
                 ) : (
                   <View className="bg-blue-50 border border-primary rounded-xl p-4 mb-2">
-                    <Text className="text-body text-text">
-                      {t('workDetail.already_applied') || 'You already applied for this job.'}
+                    <Text className="text-body text-text self-center">
+                      {t('workDetail.already_applied') || 'Already applied'}
                     </Text>
                   </View>
                 )}
@@ -812,6 +838,15 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
           refetch={refetch}
         />
       )} */}
+
+      {/* ===== REPORT MODAL ===== */}
+      <ReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        reportID={job?._id || ''}
+        reportType="WORK"
+        freelancerName={``}
+      />
     </BottomSheetModal>
   );
 };

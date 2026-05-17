@@ -18,13 +18,13 @@ export type FreelancerStackParamList = {
   FreelancerProfile: { userId: string };
   ResumeImageViewer: { uri: string };
   Bookfreelancer: { userId: string };
-  ConfirmBookingScreen: { formData: BookingFormData , isBook?:boolean};
-  ConfirmPostjob: { formData: BookingFormData};
+  ConfirmBookingScreen: { formData: BookingFormData, isBook?: boolean };
+  ConfirmPostjob: { formData: BookingFormData };
   TopFreelancerList: undefined;
 
   // profile setting
   AoserProfileSetting: undefined;
-
+  Setting: undefined;
   // start freelancer role 
 
   UpgradeToFreelancer: undefined;
@@ -66,7 +66,7 @@ export type FreelancerStackParamList = {
   RoomChat: { userId: string };
   ChatStack: undefined
   NewsScreen: undefined
-  News: {newsId: string};
+  News: { newsId: string };
 
 
   // Aoser profile favorite 

@@ -252,14 +252,14 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
                     // Custom [+] button for New Work
                     <View
                       style={{
-                        // width: 48,
-                        // height: 48,
-                        // borderRadius: 14,
-                        // backgroundColor: isFocused ? '#3B82F6' : '#64748B',
-                        // alignItems: 'center',
-                        // justifyContent: 'center',
-                        // borderWidth: 2.5,
-                        // borderColor: isFocused ? '#93C5FD' : '#94A3B8',
+                        width: 42,
+                        height: 32,
+                        borderRadius: 5,
+                        backgroundColor: isFocused ? '#3B82F6' : '#fff',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 1.3,
+                        borderColor: isFocused ? '#93C5FD' : '#6B7280',
                         // ...(isFocused && {
                         //   shadowColor: '#3B82F6',
                         //   shadowOffset: { width: 0, height: 2 },
@@ -267,19 +267,23 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
                         //   shadowRadius: 6,
                         //   elevation: 8,
                         // }),
+                        marginTop: -14,
                       }}
                     >
-                      <Text
+                      {/* <Text
                         style={{
-                          color: isFocused ? '#3B82F6' : '#6B7280',
-                          fontSize: 26,
+                          // color: isFocused ? '#3B82F6' : '#6B7280',
+                          fontSize: 23,
                           fontWeight: isFocused ? '400' : '300',
                           lineHeight: 30,
-                          marginTop: -2,
+                          marginTop: -10,
                         }}
+                        className={`border px-5 py-1 ${isFocused ? 'border-border' : 'border-primary'} `}
                       >
-                       [ + ]
-                      </Text>
+                        + 
+                      </Text> */}
+
+                      <Ionicons name="add-outline" size={24} color={isFocused ? '#ffff' : '#6B7280'} />
                     </View>
                   ) : (
                     // Normal icon for other tabs

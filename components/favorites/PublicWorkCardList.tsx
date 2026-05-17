@@ -161,7 +161,7 @@ const PublicWorkCardList = ({ data, refetch }: Props) => {
               </View>
               {item.likedItem?.budgetType === 'OFFERING' ? (
                 <View className=''>
-                  <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                  <Text className="text-body text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
                 </View>
               ) : (
 
@@ -191,7 +191,7 @@ const PublicWorkCardList = ({ data, refetch }: Props) => {
               {item.likedItem?.deadLine !== undefined &&
                 <View className="flex-row mt-3 items-center">
                   {/* <Text>{t('workDetail.deadline')} : </Text> */}
-                  <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+                  <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
 
                   <View className="flex-row gap-2 items-center">
                     <Ionicons name="time-outline" size={18} color="#F59E0B" />
@@ -206,38 +206,46 @@ const PublicWorkCardList = ({ data, refetch }: Props) => {
 
               }
 
-              {item.likedItem.address.village !== '' && item.likedItem.address.district !== '' && item.likedItem?.address.province !== '' &&
 
-                <View className="flex-row mt-3 items-center">
-                  {/* <Text>{t('workDetail.deadline')} : </Text> */}
-                  <Text>{t('payment_success.address')}:  </Text>
+              <View className="flex-row row-auto items-center" >
 
-                  <View className="flex-row gap-2 items-center">
-                    <Ionicons name="location-outline" size={18} color="#F59E0B" />
+                {item.likedItem.address &&
 
-                    <Text className="text-sm text-textSecondary">
-                      {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+                  <View className="flex-row mt-3 items-center">
 
-                      {item.likedItem?.address.village}, {item.likedItem?.address.district}, {item.likedItem?.address.province}
-                    </Text>
+
+                    <View className="flex-row gap-2 items-start">
+                      <Ionicons name="location-outline" size={18} color="#F59E0B" />
+
+                      <View>
+
+                        {item.likedItem.address.village !== '' && item.likedItem.address.district !== '' && item.likedItem?.address.province !== '' &&
+
+                          <Text className="text-sm text-textSecondary">
+                            {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                            {item.likedItem?.address.village}, {item.likedItem?.address.district}, {item.likedItem?.address.province} ,
+                          </Text>
+                        }
+
+                        {item.likedItem?.place && (
+
+
+                          <Text className="text-sm text-textSecondary">
+                            {item.likedItem?.place}
+                          </Text>
+
+
+                        )}
+
+
+                      </View>
+                    </View>
                   </View>
-                </View>
-              }
-              {item.likedItem?.place && (
+                }
 
-                <View className="flex-row mt-3 items-center">
-                  <Text>{t('postWork.address_manually')}: </Text>
+              </View>
 
-                  <View className="flex-row gap-2 items-center">
-                    <Ionicons name="location-outline" size={18} color="#F59E0B" />
-
-                    <Text className="text-sm text-textSecondary">
-                    {item.likedItem?.place}
-                    </Text>
-                  </View>
-                </View>
-
-              )}
             </View>
           </Pressable>
         )

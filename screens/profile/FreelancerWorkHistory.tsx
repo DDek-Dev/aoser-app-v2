@@ -239,7 +239,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
                     </View>
                     {item.budgetType === 'OFFERING' ? (
                         <View className=''>
-                            <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                            <Text className="text-body text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
                         </View>
                     ) : (
 
@@ -272,7 +272,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
                     {item.deadLine !== undefined &&
                         <View className="flex-row mt-3 items-center">
                             {/* <Text>{t('workDetail.deadline')} : </Text> */}
-                            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+                            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
 
                             <View className="flex-row gap-2 items-center">
                                 <Ionicons name="time-outline" size={18} color="#F59E0B" />

@@ -148,7 +148,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
           </View>
           {workData.budgetType === 'OFFERING' ? (
             <View className=''>
-              <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+              <Text className="text-body text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
             </View>
           ) : (
 
@@ -177,7 +177,7 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
           </View>
           <View className="flex-row mt-3 items-center">
             {/* <Text>{t('workDetail.deadline')} : </Text> */}
-            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
+            <Text>{currentLanguage === 'la' ? 'ຫາ ' : 'End'} : </Text>
 
             <View className="flex-row gap-2 items-center">
               <Ionicons name="time-outline" size={18} color="#F59E0B" />
@@ -194,37 +194,43 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
 
 
             <View className="flex-row mt-3 items-center">
-              {/* <Text>{t('workDetail.deadline')} : </Text> */}
-              <Text>{t('payment_success.address')}:  </Text>
 
-              <View className="flex-row gap-2 items-center">
+              <View className="flex-row gap-2 items-start">
                 <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-                <Text className="text-sm text-textSecondary" numberOfLines={1}>
-                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
 
-                  {workAddress.village}, {workAddress.district}, {workAddress.province}
-                </Text>
+
+                <View>
+
+
+                  {workData.address.village !== '' &&
+                    workData.address.district !== '' &&
+                    workData.address.province !== '' &&
+
+
+                    <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                      {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                      {workAddress.village}, {workAddress.district}, {workAddress.province}.
+                    </Text>
+                  }
+
+                  {workData.place && (
+
+
+                    <Text className="text-sm text-textSecondary">
+                      {workData.place}
+                    </Text>
+
+
+                  )}
+                </View>
               </View>
             </View>
           }
-          {workData.place && (
 
-            <View className="flex-row mt-3 items-center">
-              <Text>{t('postWork.address_manually')}: </Text>
 
-              <View className="flex-row gap-2 items-center">
-                <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-                <Text className="text-sm text-textSecondary">
-                  {workData.place}
-                </Text>
-              </View>
-            </View>
-
-          )}
-
-          
 
         </View>
       </Pressable>

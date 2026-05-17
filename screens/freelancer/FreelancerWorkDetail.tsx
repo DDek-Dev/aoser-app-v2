@@ -1134,7 +1134,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
               {budgetType === 'OFFERING' ? (
                 <View className="bg-white rounded-2xl p-5 mb-4">
-                  <Text className="text-primary font-bold text-lg text-center">
+                  <Text className="text-primary font-bold text-body text-center">
                     {t('workDetail.offering_price')}
                   </Text>
                 </View>
@@ -1213,7 +1213,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                       <View>
 
 
-                        <Text className="text-primary font-bold text-lg">
+                        <Text className="text-primary font-bold text-body">
                           {t('workDetail.offering_price')}
                         </Text>
 
@@ -1294,48 +1294,38 @@ export default function FreelancerWorkDetail({ route }: Props) {
             {/* Divider */}
             <View className="h-px bg-border my-2 ml-4" />
 
-            {data.address && data.address?.village !== '' && data.address?.district !== '' && data.address?.province !== '' &&
 
-
-              <View className="flex-row mt-3 items-center">
-
-
-                <View className="flex-row items-center">
+            <View className="" >
+              {data.address &&
+                <View className="flex-row items-start">
                   <View className="w-8 h-8 rounded-full bg-error/10 items-center justify-center mr-3">
                     <Ionicons name="location-outline" size={16} color="#F59E0B" />
                   </View>
 
-                  <View className="flex-1">
-                    <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text>
+                  <View>
+                    {data.address?.village !== '' && data.address?.district !== '' && data.address?.province !== '' && (
+                      <Text className="text-body text-text ">
+                        {data?.address.village}, {data?.address.district}, {data?.address.province}.
+                      </Text>
+                    )}
+                    {data?.place && (
 
-                    <Text className="text-body text-text ">
-                      {data?.address.village}, {data?.address.district}, {data?.address.province}
-                    </Text>
+                      <Text className="text-body text-text ">
+                        {data?.place}
+                      </Text>
+
+                    )}
                   </View>
 
 
                 </View>
-              </View>
-            }
-            {data?.place && (
-              <View className="flex-row mt-3 items-center">
-                <View className="flex-row items-center">
-                  <View className="w-8 h-8 rounded-full bg-error/10 items-center justify-center mr-3">
-                    <Ionicons name="location-outline" size={16} color="#F59E0B" />
-                  </View>
 
-                  <View className="flex-1">
-                    <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text>
-
-                    <Text className="text-body text-text ">
-                      {data?.place}
-                    </Text>
-                  </View>
+              }
 
 
-                </View>
-              </View>
-            )}
+
+
+            </View>
           </View>
 
         </View>
@@ -1522,7 +1512,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                 onPress={() => toggleExpandAppendItem(expandKey)}
                                 onLongPress={() => handleAppendWorkSectionTitleLongPress(appendWork._id, idx, section.sectionTitle)}
                                 className="flex-1"
-                      disabled={isCompleted? true : false}
+                                disabled={isCompleted ? true : false}
 
                               >
                                 <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
@@ -1539,7 +1529,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                             size={20}
                             color="#6B7280"
                             onPress={() => toggleExpandAppendItem(expandKey)}
-                            disabled={isCompleted? true : false}
+                            disabled={isCompleted ? true : false}
                           />
                         </View>
 
@@ -1565,7 +1555,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                     <TouchableOpacity
                                       onLongPress={() => canEdit && handleAppendWorkSubTaskTitleLongPress(appendWork._id, idx, subTaskIndex, subTask.title)}
                                       className="flex-1"
-                      disabled={isCompleted? true : false}
+                                      disabled={isCompleted ? true : false}
 
                                     >
                                       <Text className="text-body text-text">{subTask.title}</Text>
@@ -1582,7 +1572,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                       className="px-3 py-1 rounded-full flex-row items-center"
                                       style={{ backgroundColor: statusColors.bg }}
                                       onPress={() => setShowStatusDropdown(showStatusDropdown === dropdownKey ? null : dropdownKey)}
-                                      disabled={isCompleted? true : false}
+                                      disabled={isCompleted ? true : false}
                                     >
                                       <Text className="text-caption font-medium mr-1" style={{ color: statusColors.text }}>
                                         {currentStatus}
@@ -1618,7 +1608,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                                 appendWork.subWorkDetails
                                               )
                                             }
-                                            disabled={isCompleted? true : false}
+                                            disabled={isCompleted ? true : false}
                                           >
                                             <View className="flex-row items-center">
                                               <View className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: optionColors.bg }} />
@@ -1643,9 +1633,9 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                   })}
                                   className="flex-1 text-body text-text"
                                   placeholderTextColor="#6B7280"
-                                  
+
                                 />
-                                <TouchableOpacity onPress={() => handleAppendWorkAddSubTask(appendWork._id, idx)} disabled={isCompleted? true : false}>
+                                <TouchableOpacity onPress={() => handleAppendWorkAddSubTask(appendWork._id, idx)} disabled={isCompleted ? true : false}>
                                   <Text className="text-primary font-medium">{t('workDetail.add_plus')}</Text>
                                 </TouchableOpacity>
                               </View>
@@ -1831,7 +1821,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                       onPress={() => toggleExpand(idx)}
                       onLongPress={() => handleSectionTitleLongPress(idx, section.sectionTitle)}
                       className="flex-1"
-                      disabled={isCompleted? true : false}
+                      disabled={isCompleted ? true : false}
                     >
                       <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
                     </TouchableOpacity>
@@ -1844,7 +1834,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                         onPress={() => toggleExpand(idx)}
                         onLongPress={() => handleSectionTitleLongPress(idx, section.sectionTitle)}
                         className="flex-1"
-                      disabled={isCompleted? true : false}
+                        disabled={isCompleted ? true : false}
 
                       >
                         <Text className="text-body text-text font-medium">{section.sectionTitle}</Text>
@@ -1886,7 +1876,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                 <TouchableOpacity
                                   onLongPress={() => handleSubTaskTitleLongPress(idx, subTaskIndex, subTask.title)}
                                   className="flex-row items-center flex-1"
-                      disabled={isCompleted? true : false}
+                                  disabled={isCompleted ? true : false}
 
                                 >
                                   <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
@@ -1922,7 +1912,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                 <TouchableOpacity
                                   onLongPress={() => handleSubTaskTitleLongPress(idx, subTaskIndex, subTask.title)}
                                   className="flex-row items-center flex-1"
-                      disabled={isCompleted? true : false}
+                                  disabled={isCompleted ? true : false}
 
                                 >
                                   <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
@@ -2054,7 +2044,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
           )} */}
 
           {data?.createdBy?._id === user?._id && data?.workStatus === "DOING" && (
-            <Pressable onPress={() => navigation.navigate('AppendOwnerWork', { workId: data?._id })} className='p-3'>
+            <Pressable onPress={() => navigation.navigate('AppendOwnerWork', { workId: data?._id })} className='p-3 border border-border rounded-2xl'>
               <Text className="text-surface font-semibold text-base">{t('workDetail.add_work')}</Text>
             </Pressable>
           )}
@@ -2072,7 +2062,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
         {data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id && (
           <View className="bg-border px-4 py-2 flex-row items-center justify-between h-auto">
-            <Text className="text-success text-caption font-medium">{t('workDetail.project_paid_successfully')}</Text>
+            <Text className="text-success text-caption font-bold">{t('workDetail.project_paid_successfully')}</Text>
           </View>
         )}
 
@@ -2251,7 +2241,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                   openActionConfirm({
                     title: t('workDetail.confirm_submit'),
                     message: t('workDetail.confirm_work.message_comfirm'),
-                    actionText: t('kyc.buttons.submit'),
+                    actionText: t('workDetail.confirm'),
                     variant: 'primary',
                     onConfirm: handleConfirmWork,
                   })
@@ -2283,8 +2273,8 @@ export default function FreelancerWorkDetail({ route }: Props) {
           )}
 
           {data?.workStatus === 'COMPLETED' && data?.createdBy?._id !== user?._id && (
-            <View className=" px-16">
-              <Ionicons name='checkmark-outline' size={32} color='#10B981' />
+            <View className=" h-12 w-12 bg-success rounded-xl flex-row items-center justify-center">
+              <Ionicons name='checkmark-outline' size={32} color='#fff' />
             </View>
           )}
 

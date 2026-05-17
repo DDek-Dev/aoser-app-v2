@@ -139,14 +139,12 @@ const HistoryScreen = () => {
               <TouchableOpacity
                 key={tabKey}
                 onPress={() => setSelectedTab(tabKey)}
-                className={`flex-1 py-2 px-6 space-x-4 rounded-full items-center ${
-                  selectedTab === tabKey ? 'bg-surface' : ''
-                }`}
+                className={`flex-1 py-2 px-6 space-x-4 rounded-full items-center ${selectedTab === tabKey ? 'bg-surface' : ''
+                  }`}
               >
                 <Text
-                  className={`text-sm font-medium ${
-                    selectedTab === tabKey ? 'text-primary' : 'text-surface'
-                  }`}
+                  className={`text-sm font-medium ${selectedTab === tabKey ? 'text-primary' : 'text-surface'
+                    }`}
                 >
                   {t(`favorites.${tabKey}`)}
                 </Text>
@@ -169,14 +167,12 @@ const HistoryScreen = () => {
                   <Pressable
                     key={filterId}
                     onPress={() => setPublicWorkStatusFilter(filterId)}
-                    className={`px-3 py-2 rounded-full border ${
-                      isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
-                    }`}
+                    className={`px-3 py-2 rounded-full border ${isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
+                      }`}
                   >
                     <Text
-                      className={`text-sm font-medium ${
-                        isActive ? 'text-white' : 'text-textSecondary'
-                      }`}
+                      className={`text-sm font-medium ${isActive ? 'text-white' : 'text-textSecondary'
+                        }`}
                     >
                       {statusFilterLabel(filterId)}
                     </Text>
@@ -207,28 +203,14 @@ const HistoryScreen = () => {
         >
           {/* Public Works Tab */}
           <View style={{ display: selectedTab === 'public_works' ? 'flex' : 'none' }}>
+            
             {publicWorkLoading ? (
               <JobListItem />
-            ) : publicWorkData.length === 0 ? (
+            ) : !filteredPublicWorkData || filteredPublicWorkData.length === 0 ? (
               <HistoryNoResult
                 title={t('history.history_no_result.no_history')}
                 desc={t('history.history_no_result.items_will_appear_here')}
               />
-            ) : filteredPublicWorkData.length === 0 ? (
-              <View className="py-2">
-                <HistoryNoResult
-                  title={t('history.history_no_result.no_history')}
-                  desc={t('history.history_no_result.items_will_appear_here')}
-                />
-                {hasNextPage && (
-                  <Pressable
-                    onPress={() => fetchNextPage()}
-                    className="mt-4 bg-primary px-6 py-3 rounded-full self-center"
-                  >
-                    <Text className="text-white font-semibold">Load more</Text>
-                  </Pressable>
-                )}
-              </View>
             ) : (
               <PublicWorkHistoryList data={filteredPublicWorkData} />
             )}

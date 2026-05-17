@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import './global.css';
+import './global.css' ;
 import MainNavigator from 'navigation/MainNavigator';
 import { navigationRef } from 'navigation/RootNavigation';
 import './i18n';

@@ -23,6 +23,7 @@ import VDOPromote from 'components/profile/VDOPromote';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
+import ReportModal from 'components/ui/ReportModal';
 
 // Types
 import { FreelancerStackParamList } from 'types/navigation';
@@ -58,6 +59,7 @@ export default function FreelancerProfile() {
 
   // Local state
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
 
   // Refs
   const debounceRef = useRef<any>(null);
@@ -340,17 +342,17 @@ export default function FreelancerProfile() {
         />
         
         
-        {/* Favorite Button - Only shown to authenticated users */}
+        {/* Favorite Button & Report Button - Only shown to authenticated users */}
         {isAuthenticated && !isOwnProfile && (
-          <View className="flex-row mr-8 items-center gap-8 ">
+          <View className="flex-row mr-6 items-center ">
+            {/* Favorite Button */}
             <TouchableOpacity
               onPress={handleFavoriteToggle}
               disabled={isLoadingFavorite}
-              className="mr-2 p-2" // Added padding for better touch target
+              className="mr-2 p-2"
               activeOpacity={0.7}
               accessibilityLabel={isFavorite ? 'Unlike profile' : 'Like profile'}
               accessibilityRole="button"
-
             >
               {isLoadingFavorite ? (
                 <ActivityIndicator size="small" color="#3B82F6" />
@@ -360,8 +362,20 @@ export default function FreelancerProfile() {
                 <Ionicons name="heart-outline" size={28} color="#3b82f6" />
               )}
             </TouchableOpacity>
+
+            {/* Report Button */}
+            <TouchableOpacity
+              onPress={() => setReportModalVisible(true)}
+              className="p-2"
+              activeOpacity={0.7}
+              accessibilityLabel="Report profile"
+              accessibilityRole="button"
+            >
+              <Ionicons name="information-circle" size={28} color="#000" />
+            </TouchableOpacity>
           </View>
         )}
+
       </View>
       <Animated.ScrollView
         className="bg-white flex-1"
@@ -429,6 +443,15 @@ export default function FreelancerProfile() {
           onMessage={handleNavigateToChat}
         />
       )} */}
+
+      {/* ===== REPORT MODAL ===== */}
+      <ReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        reportID={userId}
+        reportType="FREELANCER"
+        freelancerName={``}
+      />
     </ScreenWrapper>
   );
 }

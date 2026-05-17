@@ -80,7 +80,7 @@ const remoteFile = (filename: string | undefined, type: 'image' | 'video' = 'ima
     return {
         uri: `${CDN_BASE_URL}${filename}`,
         name: filename,
-        type: mimeType,
+        type: mimeType, 
     };
 };
 
@@ -98,9 +98,7 @@ const UpgradeToFreelancer = () => {
     // ─── Registration mode flags ───────────────────────────────────────────────
     const isRejectedRegistration =profileData?.businessType === 'FREELANCER'&& profileData?.registrationStatus === 'REJECTED';
         
-    const canStartRegistration =
-        profileData?.businessType === 'CUSTOMER' &&
-        profileData?.registrationStatus === '';
+    
     // ──────────────────────────────────────────────────────────────────────────
 
     // console.log("User profile:: ", JSON.stringify(profileData, null, 2))
@@ -109,14 +107,14 @@ const UpgradeToFreelancer = () => {
     const [lastName, setLastName] = useState('');
     const [profileImg, setProfileImg] = useState<FileWithType | null>(null);
     const [userId, setUserId] = useState('');
-    const [gender, setGender] = useState('');
+    // const [gender, setGender] = useState('');
     const [phone, setPhone] = useState('');
 
     const { mutate: updateProfile } = useUpdateMyProfile();
 
     const [aoserProfile, setAoserProfile] = useState<ErrorState>({
         firstName: false, lastName: false, profileImg: false,
-        gender: false, phone: false, province: false, district: false, village: false,
+         phone: false, province: false, district: false, village: false,
     });
 
     // Step 1
@@ -228,7 +226,7 @@ const UpgradeToFreelancer = () => {
             if (!hasStep0) {
                 setFirstName(profileData.firstName || '');
                 setLastName(profileData.lastName || '');
-                setGender(profileData.gender || '');
+                // setGender(profileData.gender || '');
                 setPhone(profileData.phone || '');
                 setUserId(profileData._id || '');
                 setAddressProvince(profileData.address?.province || '');
@@ -344,7 +342,7 @@ const UpgradeToFreelancer = () => {
                     firstName={firstName} setFirstName={setFirstName}
                     lastName={lastName} setLastName={setLastName}
                     profileImg={profileImg} setProfileImg={setProfileImg}
-                    gender={gender} setGender={setGender}
+                    // gender={gender} setGender={setGender}
                     phone={phone} setPhone={setPhone}
                     province={addressProvince} setProvince={setAddressProvince}
                     district={addressDistrict} setDistrict={setAddressDistrict}
@@ -438,7 +436,7 @@ const UpgradeToFreelancer = () => {
                 firstName: firstName.trim() === '',
                 lastName: lastName.trim() === '',
                 profileImg: !profileImg?.uri,
-                gender: !gender.trim(),
+                // gender: !gender.trim(),
                 phone: !phone.trim(),
                 province: !addressProvince.trim(),
                 district: !addressDistrict.trim(),
@@ -453,7 +451,7 @@ const UpgradeToFreelancer = () => {
                     userId,
                     firstName,
                     lastName,
-                    gender,
+                    // gender,
                     phone,
                     address: {
                         country: 'Laos',
@@ -735,7 +733,7 @@ const UpgradeToFreelancer = () => {
                 // ── Build final payload ──────────────────────────────────────
                 const savedFirstName = reconstructedData['@aoser_profile']?.firstName || '';
                 const savedLastName = reconstructedData['@aoser_profile']?.lastName || '';
-                const savedGender = reconstructedData['@aoser_profile']?.gender || '';
+                // const savedGender = reconstructedData['@aoser_profile']?.gender || '';
                 const savedPhone = reconstructedData['@aoser_profile']?.phone || '';
                 const uploadedUserProfileImage = reconstructedData['@aoser_profile']?.existingProfileImg as string | undefined;
 
@@ -830,7 +828,7 @@ const UpgradeToFreelancer = () => {
                     const profilePayload: Record<string, string> = {
                         firstName: savedFirstName.trim(),
                         lastName: savedLastName.trim(),
-                        gender: savedGender.trim(),
+                        // gender: savedGender.trim(),
                         phone: savedPhone.trim(),
                     };
                     if (uploadedUserProfileImage) {
@@ -873,9 +871,12 @@ const UpgradeToFreelancer = () => {
 
                 if (isRejectedRegistration) {
                     // ✅ Re-submission: UPDATE existing profile PENDING
+                    // console.log('final data review:', JSON.stringify(finalData, null, 2))
                     updateFreelancerProfile(finalData as UserProfile, { onSuccess, onError });
                 } else {
                     // ✅ First time: CREATE new freelancer profile
+                    // console.log('final data new okyc:', JSON.stringify(finalData, null, 2))
+
                     createFreelancer(finalData as UserProfile, { onSuccess, onError });
                 }
 
@@ -906,7 +907,7 @@ const UpgradeToFreelancer = () => {
             <View style={{ flex: 1 }}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 110}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ?110 : 110}
                     style={{ flex: 1, backgroundColor: 'white' }}
                 >
                     <ScrollView
@@ -920,7 +921,7 @@ const UpgradeToFreelancer = () => {
                         </TouchableWithoutFeedback>
                     </ScrollView>
 
-                    <View className='px-4 mb-6 flex-row gap-4'>
+                    <View className='px-4 mb-6 flex-row gap-4 justify-center items-center'>
                         {step >= 0 && (
                             <TouchableOpacity
                                 onPress={handleBack}

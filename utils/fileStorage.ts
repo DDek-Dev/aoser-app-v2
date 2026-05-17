@@ -458,7 +458,7 @@ export interface AoserProfileData {
   firstName: string;
   lastName: string;
   profileImg?: FileWithType | null;
-  gender: string;
+  // gender: string;
   phone: string;
   address?: {
     country: string;

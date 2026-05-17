@@ -555,7 +555,7 @@ const fetchFreelancerLocalProfile = async (userId: string): Promise<any | null> 
        
       };
 
-      console.log('Fetched freelancer profile:', JSON.stringify(profile,null,2));
+      // console.log('Fetched freelancer profile:', JSON.stringify(profile,null,2));
 
       return profile;
     }

@@ -63,7 +63,21 @@ export const authApi = {
         }
 
     },
+     handleApplelogin : async (data: string) : Promise<any>=> {
+        try {
+            
+            const res = await networkCheck.post(`${API_BASE_URL}/auth/apple/login`,  data );
+            return res.data;
+        } catch (err: any) {
+            console.log(err.message);
 
+        }
+
+    },
+
+
+    
+    
     // Handle Google callback
 
 
@@ -91,6 +105,33 @@ export const authApi = {
                 stack: error.stack
             });
             throw new Error(error.message || t('errors.sendOTPFailed'));
+        }
+    },
+    deleteAccount: async (token: string): Promise<{ success: boolean; message: string }> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/delete-me`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Aoser ${token}`
+                }
+                
+             
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to delete account');
+            }
+
+            return data;
+        } catch (error: any) {
+            console.log("Delete account error:", {
+                message: error.message,
+                stack: error.stack
+            });
+            throw new Error(error.message );
         }
     },
 

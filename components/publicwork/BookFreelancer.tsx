@@ -540,7 +540,7 @@ const BookFreelancer = ({ route }: Props) => {
 
                 {budgetType === 'OFFERING' ? (
                   <View className='flex-row mb-4'>
-                    <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                    <Text className="text-body text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
                   </View>
                 ) : (
                   <BudgetInput

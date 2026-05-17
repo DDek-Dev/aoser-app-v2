@@ -225,6 +225,11 @@ const NotificationsScreen = () => {
               <Text className="font-semibold text-primary text-heading">{t('notification.notification')}</Text>
             </View>
           </View>
+
+          <Pressable onPress={() => navigation.navigate('NewsScreen')} className="flex-row justify-between items-center mt-4 gap-2">
+            <Text className="text-body font-bold text-textSecondary">{t('news.title')}</Text>
+            <Ionicons name="newspaper-outline" size={20} color="#6B7280" />
+          </Pressable>
         </View>
 
         {/* Notifications List */}

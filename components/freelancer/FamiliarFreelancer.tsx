@@ -117,8 +117,16 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY, excep
         }
     }
 
-    if(data?.pages.length === 0 || allFreelancers?.length === 0) {
-        return <NoResults title={`${t('freelancer_profile.no_freelancer_fimiliar')}`} subtitle={`${t('freelancer_profile.no_freelancer_fimiliar_dec')}`} isShow={false} />;
+    if (data?.pages.length === 0 || allFreelancers?.length === 0) {
+        return (
+            <View ref={containerRef} className="mt-6 px-1 ">
+                <View className='h-[1px] mb-4 bg-border'/>
+                <View className="flex-row justify-between items-center mb-2">
+                    <Text className="text-body font-bold mb-2">{title}</Text>
+                </View>
+                <NoResults title={`${t('freelancer_profile.no_freelancer_fimiliar')}`} subtitle={`${t('freelancer_profile.no_freelancer_fimiliar_dec')}`} isShow={false} />
+            </View>
+        )
     }
 
     // Main render with data

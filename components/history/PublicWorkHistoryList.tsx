@@ -103,7 +103,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
               </View>
               {item.budgetType === 'OFFERING' ? (
                 <View className=''>
-                  <Text className="text-lg text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                  <Text className="text-body text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
                 </View>
               ) : (
 
@@ -136,7 +136,7 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
               {item.deadLine !== undefined &&
                 <View className="flex-row mt-3 items-center">
                   {/* <Text>{t('workDetail.deadline')} : </Text> */}
-                  <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+                  <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
 
                   <View className="flex-row gap-2 items-center">
                     <Ionicons name="time-outline" size={18} color="#F59E0B" />
@@ -151,39 +151,36 @@ const PublicWorkHistoryList = ({ data, onViewPress }: Props) => {
 
               }
 
-              {item.address && item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
+              <View className="flex-row row-auto items-center" >
+                {item.address &&
 
-                <View className="flex-row mt-3 items-center">
-                  {/* <Text>{t('workDetail.deadline')} : </Text> */}
-                  <Text>{t('payment_success.address')}:  </Text>
+                  <View className="flex-row mt-3 items-center">
+                    {/* <Text>{t('payment_success.address')}: </Text> */}
 
-                  <View className="flex-row gap-2 items-center">
-                    <Ionicons name="location-outline" size={18} color="#F59E0B" />
+                    <View className="flex-row gap-2 items-start">
+                      <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-                    <Text className="text-sm text-textSecondary">
-                      {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+                      <View>
 
-                      {item.address.village}, {item.address.district}, {item.address.province}
-                    </Text>
+
+                        {item.address.village !== '' &&
+                          item.address.district !== '' &&
+                          item.address.province !== '' && (
+
+                            <Text className="text-sm text-textSecondary">
+                              {item.address.village}, {item.address.district}, {item.address.province}.
+                            </Text>
+                          )}
+                        {item.place && (
+                          <Text className="text-sm text-textSecondary">
+                            {item.place}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
                   </View>
-                </View>
-              }
-
-              {item.place && (
-
-                <View className="flex-row mt-3 items-center">
-                  <Text>{t('postWork.address_manually')}: </Text>
-
-                  <View className="flex-row gap-2 items-center">
-                    <Ionicons name="location-outline" size={18} color="#F59E0B" />
-
-                    <Text className="text-sm text-textSecondary">
-                      {item.place}
-                    </Text>
-                  </View>
-                </View>
-
-              )}
+                }
+              </View>
 
             </View>
 

@@ -134,7 +134,7 @@ function PhoneInput({
           onChangeText={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className="flex-1 text-body text-text"
+          className="flex-1 text-body text-text  mb-1 items-center"
           // placeholderClassName='#111827'
             placeholderTextColor="#9CA3AF"
           style={{ paddingVertical: Platform.OS === 'ios' ? 14 : 10 }}

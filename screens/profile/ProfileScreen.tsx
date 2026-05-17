@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useCallback, useMemo, useState } from 'react';
 import LogoutModal from 'components/ui/LogoutModal';
 import Constants from 'expo-constants';
+import { profileImage } from 'assets';
 
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
@@ -88,10 +89,13 @@ const settings = useMemo(() => [
       <View className="flex-row justify-between items-center mt-4">
         <Text className="text-heading font-bold text-white">{t('profile.profile')}</Text>
       </View>
-      <Pressable onPress={()=> navigation.navigate('NewsScreen')} className="flex-row justify-between items-center mt-4 gap-2">
-        <Text className="text-body font-bold text-white">{t('news.title')}</Text>
-        <Ionicons name="newspaper-outline" size={20} color="#FFFFFF" />
+      <Pressable onPress={()=> navigation.navigate('Setting')} className="flex-row justify-between items-center mt-4 gap-2">
+        {/* <Text className="text-body font-bold text-white">Setting</Text> */}
+        <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
       </Pressable>
+
+
+      
     </View>
   );
 
@@ -112,7 +116,7 @@ const settings = useMemo(() => [
     <Pressable onPress={() => navigation.navigate('CustomerProfile', { userId: data?._id as string })}>
       <View className="flex-row items-center">
         <Image
-          source={{ uri: BASE_IMAGE + data?.userProfileImage }}
+          source={ data?.userProfileImage ? {  uri: BASE_IMAGE + data?.userProfileImage } : profileImage }
           className="w-14 h-14 rounded-full mr-3"
         />
         <View>

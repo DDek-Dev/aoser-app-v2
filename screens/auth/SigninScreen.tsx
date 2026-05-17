@@ -25,6 +25,7 @@ import { FreelancerStackParamList } from 'types/navigation';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
+import AppleLoginButton from './AppleLoginButton';
 
 // ========================================
 // VALIDATION SCHEMA
@@ -185,6 +186,8 @@ export default function SigninScreen({ navigation }: any) {
                 disabled={isLoading}
               />
 
+              {Platform.OS === 'ios' && <AppleLoginButton/>}
+
               {/* Error Message */}
               {loginError && <ErrorMessage />}
 
@@ -228,6 +231,8 @@ type EmailInputProps = {
 
 function EmailInput({ control, error, disabled }: EmailInputProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const { t } = useTranslation();
+
   return (
     <Controller
       control={control}
@@ -235,7 +240,7 @@ function EmailInput({ control, error, disabled }: EmailInputProps) {
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 rounded-2xl mb-2 mt-4 ${error
+            className={`flex-row items-center px-4  rounded-2xl mb-2 mt-4 ${error
               ? 'border border-red-500'
               : isFocused
                 ? 'border border-primary'
@@ -250,7 +255,7 @@ function EmailInput({ control, error, disabled }: EmailInputProps) {
               style={{ marginRight: 8 }}
             />
             <TextInput
-              placeholder="Aoser@example.com"
+              placeholder={t('forgotPassword.emailPlaceholder')}
               style={{ flex: 1, fontSize: 16, paddingVertical: 0, includeFontPadding: false }}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -375,7 +380,8 @@ function GoogleLoginButton({ onPress, loading, disabled }: GoogleLoginButtonProp
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className="flex-row justify-center items-center border border-border py-6 rounded-2xl bg-background mb-4"
+      className="flex-row justify-center items-center border border-border rounded-2xl bg-background mb-4"
+      style={{ height: 52,}}
     >
       {loading ? (
         <ActivityIndicator color="#DB4437" />

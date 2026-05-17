@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import FormInput from 'components/ui/Input';
 import SelectInput from 'components/ui/SelectInput';
-import { getCategories, useFreelancerById, useMyProfile, useUpdateFreelancerProfile } from 'hooks/useFreelancer';
+import { getCategories, useFreelancerById, useMyProfile, useUpdateFreelancerProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
 import SelectImage from 'components/ui/SelectImage';
 import SelectVideo from 'components/ui/SelectVideo';
 import SelectFreelancerType from 'components/ui/SelectfreelancerType';
@@ -43,7 +43,8 @@ const EditFreelancerJobsection = () => {
     const categoryRef = useRef<{ focus: () => void }>(null);
     const { data } = useMyProfile();
     const { data: profile, isLoading } = useFreelancerById(data?._id || '');
-    const updateProfileMutation = useUpdateFreelancerProfile();
+    // const updateProfileMutation = useUpdateFreelancerProfile();
+    const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
 
 
     const { t } = useTranslation();
@@ -220,16 +221,28 @@ const EditFreelancerJobsection = () => {
             console.log('updateData', updateData);
 
             // Update profile
-            const result = await updateProfileMutation.mutateAsync(updateData as UserProfile);
+            // const result = await updateProfileMutation.mutateAsync(updateData as UserProfile);
 
-            console.log('Update successful:', result);
+            // console.log('Update successful:', result);
 
-            Toast.show({
-                type: ALERT_TYPE.SUCCESS,
-                title: t('kyc.toast.success.title'),
-                textBody:  t('kyc.toast.success.onupdate'),
-            })
-            navigation.goBack();
+            updateProfile(updateData, {
+                onSuccess: () => {
+                    Toast.show({
+                        type: ALERT_TYPE.SUCCESS,
+                        title: t('kyc.toast.success.title'),
+                        textBody: t('kyc.toast.success.onupdate'),
+                    })
+                    navigation.goBack();
+                },
+                onError: (error) => {
+                    Toast.show({
+                        type: ALERT_TYPE.DANGER,
+                        title: t('kyc.toast.oops.title'),
+                        textBody: t('kyc.toast.oops.body'),
+                    })
+                },
+            });
+
 
         } catch (error) {
             console.log('Update error:', error);
@@ -271,7 +284,7 @@ const EditFreelancerJobsection = () => {
                     placeholder={t('kyc.step1.jobTitle.placeholder')}
                     value={jobTitle}
                     onChangeText={setJobTitle}
-                    inputClassName={ errors.jobTitle ? 'border-error' : 'border-border'}
+                    inputClassName={errors.jobTitle ? 'border-error' : 'border-border'}
                     required
                     isValidate={`${errors.jobTitle ? t('kyc.step1.jobTitle.required') : ''}`}
 
@@ -323,16 +336,16 @@ const EditFreelancerJobsection = () => {
                         isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
                     /> */}
                     <SelectInput
-                    label={t('kyc.step1.serviceType.label')}
-                    value={category}
-                    initialSubcategories={subcategories}
-                    onSelect={(serviceTypeId, jobIds) => {
-                        setCategory(serviceTypeId);
-                        setSubcategories(jobIds);
-                    }}
-                    required
-                    isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
-                />
+                        label={t('kyc.step1.serviceType.label')}
+                        value={category}
+                        initialSubcategories={subcategories}
+                        onSelect={(serviceTypeId, jobIds) => {
+                            setCategory(serviceTypeId);
+                            setSubcategories(jobIds);
+                        }}
+                        required
+                        isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
+                    />
                 </View>
             </ScrollView>
 

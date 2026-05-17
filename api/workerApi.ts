@@ -3,7 +3,7 @@
 import { Freelancer, UserProfile } from "types/profile";
 
 
-import { CreateReview, ServiceType, SubService, Favorite, Review, GetFavorite, JobpopularData, WalletData } from "types";
+import { CreateReview, ServiceType, SubService, Favorite, Review, GetFavorite, JobpopularData, WalletData, ReportType } from "types";
 import axios from "axios";
 import networkCheck from "./networkCheck";
 
@@ -164,6 +164,7 @@ export const workerApi = {
 
     // create freelancer
     createFreelancer: async (data: UserProfile, token: string): Promise<UserProfile> => {
+        console.log("Data to create freelancer: ", JSON.stringify(data, null, 2));
         const response = await fetch(`${API_BASE_URL}/worker/freelancer-kyc`, {
             method: 'POST',
             headers: {
@@ -398,7 +399,8 @@ export const workerApi = {
                     'Authorization': `Aoser ${token}`,
                 },
             });
-            return response.data.data[0].freelancers || [];
+            // Safely access nested freelancers array with fallback
+            return response?.data?.data?.[0]?.freelancers || [];
         } catch (error) {
             console.log('Error fetching hired freelancers:', error);
             throw error;
@@ -467,6 +469,18 @@ export const workerApi = {
             console.log('Error fetching reviews:', error);
             throw error;
         }
+    },
+    
+    report: async (data: ReportType, token: string) => {
+
+        const res = await networkCheck.post(`${API_BASE_URL}/worker/problem-report`, data, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Aoser ${token}`,
+            },
+        });
+        // console.log("CREATE respone in APIL = ", res.data.data);
+        return res.data.data;
     },
 
 

@@ -62,6 +62,7 @@ import { useEffect, useRef } from 'react';
 import WalletScreen from 'components/profile/WalletScreen';
 import NewsScreen from 'screens/profile/NewsScreen';
 import News from 'screens/profile/News';
+import Setting from 'screens/profile/Setting';
 
 
 
@@ -301,6 +302,19 @@ export default function MainNavigator() {
               onSignUpPress={() => navigation.navigate('SignUp')}
             >
               <AuthFreelancerSetting />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen name="Setting"
+
+        >
+          {() => (
+            <ProtectedRoute
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <Setting />
             </ProtectedRoute>
           )}
         </RootStack.Screen>

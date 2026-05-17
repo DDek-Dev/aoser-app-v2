@@ -1,10 +1,12 @@
 import { Freelancer, UserProfile } from "types/profile";
 import { useInfiniteQuery, useMutation, UseMutationResult, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CategoryOption, CreateReview, Job, Favorite, Review, GetFavorite, JobpopularData, ServiceType } from "types";
+import { CategoryOption, CreateReview, Job, Favorite, Review, GetFavorite, JobpopularData, ServiceType, ReportType } from "types";
 import { useAuth } from "./useAuth";
 import { workerApi } from "api/workerApi";
 
 import axios from "axios";
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
+import { useTranslation } from "react-i18next";
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -32,7 +34,7 @@ export const useFreeLancers = () => {
     refetchOnMount: false, // Use cache on mount
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    
+
   });
 };
 
@@ -65,7 +67,7 @@ export const useFreelancerById = (userId: string) => {
         //   'Content-Type': 'application/json',
         //   'Authorization': `Aoser ${tokens.accessToken}`,
         // },
-      }); 
+      });
 
       if (Array.isArray(response.data.data)) {
         return response.data.data[0] || null;
@@ -133,7 +135,7 @@ export const useUpdateFreelancerProfile = () => {
     },
 
     onSuccess: (updatedData, variables) => {
-    
+
 
       // More specific cache invalidation
       queryClient.invalidateQueries({
@@ -450,7 +452,7 @@ export function useGetJobsByServiceType(serviceTypeId: string) {
 }
 
 export function useFreelancerReviews(freelancerId: string) {
-  
+
 
   return useQuery<Review[]>({
     queryKey: ['reviews', freelancerId],
@@ -460,6 +462,34 @@ export function useFreelancerReviews(freelancerId: string) {
 
   });
 }
+
+//use fore report problem
+
+export const useReportProblem = () => {
+  const { tokens } = useAuth();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: (data: ReportType) => workerApi.report(data, tokens?.accessToken || ''),
+    onSuccess: (respone, variables) => {
+      console.log("Report submitted successfully:", respone);
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('report.success_title'),
+        textBody: t('report.success_message'),
+      })
+    },
+    onError: (error) => {
+      console.log("Error submitting report:", error);
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('report.error_title'),
+        textBody: t('report.error_message'),
+      });
+    }
+  });
+};
+
 // Category mockdata
 
 export const categories: CategoryOption[] = [

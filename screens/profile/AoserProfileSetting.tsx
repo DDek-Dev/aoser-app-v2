@@ -31,7 +31,7 @@ type Props = {
     firstName: string;
     lastName: string;
     profileImg: FileWithType | null;
-    gender: string;
+    // gender: string;
     phone: string;
     province: string;
     district: string;
@@ -39,7 +39,7 @@ type Props = {
     setFirstName: (firstName: string) => void;
     setLastName: (lastName: string) => void;
     setProfileImg: (profileImg: FileWithType | null) => void;
-    setGender: (gender: string) => void;
+    // setGender: (gender: string) => void;
     setPhone: (phone: string) => void;
     setProvince: (value: string) => void;
     setDistrict: (value: string) => void;
@@ -48,7 +48,7 @@ type Props = {
         firstName?: boolean;
         lastName?: boolean;
         profileImg?: boolean;
-        gender?: boolean;
+        // gender?: boolean;
         phone?: boolean;
         province?: boolean;
         district?: boolean;
@@ -63,7 +63,7 @@ const AoserProfileSetting = ({
     firstName,
     lastName,
     profileImg,
-    gender,
+    // gender,
     phone,
     province,
     district,
@@ -71,7 +71,7 @@ const AoserProfileSetting = ({
     setFirstName,
     setLastName,
     setProfileImg,
-    setGender,
+    // setGender,
     setPhone,
     setProvince,
     setDistrict,
@@ -85,7 +85,7 @@ const AoserProfileSetting = ({
 
 
     const [isImageLoading, setIsImageLoading] = useState(false);
-    const [genderModalVisible, setGenderModalVisible] = useState(false);
+    // const [genderModalVisible, setGenderModalVisible] = useState(false);
     const [imageActionModalVisible, setImageActionModalVisible] = useState(false);
     const [deleteConfirmationModalVisible, setDeleteConfirmationModalVisible] = useState(false);
     const [selectedProvince, setSelectedProvince] = useState<Province | undefined>(undefined);
@@ -163,7 +163,7 @@ const AoserProfileSetting = ({
         setUserId(userIdValue);
         setFirstName(firstNameValue);
         setLastName(lastNameValue);
-        setGender(genderValue);
+        // setGender(genderValue);
         setPhone(phoneValue);
         setProvince(provinceValue);
         setDistrict(districtValue);
@@ -372,7 +372,7 @@ const AoserProfileSetting = ({
         );
     }
 
-    const displayGender = GENDER_OPTIONS.find((opt) => opt.value === gender)?.label || t('signUpScreen.selectGender');
+    // const displayGender = GENDER_OPTIONS.find((opt) => opt.value === gender)?.label || t('signUpScreen.selectGender');
     const hasImage = !!profileImg?.uri;
     const provinces = addressData[0]?.provinces || [];
     const districts = selectedProvince?.districts || [];
@@ -572,7 +572,7 @@ const AoserProfileSetting = ({
             </Modal>
 
             {/* Gender Dropdown */}
-            <View className="mb-4">
+            {/* <View className="mb-4">
                 <Text className="text-text mb-2 font-bold text-body">{t('signUpScreen.gender')}</Text>
                 <Pressable
                     onPress={() => setGenderModalVisible(true)}
@@ -586,10 +586,10 @@ const AoserProfileSetting = ({
                 {errors.gender && (
                     <Text className="text-error text-caption mt-1">{t('signUpScreen.gender_required')}</Text>
                 )}
-            </View>
+            </View> */}
 
             {/* Gender Selection Modal */}
-            <Modal
+            {/* <Modal
                 visible={genderModalVisible}
                 transparent
                 animationType="fade"
@@ -625,7 +625,7 @@ const AoserProfileSetting = ({
                         </View>
                     </TouchableWithoutFeedback>
                 </TouchableOpacity>
-            </Modal>
+            </Modal> */}
 
             {/* First Name & Last Name Section */}
             <View className='flex-row'>
@@ -637,7 +637,7 @@ const AoserProfileSetting = ({
 
             {/* First Name Input */}
             <View className="mb-2">
-                <View className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.firstName ? 'border border-error' : 'border border-border'}`}>
+                <View style={{ height: 52, minHeight: 52 }} className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.firstName ? 'border border-error' : 'border border-border'}`}>
                     <TextInput
                         placeholder={t('signUpScreen.firstName')}
                         className="flex-1 text-text"
@@ -655,7 +655,7 @@ const AoserProfileSetting = ({
 
             {/* Last Name Input */}
             <View className="mb-4">
-                <View className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.lastName ? 'border border-error' : 'border border-border'}`}>
+                <View style={{ height: 52, minHeight: 52 }} className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.lastName ? 'border border-error' : 'border border-border'}`}>
                     <TextInput
                         placeholder={t('signUpScreen.lastName')}
                         className="flex-1 text-text"
@@ -717,7 +717,7 @@ const AoserProfileSetting = ({
             <View className="mb-4">
                 <Text className="text-body font-medium text-text mb-2">{t('kyc.step4.location.village.label')}</Text>
 
-                <View className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.village ? 'border border-error' : 'border border-border'}`}>
+                <View style={{ height: 52, minHeight: 52 }} className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.village ? 'border border-error' : 'border border-border'}`}>
                     <TextInput
                         placeholder={t('kyc.step4.location.village.placeholder')}
                         className="flex-1 text-text"

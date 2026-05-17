@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 
 import { Address, UserProfile } from "./profile";
+import { string } from "yup";
 
 
 
@@ -598,4 +599,12 @@ export type NewsType = {
   createdAt: string;
   updatedAt: string;
 
+}
+
+export type ReportType = {
+  reportType: "FREELANCER" | "WORK";
+  reportedUser?:string;
+  work?: string;
+  reason?: "INAPPROPRIATE_BEHAVIOR" | "FRAUD" | "NO_SHOW" | "POOR_QUALITY" | "HARASSMENT" | "OTHER" | null,  /// [ SPAM,INAPPROPRIATE_BEHAVIOR,FRAUD,NO_SHOW,POOR_QUALITY,HARASSMENT,OTHER]
+  description: string
 }

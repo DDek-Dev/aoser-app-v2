@@ -652,7 +652,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
           </View>
           <View className="flex-row mt-3 items-center">
             {/* <Text>{t('workDetail.deadline')} : </Text> */}
-            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
 
             <View className="flex-row gap-2 items-center">
               <Ionicons name="time-outline" size={18} color="#F59E0B" />
@@ -665,44 +665,33 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
             </View>
           </View>
 
-         {item.address &&
-            item.address.village !== '' &&
-            item.address.district !== '' &&
-            item.address.province !== '' && (
+          <View className="flex-row row-auto items-center" >
+            {item.address &&
 
+              <View className="flex-row mt-3 items-center">
+                {/* <Text>{t('payment_success.address')}: </Text> */}
 
-            <View className="flex-row mt-3 items-center">
-              {/* <Text>{t('workDetail.deadline')} : </Text> */}
-              <Text>{t('payment_success.address')}:  </Text>
+                <View className="flex-row gap-2 items-center">
+                  <Ionicons name="location-outline" size={18} color="#F59E0B" />
+                  {item.address.village !== '' &&
+                    item.address.district !== '' &&
+                    item.address.province !== '' && (
 
-              <View className="flex-row gap-2 items-center">
-                <Ionicons name="location-outline" size={18} color="#F59E0B" />
-
-                <Text className="text-sm text-textSecondary">
-                  {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-
-                  {item?.address.village}, {item?.address.district}, {item?.address.province}
-                </Text>
-              </View>
-            </View>
-            )
-          }
-
-          {item.place && (
-          
-                      <View className="flex-row mt-3 items-center">
-                        <Text>{t('postWork.address_manually')}: </Text>
-          
-                        <View className="flex-row gap-2 items-center">
-                          <Ionicons name="location-outline" size={18} color="#F59E0B" />
-          
-                          <Text className="text-sm text-textSecondary">
-                            {item.place}
-                          </Text>
-                        </View>
-                      </View>
-          
+                      <Text className="text-sm text-textSecondary">
+                        {item.address.village}, {item.address.district}, {item.address.province} ,
+                      </Text>
                     )}
+                  {item.place && (
+                    <Text className="text-sm text-textSecondary">
+                      {item.place}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            }
+          </View>
+
+
 
         </View>
 
@@ -770,7 +759,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
           {/* Budget */}
           {item.budgetType === 'OFFERING' ? (
             <View className='mt-2'>
-              <Text className="text-lg text-primary font-bold mr-2">
+              <Text className="text-body text-primary font-bold mr-2">
                 {t('workDetail.offering_price')}
               </Text>
             </View>
@@ -799,7 +788,7 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
           {/* End Date */}
           <View className="flex-row mt-3 items-center">
-            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'To'} : </Text>
+            <Text>{currentLanguage === 'la' ? 'ຫາ' : 'End'} : </Text>
             <View className="flex-row gap-2 items-center ml-2">
               <Ionicons name="time-outline" size={18} color="#F59E0B" />
               <Text className="text-sm text-textSecondary">

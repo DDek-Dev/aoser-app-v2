@@ -325,6 +325,8 @@ export const useGetHiredFreelancers = () => {
     queryKey: ['hiredFreelancers'],
     queryFn: () => workerApi.getHiredFreelancers(tokens?.accessToken || ''),
     enabled: !!tokens?.accessToken,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
 

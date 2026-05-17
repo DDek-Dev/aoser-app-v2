@@ -46,10 +46,11 @@ export default function UpgradeToFreelancerReview() {
   })();
   const isLoading = isLoadingLocal || (!localProfile && (isLoadingMyProfile || (!!currentUserId && isLoadingDb)));
 
-  console.log("profile", profile.videoPromote);
   const { t } = useTranslation();
   if (isLoading) return <LoadingScreen />;
   if (!profile) return null;
+
+  // console.log("profile", JSON.stringify(profile, null, 2));
 
   return (
     <View className="bg-white" >
@@ -89,7 +90,7 @@ export default function UpgradeToFreelancerReview() {
         <VDOPromote
           video={profile.videoPromote}
           // isReview={isLocalDraft}
-          isReview={false}
+          isReview={true}
           context="profile"
           isScreenFocused={true}
         />

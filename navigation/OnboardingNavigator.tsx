@@ -1,6 +1,5 @@
 // OnboardingNavigator.tsx
 import { createStackNavigator } from '@react-navigation/stack';
-import OnboardingScreen from 'screens/onboarding/OnboardingScreen';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from 'i18next';
@@ -13,7 +12,9 @@ const Stack = createStackNavigator();
 
 export default function OnboardingNavigator() {
   const [isLoading, setIsLoading] = useState(true);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  // const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [hasCompleteLanguage, setHasCompleteLanguage] = useState(false);
+  // const [profileSetup, setPProfileSetup] = useState(false);
   const { isAuthenticated } = useAuth();
   useEffect(() => {
     initializeApp();
@@ -21,10 +22,12 @@ export default function OnboardingNavigator() {
 
   const initializeApp = async () => {
     try {
-      const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
+      // const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');
       const selectedLang = await AsyncStorage.getItem('selected_language');
-      setHasCompletedOnboarding(onboardingComplete === 'true' && !!selectedLang);
-
+      // const passProfileSetup = await AsyncStorage.getItem('profileSetup');
+      // setHasCompletedOnboarding(onboardingComplete === 'true' && !!selectedLang);
+      setHasCompleteLanguage(selectedLang === 'true');
+      // setPProfileSetup(passProfileSetup === 'true');
       if (selectedLang && ['en', 'la'].includes(selectedLang)) {
         i18n.changeLanguage(selectedLang);
       }
@@ -44,17 +47,19 @@ export default function OnboardingNavigator() {
       headerShown: false,
       gestureEnabled: false
     }}>
-      {!hasCompletedOnboarding && <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} />}
+      {!hasCompleteLanguage && <Stack.Screen name="LanguageSelection" component={LanguageSelectionScreen} initialParams={{ onComplete: () => setHasCompleteLanguage(true) }} />}
 
-      {!hasCompletedOnboarding &&
+      {/* {!hasCompletedOnboarding &&
         <Stack.Screen
           name="Onboarding"
           component={OnboardingScreen}
           initialParams={{ onComplete: () => setHasCompletedOnboarding(true) }}
         />
 
-      }
-      {hasCompletedOnboarding && (
+      } */}
+
+      {/* {!profileSetup && <ProfileSetup />} */}
+      {hasCompleteLanguage && (
         <Stack.Screen name="MainTabs" component={MainNavigator} />
 
       )}

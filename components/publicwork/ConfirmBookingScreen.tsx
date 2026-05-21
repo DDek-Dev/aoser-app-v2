@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { FreelancerStackParamList, TabParamList } from 'types/navigation';
@@ -10,6 +10,7 @@ import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
 
+
 type ConfirmBookingRouteProp = RouteProp<FreelancerStackParamList, 'ConfirmBookingScreen'>;
 
 const ConfirmBookingScreen = () => {
@@ -18,6 +19,7 @@ const ConfirmBookingScreen = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
+    const navigation2 = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
 
 
     const route = useRoute<ConfirmBookingRouteProp>();
@@ -25,6 +27,7 @@ const ConfirmBookingScreen = () => {
     const [localFormData, setLocalFormData] = useState(params?.formData || {});
     const { t } = useTranslation();
 
+    // console.log('ConfirmBookingScreen received formData:', JSON.stringify(params?.formData, null, 2));
     const handleConfirm = async () => {
         try {
             setIsLoading(true);
@@ -48,7 +51,7 @@ const ConfirmBookingScreen = () => {
                 workTitle: '',
                 description: '',
                 budget: null,
-                category: '',
+              
                 kindOfWork: 'ONLINE',
                 deadLine: null,
                 startDate: null,
@@ -57,39 +60,53 @@ const ConfirmBookingScreen = () => {
                 budgetType: 'FIXED_PRICE',
                 serviceType: '',
                 jobs: [],
+                address: {
+                    country: "Laos",
+                    province: '',
+                    district: '',
+                    village: '',
+                },
+                place:'',
             });
 
 
             Toast.show({
                 type: ALERT_TYPE.SUCCESS,
                 title: `${t('postWork.confirm.success')}`,
-                textBody: `${t('postWork.confirm.work_created_successfully')}`,
+                textBody: `${t('postWork.confirm.work_send_successfully')}`,
             });
 
-            navigation.reset({
-                index: 0,
-                routes: [{
-                    name: 'MainTabs' as keyof TabParamList,
-                    state: {
-                        routes: [{ name: 'Works' }]
-                    }
-                }],
-            });
+            if (params.isBook) {
+                navigation2.replace('HistoryScreen');
+
+            } else {
+
+                navigation.reset({
+                    index: 0,
+                    routes: [{
+                        name: 'MainTabs' as keyof TabParamList,
+                        state: {
+                            routes: [{ name: 'Works' }]
+                        }
+                    }],
+                });
+            }
         } catch (error) {
+            setIsLoading(false);
             console.log('Error:', error);
             // Handle error (show toast, etc.)
         }
     };
 
+
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']} >
 
-            <Header_back text={t('postWork.confirm.confirm')} iconColor='#3B82F6' />
+            <Header_back text={t('postWork.confirm.confirm')} iconColor='#3B82F6' onPress={() => navigation.goBack()} />
             <ScrollView
                 contentContainerStyle={{ padding: 20, flexGrow: 1 }}
                 showsVerticalScrollIndicator={false}
             >
-
                 <Text className="text-body text-text font-semibold mb-4">
                     {t('postWork.confirm.confirm_message')}
                 </Text>
@@ -100,7 +117,7 @@ const ConfirmBookingScreen = () => {
                         <View className="ml-2 flex-1">
                             <Text className="text-primary font-semibold mb-1">{t('postWork.confirm.complete_job_details')}</Text>
                             <Text className="text-body text-text">
-                            {t('postWork.confirm.system_review_description')}
+                                {t('postWork.confirm.system_review_description')}
                             </Text>
                         </View>
                     </View>
@@ -112,7 +129,7 @@ const ConfirmBookingScreen = () => {
                         <View className="ml-2 flex-1">
                             <Text className="text-red-600 font-semibold mb-1">{t('postWork.confirm.important_notice')}</Text>
                             <Text className="text-body text-error">
-                               {t('postWork.confirm.important_notice_description')}
+                                {t('postWork.confirm.important_notice_description')}
                             </Text>
                             <Text className="text-body text-red-500 font-semibold mt-1">
                                 {t('postWork.confirm.ensure_clear_post')}                            </Text>
@@ -120,13 +137,13 @@ const ConfirmBookingScreen = () => {
                     </View>
                 </View>
 
-                <TouchableOpacity
+                <Pressable
                     onPress={handleConfirm}
-                    className="bg-blue-600 mt-auto py-4 rounded-xl items-center"
+                    className="bg-primary mt-auto py-4 rounded-xl "
                 >
-                    {isLoading ? <Text className="text-white font-semibold text-base">{t('postWork.confirm.confirming')}</Text> :
-                        <Text className="text-white font-semibold text-base">{t('postWork.confirm.confirm_submit')}</Text>}
-                </TouchableOpacity>
+                    {isLoading ? <Text className="text-white font-semibold text-base text-center">{t('postWork.confirm.confirming')}</Text> :
+                        <Text className="text-white font-semibold text-base text-center">{t('postWork.confirm.confirm_submit')}</Text>}
+                </Pressable>
             </ScrollView>
 
         </ScreenWrapper>

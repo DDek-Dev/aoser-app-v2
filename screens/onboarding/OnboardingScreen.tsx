@@ -18,10 +18,7 @@ import { FreelancerStackParamList } from 'types/navigation';
 
 const { width } = Dimensions.get('window');
 
-type OnboardingStackParamList = {
-  Onboarding: undefined;
-  MainApp: undefined;
-};
+
 
 // type NavigationProp = StackNavigationProp<OnboardingStackParamList>;
 

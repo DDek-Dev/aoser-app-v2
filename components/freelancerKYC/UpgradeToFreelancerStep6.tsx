@@ -14,10 +14,12 @@ import { useTranslation } from 'react-i18next';
 
 type Props = {
   paymentMethod: 'LAOS_BANK' | 'PAYPAL';
+  bankName: string;
   accountName: string;
   bankNumber: string;
   paypalInfo: string;
   setPaymentMethod: React.Dispatch<React.SetStateAction<'LAOS_BANK' | 'PAYPAL'>>;
+  setBankName: React.Dispatch<React.SetStateAction<string>>;
   setAccountName: React.Dispatch<React.SetStateAction<string>>;
   setBankNumber: React.Dispatch<React.SetStateAction<string>>;
   setPaypalInfo: React.Dispatch<React.SetStateAction<string>>;
@@ -26,10 +28,12 @@ type Props = {
 const UpgradeToFreelancerStep6 = (
   {
     paymentMethod,
+    bankName,
     accountName,
     bankNumber,
     paypalInfo,
     setPaymentMethod,
+    setBankName,
     setAccountName,
     setBankNumber,
     setPaypalInfo,
@@ -41,9 +45,10 @@ const UpgradeToFreelancerStep6 = (
   useEffect(() => {
     if (dataStep6) {
       setPaymentMethod(dataStep6.paymentMethod);
-      setAccountName(dataStep6.accountName);
-      setBankNumber(dataStep6.bankNumber);
-      setPaypalInfo(dataStep6.paypalInfo);
+      setBankName(dataStep6.bankName || '');
+      setAccountName(dataStep6.accountName || '');
+      setBankNumber(dataStep6.bankNumber || '');
+      setPaypalInfo(dataStep6.paypalInfo || '');
     };
   }
     , [dataStep6]);
@@ -102,18 +107,32 @@ const UpgradeToFreelancerStep6 = (
         </TouchableOpacity>
 
         <TouchableOpacity
+        disabled={true}
           onPress={() => handlePaymentMethodChange('PAYPAL')}
-          className={`flex-1 border rounded-xl py-3 items-center ${paymentMethod === 'PAYPAL' ? 'border-primary bg-blue-50' : 'border-border'
+          className={`flex-1 border bg-gray-300 rounded-xl py-3 items-center ${paymentMethod === 'PAYPAL' ? 'border-primary bg-blue-50' : 'border-border'
             }`}
         >
-          <Text className={`text-body ${paymentMethod === 'PAYPAL' ? 'text-primary' : 'text-text'}`}>
+          <Text className={`text-body ${paymentMethod === 'PAYPAL' ? 'text-primary' : 'text-gray-200'}`}>
             {t('kyc.step6.methods.PAYPAL')}
           </Text>
         </TouchableOpacity>
       </View>
 
+
+
       <View className="bg-blue-50 px-4 pt-4 pb-6 rounded-xl">
         {/* Account Name */}
+        <View className="mb-4">
+          <FormInput
+            label={t('kyc.step6.bankName.label')}
+            placeholder={t('kyc.step6.bankName.placeholder')}
+            value={bankName}
+            onChangeText={setBankName}
+            required
+            inputClassName={errors.bankName ? 'border-error' : 'border-border'}
+            isValidate={errors.bankName ? t('kyc.step6.bankName.error') : ''}
+          />
+        </View>
         <View className="mb-4">
           <FormInput
             label={t('kyc.step6.accountName.label')}

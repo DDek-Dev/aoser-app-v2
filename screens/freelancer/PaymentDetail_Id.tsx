@@ -6,13 +6,12 @@ import { useGetBillData } from 'hooks/usePayment'; // Adjust path
 import { useTranslation } from 'react-i18next';
 
 import { Ionicons } from '@expo/vector-icons';
-import { formatDate } from 'utils/dateFormatter';
 import { aoserlogo_no_bg_blue, bcelone, pal } from 'assets';
 import { useNavigation } from '@react-navigation/native';
-import moment from 'moment';
 type Props = {
     route: any;
 };
+
 
 const PaymentDetail_Id = ({ route }: Props) => {
     const { t } = useTranslation();
@@ -41,7 +40,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (getBillDataMutation.isPending) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center">
                     <ActivityIndicator size="large" color="#3B82F6" />
@@ -55,7 +54,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
     if (getBillDataMutation.isError) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center px-6">
                     <View className="w-16 h-16 rounded-full bg-red-100 items-center justify-center mb-4">
@@ -82,11 +81,11 @@ const PaymentDetail_Id = ({ route }: Props) => {
 
     const billData = getBillDataMutation.data;
 
-    //   console.log("billData: ", billData);
+    // console.log("billData: ", JSON.stringify(billData, null, 2));
     if (!billData || !billData.payment) {
         return (
             <ScreenWrapper safeEdges={['bottom', 'top']}>
-                <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
                 <View className="flex-1 justify-center items-center px-6">
                     <Text className="text-xl font-bold text-gray-800 mb-2">
@@ -111,11 +110,29 @@ const PaymentDetail_Id = ({ route }: Props) => {
         invoiceid,
         fromBankInformation,
         createdAt: paymentCreatedAt,
-    } = payment;
+        payTo
+    } = payment as any;
+
+    if (!payment.createdBy) {
+        return (
+            <ScreenWrapper safeEdges={['bottom', 'top']}>
+                <Header_back
+                    text={t('protectedRoute.back')}
+                    onPress={navigation.goBack}
+                    iconColor="#3B82F6"
+                />
+                <View className="flex-1 justify-center items-center">
+                    <Text className="text-text">
+                        {t('payment_success.completed')}
+                    </Text>
+                </View>
+            </ScreenWrapper>
+        );
+    }
 
     return (
         <ScreenWrapper safeEdges={['bottom', 'top']}>
-            <Header_back text={t('payment_success.payment_details')} onPress={navigation.goBack} iconColor='#3B82F6' />
+            <Header_back text={t('protectedRoute.back')} onPress={navigation.goBack} iconColor='#3B82F6' />
 
             <ScrollView className="flex-1 px-4 py-4">
                 {/* Status Badge */}
@@ -145,38 +162,38 @@ const PaymentDetail_Id = ({ route }: Props) => {
                 {/* Main Card */}
                 <View className="bg-white rounded-2xl shadow-sm overflow-hidden mb-4">
                     {/* Watermark Background (logo) */}
-                    <View className="absolute inset-0 opacity-[0.05] overflow-hidden">
+                    <View className="absolute inset-0 opacity-[0.1]  ">
                         <Image
                             source={aoserlogo_no_bg_blue}
                             className="w-full h-full"
-                            resizeMode="cover"
+                            resizeMode="contain"
                         />
                     </View>
 
                     {/* Watermark Background - Line by Line Pattern */}
-                    
+
 
                     <View className="absolute inset-0 opacity-[0.1] overflow-hidden">
-                                    <View
-                                      style={{
-                                        transform: [{ rotate: '-30deg' }],
-                                        top: -100,
-                                        left: -100,
-                                        right: -100,
-                                        bottom: -100,
-                                        position: 'absolute',
-                                      }}
-                                    >
-                                      <Text
-                                        className="text-caption font-semibold text-textSecondary"
-                                        style={{ lineHeight: 25 }}
-                                      >
-                                        {[...Array(50)].map((_, i) => (
-                                          `${formatDate(payment.fromBankInformation.txtime)} • ${payment.invoiceId} • ${formatCurrency(payment.amount, payment.currency)} ${payment.currency} • AOSER • `
-                                        )).join('')}
-                                      </Text>
-                                    </View>
-                                  </View>
+                        <View
+                            style={{
+                                transform: [{ rotate: '-30deg' }],
+                                top: -100,
+                                left: -100,
+                                right: -200,
+                                bottom: -100,
+                                position: 'absolute',
+                            }}
+                        >
+                            <Text
+                                className="text-caption font-semibold text-textSecondary"
+                                style={{ lineHeight: 25 }}
+                            >
+                                {[...Array(80)].map((_, i) => (
+                                    `${payment.fromBankInformation.txtime} • ${formatCurrency(payment.amount, payment.currency)} ${payment.currency} • AOSER • `
+                                )).join('')}
+                            </Text>
+                        </View>
+                    </View>
 
                     {/* Header Section */}
                     <View className="bg-primary p-4">
@@ -205,11 +222,28 @@ const PaymentDetail_Id = ({ route }: Props) => {
                             <Text className="text-text">{t('payment_success.invoice_id')}</Text>
                             <Text className="text-gray-900 font-semibold">{invoiceid}</Text>
                         </View>
+                        <View className="flex-row justify-between py-3 border-b border-border">
+                            <Text className="text-text">{t('payment_success.name_of_customer')}</Text>
+                            <Text className="text-gray-900 font-semibold">{createdBy.firstName} {createdBy.lastName}</Text>
+                        </View>
+
+                        <View className="flex-row justify-between py-3 border-b border-border">
+                            <Text className="text-text">{t('payment_success.name_of_freelancer')}</Text>
+                            {payTo && (
+                                <Text className="text-gray-900 font-semibold">{payTo.firstName} {payTo.lastName}</Text>
+                            )}
+                        </View>
+
 
                         {/* Payment Type */}
                         <View className="flex-row justify-between py-3 border-b border-border">
                             <Text className="text-text">{t('payment_success.payment_type')}</Text>
-                            <Text className="text-gray-900 font-semibold">{invoiceType}</Text>
+                            <Text className="text-text font-semibold text-body">
+                                {invoiceType === 'WORK' && t('postWork.book_freelancer')}
+                                {invoiceType === 'APPEND_WORK' && t('editWork.appendNewWork')}
+                                {invoiceType === 'USER_RECOMMEND_STAR' && t('profile.buyStar.stars_plural')}
+                            </Text>
+                            {/* <Text className="text-gray-900 font-semibold">{invoiceType}</Text> */}
                         </View>
 
                         {/* Payment Method */}
@@ -237,7 +271,7 @@ const PaymentDetail_Id = ({ route }: Props) => {
                             </View>
                         )}
 
-                     
+
 
                         {/* Footer */}
                         {/* <View className="items-center py-6">
@@ -253,6 +287,39 @@ const PaymentDetail_Id = ({ route }: Props) => {
                         </View> */}
 
 
+                    </View>
+
+                    <View className="mx-6 mb-6">
+                        <Text className="text-error text-body font-bold mb-2">
+                            {t('payment_success.notice_title')}
+                        </Text>
+
+
+                        <View className="space-y-3">
+                            {/* Point 1 */}
+                            <View className="flex-row items-start gap-2">
+                                <Text className="text-primary mt-1">•</Text>
+                                <Text className="text-caption text-textSecondary flex-1 leading-5">
+                                    {t('payment_success.important_info_point1')}
+                                </Text>
+                            </View>
+
+                            {/* Point 2 */}
+                            <View className="flex-row items-start gap-2">
+                                <Text className="text-primary mt-1">•</Text>
+                                <Text className="text-caption text-textSecondary flex-1 leading-5">
+                                    {t('payment_success.important_info_point2')}
+                                </Text>
+                            </View>
+
+                            {/* Point 3 */}
+                            <View className="flex-row items-start gap-2">
+                                <Text className="text-primary mt-1">•</Text>
+                                <Text className="text-caption text-textSecondary flex-1 leading-5">
+                                    {t('payment_success.important_info_point3')}
+                                </Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
 

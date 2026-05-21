@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, Share, TouchableOpacity, View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { Animated, Share, Text, TouchableOpacity, View, ActivityIndicator, Platform, Pressable } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,12 +20,10 @@ import Reviews from 'components/profile/Reviews';
 import Hire_Chat_Button from './Hire_Chat_Button';
 import WhatExpected from 'components/profile/whatExpect';
 import VDOPromote from 'components/profile/VDOPromote';
-// import Freelancers from './Freelancers';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
-import ResumeImage from 'components/profile/ResumeImage';
-import FloatingProfileButtons from 'components/profile/FloatingProfileButtons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
+import ReportModal from 'components/ui/ReportModal';
 
 // Types
 import { FreelancerStackParamList } from 'types/navigation';
@@ -32,66 +31,61 @@ import { Favorite } from 'types';
 import { useAuth } from 'hooks/useAuth';
 import FamiliarFreelancers from './FamiliarFreelancer';
 import { useTranslation } from 'react-i18next';
+import FreelancerSkeleton from 'screens/freelancer/FreelancerSkeleton';
 
-
+// Constants
 const DEBOUNCE_DELAY = 100;
+const REFETCH_DELAY = 300; // Delay before refetching to ensure backend updates
+
+
 
 export default function FreelancerProfile() {
+  // Navigation & Route
   const route = useRoute<RouteProp<FreelancerStackParamList, 'FreelancerProfile'>>();
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { userId } = route.params;
 
+  // Hooks
+  const { t } = useTranslation();
+  const { user, isAuthenticated } = useAuth();
+
   // Data fetching hooks
-  const { data: profile, isLoading: isLoadingProfile, refetch } = useFreelancerById(userId);
+  const { data: profile, isLoading: isLoadingProfile, refetch, error: profileError } = useFreelancerById(userId);
   const { data: reviews, isLoading: isLoadingReviews } = useFreelancerReviews(profile?._id as string);
-const {user , isAuthenticated} = useAuth();
+
   // Mutation hooks
   const createFavorite = useCreateFavorite();
   const deleteFavorite = useDeleteFavorite();
 
-  // State management
-  const [favoriteState, setFavoriteState] = useState({
-    isFavorite: false,
-    favoriteId: userId,
-    totalLikes: 0,
-    isProcessing: false,
-  });
+  // Local state
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
 
   // Refs
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<any>(null);
   const isFirstLoad = useRef(true);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const isFocused = useIsFocused();
 
   // Derived state
   const isOwnProfile = user?._id === profile?._id;
-  const isLoadingFavorite = createFavorite.isPending || deleteFavorite.isPending || favoriteState.isProcessing;
+  const isLoadingFavorite = createFavorite.isPending || deleteFavorite.isPending;
 
-
-  const {t} = useTranslation();
   /**
-   * Sync favorite state with profile data
+   * Sync favorite state with profile data on initial load
+   * This ensures the UI reflects the server state
    */
   useEffect(() => {
     if (!profile) return;
 
-    const shouldUpdate =
-      isFirstLoad.current ||
-      favoriteState.isFavorite !== (profile.isLiked || false) ||
-      favoriteState.favoriteId !== (profile._id || null) ||
-      favoriteState.totalLikes !== (profile.totalLikes || 0);
-
-    if (shouldUpdate) {
-      setFavoriteState({
-        isFavorite: profile.isLiked || false,
-        favoriteId: profile._id || '',
-        totalLikes: profile.totalLikes || 0,
-        isProcessing: false,
-      });
+    if (isFirstLoad.current) {
+      setIsFavorite(profile.isLiked ?? false);
       isFirstLoad.current = false;
     }
-  }, [profile?._id, profile?.isLiked, profile?.totalLikes]);
+  }, [profile?.isLiked]);
 
   /**
-   * Cleanup debounce timer on unmount
+   * Cleanup debounce timer on unmount to prevent memory leaks
    */
   useEffect(() => {
     return () => {
@@ -103,20 +97,22 @@ const {user , isAuthenticated} = useAuth();
 
   /**
    * Create favorite with optimistic update
+   * 
+   * Flow:
+   * 1. Optimistically update UI (heart icon fills immediately)
+   * 2. Send request to backend
+   * 3. Wait for backend to process
+   * 4. Refetch to sync with server state
+   * 5. Revert on error
    */
   const handleCreateFavorite = useCallback(async () => {
-    if (!profile?._id || favoriteState.isProcessing) {
-      console.log('Profile ID required or already processing');
+    if (!profile?._id) {
+      console.warn('[Favorite] Cannot create: Profile ID missing');
       return;
     }
 
-    // Optimistic update
-    setFavoriteState((prev) => ({
-      ...prev,
-      isFavorite: true,
-      totalLikes: prev.totalLikes + 1,
-      isProcessing: true,
-    }));
+    // Optimistic update - instant UI feedback
+    setIsFavorite(true);
 
     try {
       const formData: Favorite = {
@@ -126,180 +122,275 @@ const {user , isAuthenticated} = useAuth();
 
       const response = await createFavorite.mutateAsync(formData);
 
-      if (response?._id || response?.id) {
-        setFavoriteState((prev) => ({
-          ...prev,
-          favoriteId: response._id || response.id || null,
-          isProcessing: false,
-        }));
-        await refetch();
-        console.log('✅ Favorite created:', response);
-      } else {
-        throw new Error('Invalid server response');
-      }
+      // Wait for backend to process the like
+      await new Promise(resolve => setTimeout(resolve, REFETCH_DELAY));
+
+      // Refetch to ensure UI matches server state
+      await refetch();
+
+      console.log('[Favorite] ✅ Successfully created:', response);
     } catch (error) {
-      // Revert optimistic update
-      setFavoriteState((prev) => ({
-        ...prev,
-        isFavorite: false,
-        totalLikes: Math.max(0, prev.totalLikes - 1),
-        isProcessing: false,
-      }));
-      console.log('❌ Error creating favorite:', error);
+      // Revert optimistic update on error
+      setIsFavorite(false);
+      console.log('[Favorite] ❌ Error creating:', error);
     }
-  }, [profile?._id, favoriteState.isProcessing, createFavorite, refetch]);
+  }, [profile?._id, createFavorite, refetch]);
 
   /**
    * Delete favorite with optimistic update
+   * 
+   * @param likeId - The ID of the like record to delete (from profile.likes array)
    */
   const handleDeleteFavorite = useCallback(
     async (likeId: string) => {
-      if (!likeId || favoriteState.isProcessing) {
-        console.log('Favorite ID required or already processing');
+      if (!likeId) {
+        console.warn('[Favorite] Cannot delete: Like ID missing');
         return;
       }
 
-      // Optimistic update
-      setFavoriteState((prev) => ({
-        ...prev,
-        isFavorite: false,
-        totalLikes: Math.max(0, prev.totalLikes - 1),
-        favoriteId: null,
-        isProcessing: true,
-      } as any));
+
+
+      //console.log('[Favorite] Deleting favorite with ID:', likeId);
+
+      // Optimistic update - instant UI feedback
+      setIsFavorite(false);
 
       try {
         await deleteFavorite.mutateAsync(likeId);
+
+        // Wait for backend to process the unlike
+        await new Promise(resolve => setTimeout(resolve, REFETCH_DELAY));
+
+        // Refetch to ensure UI matches server state
         await refetch();
-        setFavoriteState((prev) => ({ ...prev, isProcessing: false }));
-        console.log('✅ Favorite deleted');
+
+        console.log('[Favorite] ✅ Successfully deleted');
       } catch (error) {
-        // Revert optimistic update
-        setFavoriteState((prev) => ({
-          ...prev,
-          isFavorite: true,
-          totalLikes: prev.totalLikes + 1,
-          favoriteId: likeId,
-          isProcessing: false,
-        }));
-        console.log('❌ Error deleting favorite:', error);
+        // Revert optimistic update on error
+        setIsFavorite(true);
+        console.log('[Favorite] ❌ Error deleting:', error);
       }
     },
-    [favoriteState.isProcessing, deleteFavorite, refetch]
+    [deleteFavorite, refetch]
   );
 
   /**
    * Toggle favorite with debounce protection
+   * 
+   * Prevents rapid clicking by debouncing the action.
+   * Finds the correct like ID from the profile.likes array.
    */
   const handleFavoriteToggle = useCallback(() => {
-    if (favoriteState.isProcessing) return;
-
-    // Clear existing debounce
+    // Clear existing debounce timer
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
-    // Debounce to prevent rapid clicks
+    // Debounce to prevent rapid clicks (spam protection)
     debounceRef.current = setTimeout(() => {
-      const likeId = profile?._id || favoriteState.favoriteId;
+      // Find the like ID where the current user (createdBy) has liked this profile (likedItem)
+      const likeId = profile?.likes?.find(
+        like => like.createdBy === user?._id
+      )?._id;
 
-      if (favoriteState.isFavorite && likeId) {
+   
+      if (isFavorite && likeId) {
+        // Unlike: we have the like ID from the server
         handleDeleteFavorite(likeId);
-      } else if (!favoriteState.isFavorite) {
+      } else if (!isFavorite) {
+        // Like: create new favorite
         handleCreateFavorite();
       }
     }, DEBOUNCE_DELAY);
   }, [
-    favoriteState.isFavorite,
-    favoriteState.favoriteId,
-    favoriteState.isProcessing,
+    isFavorite,
     profile?._id,
+    profile?.likes,
     handleCreateFavorite,
     handleDeleteFavorite,
   ]);
-
   /**
-   * Navigate to chat room
+   * Navigate to chat room with the freelancer
    */
   const handleNavigateToChat = useCallback(() => {
-    console.log("hshs")
+    console.log('[Navigation] Opening chat with user:', userId);
     navigation.navigate('RoomChat', { userId });
   }, [navigation, userId]);
 
   /**
-   * Navigate back
+   * Navigate back to previous screen
    */
   const handleGoBack = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
-  // Loading state
-  if (!profile || isLoadingProfile || isLoadingReviews) {
-    return null;
-  }
+  /**
+   * Share profile functionality
+   * Compatible with both iOS and Android
+   */
+  const handleShare = useCallback(async () => {
+    try {
+      const shareUrl = `https://aoser.app/freelancer/${userId}`;
+      const shareMessage = t(
+        'freelancer_profile.share_message',
+        `Check out this freelancer profile on Aoser: ${shareUrl}`
+      );
 
-  const handleShare = async () => {
-  try {
-    const result = await Share.share({
-      message: `Check out this freelancer profile on Aoser: https://aoser.app/freelancer/${userId}`,
-      title: 'Freelancer Profile',
-      url: `https://aoser.app/freelancer/${userId}`, // optional
-    });
+      const result = await Share.share(
+        {
+          message: Platform.OS === 'ios' ? shareMessage : shareMessage,
+          url: Platform.OS === 'ios' ? shareUrl : undefined,
+          title: t('freelancer_profile.share_title', 'Freelancer Profile'),
+        },
+        {
+          // iOS only - specify the dialog title
+          dialogTitle: t('freelancer_profile.share_dialog', 'Share Profile'),
+        }
+      );
 
-    if (result.action === Share.sharedAction) {
-      if (result.activityType) {
-        console.log('Shared with activity type:', result.activityType);
-      } else {
-        console.log('Shared successfully!');
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          console.log('[Share] Shared via:', result.activityType);
+        } else {
+          console.log('[Share] ✅ Successfully shared');
+        }
+      } else if (result.action === Share.dismissedAction) {
+        console.log('[Share] Dismissed by user');
       }
-    } else if (result.action === Share.dismissedAction) {
-      console.log('Share dismissed');
+    } catch (error) {
+      console.log('[Share] ❌ Error:', error);
     }
-  } catch (error) {
-    console.log('Error sharing:', error);
-    // Alert.alert('Error', 'Unable to share this profile.');
-  }
-};
+  }, [userId, t]);
 
+  // =================================================================
+  // LOADING STATE
+  // =================================================================
+  if (isLoadingProfile || isLoadingReviews) {
+    return (
+      <ScreenWrapper safeEdges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
+        <FreelancerSkeleton />
+      </ScreenWrapper>
+    );
+  }
+
+  // =================================================================
+  // ERROR STATE - No Profile Found
+  // =================================================================
+  if (!profile) {
+    return (
+      <ScreenWrapper safeEdges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
+        <View className="flex-1 justify-center items-center px-6 bg-white">
+          {/* Icon */}
+          <View className="mb-6 bg-blue-50 p-6 rounded-full">
+            <Ionicons name="person-outline" size={64} color="#3B82F6" />
+          </View>
+
+          {/* Title */}
+          <Text className="text-2xl font-bold text-gray-900 mb-3 text-center">
+            {t('freelancer_profile.no_profile_title')}
+          </Text>
+
+          {/* Description */}
+          <Text className="text-base text-gray-600 text-center mb-8 leading-6">
+            {t('freelancer_profile.no_profile_description'
+            )}
+          </Text>
+
+          {/* Retry Button */}
+          <TouchableOpacity
+            onPress={() => refetch()}
+            disabled={isLoadingProfile}
+            className="bg-blue-500 px-8 py-4 rounded-lg flex-row items-center gap-2"
+            activeOpacity={0.8}
+          >
+            <Ionicons name="refresh" size={20} color="white" />
+            <Text className="text-white font-semibold text-base">
+              {isLoadingProfile
+                ? t('freelancer_profile.loading')
+                : t('freelancer_profile.retry')
+              }
+            </Text>
+          </TouchableOpacity>
+
+          {/* Go Back Button */}
+          <TouchableOpacity
+            onPress={handleGoBack}
+            className="mt-4 px-6 py-3"
+            activeOpacity={0.7}
+          >
+            <Text className="text-blue-500 font-medium text-base">
+              {t('freelancer_profile.go_back')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+
+  // =================================================================
+  // MAIN RENDER - Profile Content
+  // =================================================================
   return (
     <ScreenWrapper safeEdges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScrollView
+      <View className="bg-surface flex-row items-center justify-between w-full">
+        <Header_back
+          text={t('freelancer_profile.header_back_text', 'Profile')}
+          onPress={handleGoBack}
+          iconColor="#3B82F6"
+          backgroundColor="bg-surface"
+        />
+        
+        
+        {/* Favorite Button & Report Button - Only shown to authenticated users */}
+        {isAuthenticated && !isOwnProfile && (
+          <View className="flex-row mr-6 items-center ">
+            {/* Favorite Button */}
+            <TouchableOpacity
+              onPress={handleFavoriteToggle}
+              disabled={isLoadingFavorite}
+              className="mr-2 p-2"
+              activeOpacity={0.7}
+              accessibilityLabel={isFavorite ? 'Unlike profile' : 'Like profile'}
+              accessibilityRole="button"
+            >
+              {isLoadingFavorite ? (
+                <ActivityIndicator size="small" color="#3B82F6" />
+              ) : isFavorite ? (
+                <Ionicons name="heart" size={28} color="#EF4444" />
+              ) : (
+                <Ionicons name="heart-outline" size={28} color="#3b82f6" />
+              )}
+            </TouchableOpacity>
+
+            {/* Report Button */}
+            <TouchableOpacity
+              onPress={() => setReportModalVisible(true)}
+              className="p-2"
+              activeOpacity={0.7}
+              accessibilityLabel="Report profile"
+              accessibilityRole="button"
+            >
+              <Ionicons name="information-circle" size={28} color="#000" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+      </View>
+      <Animated.ScrollView
         className="bg-white flex-1"
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[0]}
+        // stickyHeaderIndices={[0]}
+        bounces={true} // iOS bounce effect
+        scrollEventThrottle={16} // Smooth scrolling
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
       >
-        {/* Header Section */}
-        <View className="bg-white z-10 flex-row items-center justify-between w-full">
-          <Header_back
-            text={t('freelancer_profile.header_back_text')}
-            onPress={handleGoBack}
-            iconColor="#3B82F6"
-            backgroundColor="bg-surface"
-          />
-          
-          {/* Favorite Button */}
-          {isAuthenticated && (
+        {/* ===== STICKY HEADER ===== */}
 
-          <View className="flex-row mr-8 items-center gap-8">
-            <View className="items-center flex-row gap-4 absolute right-4">
-              <TouchableOpacity
-                onPress={handleFavoriteToggle}
-                disabled={isLoadingFavorite}
-                className="mr-2"
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={favoriteState.isFavorite ? 'heart' : 'heart-outline'}
-                  size={28}
-                  color={favoriteState.isFavorite ? '#EF4444' : '#3b82f6'}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-          )}
-        </View>
-
-        {/* Profile Header */}
+        {/* ===== PROFILE HEADER ===== */}
         <Header
           userId={profile._id}
           backgroundImage={profile.bannerImage}
@@ -308,47 +399,58 @@ const {user , isAuthenticated} = useAuth();
           job={profile.jobTitle || ''}
           rating={profile.starRating || 0}
           status={profile.workerStatus}
-          isme={isOwnProfile || false}
+          isme={isOwnProfile}
         />
 
-        {/* Action Buttons */}
-        <Hire_Chat_Button userId={userId} />
+        {/* ===== ACTION BUTTONS ===== */}
+        {!isOwnProfile && <Hire_Chat_Button userId={userId} />}
 
-        {/* Statistics */}
+        {/* ===== STATISTICS ===== */}
         <InfoStats
-          success={profile.totalCompletedWork}
-          jobs={profile.totalWorks}
-          rewards={profile.totalDoingWork}
+          success={profile.totalCompletedWork || 0}
+          jobs={profile.totalWorks || 0}
+          rewards={profile.totalDoingWork || 0}
         />
 
-        {/* Video Promotion */}
-        <VDOPromote video={profile.videoPromote} />
+        {/* ===== VIDEO PROMOTION ===== */}
 
-        {/* Tabbed Profile Section */}
+        {profile.videoPromote && <VDOPromote video={profile.videoPromote} context="profile" scrollY={scrollY} isScreenFocused={isFocused} />}
+
+        {/* ===== TABBED PROFILE SECTION ===== */}
         <TabbedProfileSection profile={profile} stylepadd="" />
 
-        {/* Resume Image */}
-        <ResumeImage resumeImage={profile.resumeImage} />
 
-        {/* What to Expect */}
+
+        {/* ===== WHAT TO EXPECT ===== */}
         <WhatExpected profile={profile} />
 
-        {/* Reviews Section */}
+        {/* ===== REVIEWS SECTION ===== */}
         <View className="mb-24">
           <Reviews reviews={reviews || []} />
         </View>
 
-        {/* Similar Freelancers */}
-        <FamiliarFreelancers title={t('freelancer_profile.similar_Freelancer')}/>
+        {/* ===== SIMILAR FREELANCERS ===== */}
+        <FamiliarFreelancers title={t('freelancer_profile.similar_Freelancer')} scrollY={scrollY} serviceType={profile.serviceType} exceptedIds={profile._id} />
 
-        {/* Bottom Spacing */}
-        <View className="mb-64" />
-      </ScrollView>
+        {/* Bottom Spacing for Floating Buttons */}
+        <View className="mb-32" />
+      </Animated.ScrollView>
 
-      {/* Floating Action Buttons */}
-      <FloatingProfileButtons
-        onShare={() => {handleShare()}}
-        onMessage={handleNavigateToChat}
+      {/* ===== FLOATING ACTION BUTTONS ===== */}
+      {/* {!isOwnProfile && (
+        <FloatingProfileButtons
+          onShare={handleShare}
+          onMessage={handleNavigateToChat}
+        />
+      )} */}
+
+      {/* ===== REPORT MODAL ===== */}
+      <ReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        reportID={userId}
+        reportType="FREELANCER"
+        freelancerName={``}
       />
     </ScreenWrapper>
   );

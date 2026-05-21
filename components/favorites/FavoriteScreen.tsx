@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+    RefreshControl,
     ScrollView,
     Text,
     TouchableOpacity,
@@ -24,32 +25,32 @@ const FavoriteScreen = () => {
     const [selectedTab, setSelectedTab] = useState('public_works'); // Use key instead of value
 
     const navigation = useNavigation();
-    const { data, isLoading, error, refetch } = useGetAllFavorites();
+    const { data, isLoading, error, refetch, isRefetching } = useGetAllFavorites();
 
     const renderTabContent = () => {
+        
         switch (selectedTab) {
             case 'freelancer':
                 if (isLoading) return <JobListItem />;
 
                 if (!data || data.length === 0) {
-                    return <FavoriteNoResult />;
+                    return <FavoriteNoResult  title={t('favorites.work.no_favorite_freelancer')} desc=  {t('favorites.work.items_will_appear_here_freelancer')}/>;
                 }
 
                 return <FavoriteCardList data={data} />;
 
             case 'public_works':
 
-        
+
                 if (!data || data.length === 0) {
-                    return <FavoriteNoResult />;
+                    return <FavoriteNoResult title={t('favorites.work.no_favorite')} desc=  {t('favorites.work.items_will_appear_here')}/>;
                 }
                 return <PublicWorkCardList
                     data={data}
                     refetch={refetch}
                 />
 
-            default:
-                return <FavoriteNoResult />;
+           
         }
     };
 
@@ -86,7 +87,18 @@ const FavoriteScreen = () => {
                 </ScrollView>
             </View>
 
-            <ScrollView className="bg-white flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
+            <ScrollView className="bg-white flex-1 px-2 pt-2" showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefetching}
+                        onRefresh={refetch}
+                        colors={['#2B68F2']}
+                        tintColor="#2B68F2"
+                        title={t('works.error.refresh')}
+                    />
+                }
+
+            >
                 {renderTabContent()}
                 <View className="h-32" />
             </ScrollView>

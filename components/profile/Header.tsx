@@ -1,5 +1,4 @@
-import { use, useState } from 'react';
-import { View, Image, Text, Pressable, TouchableWithoutFeedback } from 'react-native';
+import { View, Image, Text, Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,7 +12,8 @@ const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 type HeaderProps = {
   userId: string
   backgroundImage?: string;
-  profileImage?: string;
+  userfileImage?: string;
+  profileImage: string;
   name: string;
   job: string;
   rating: number;
@@ -27,6 +27,7 @@ type HeaderProps = {
 export default function Header({
   userId,
   backgroundImage,
+  userfileImage,
   profileImage,
   name,
   job,
@@ -37,30 +38,51 @@ export default function Header({
   , isme
   , isReview
 }: HeaderProps) {
-
-  const [showPopup, setShowPopup] = useState(false);
+const imageUri = isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}`;
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { t } = useTranslation()
+  const getImageSource = () => {
+    // Case 1: User selected a new local image (review mode)
+    if (userfileImage && isReview) {
+      return { uri: profileImage };
+    }
+
+    // Case 2: No local selection, but DB has image
+    if (profileImage) {
+      return { uri: IMAGES_BASE_URL + profileImage };
+    }
+
+    // Case 3: No image at all
+    return proIMG;
+  };
+
   return (
     <View className="relative">
-      <Image source={{ uri: isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}` }} className="w-full h-48" />
 
-      <View className="items-start px-4 -mt-10 relative z-0">
-        {/* <Image source={{ uri: isReview? profileImage : IMAGES_BASE_URL + profileImage }} className="w-20 h-20 rounded-full border-4 border-white" /> */}
+      <Pressable
+        onPress={() => navigation.navigate('ResumeImageViewer', { uri: isReview?backgroundImage:  IMAGES_BASE_URL + backgroundImage })}
+        className="self-center w-full h-48"
+      >
+        <Image source={{ uri: isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}` }} className="w-full h-48" />
+      </Pressable>
 
-        <Image
-          source={
-            isReview
-              ? profileImage
-              : profileImage
-                ? { uri: IMAGES_BASE_URL + profileImage }
-                : proIMG
-          }
-          className="w-20 h-20 rounded-full border-4 border-white"
-        />
-        {isme ? (
-          <ProfileStatusPopup
+      <View className="items-start px-4 -mt-10 ">
+       
+        <Pressable
+          onPress={() => navigation.navigate('ResumeImageViewer', { uri: IMAGES_BASE_URL + profileImage })}
+          disabled={isReview? true : false}
+        >
+          <Image
+            source={getImageSource()}
+            className="w-20 h-20 rounded-full border-4 border-white"
+            defaultSource={proIMG} // ເພີ່ມ defaultSource ສຳລັບ iOS
+            onError={() => console.log("Failed to load profile image")}
           />
+        </Pressable>
+
+        {isme ? (
+          <ProfileStatusPopup workStatus={status} isme userId ={userId} />
+
         ) : (
           <View className="absolute right-4 top-12  flex-row items-center gap-8">
             {status === 'ACTIVE' ? (
@@ -71,45 +93,14 @@ export default function Header({
               <View className="items-end">
                 {/* Busy Button */}
                 <Pressable
-                  onPress={() => setShowPopup(true)}
+                  onPress={() => navigation.navigate('Bookfreelancer', { userId })}
                   className="p-3 bg-red-100 rounded-full"
                 >
-                  <Text className="text-caption text-warning text-center">Make a Book</Text>
+                  <Text className="text-caption text-warning text-center">{t('freelancer_profile.make_a_book')}</Text>
                 </Pressable>
 
                 {/* Popup Box Positioned Below the Busy Button */}
-                {showPopup && (
-                  <>
-                    {/* Overlay to detect outside touches */}
-                    <TouchableWithoutFeedback onPress={() => setShowPopup(false)}>
-                      {/* <View className="absolute -top-12 -left-0 w-full h-full bg-black " /> */}
 
-                      {/* Actual popup box */}
-                      <View className="bg-primary rounded-2xl px-4 py-4 w-72 shadow-lg mt-2 z-2">
-                        <Text className="text-white text-sm font-semibold mb-2">
-                          {t('freelancer_profile.busy')}
-                        </Text>
-
-                        <View className="bg-blue-300 py-2 px-3 rounded-xl mb-3">
-                          <Text className="text-white text-center text-base">{busyUntil}</Text>
-                        </View>
-
-                        <Pressable
-                          onPress={() => {
-                            setShowPopup(false);
-                            navigation.navigate('Bookfreelancer', { userId });
-                            // Alert.alert('Booking', 'You have successfully booked this freelancer.');
-                          }}
-                          className="bg-blue-100 px-6 py-2 rounded-full self-end"
-                        >
-                          <Text className="text-blue-600 text-sm font-semibold">Book</Text>
-                        </Pressable>
-                      </View>
-                    </TouchableWithoutFeedback>
-
-
-                  </>
-                )}
               </View>
 
             )}
@@ -131,6 +122,7 @@ export default function Header({
           <Text className="text-blue-600 font-medium text-body">{rating} (0 {t('freelancer_profile.reviews')})</Text>
         </View>
       </View>
+      
     </View>
   );
 }

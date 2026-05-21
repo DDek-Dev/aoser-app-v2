@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Image, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -20,11 +20,12 @@ type TopFreelancersProps = {
     serviceType?: string | null;
     title?: string;
     scrollY?: any;
+    exceptedIds?: string;
 };
 
 
 
-export default function FamiliarFreelancers({ title, serviceType, scrollY }: TopFreelancersProps) {
+export default function FamiliarFreelancers({ title, serviceType, scrollY, exceptedIds }: TopFreelancersProps) {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const containerRef = useRef<View>(null);
     const hasTriggeredLoad = useRef(false);
@@ -36,13 +37,13 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage
-    } = useRecommendedFreelancers(serviceType ? serviceType : '');
+    } = useRecommendedFreelancers(serviceType ? serviceType : '', exceptedIds);
     const { user, isAuthenticated } = useAuth();
 
     // Flatten all pages into a single array
     const allFreelancers = data?.pages.flat();
 
-    const {t} = useTranslation();
+    const { t } = useTranslation();
     // Listen to scroll position and trigger load more
     useEffect(() => {
         if (!scrollY || !containerRef.current) return;
@@ -97,30 +98,43 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
     }
 
     // No results state - FIXED: Added proper return
-    if (allFreelancers?.length === 0) {
-        return <NoResults title={'No freelancers found'} subtitle={'Try searching with different keywords or check your spelling.'} />;
-    }
+    // if (allFreelancers?.length === 0) {
+    //     return <NoResults title={`${t('freelancer_profile.no_freelancer_fimiliar')}`} subtitle={`${t('freelancer_profile.no_freelancer_fimiliar_dec')}`} />;
+    // }
 
     const handleNavigate = (item_id: string) => {
         if (isAuthenticated && user?._id === item_id) {
-            console.log("user in logged in" , item_id)
+            console.log("user in logged in", item_id)
 
             navigation.replace('AuthFreelancerProfile', { userId: item_id })
 
         } else {
-            console.log("user not logged in" , item_id)
+            console.log("user not logged in", item_id)
 
             navigation.replace('FreelancerProfile', { userId: item_id })
 
 
         }
     }
+
+    if (data?.pages.length === 0 || allFreelancers?.length === 0) {
+        return (
+            <View ref={containerRef} className="mt-6 px-1 ">
+                <View className='h-[1px] mb-4 bg-border'/>
+                <View className="flex-row justify-between items-center mb-2">
+                    <Text className="text-body font-bold mb-2">{title}</Text>
+                </View>
+                <NoResults title={`${t('freelancer_profile.no_freelancer_fimiliar')}`} subtitle={`${t('freelancer_profile.no_freelancer_fimiliar_dec')}`} isShow={false} />
+            </View>
+        )
+    }
+
     // Main render with data
     return (
 
         <View >
 
-            <View ref={containerRef} className="mt-6 px-4 ">
+            <View ref={containerRef} className="mt-6 px-1 ">
                 <View className="flex-row justify-between items-center mb-2">
                     <Text className="text-body font-bold mb-2">{title}</Text>
                 </View>
@@ -132,10 +146,10 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
                             onPress={() => handleNavigate(item._id)}
 
                             key={`${item._id}-${index}`}
-                            className="w-[48%] bg-white rounded-2xl mb-3 border border-border overflow-hidden"
+                            className="w-[49.5%] bg-white rounded-xl mb-1 border border-border overflow-hidden"
                         >
                             {item.videoPromote !== null ? (
-                                <VDOPromote_free_profile video={item.videoPromote} />
+                                <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
                             ) : (
                                 <Image
                                     source={{ uri: IMAGE_BASE + item.bannerImage }}
@@ -164,9 +178,24 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY }: Top
                                     {item.jobTitle}
                                 </Text>
 
-                                <Text className="text-caption text-textSecondary" numberOfLines={2}>
-                                    {item.customerExpect}
-                                </Text>
+                                {item.address &&
+
+
+                                    <View className="flex-row items-end">
+                                        {/* <Text>{t('workDetail.deadline')} : </Text> */}
+                                        {/* <Text>{t('payment_success.address')}:  </Text> */}
+                                        <Ionicons name="location-outline" size={18} color="#6B7280" />
+
+                                        <View className="">
+
+                                            <Text className="text-[12px] text-textSecondary" numberOfLines={1}>
+                                                {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                                                {item.address.village}, {item.address.district}, {item.address.province}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                }
                             </View>
                         </Pressable>
                     ))}

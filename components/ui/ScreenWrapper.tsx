@@ -1,17 +1,17 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { Platform, View, ViewStyle } from 'react-native';
 import { SafeAreaView, Edge, useSafeAreaInsets } from 'react-native-safe-area-context';
-import FloatingChatButton from 'screens/chat/FloatingChatButton';
 
 type ScreenWrapperProps = {
   children: React.ReactNode;
-  safeEdges?: Edge[]; // e.g. ['top', 'bottom']
+  safeEdges?: Edge[]; 
   style?: ViewStyle;
   isbluetop?: boolean;
 };
 
 const ScreenWrapper = ({ children, safeEdges = [], style, isbluetop }: ScreenWrapperProps) => {
   const insets = useSafeAreaInsets();
+  const showBottomInsetOverlay = safeEdges.includes('bottom') && insets.bottom > 0;
 
   return (
     <SafeAreaView
@@ -25,6 +25,21 @@ const ScreenWrapper = ({ children, safeEdges = [], style, isbluetop }: ScreenWra
       
 
       {children}
+
+      {showBottomInsetOverlay && (
+        <View
+          pointerEvents="none"
+          style={{
+            height: insets.bottom,
+            backgroundColor: Platform.OS === 'ios' ? '#fff' : '#000',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 9999,
+          }}
+        />
+      )}
       
 
     </SafeAreaView>

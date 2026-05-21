@@ -28,13 +28,27 @@ export const clearFormData = async () => {
 
 
 export const initLanguage = async (i18n: any) => {
+  // try {
+  //   const savedLang = await AsyncStorage.getItem('userLanguage');
+  //   if (savedLang) {
+  //     await i18n.changeLanguage(savedLang);
+  //   }
+  //   // If no saved language, i18n will use its default (first language in config)
+  // } catch (error) {
+  //   console.log('Error initializing language:', error);
+  // }
+
   try {
-    const savedLang = await AsyncStorage.getItem('userLanguage');
-    if (savedLang) {
-      await i18n.changeLanguage(savedLang);
+    const saved = await AsyncStorage.getItem('userLanguage');
+    const lang: 'la' | 'en' =
+      saved && ['la', 'en'].includes(saved) ? (saved as any) : 'la';
+
+    // change language and keep the key so next launch is correct
+    await i18n.changeLanguage(lang);
+    if (!saved) {
+      await AsyncStorage.setItem('userLanguage', lang);
     }
-    // If no saved language, i18n will use its default (first language in config)
-  } catch (error) {
-    console.log('Error initializing language:', error);
+  } catch (err) {
+    console.log('initLanguage error', err);
   }
 };

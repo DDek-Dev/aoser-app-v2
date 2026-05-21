@@ -46,6 +46,8 @@ const FileOptionsMenu: React.FC<FileOptionsMenuProps> = ({
         className="absolute w-full bg-surface rounded-2xl shadow-2xl p-4 z-50 border border-border"
         style={{
           bottom: 80 + (keyboardHeight > 0 ? keyboardHeight : 0),
+          zIndex: 50,
+          elevation: 50,
         }}
       >
         <View className="flex-row flex-wrap justify-between">

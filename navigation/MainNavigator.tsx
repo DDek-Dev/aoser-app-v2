@@ -1,5 +1,5 @@
-import { View, } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { Platform, View, } from 'react-native';
+import { NavigationContainerRef, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -54,6 +54,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RecommendUser from 'screens/profile/Recommend_user';
 import { useTranslation } from 'react-i18next';
 import PaymentDetail_Id from 'screens/freelancer/PaymentDetail_Id';
+import CustomerProfile from 'screens/profile/CustomerProfile';
+import AppendOwnerWork from 'components/publicwork/AppendOwnerWork';
+import TopFreelancerList from 'components/freelancer/TopFreelancerList';
+import ConfirmPostjob from 'components/publicwork/ConfirmPostjob';
+import { useEffect, useRef } from 'react';
+import WalletScreen from 'components/profile/WalletScreen';
+import NewsScreen from 'screens/profile/NewsScreen';
+import News from 'screens/profile/News';
+import Setting from 'screens/profile/Setting';
+
 
 
 
@@ -64,9 +74,9 @@ const RootStack = createNativeStackNavigator<FreelancerStackParamList>();
 function TabNavigator() {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { isAuthenticated } = useAuthContext();
- const { t } = useTranslation();
+  const { t } = useTranslation();
   return (
-    <ScreenWrapper safeEdges={['bottom']} style={{ flex: 1, backgroundColor: '#000' }}>
+    <ScreenWrapper safeEdges={['bottom']} style={{ flex: 1, backgroundColor: Platform.OS === 'ios' ? '#fff' : '#000' }}>
       <View className="flex-1 relative">
         <Tab.Navigator
           tabBar={(props) => <CustomTabBar {...props} />}
@@ -83,7 +93,7 @@ function TabNavigator() {
           <Tab.Screen name="Works" component={WorkFeedScreen} />
 
           <Tab.Screen name="New work"
-           options={{ title: t('tab.newWork') }}
+            options={{ title: t('tab.newWork') }}
           >
             {() => (
               <ProtectedRoute
@@ -124,16 +134,26 @@ function TabNavigator() {
 
 export default function MainNavigator() {
   const { expoPushToken, notification } = usePushNotifications();
+  const navigationRef = useRef<NavigationContainerRef<any>>(null);
 
-  const data = JSON.stringify(notification, undefined, 2);
 
-  console.log("TokenL: ", expoPushToken?.data);
-  console.log(data);
+  useEffect(() => {
+    if (expoPushToken?.data) {
+      // console.log("TokenL: ", expoPushToken?.data);
+    }
+    if (notification) {
+      const data = JSON.stringify(notification, undefined, 2);
+      // console.log("Notification: ", data);
+    }
 
- const { t } = useTranslation();
+  }, [notification, expoPushToken]);
+
+
+
+  const { t } = useTranslation();
 
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const insets = useSafeAreaInsets();
+
   return (
     <View style={{ flex: 1 }}>
 
@@ -156,9 +176,20 @@ export default function MainNavigator() {
           }}
         />
         <RootStack.Screen name="FreelancerProfile" component={FreelancerProfile}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <RootStack.Screen name="TopFreelancerList" component={TopFreelancerList}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
+        <RootStack.Screen name="ResumeImageViewer" component={ResumeImageViewer}
 
         />
-        <RootStack.Screen name="ResumeImageViewer" component={ResumeImageViewer} />
 
         <RootStack.Screen name="Bookfreelancer">
           {(props) => (
@@ -176,7 +207,12 @@ export default function MainNavigator() {
         <RootStack.Screen
           name="ConfirmBookingScreen"
           component={ConfirmBookingScreen}
-          
+
+        />
+        <RootStack.Screen
+          name="ConfirmPostjob"
+          component={ConfirmPostjob}
+
         />
 
         <RootStack.Screen name="UpgradeToFreelancer" component={UpgradeToFreelancer} />
@@ -199,25 +235,24 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        {/* <RootStack.Screen name="AuthFreelancerProfile">
-          {(route) => (
-            <ProtectedRoute
-              fallbackMessage={t('protectedRoute.signInToAccess')}
-              onSignInPress={() => navigation.navigate('SignIn')}
-              onSignUpPress={() => navigation.navigate('SignUp')}
-            >
-              <AuthFreelancerProfile {...route} />
-            </ProtectedRoute>
-          )}
-        </RootStack.Screen> */}
-
         <RootStack.Screen name="AuthFreelancerProfile" component={AuthFreelancerProfile} />
+        <RootStack.Screen name="CustomerProfile" component={CustomerProfile} options={{
+          headerShown: false,
+          animation: 'ios_from_right',
+        }} />
+        <RootStack.Screen name="LanguageSelectScreen" component={LanguageSelectScreen}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
+        />
 
-
-
-        <RootStack.Screen name="LanguageSelectScreen" component={LanguageSelectScreen} />
-
-        <RootStack.Screen name="ChangePasswordScreen">
+        <RootStack.Screen name="ChangePasswordScreen"
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -232,7 +267,12 @@ export default function MainNavigator() {
 
         <RootStack.Screen name="NotificationSettingsScreen" component={NotificationSettingsScreen} />
 
-        <RootStack.Screen name="AskAQuestionScreen">
+        <RootStack.Screen name="AskAQuestionScreen"
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -245,9 +285,16 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} />
+        <RootStack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
+        />
 
-        <RootStack.Screen name="AuthFreelancerSetting">
+        <RootStack.Screen name="AuthFreelancerSetting"
+
+        >
           {() => (
             <ProtectedRoute
               fallbackMessage={t('protectedRoute.signInToAccess')}
@@ -255,6 +302,35 @@ export default function MainNavigator() {
               onSignUpPress={() => navigation.navigate('SignUp')}
             >
               <AuthFreelancerSetting />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen name="Setting"
+
+        >
+          {() => (
+            <ProtectedRoute
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <Setting />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen name="WalletScreen"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          {() => (
+            <ProtectedRoute
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <WalletScreen />
             </ProtectedRoute>
           )}
         </RootStack.Screen>
@@ -272,7 +348,12 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="EditAoserProfile">
+        <RootStack.Screen name="EditAoserProfile"
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -315,7 +396,12 @@ export default function MainNavigator() {
         />
 
         {/* Works */}
-        <RootStack.Screen name="FreelancerWorkHistory">
+        <RootStack.Screen name="FreelancerWorkHistory"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
           {() => (
             <ProtectedRoute
               backicon={true}
@@ -328,21 +414,16 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="FreelancerWorkDetail" component={FreelancerWorkDetail} />
+        <RootStack.Screen name="FreelancerWorkDetail" component={FreelancerWorkDetail}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        />
         <RootStack.Screen name="EditWorkById" component={EditWorkById} />
+        <RootStack.Screen name="AppendOwnerWork" component={AppendOwnerWork} />
 
-        {/* <RootStack.Screen name="EditWorkById">
-          {() => (
-            <ProtectedRoute
-              backicon={true}
-              fallbackMessage={t('protectedRoute.signInToAccess')}
-              onSignInPress={() => navigation.navigate('SignIn')}
-              onSignUpPress={() => navigation.navigate('SignUp')}
-            >
-              <EditWorkById  />
-            </ProtectedRoute>
-          )}
-        </RootStack.Screen> */}
+
 
         {/* Payment */}
         <RootStack.Screen
@@ -406,23 +487,6 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        {/* <RootStack.Screen
-          name="ChatScreen"
-          component={ChatScreen}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        /> */}
-
-        {/* <RootStack.Screen
-          name="RoomChat"
-          component={RoomChat}
-          options={{
-            headerShown: false,
-            animation: 'slide_from_right',
-          }}
-        /> */}
         <RootStack.Screen
           name="RoomChat"
           options={{
@@ -438,6 +502,42 @@ export default function MainNavigator() {
               onSignUpPress={() => navigation.navigate('SignUp')}
             >
               <RoomChat />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen
+          name="NewsScreen"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          {() => (
+            <ProtectedRoute
+              backicon={true}
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <NewsScreen />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen
+          name="News"
+          options={{
+            headerShown: false,
+            animation: 'fade',
+          }}
+        >
+          {() => (
+            <ProtectedRoute
+              backicon={true}
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <News />
             </ProtectedRoute>
           )}
         </RootStack.Screen>
@@ -460,16 +560,17 @@ export default function MainNavigator() {
         <RootStack.Screen name="ProfileSetup" component={ProfileSetup} />
       </RootStack.Navigator>
 
-      <View
+      {/* <View
         style={{
           height: insets.bottom,
-          backgroundColor: 'black',
+          backgroundColor: Platform.OS === 'ios' ? '#fff' :'#000',
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
+          zIndex:9999
         }}
-      />
+      /> */}
     </View>
   );
 }

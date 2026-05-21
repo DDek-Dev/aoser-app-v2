@@ -1,10 +1,11 @@
 {
   "expo": {
-    "name": "aoser-app",
-    "slug": "aoser-app",
-    "version": "1.0.0",
+    "name": "Aoser",
+    "slug": "aoser",
+    "version": "1.0.1",
+    "scheme": "com.aoser.app",
     "orientation": "portrait",
-    "icon": "./assets/aoser_logo_no_bg.png",
+    "icon": "./assets/aoser_logo_and2.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -12,33 +13,53 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.aoser.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow Aceer to save QR codes to your photo library"
-      }
+        "NSPhotoLibraryUsageDescription": "Allow Aoser to save QR codes to your photo library",
+        "NSCameraUsageDescription":"Aoser needs access to your camera to take photos for your profile and to capture images of services you offer as a freelancer.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleURLTypes": [ 
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.534310388147-ie1fa8js9n91smba52idrpns8hjme379"
+            ]
+          }
+        ]
+      },
+      "buildNumber": "5"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/aoser_logo_blue_bg.jpg",
+        "foregroundImage": "./assets/aoser_logo_and2.png",
         "backgroundColor": "#ffffff"
       },
-      "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.aoser.aoser",
+      "package": "com.aoser.app",
+      "versionCode": 4,
       "googleServicesFile": "./google-services.json",
-            "permissions": ["WRITE_EXTERNAL_STORAGE", "READ_EXTERNAL_STORAGE"]
+      "permissions": [
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
-      "favicon": "./assets/aoser_logo_blue_bg.jpg"
+      "favicon": "./assets/aoser_logo_no_bg_blue.png"
     },
     "extra": {
       "eas": {
-        "projectId": "4e2864c6-db81-4c60-b273-8161e6b88246"
-      }
+        "projectId": "d60f7004-fd5e-42fa-ab00-fdf08bfc6a94"
+      },
+      "adiRegistrationSnippet": "CRY7QPUH7BWGKAAAAAAAAAAAAA"
     },
-    "owner": "aoser-app",
+    "owner": "aosers",
     "plugins": [
       "expo-font",
       "expo-localization",
@@ -46,7 +67,8 @@
       "expo-web-browser",
       "expo-notifications",
       "expo-dev-client",
-      "expo-image-picker"
+      "expo-image-picker",
+      "./plugins/withAdiRegistrationToken"
     ]
   }
 }

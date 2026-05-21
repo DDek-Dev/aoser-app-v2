@@ -1,7 +1,7 @@
 export type Language = 'en' | 'la';
 
 export const formatRelativeTime = (dateString: string, language: Language = 'en'): string => {
-  if (!dateString) return language === 'en' ? 'Unknown date' : 'ບໍ່ຮູ້ວັນທີ';
+  if (!dateString) return language === 'en' ? 'No date' : 'ບໍ່ມີວັນທິ່';
   
   try {
     const date = new Date(dateString);
@@ -62,7 +62,7 @@ export const formatRelativeTime = (dateString: string, language: Language = 'en'
 };
 
 export const formatRelativeTimeWithTime = (dateString: string, language: Language = 'en'): string => {
-  if (!dateString) return language === 'en' ? 'Unknown date' : 'ບໍ່ຮູ້ວັນທີ';
+  if (!dateString) return language === 'en' ? 'No date' : 'ບໍ່ມີວັນທິ່';
   
   try {
     const date = new Date(dateString);
@@ -97,7 +97,7 @@ export const formatRelativeTimeWithTime = (dateString: string, language: Languag
 };
 
 export const formatDate = (dateString: string, language: Language = 'en'): string => {
-  if (!dateString) return language === 'en' ? 'Unknown date' : 'ບໍ່ຮູ້ວັນທີ';
+  if (!dateString) return language === 'en' ? 'No date' : 'ບໍ່ມີວັນທິ່';
   
   try {
     const date = new Date(dateString);

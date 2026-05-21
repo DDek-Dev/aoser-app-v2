@@ -15,7 +15,7 @@ const TextArea = ({ label, placeholder = '', isValidate, required,inputClassName
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <View className="mb-4">
+    <View className="mb-2">
       <Text className="text-body text-text mb-1 font-bold">{label} {required && <Text className="text-error">*</Text>}</Text>
       <TextInput
         className={`rounded-xl px-4 py-4 text-body  text-text bg-white h-[120px] border ${
@@ -32,7 +32,7 @@ const TextArea = ({ label, placeholder = '', isValidate, required,inputClassName
         onBlur={() => setIsFocused(false)}
       />
 
-              <Text className='text-caption text-error mt-1'>{isValidate}</Text>
+             {isValidate && <Text className='text-caption text-error mt-1'>{isValidate}</Text>}
       
     </View>
   );

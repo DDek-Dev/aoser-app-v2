@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput as RNTextInput,
+  Pressable,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useForm } from 'react-hook-form';
@@ -16,17 +17,16 @@ import { useTranslation } from 'react-i18next';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header_back from 'components/ui/Header_back';
-import FormInput from 'components/ui/Input';
 import PasswordInput from 'components/ui/PasswordInput';
 import { useAuth } from 'hooks/useAuth';
 import { ResetPasswordFormData } from 'types/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import { useMyProfile } from 'hooks/useFreelancer';
 
 type ChangePasswordStep = 'email' | 'otp' | 'password';
 
 type ChangePasswordFormData = {
-  email: string;
   otp: string;
   newPassword: string;
   confirmPassword: string;
@@ -43,16 +43,13 @@ const ChangePasswordScreen = () => {
     resetPasswordLoading,
     resetPasswordError,
   } = useAuth();
-
+  const { data, isLoading } = useMyProfile();
   const [step, setStep] = useState<ChangePasswordStep>('email');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [verifiedEmail, setVerifiedEmail] = useState('');
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
-  const [otpSent, setOtpSent] = useState(false);
+  const countdownRef = useRef<any>(null);
   const otpInputRef = useRef<RNTextInput>(null);
-  const [canEditEmail, setCanEditEmail] = useState(true);
 
   const {
     control,
@@ -62,21 +59,19 @@ const ChangePasswordScreen = () => {
     setError,
     clearErrors,
     formState: { errors, isValid },
-    trigger,
-    reset,
   } = useForm<ChangePasswordFormData>({
     mode: 'onChange',
     defaultValues: {
-      email: '',
       otp: '',
       newPassword: '',
       confirmPassword: '',
     },
   });
 
-  const email = watch('email');
   const newPassword = watch('newPassword');
   const otp = watch('otp');
+
+  const userEmail = data?.user?.email || '';
 
   // Countdown timer
   const startCountdown = (seconds = 60) => {
@@ -106,7 +101,6 @@ const ChangePasswordScreen = () => {
     };
   }, []);
 
-  // Focus OTP input when step changes to otp
   useEffect(() => {
     if (step === 'otp' && otpInputRef.current) {
       setTimeout(() => {
@@ -115,51 +109,61 @@ const ChangePasswordScreen = () => {
     }
   }, [step]);
 
-  // Step 1: Request OTP
-  const handleRequestOtp = (data: { email: string }) => {
-    forgotPWOTP(data.email, {
+  // Request OTP
+  const handleRequestOtp = () => {
+    if (!userEmail) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('common.error'),
+        textBody: 'Email not found',
+      });
+      return;
+    }
+
+    forgotPWOTP(userEmail, {
       onSuccess: () => {
-        setVerifiedEmail(data.email);
-        setOtpSent(true);
         setStep('otp');
-        setCanEditEmail(false); // Lock email editing once OTP is sent
         startCountdown();
-        // Alert.alert(
-        //   t('common.success'),
-        //   t('changePassword.otpSent')
-        // );
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: t('common.success'),
+          textBody: t('changePassword.otpSent'),
+        });
       },
-      onError: (error: any) => {
-        Alert.alert(
-          t('common.error'),
-          error.message || t('changePassword.errors.failedToSendOtp')
-        );
+      onError: () => {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: t('common.error'),
+          textBody: t('changePassword.errors.failedToSendOtp'),
+        });
       }
     });
   };
 
   // Resend OTP
   const handleResendOtp = () => {
-    if (countdown > 0 || !verifiedEmail) return;
+    if (countdown > 0 || !userEmail) return;
 
-    forgotPWOTP(verifiedEmail, {
+    forgotPWOTP(userEmail, {
       onSuccess: () => {
         startCountdown();
-        Alert.alert(
-          t('common.success'),
-          t('changePassword.otpResent')
-        );
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: t('common.success'),
+          textBody: t('changePassword.otpResent'),
+        });
       },
-      onError: (error: any) => {
-        Alert.alert(
-          t('common.error'),
-          error.message || t('changePassword.errors.failedToSendOtp')
-        );
+      onError: () => {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: t('common.error'),
+          textBody: t('changePassword.errors.failedToSendOtp'),
+        });
       }
     });
   };
 
-  // Step 2: Verify OTP and go to password step
+  // Verify OTP
   const handleVerifyOtp = () => {
     if (!otp || otp.length !== 6) {
       setError('otp', {
@@ -173,7 +177,7 @@ const ChangePasswordScreen = () => {
     clearErrors('otp');
   };
 
-  // Step 3: Reset Password
+  // Reset Password
   const handleResetPassword = (data: ChangePasswordFormData) => {
     if (data.newPassword !== data.confirmPassword) {
       setError('confirmPassword', {
@@ -184,138 +188,71 @@ const ChangePasswordScreen = () => {
     }
 
     const resetData: ResetPasswordFormData = {
-      email: verifiedEmail,
+      email: userEmail,
       newPassword: data.newPassword,
       otp: data.otp,
     };
 
     resetPassword(resetData, {
-      onSuccess: (result: any) => {
-        // Alert.alert(
-        //   t('common.success'),
-        //   t('changePassword.success'),
-        //   [
-        //     {
-        //       text: t('common.ok'),
-        //       onPress: () => {
-        //         reset();
-        //         navigation.goBack();
-        //       },
-        //     },
-        //   ]
-        // );
-
+      onSuccess: () => {
         Toast.show({
           type: ALERT_TYPE.SUCCESS,
           title: t('common.success'),
           textBody: t('changePassword.success'),
-          
-        })
+        });
         setTimeout(() => {
-          reset();
           navigation.goBack();
-        })
+        }, 1000);
       },
-      onError: (error: any) => {
-        // Alert.alert(
-        //   t('common.error'),
-        //    t('changePassword.errors.resetFailed')
-        // );
+      onError: () => {
         Toast.show({
           type: ALERT_TYPE.DANGER,
           title: t('common.error'),
           textBody: t('changePassword.errors.resetFailed'),
-        })
+        });
       }
     });
   };
 
-  // Enhanced Go back function
+  // Handle back button
   const handleBack = () => {
     if (step === 'otp') {
-      // When in OTP step, ask if user wants to edit email
-      Alert.alert(
-        t('changePassword.changeEmailTitle'),
-        t('changePassword.changeEmailMessage'),
-        [
-          {
-            text: t('common.cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('changePassword.editEmail'),
-            onPress: () => {
-              setStep('email');
-              setOtpSent(false);
-              setCanEditEmail(true);
-              clearErrors('otp');
-              // Reset OTP countdown
-              if (countdownRef.current) {
-                clearInterval(countdownRef.current);
-              }
-              setCountdown(0);
-            },
-          },
-          {
-            text: t('changePassword.sendToDifferentEmail'),
-            onPress: () => {
-              setStep('email');
-              setVerifiedEmail('');
-              setOtpSent(false);
-              setCanEditEmail(true);
-              setValue('email', '');
-              clearErrors('otp');
-              if (countdownRef.current) {
-                clearInterval(countdownRef.current);
-              }
-              setCountdown(0);
-            },
-          },
-        ]
-      );
+      // Alert.alert(
+      //   t('changePassword.goBack'),
+      //   t('changePassword.goBackMessage'),
+      //   [
+      //     {
+      //       text: t('common.cancel'),
+      //       style: 'cancel',
+      //     },
+      //     {
+      //       text: t('common.yes'),
+      //       onPress: () => {
+      //         setStep('email');
+      //         clearErrors('otp');
+      //         if (countdownRef.current) {
+      //           clearInterval(countdownRef.current);
+      //         }
+      //         setCountdown(0);
+      //       },
+      //     },
+      //   ]
+      // );
+      setStep('email');
+      clearErrors('otp');
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+      setCountdown(0);
     } else if (step === 'password') {
-      // When in password step, go back to OTP
       setStep('otp');
     } else {
-      // When in email step, go back to previous screen
       navigation.goBack();
     }
   };
 
-  // Function to go back to OTP step
-  const goBackToOtp = () => {
-    setStep('otp');
-  };
-
-  // Function to go back to email step
-  const goBackToEmail = () => {
-    Alert.alert(
-      t('changePassword.changeEmailTitle'),
-      t('changePassword.changeEmailConfirm'),
-      [
-        {
-          text: t('common.cancel'),
-          style: 'cancel',
-        },
-        {
-          text: t('common.yes'),
-          onPress: () => {
-            setStep('email');
-            setCanEditEmail(true);
-            clearErrors('otp');
-            if (countdownRef.current) {
-              clearInterval(countdownRef.current);
-            }
-            setCountdown(0);
-          },
-        },
-      ]
-    );
-  };
-
   // OTP Input Handler
   const handleOtpChange = (text: string) => {
-    // Only allow numbers and limit to 6 digits
     const numericText = text.replace(/[^0-9]/g, '').substring(0, 6);
     setValue('otp', numericText, { shouldValidate: true });
   };
@@ -329,14 +266,12 @@ const ChangePasswordScreen = () => {
         <Text className="text-textPrimary text-sm font-medium mb-3">
           {t('changePassword.enterOtp')}
         </Text>
-        
-        {/* OTP Boxes Container */}
+
         <TouchableOpacity
           activeOpacity={1}
           onPress={() => otpInputRef.current?.focus()}
           className="relative"
         >
-          {/* OTP Boxes - Visual Display */}
           <View className="flex-row justify-between mb-2">
             {Array.from({ length: 6 }).map((_, index) => (
               <View
@@ -354,8 +289,7 @@ const ChangePasswordScreen = () => {
               </View>
             ))}
           </View>
-          
-          {/* Hidden TextInput for OTP entry */}
+
           <RNTextInput
             ref={otpInputRef}
             value={otp}
@@ -368,7 +302,7 @@ const ChangePasswordScreen = () => {
             caretHidden={true}
           />
         </TouchableOpacity>
-        
+
         {errors.otp && (
           <Text className="text-error text-sm mt-2">{errors.otp.message}</Text>
         )}
@@ -376,13 +310,33 @@ const ChangePasswordScreen = () => {
     );
   };
 
+  const goBackToOtp = () => {
+    setStep('otp');
+  };
+
+  if (isLoading) {
+    return (
+      <ScreenWrapper safeEdges={['top']}>
+        <Header_back
+          text={t('changePassword.title')}
+          onPress={() => navigation.goBack()}
+          iconColor="#3B82F6"
+          backgroundColor="bg-surface"
+        />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#3B82F6" />
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
   return (
     <ScreenWrapper safeEdges={['top']}>
-      <Header_back 
-        text={t('changePassword.title')} 
+      <Header_back
+        text={t('changePassword.title')}
         onPress={handleBack}
-        iconColor="#3B82F6" 
-        backgroundColor="bg-surface" 
+        iconColor="#3B82F6"
+        backgroundColor="bg-surface"
       />
 
       <KeyboardAvoidingView
@@ -390,7 +344,7 @@ const ChangePasswordScreen = () => {
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <ScrollView 
+        <ScrollView
           className="flex-1 bg-surface"
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
@@ -399,151 +353,123 @@ const ChangePasswordScreen = () => {
             {/* Progress Indicator */}
             <View className="flex-row items-center mb-8">
               <View className="flex-row items-center">
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${
-                  step === 'email' ? 'bg-primary' : 'bg-success'
-                }`}>
+                <View className={`w-8 h-8 rounded-full items-center justify-center ${step === 'email' ? 'bg-primary' : 'bg-success'
+                  }`}>
                   <Text className="text-white font-bold text-sm">1</Text>
                 </View>
-                <Text className="text-textSecondary text-xs ml-2">Email</Text>
+                <Text className="text-textSecondary text-xs ml-2">{t('signUpScreen.email')}</Text>
               </View>
-              
+
               <View className="h-1 flex-1 mx-2 bg-border" />
-              
+
               <View className="flex-row items-center">
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${
-                  step === 'otp' ? 'bg-primary' : 
-                  step === 'password' ? 'bg-success' : 'bg-gray-300'
-                }`}>
+                <View className={`w-8 h-8 rounded-full items-center justify-center ${step === 'otp' ? 'bg-primary' : step === 'password' ? 'bg-success' : 'bg-gray-300'
+                  }`}>
                   <Text className="text-white font-bold text-sm">2</Text>
                 </View>
                 <Text className="text-textSecondary text-xs ml-2">OTP</Text>
               </View>
-              
+
               <View className="h-1 flex-1 mx-2 bg-border" />
-              
+
               <View className="flex-row items-center">
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${
-                  step === 'password' ? 'bg-primary' : 'bg-gray-300'
-                }`}>
+                <View className={`w-8 h-8 rounded-full items-center justify-center ${step === 'password' ? 'bg-primary' : 'bg-gray-300'
+                  }`}>
                   <Text className="text-white font-bold text-sm">3</Text>
                 </View>
-                <Text className="text-textSecondary text-xs ml-2">Password</Text>
+                <Text className="text-textSecondary text-xs ml-2">{t('signUpScreen.password')}</Text>
               </View>
             </View>
 
-            {/* Step 1: Email */}
+            {/* Step 1: Email - Show only Send OTP button */}
             {step === 'email' && (
-              <View className="bg-white rounded-2xl ">
-                <Text className="text-xl font-bold text-textPrimary mb-2">
-                  {t('changePassword.enterEmail')}
-                </Text>
-                <Text className="text-textSecondary mb-6">
-                  {t('changePassword.emailInstructions')}
-                </Text>
+              <View className="bg-white h-[90%] rounded-2xl flex-col justify-between">
 
-                {/* Email Input using FormInput */}
-                <FormInput
-                  label={t('changePassword.email')}
-                  placeholder={t('changePassword.emailPlaceholder')}
-                  value={email}
-                  onChangeText={(text: string) => {
-                    setValue('email', text, { shouldValidate: true });
-                  }}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  editable={canEditEmail}                 
-                //   error={errors.email?.message}
-                  required
-                //   inputClassName={`rounded-full ${errors.email ? 'border-error' : ''}`}
-                  className="rounded-3xl border  p-4 border-border"
-                />
+                <View className=''>
 
-                {/* If OTP was already sent but user came back */}
-                {otpSent && (
-                  <View className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <Text className="text-blue-800 text-sm">
-                      {t('changePassword.otpAlreadySent')} {verifiedEmail}
+                  <Text className="text-xl font-bold text-textPrimary mb-2">
+                    {t('changePassword.enterEmail')}
+                  </Text>
+                  <Text className="text-textSecondary mb-6">
+                    {t('changePassword.emailInstructions')}
+                  </Text>
+
+                </View>
+
+                {/* Display User Email */}
+                {/* <View className="mb-6">
+                  <Text className="text-sm text-textSecondary mb-2">
+                    {t('changePassword.sendingOtpTo')}:
+                  </Text>
+                  <View className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <Text className="text-base font-semibold text-textPrimary">
+                      {userEmail}
                     </Text>
                   </View>
-                )}
+                </View> */}
 
-                <TouchableOpacity
-                  onPress={handleSubmit(handleRequestOtp)}
-                  disabled={(!isValid && !otpSent) || forgotPwIsLoading}
+                <Pressable
+                  onPress={handleRequestOtp}
+                  disabled={forgotPwIsLoading}
                   className={`
-                    mt-8 py-4 rounded-full items-center
-                    ${((isValid || otpSent) && !forgotPwIsLoading) ? 'bg-primary' : 'bg-gray-300'}
+                    py-4 rounded-full items-center
+                    ${forgotPwIsLoading ? 'bg-gray-300' : 'bg-primary'}
                   `}
                 >
                   {forgotPwIsLoading ? (
                     <ActivityIndicator color="white" size="small" />
-                  ) : otpSent ? (
-                    <Text className="text-white text-base font-semibold">
-                      {t('changePassword.resendOtp')}
-                    </Text>
                   ) : (
                     <Text className="text-white text-base font-semibold">
                       {t('changePassword.sendOtp')}
                     </Text>
                   )}
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 
             {/* Step 2: OTP */}
             {step === 'otp' && (
-              <View className="bg-white rounded-2xl ">
-                <View className="flex-row justify-between items-center mb-2">
-                  <Text className="text-xl font-bold text-textPrimary">
+              <View className="bg-white rounded-2xl flex-col justify-between  h-[90%]">
+
+                <View className=''>
+
+                  <Text className="text-xl font-bold text-textPrimary mb-2">
                     {t('changePassword.verifyOtp')}
                   </Text>
-                  <TouchableOpacity
-                    onPress={goBackToEmail}
-                    className="flex-row items-center"
-                  >
-                    <Ionicons name="pencil-outline" size={16} color="#3B82F6" />
-                    <Text className="text-primary text-sm ml-1">
-                      {t('changePassword.editEmail')}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-textSecondary mb-2">
-                  {t('changePassword.otpSentTo')}
-                </Text>
-                <Text className="text-textPrimary font-semibold mb-6">
-                  {verifiedEmail}
-                </Text>
 
-                {/* OTP Input */}
-                {renderOtpInput()}
-
-                {/* Resend OTP */}
-                <View className="flex-row justify-between items-center mt-4">
-                  <Text className="text-textSecondary text-sm">
-                    {t('changePassword.didntReceiveOtp')}
+                  <Text className="text-textSecondary mb-2">
+                    {t('changePassword.otpSentTo')}
                   </Text>
-                  <TouchableOpacity
-                    onPress={handleResendOtp}
-                    disabled={countdown > 0 || forgotPwIsLoading}
-                  >
-                    {forgotPwIsLoading ? (
-                      <ActivityIndicator size="small" color="#3B82F6" />
-                    ) : countdown > 0 ? (
-                      <Text className="text-primary font-medium">
-                        {t('changePassword.resendIn')} {countdown}s
-                      </Text>
-                    ) : (
-                      <Text className="text-primary font-medium">
-                        {t('changePassword.resendOtp')}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
+                  <Text className="text-textPrimary font-semibold mb-6">
+                    {userEmail}
+                  </Text>
+
+                  {renderOtpInput()}
+                  <View className="flex-row justify-between items-center mt-4">
+                    <Text className="text-textSecondary text-sm">
+                      {t('changePassword.didntReceiveOtp')}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleResendOtp}
+                      disabled={countdown > 0 || forgotPwIsLoading}
+                    >
+                      {forgotPwIsLoading ? (
+                        <ActivityIndicator size="small" color="#3B82F6" />
+                      ) : countdown > 0 ? (
+                        <Text className="text-primary font-medium">
+                          {t('changePassword.resendIn')} {countdown}s
+                        </Text>
+                      ) : (
+                        <Text className="text-primary font-medium">
+                          {t('changePassword.resendOtp')}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
-                <TouchableOpacity
+
+                <Pressable
                   onPress={handleVerifyOtp}
                   disabled={!otp || otp.length !== 6}
                   className={`
@@ -554,51 +480,52 @@ const ChangePasswordScreen = () => {
                   <Text className="text-white text-base font-semibold">
                     {t('changePassword.verifyOtpButton')}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 
             {/* Step 3: New Password */}
             {step === 'password' && (
-              <View className="bg-white rounded-2xl ">
-                <View className="flex-row justify-between items-center mb-2">
-                  <Text className="text-xl font-bold text-textPrimary">
-                    {t('changePassword.setNewPassword')}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={goBackToOtp}
-                    className="flex-row items-center"
-                  >
-                    <Ionicons name="arrow-back-outline" size={16} color="#3B82F6" />
-                    <Text className="text-primary text-sm ml-1">
-                      {t('changePassword.editOtp')}
+              <View className="bg-white rounded-2xl  flex-col h-[90%] justify-between">
+
+                <View>
+
+
+                  <View className="flex-row justify-between items-center mb-2">
+                    <Text className="text-xl font-bold text-textPrimary">
+                      {t('changePassword.setNewPassword')}
                     </Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text className="text-textSecondary mb-6">
-                  {t('changePassword.passwordInstructions')}
-                </Text>
+                    <TouchableOpacity
+                      onPress={goBackToOtp}
+                      className="flex-row items-center"
+                    >
+                      <Ionicons name="arrow-back-outline" size={16} color="#3B82F6" />
+                      <Text className="text-primary text-sm ml-1">
+                        {t('changePassword.editOtp')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
 
-                {/* Display OTP Info */}
-                <View className="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <Text className="text-textSecondary text-sm">
-                    {t('changePassword.verifyingOtp')}:
+                  <Text className="text-textSecondary mb-6">
+                    {t('changePassword.passwordInstructions')}
                   </Text>
-                  <Text className="text-textPrimary font-semibold">
-                    {otp} ••••
-                  </Text>
-                  <Text className="text-textSecondary text-xs mt-1">
-                    {t('changePassword.sentTo')}: {verifiedEmail}
-                  </Text>
-                </View>
 
-                {/* New Password */}
-                <View className="mb-6">
-                  <Text className="text-textPrimary text-sm font-medium mb-2">
-                    {t('changePassword.newPassword')}
-                  </Text>
-                  <View className="relative">
+                  <View className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <Text className="text-textSecondary text-sm">
+                      {t('changePassword.verifyingOtp')}:
+                    </Text>
+                    <Text className="text-textPrimary font-semibold">
+                      {otp} ••••
+                    </Text>
+                    <Text className="text-textSecondary text-xs mt-1">
+                      {t('changePassword.sentTo')}: {userEmail}
+                    </Text>
+                  </View>
+
+                  <View className="mb-6">
+                    <Text className="text-textPrimary text-sm font-medium mb-2">
+                      {t('changePassword.newPassword')}
+                    </Text>
                     <PasswordInput
                       control={control}
                       name="newPassword"
@@ -615,14 +542,11 @@ const ChangePasswordScreen = () => {
                       error={errors.newPassword?.message}
                     />
                   </View>
-                </View>
 
-                {/* Confirm Password */}
-                <View className="mb-6">
-                  <Text className="text-textPrimary text-sm font-medium mb-2">
-                    {t('changePassword.confirmPassword')}
-                  </Text>
-                  <View className="relative">
+                  <View className="mb-6">
+                    <Text className="text-textPrimary text-sm font-medium mb-2">
+                      {t('changePassword.confirmPassword')}
+                    </Text>
                     <PasswordInput
                       control={control}
                       name="confirmPassword"
@@ -639,7 +563,7 @@ const ChangePasswordScreen = () => {
                   </View>
                 </View>
 
-                <TouchableOpacity
+                <Pressable
                   onPress={handleSubmit(handleResetPassword)}
                   disabled={!isValid || resetPasswordLoading}
                   className={`
@@ -654,15 +578,11 @@ const ChangePasswordScreen = () => {
                       {t('changePassword.updateButton')}
                     </Text>
                   )}
-                </TouchableOpacity>
+                </Pressable>
 
                 {resetPasswordError && (
                   <View className="mt-4 p-3 bg-red-50 rounded-lg">
-                  
-                    <TouchableOpacity
-                      onPress={goBackToOtp}
-                      className="mt-2"
-                    >
+                    <TouchableOpacity onPress={goBackToOtp} className="mt-2">
                       <Text className="text-error text-center text-sm">
                         {t('changePassword.wrongOtpTryAgain')}
                       </Text>

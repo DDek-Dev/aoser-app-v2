@@ -26,13 +26,15 @@ import { storeFormData } from 'utils/authStorage';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
+import AppleLoginButton from './AppleLoginButton';
+
 
 // ========================================
 // VALIDATION SCHEMA
 // ========================================
 
 type FormData = {
-  gender: string;
+  // gender: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -50,7 +52,7 @@ type FormData = {
 export default function SignUpScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const [showPassword, setShowPassword] = useState(false);
-  const [genderModalVisible, setGenderModalVisible] = useState(false);
+  // const [genderModalVisible, setGenderModalVisible] = useState(false);
 
   const {
     otpSendLoading,
@@ -63,7 +65,7 @@ export default function SignUpScreen() {
   const { t } = useTranslation();
 
   const schema = yup.object({
-    gender: yup.string().required(t('signUpScreen.gender_required')),
+    // gender: yup.string().required(t('signUpScreen.gender_required')),
     firstName: yup.string().required(t('signUpScreen.firstName_required')),
     lastName: yup.string().required(t('signUpScreen.lastName_required')),
     email: yup
@@ -72,7 +74,7 @@ export default function SignUpScreen() {
       .required(t('signUpScreen.email_required')),
     password: yup
       .string()
-      .min(4, t('signUpScreen.password_min'))
+      .min(6, t('signUpScreen.password_min'))
       .required(t('signUpScreen.password_required')),
     rePassword: yup
       .string()
@@ -89,7 +91,7 @@ export default function SignUpScreen() {
   } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: {
-      gender: '',
+      // gender: '',
       firstName: '',
       lastName: '',
       email: '',
@@ -129,6 +131,8 @@ export default function SignUpScreen() {
     navigation.replace('SignIn');
   };
 
+ 
+
   // ========================================
   // COMPUTED VALUES
   // ========================================
@@ -148,9 +152,12 @@ export default function SignUpScreen() {
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-          style={{ flex: 1, backgroundColor: 'white' }}
+          behavior={'padding'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          style={{
+            flex: 1,
+            backgroundColor: 'white'
+          }}
         >
           {/* Scrollable Content */}
           <ScrollView
@@ -160,7 +167,6 @@ export default function SignUpScreen() {
           >
             <View className="px-6 py-6">
 
-             
               {/* Google Login Button */}
               <GoogleLoginButton
                 onPress={handleGoogleLoginPress}
@@ -168,17 +174,19 @@ export default function SignUpScreen() {
                 disabled={isLoading}
               />
 
+              {Platform.OS === 'ios' && <AppleLoginButton />}
+
               {/* Divider */}
               <Divider />
 
               {/* Gender Dropdown */}
-              <GenderInput
+              {/* <GenderInput
                 control={control}
                 error={errors.gender}
                 modalVisible={genderModalVisible}
                 setModalVisible={setGenderModalVisible}
                 disabled={isLoading}
-              />
+              /> */}
 
               {/* First Name & Last Name */}
               <Text className="text-text mb-2 font-bold text-body">{t('signUpScreen.fullname')}</Text>
@@ -262,7 +270,8 @@ function GoogleLoginButton({ onPress, loading, disabled }: GoogleLoginButtonProp
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className="flex-row justify-center items-center border border-border py-6 rounded-2xl bg-background mb-4"
+      className="flex-row justify-center items-center border border-border  rounded-2xl bg-background mb-4"
+      style={{ height: 52, width: '100%' }}
     >
       {loading ? (
         <ActivityIndicator color="#DB4437" />
@@ -405,8 +414,9 @@ function FirstNameInput({ control, error, disabled }: FirstNameInputProps) {
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.firstName')}
@@ -443,8 +453,9 @@ function LastNameInput({ control, error, disabled }: LastNameInputProps) {
         <View>
 
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.lastName')}
@@ -472,6 +483,7 @@ type EmailInputProps = {
 };
 
 function EmailInput({ control, error, disabled }: EmailInputProps) {
+  const { t } = useTranslation();
 
   return (
     <Controller
@@ -481,11 +493,12 @@ function EmailInput({ control, error, disabled }: EmailInputProps) {
         <View>
 
           <View
-            className={`flex-row items-center px-4 py-2  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4   rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
-              placeholder="Aoser@example.com"
+              placeholder={t('signUpScreen.email_holder')}
               keyboardType="email-address"
               autoCapitalize="none"
               className='flex-1 text-text'
@@ -528,8 +541,9 @@ function PasswordInput({
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4  rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.password')}
@@ -585,8 +599,9 @@ function ConfirmPasswordInput({
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
+            className={`flex-row items-center px-4 rounded-2xl mb-2 ${error ? 'border border-error' : 'border border-border'
               }`}
+            style={{ minHeight: 52 }}
           >
             <TextInput
               placeholder={t('signUpScreen.confirm_password')}

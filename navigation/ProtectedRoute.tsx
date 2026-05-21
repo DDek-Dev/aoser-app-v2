@@ -1,6 +1,6 @@
 // components/auth/ProtectedRoute.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
@@ -9,6 +9,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useAuth } from 'hooks/useAuth'; // Import useAuth instead
 import { useTranslation } from 'react-i18next';
+import AppleLoginButton from 'screens/auth/AppleLoginButton';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -66,74 +67,83 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
                 <View className="flex-1 justify-center items-center bg-white px-6 ">
 
-                    <View className="items-center max-w-md">
-                        {/* Lock Icon */}
-                        <View className="w-24 h-24 bg-blue-100 rounded-full items-center justify-center mb-6">
-                            <Text className="text-5xl">🔒</Text>
-                        </View>
+                    {/* Lock Icon */}
+                    <View className="w-24 h-24 bg-blue-100 rounded-full items-center justify-center mb-6">
+                        <Text className="text-5xl">🔒</Text>
+                    </View>
 
-                        {/* Title */}
-                        <Text className="text-2xl font-bold text-text mb-3 text-center">
-                            {t('protectedRoute.authentication_require')}
-                        </Text>
 
-                        {/* Message */}
-                        <Text className="text-body text-textSecondary text-center mb-8 leading-6">
-                            {fallbackMessage || t('protectedRoute.signInToAccess')}
 
-                        </Text>
-                        {/* Create Account Button */}
+                    {/* Title */}
+                    <Text className="text-2xl font-bold text-text mb-3 text-center">
+                        {t('protectedRoute.authentication_require')}
+                    </Text>
 
+                    {/* Message */}
+                    <Text className="text-body text-textSecondary text-center mb-8 leading-6">
+                        {fallbackMessage || t('protectedRoute.signInToAccess')}
+
+                    </Text>
+                    {/* Create Account Button */}
+
+                    <TouchableOpacity
+                        onPress={handleGoogleLoginPresss}
+                        className="border px-6 border-border rounded-2xl bg-background mb-4"
+                        style={{ height: 52, width: '100%' }}
+                    >
+                        {googleloading ? (
+                            <ActivityIndicator color="#DB4437" style={{ flex: 1 }} />
+                        ) : (
+                            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                <FontAwesome name="google" size={18} color="#DB4437" />
+                                <Text className="text-textSecondary font-medium" style={{ marginLeft: 10 }}>
+                                    {t('protectedRoute.googleLogin')}
+                                </Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                    {Platform.OS === 'ios' && <AppleLoginButton />}
+
+                    {/* Sign In Button */}
+                    {onSignInPress && (
                         <TouchableOpacity
-                            onPress={handleGoogleLoginPresss}
-                            //   disabled={googleloading}
-                            className="flex-row justify-center items-center border border-border p-6 rounded-2xl bg-background mb-4"
+                            // onPress={onSignInPress}
+                            onPress={
+                                onSignInPress
+                            }
+                            className="bg-primary px-8 py-4 rounded-2xl w-full "
+                            activeOpacity={0.8}
+                           
                         >
-                            {googleloading ? (
-                                <ActivityIndicator color="#DB4437" />
-                            ) : (
-                                <>
-                                    <FontAwesome name="google" size={18} color="#DB4437" style={{ marginRight: 10 }} />
-                                    <Text className="text-textSecondary font-medium">{t('protectedRoute.googleLogin')}</Text>
-                                </>
-                            )}
+                            <Text className="text-white font-semibold text-body text-center">
+                                {t('protectedRoute.signIn')}
+                            </Text>
                         </TouchableOpacity>
+                    )}
 
-                        {/* Sign In Button */}
-                        {onSignInPress && (
+
+                    {/* Help Text */}
+                    <View className='flex-row items-center  mt-6 gap-2'>
+                        <Text className="text-body text-gray-500 text-center ">
+                            {t('protectedRoute.newhere')}
+                        </Text>
+                        {onSignUpPress && (
                             <TouchableOpacity
-                                // onPress={onSignInPress}
-                                onPress={
-                                    onSignInPress
-                                }
-                                className="bg-primary px-8 py-4 rounded-lg w-full mb-3"
+                                onPress={onSignUpPress}
                                 activeOpacity={0.8}
+                               
                             >
-                                <Text className="text-white font-semibold text-body text-center">
-                                    {t('protectedRoute.signIn')}
+                                <Text className="text-primary font-semibold text-body">
+                                    {t('protectedRoute.singup_to_start')}
                                 </Text>
                             </TouchableOpacity>
                         )}
 
-
-                        {/* Help Text */}
-                        <View className='flex-row items-center mt-6 gap-2'>
-                            <Text className="text-body text-gray-500 text-center ">
-                                {t('protectedRoute.newhere')}
-                            </Text>
-                            {onSignUpPress && (
-                                <TouchableOpacity
-                                    onPress={onSignUpPress}
-                                    activeOpacity={0.8}
-                                >
-                                    <Text className="text-primary font-semibold text-body">
-                                        {t('protectedRoute.singup_to_start')}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-
-                        </View>
                     </View>
+
+
+
+
                 </View>
             </ScreenWrapper >
         );

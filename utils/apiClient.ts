@@ -36,11 +36,11 @@ export const clearTokens = async (): Promise<void> => {
 
 // user 
 export const storeUser = async (user: UserProfile): Promise<void> => {
-  console.log("STORE USER", JSON.stringify(user, null, 2));
+  // console.log("STORE USER", JSON.stringify(user, null, 2));
   try {
     await AsyncStorage.setItem('authUser', JSON.stringify(user));
   } catch (error) {
-    console.log('Failed to store user', error);
+    // console.log('Failed to store user', error);
     throw error;
   }
 };

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { t } from 'i18next';
 import { AuthResponse, LoginFormData, OTPVerifyData, Tokens, ForgotPasswordFormData, ResetPasswordFormData, GoogleLoginFormData } from 'types/auth';
+import networkCheck from './networkCheck';
 
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
@@ -28,6 +29,7 @@ export const authApi = {
                 15000 // 15 second timeout
             );
 
+           
             // Handle HTTP errors (404, 500, etc.)
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
@@ -53,7 +55,18 @@ export const authApi = {
      handleGoogleLogin : async (idToken: string) : Promise<any>=> {
         try {
             
-            const res = await axios.post(`${API_BASE_URL}/auth/google/login`, { idToken });
+            const res = await networkCheck.post(`${API_BASE_URL}/auth/google/login`, { idToken });
+            return res.data;
+        } catch (err: any) {
+            console.log(err.message);
+
+        }
+
+    },
+     handleApplelogin : async (data: string) : Promise<any>=> {
+        try {
+            
+            const res = await networkCheck.post(`${API_BASE_URL}/auth/apple/login`,  data );
             return res.data;
         } catch (err: any) {
             console.log(err.message);
@@ -62,6 +75,9 @@ export const authApi = {
 
     },
 
+
+    
+    
     // Handle Google callback
 
 
@@ -89,6 +105,33 @@ export const authApi = {
                 stack: error.stack
             });
             throw new Error(error.message || t('errors.sendOTPFailed'));
+        }
+    },
+    deleteAccount: async (token: string): Promise<{ success: boolean; message: string }> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/delete-me`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Aoser ${token}`
+                }
+                
+             
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to delete account');
+            }
+
+            return data;
+        } catch (error: any) {
+            console.log("Delete account error:", {
+                message: error.message,
+                stack: error.stack
+            });
+            throw new Error(error.message );
         }
     },
 

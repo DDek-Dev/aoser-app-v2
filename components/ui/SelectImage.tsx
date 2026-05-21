@@ -1,10 +1,17 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  Alert,
+  Modal,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
-import { selfie_with_card_png } from 'assets';
 import { useTranslation } from 'react-i18next';
+import { Pressable } from 'react-native-gesture-handler';
 
 type FileWithType = {
   uri: string;
@@ -29,140 +36,215 @@ const SelectImage: React.FC<Props> = ({
   defaultimg,
   isValidate,
   inputClassName,
-  onChange
+  onChange,
 }) => {
+  const { t } = useTranslation();
+  const [imageActionModalVisible, setImageActionModalVisible] = useState(false);
 
+  const hasImage = !!image;
 
-  const {t} = useTranslation();
+  /* ------------------ Gallery ------------------ */
+  const pickFromGallery = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) return;
 
-  const handlePickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-    if (!permissionResult.granted) {
-      alert('Permission to access camera roll is required!');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      aspect: [16, 9],
-      quality: 1,
-      allowsMultipleSelection: false,
-    });
-
-
-    if (!result.canceled && result.assets?.length) {
-      const asset = result.assets[0];
-
-      try {
-        // Get file info
-        const fileInfo = await FileSystem.getInfoAsync(asset.uri);
-        if (!fileInfo.exists) {
-          throw new Error('File does not exist');
-        }
-
-        // Extract file extension
-        const uriParts = asset.uri.split('.');
-        const fileExtension = uriParts[uriParts.length - 1].toLowerCase();
-
-        // Create a file name
-        const fileName = `image_${Date.now()}.${fileExtension}`;
-
-        // Determine MIME type
-        let mimeType = 'image/jpeg'; // default
-        if (fileExtension === 'png') mimeType = 'image/png';
-        else if (fileExtension === 'gif') mimeType = 'image/gif';
-        else if (fileExtension === 'webp') mimeType = 'image/webp';
+      if (!result.canceled && result.assets?.length) {
+        const asset = result.assets[0];
+        const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
 
         const fileWithType: FileWithType = {
           uri: asset.uri,
-          name: fileName,
-          type: mimeType,
+          name: `image_${Date.now()}.${ext}`,
+          type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
         };
-        // console.log("fileWithType: ",fileWithType);
 
         onChange(fileWithType);
-      } catch (error) {
-        console.log('Error processing image:', error);
-        onChange(undefined);
+        setImageActionModalVisible(false);
       }
+    } catch (e) {
+      Alert.alert(t('editProfile.error'), t('editProfile.pick_image_error'));
     }
   };
 
-  const handleRemoveImage = () => {
-    onChange(undefined);
+  /* ------------------ Camera ------------------ */
+  const takePhoto = async () => {
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) return;
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.length) {
+        const asset = result.assets[0];
+        const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+
+        const fileWithType: FileWithType = {
+          uri: asset.uri,
+          name: `camera_${Date.now()}.${ext}`,
+          type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+        };
+
+        onChange(fileWithType);
+        setImageActionModalVisible(false);
+      }
+    } catch (e) {
+      Alert.alert(t('editProfile.error'), t('editProfile.camera_error'));
+    }
   };
 
+  const handleDeleteImage = () => {
+    onChange(undefined);
+    setImageActionModalVisible(false);
+  };
+  const handleRemove = () => {
+    onChange(undefined);
+
+  };
 
   return (
     <>
       {label && (
-        <Text className="text-body font-bold text-text mb-2">
+        <Text className="text-body font-bold text-text mb-2 mt-4">
           {label} {required && <Text className="text-error">*</Text>}
         </Text>
       )}
 
+      {/* IMAGE AREA */}
       <View className="relative mb-4">
         {image ? (
-          <>
-            <Image
-              source={{ uri: image }}
-              className="w-full h-64 rounded-md"
-              resizeMode="cover"
-            />
+          <View>
+
+
+            <Pressable onPress={() => setImageActionModalVisible(true)}>
+              <Image
+                source={{ uri: image }}
+                className="w-full h-64 rounded-md"
+                resizeMode="cover"
+              />
+            </Pressable>
             <TouchableOpacity
-              onPress={handleRemoveImage}
+              onPress={handleRemove}
               className="absolute top-2 right-2 bg-primary p-1.5 rounded-full"
             >
               <Ionicons name="close" size={16} color="#fff" />
             </TouchableOpacity>
-          </>
-        ) : defaultimg ? (
-          <View>
-            <TouchableOpacity
-              onPress={handlePickImage}
-              className={`border h-64 w-full border-dashed bg-blue-50 rounded-xl overflow-hidden ${inputClassName}`}
-            >
-              <Image
-                source={defaultimg}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
-            </TouchableOpacity>
-            {isValidate && (
-              <Text className="text-caption text-error mt-1">
-                {isValidate}
-              </Text>
-            )}
           </View>
         ) : (
-          <View>
-            <TouchableOpacity
-              onPress={handlePickImage}
-              className={`border h-40 border-dashed bg-blue-50 rounded-xl p-4 flex-col justify-center items-center ${inputClassName}`}
-            >
-              <Ionicons name="image-outline" size={24} color="#9CA3AF" />
-              {/* <Text className="text-caption text-textSecondary mt-2">
-                Upload Banner Image (16:9)
-              </Text> */}
+          <TouchableOpacity
+            onPress={() => setImageActionModalVisible(true)}
+            className={`border h-40 border-dashed bg-blue-50 rounded-xl p-4 flex-col justify-center items-center ${inputClassName}`}
+          >
+            <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+            <Text className="text-caption text-textSecondary mt-2">
+              {t('selectVideo.upload_banner_Prompt')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
-              <View className='flex-row gap-2'>
-              
-                            <Ionicons name='cloud-upload-outline' size={32} color="#9CA3AF"/>
-                            <Text className="text-caption text-textSecondary mt-2">
-                              {t('selectVideo.upload_banner_Prompt')}
-                            </Text>
-                          </View>
-            </TouchableOpacity>
-            {isValidate && (
-              <Text className="text-caption text-error mt-1">
-                {isValidate}
-              </Text>
-            )}
-          </View>
+        {isValidate && (
+          <Text className="text-caption text-error mt-1">{isValidate}</Text>
         )}
       </View>
+
+      {/* ================= MODAL ================= */}
+      <Modal
+        visible={imageActionModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setImageActionModalVisible(false)}
+      >
+        <TouchableOpacity
+          className="flex-1 justify-end bg-black/50"
+          activeOpacity={1}
+          onPressOut={() => setImageActionModalVisible(false)}
+        >
+          <TouchableWithoutFeedback>
+            <View className="bg-white rounded-t-3xl p-6 pb-12">
+              <Text className="text-center text-lg font-bold mb-6 text-text">
+                {t('editProfile.choose_image_source')}
+              </Text>
+
+              {/* Take Photo */}
+              <TouchableOpacity
+                onPress={takePhoto}
+                className="flex-row items-center py-4 border-b border-gray-200"
+              >
+                <View className="bg-blue-50 p-2 rounded-full mr-4">
+                  <Ionicons name="camera" size={24} color="#3B82F6" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-body font-medium text-text">
+                    {t('editProfile.take_photo')}
+                  </Text>
+                  <Text className="text-sm text-gray-500 mt-1">
+                    {t('editProfile.take_photo_desc')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Gallery */}
+              <TouchableOpacity
+                onPress={pickFromGallery}
+                className="flex-row items-center py-4 border-b border-gray-200"
+              >
+                <View className="bg-blue-50 p-2 rounded-full mr-4">
+                  <Ionicons name="image" size={24} color="#3B82F6" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-body font-medium text-text">
+                    {t('editProfile.choose_from_gallery')}
+                  </Text>
+                  <Text className="text-sm text-gray-500 mt-1">
+                    {t('editProfile.choose_from_gallery_desc')}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Delete */}
+              {hasImage && (
+                <TouchableOpacity
+                  onPress={handleDeleteImage}
+                  className="flex-row items-center py-4"
+                >
+                  <View className="bg-red-50 p-2 rounded-full mr-4">
+                    <Ionicons name="trash-outline" size={24} color="#EF4444" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-body font-medium text-error">
+                      {t('editProfile.delete_image')}
+                    </Text>
+                    <Text className="text-sm text-gray-500 mt-1">
+                      {t('editProfile.delete_image_desc')}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+
+              {/* Cancel */}
+              <TouchableOpacity
+                onPress={() => setImageActionModalVisible(false)}
+                className="mt-6 py-3 rounded-full bg-gray-100 items-center"
+              >
+                <Text className="text-body font-medium text-gray-600">
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 };

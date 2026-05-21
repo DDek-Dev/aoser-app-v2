@@ -25,20 +25,11 @@ import { FreelancerStackParamList } from 'types/navigation';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
+import AppleLoginButton from './AppleLoginButton';
 
 // ========================================
 // VALIDATION SCHEMA
 // ========================================
-const schema = yup.object({
-  email: yup
-    .string()
-    .email('Invalid email')
-    .required('Email is required'),
-  password: yup
-    .string()
-    .min(4, 'Password must be at numer and characters')
-    .required('Password is required'),
-});
 
 type FormData = {
   email: string;
@@ -60,6 +51,18 @@ export default function SigninScreen({ navigation }: any) {
     googleLogin,
     googleloading,
   } = useAuth();
+
+
+  const schema = yup.object({
+    email: yup
+      .string()
+      .email(t('signUpScreen.email_invalid'))
+      .required(t('signUpScreen.email_required')),
+    password: yup
+      .string()
+      .min(4, t('signUpScreen.password_min'))
+      .required(t('signUpScreen.password_required')),
+  });
 
   const {
     control,
@@ -143,9 +146,12 @@ export default function SigninScreen({ navigation }: any) {
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-          style={{ flex: 1, backgroundColor: 'white' }}
+          behavior={'padding'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          style={{
+            flex: 1,
+            backgroundColor: 'white'
+          }}
         >
           {/* Scrollable Content */}
           <ScrollView
@@ -179,6 +185,8 @@ export default function SigninScreen({ navigation }: any) {
                 loading={googleloading}
                 disabled={isLoading}
               />
+
+              {Platform.OS === 'ios' && <AppleLoginButton/>}
 
               {/* Error Message */}
               {loginError && <ErrorMessage />}
@@ -224,6 +232,7 @@ type EmailInputProps = {
 function EmailInput({ control, error, disabled }: EmailInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const { t } = useTranslation();
+
   return (
     <Controller
       control={control}
@@ -231,12 +240,13 @@ function EmailInput({ control, error, disabled }: EmailInputProps) {
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 mt-4 ${error
+            className={`flex-row items-center px-4  rounded-2xl mb-2 mt-4 ${error
               ? 'border border-red-500'
               : isFocused
                 ? 'border border-primary'
                 : 'border border-gray-300'
               }`}
+            style={{ height: 52, minHeight: 52 }}
           >
             <FontAwesome
               name="envelope"
@@ -245,8 +255,8 @@ function EmailInput({ control, error, disabled }: EmailInputProps) {
               style={{ marginRight: 8 }}
             />
             <TextInput
-              placeholder="Aoser@example.com"
-              className="flex-1 text-text"
+              placeholder={t('forgotPassword.emailPlaceholder')}
+              style={{ flex: 1, fontSize: 16, paddingVertical: 0, includeFontPadding: false }}
               keyboardType="email-address"
               autoCapitalize="none"
               onChangeText={onChange}
@@ -291,12 +301,13 @@ function PasswordInput({
       render={({ field: { onChange, value } }) => (
         <View>
           <View
-            className={`flex-row items-center px-4 py-2 rounded-2xl mb-2 ${error
+            className={`flex-row items-center px-4  rounded-2xl mb-2 ${error
               ? 'border border-error'
               : isFocused
                 ? 'border border-primary'
                 : 'border border-border'
               }`}
+            style={{ height: 52, minHeight: 52 }}
           >
             <FontAwesome
               name="lock"
@@ -306,17 +317,25 @@ function PasswordInput({
             />
             <TextInput
               placeholder={t('loginScreen.password')}
-              className="flex-1 text-text"
+              style={{ flex: 1, fontSize: 16, paddingVertical: 0, includeFontPadding: false }}
               secureTextEntry={!showPassword}
               onChangeText={onChange}
               value={value}
+             
               placeholderTextColor="#999"
+
+
               editable={!disabled}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
+              className='text-text'
             />
             <TouchableOpacity
-              className="absolute right-4"
+              style={{
+                position: 'absolute',
+                right: 16, top: 0, bottom: 0,
+                justifyContent: 'center'
+              }}
               onPress={onTogglePassword}
               disabled={disabled}
             >
@@ -361,7 +380,8 @@ function GoogleLoginButton({ onPress, loading, disabled }: GoogleLoginButtonProp
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className="flex-row justify-center items-center border border-border py-6 rounded-2xl bg-background mb-4"
+      className="flex-row justify-center items-center border border-border rounded-2xl bg-background mb-4"
+      style={{ height: 52,}}
     >
       {loading ? (
         <ActivityIndicator color="#DB4437" />

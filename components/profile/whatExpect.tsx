@@ -4,22 +4,23 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Freelancer, UserProfile } from 'types/profile';
 
 type TabContentProps = {
-  profile: Freelancer;
+  profile: UserProfile;
 };
 
 export default function WhatExpect({ profile }: TabContentProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Split text into lines and check if it's longer than 5 lines
-  const lines = profile.customerExpect;
-  const shouldShowReadMore = lines.length > 200;
   const {t} = useTranslation();
+  
+  // Check if text is longer than 200 characters
+  const text = profile.customerExpect || '';
+  const shouldShowReadMore = text.length > 200;
+
   // Get displayed text based on expansion state
   const getDisplayedText = () => {
     if (!shouldShowReadMore || isExpanded) {
-      return profile.customerExpect;
+      return text;
     }
-    return lines.slice(0, 200);
+    return text.slice(0, 200);
   };
 
   const toggleExpansion = () => {
@@ -48,7 +49,12 @@ export default function WhatExpect({ profile }: TabContentProps) {
           <View className="flex-row  py-2 px-4 items-center rounded-full">
             <Text className="text-xl font-bold text-warning">{profile.hourlyRateCurrency} </Text>
             <Text className="text-xl font-bold text-primary"> { new Intl.NumberFormat().format(profile.hourlyRate)}</Text>
-            <Text className="text-sm text-textSecondary"> / {t('freelancer_profile.hour')}</Text>
+            <Text className="text-sm text-textSecondary"> /
+
+              {profile?.rateType === 'PER_HOUR' && t('kyc.step3.rateType.perHour')}
+                    {profile?.rateType === 'PER_DAY' && t('kyc.step3.rateType.perDay')}
+                    {profile?.rateType === 'PER_JOB' && t('kyc.step3.rateType.perJob')}
+            </Text>
           </View>
         </View>
       </View>

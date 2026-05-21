@@ -42,7 +42,7 @@ const ForgotPasswordScreen = () => {
 
     // Timer for resend OTP
     // const [resendTimer, setResendTimer] = useState(0);
-    const countdownRef = useRef<NodeJS.Timeout | null>(null);
+    const countdownRef = useRef<any>(null);
     const [countdown, setCountdown] = useState(60);
 
 

@@ -1,10 +1,9 @@
 import React, { useRef, useState, useMemo, useEffect, use } from 'react';
-import { FlatList, StyleProp, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { FlatList, Pressable, StyleProp, Text, View, ViewStyle } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useGetServiceTypes } from 'hooks/useFreelancer';
 import * as Icons from 'lucide-react-native';
 import { CategoryTabSkeleton } from 'skeletonScreens/CategoryTabSkeleton';
-import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { useTranslation } from 'react-i18next';
 
 type Props = {
@@ -108,7 +107,7 @@ export default function CategoryTabs({
     if (index > 0 && index < categories.length - 1) {
       flatListRef.current?.scrollToIndex({
         index,
-        animated: true,
+      animated: true,
         viewPosition: 0.5, 
       });
     }
@@ -118,14 +117,14 @@ export default function CategoryTabs({
     const isActive = activeCategory === item.name;
 
     return (
-      <TouchableOpacity
+      <Pressable
         onPress={() => onPressCategory(item, index)}
         style={{
           alignItems: 'center',
           justifyContent: 'center',
           width: 70,
           height: 70,
-          marginRight: 12,
+          marginRight: 6,
           marginBottom: 4,
           borderRadius: 16,
           // zIndex: 10,
@@ -155,7 +154,7 @@ export default function CategoryTabs({
         >
           {item.name =='All' ?  t('categoryTabs.all') : item.name } 
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 

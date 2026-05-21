@@ -7,6 +7,7 @@ import {
   ListRenderItem,
   StyleProp,
   ViewStyle,
+  Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Job } from 'types';
@@ -120,15 +121,16 @@ const SortByCategory: React.FC<SortByCategoryProps> = ({
   const renderCategory = ({ item, index }: { item: any; index: number }) => {
     const isActive = active === item.name;
     return (
-      <TouchableOpacity
+      <Pressable
         onPress={() => onPressCategory(item, index)}
         style={{
           alignItems: 'center',
           justifyContent: 'center',
           width: 70,
           height: 70,
-          marginRight: 12,
-          marginBottom: 4,
+          marginRight: 6,
+          // marginBottom: 4,
+          marginTop: 4,
           borderRadius: 16,
           zIndex: 10,
           backgroundColor: isActive ? '#3b82f6' : '#fff',
@@ -159,7 +161,7 @@ const SortByCategory: React.FC<SortByCategoryProps> = ({
           {item.name == 'All' ? t('categoryTabs.all') : item.name}
 
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -175,7 +177,7 @@ const SortByCategory: React.FC<SortByCategoryProps> = ({
     />
   )
   return (
-    <View style={{ paddingVertical: 8 }}>
+    <View >
       <FlatList
         ref={flatListRef}
         horizontal
@@ -183,7 +185,7 @@ const SortByCategory: React.FC<SortByCategoryProps> = ({
         renderItem={renderCategory}
         keyExtractor={(item) => item.name}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
+        // contentContainerStyle={{ paddingHorizontal: 16 }}
         keyboardShouldPersistTaps="handled"
         getItemLayout={(_, index) => ({
           length: 92,

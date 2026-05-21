@@ -3,6 +3,7 @@ import {
   Text,
   Image,
   TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -17,10 +18,12 @@ type Props = {
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL
 
+
 const FavoriteCardList = ({ data }: Props) => {
   const navigator = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { t } = useTranslation();
   const workItems = data.filter((items) => items.likedItemType === "UserProfile");
+
 
   if (data.length === 0 || !data || workItems.length === 0) {
     return (
@@ -40,36 +43,35 @@ const FavoriteCardList = ({ data }: Props) => {
   }
   return (
     <View className="space-y-3">
-      {data.filter((item) => item.likedItemType === "UserProfile").map((item, index) => (
-        <TouchableOpacity
-          onPress={() => navigator.navigate('FreelancerProfile', { userId: item._id })}
+      {data.filter((items) => items.likedItemType === "UserProfile").map((item, index) => (
+        <Pressable
+          onPress={() => navigator.navigate('FreelancerProfile', { userId: item.likedItem._id })}
           key={index}
           className="flex-row items-start bg-white rounded-2xl pr-2 mb-2 border border-gray-200"
         >
           <Image
-            source={{ uri: BASE_IMAGE + item.createdBy.bannerImage }}
+            source={{ uri: BASE_IMAGE + item.likedItem.bannerImage }}
             className="w-[40%] h-44 rounded-xl mr-3"
             resizeMode="cover"
           />
 
-          <View className="flex-1 space-y-1 py-4">
+          <View className="flex-1 space-y-1 py-4 overflow-hidden">
             <View className="flex-row items-start  w-full">
-              <View className="flex-row gap-2">
+              {/* <View className="flex-row gap-2">
                 <View className="flex-row items-center">
                   <FontAwesome name="star" size={14} color="#facc15" />
                   <Text className="ml-1 text-body font-medium text-yellow-500">
-                    {item.createdBy.hourlyRate}
+                    {item.likedItem.starRating}
                   </Text>
                 </View>
-                {/* <Text className="text-gray-400 font-bold">.</Text>
-                <Text className="text-gray-400 text-sm">{item.distance} Km</Text> */}
-              </View>
+               
+              </View> */}
 
-              <View className="bg-blue-100 px-2 py-1 rounded-full ml-6">
+              <View className="bg-blue-100 px-2 py-1 rounded-full ">
 
                 <View className='flex-row'>
-                  <Text className='font-bold text-warning '>{item.createdBy.hourlyRateCurrency}</Text>
-                  <Text className=' text-primary ml-2'>{new Intl.NumberFormat().format(item.createdBy.hourlyRate)}</Text>
+                  <Text className='font-bold text-warning '>{item.likedItem.hourlyRateCurrency}</Text>
+                  <Text className=' text-primary ml-2'>{new Intl.NumberFormat().format(item.likedItem.hourlyRate)}</Text>
                 </View>
               </View>
 
@@ -78,13 +80,29 @@ const FavoriteCardList = ({ data }: Props) => {
               </View>
             </View>
 
-            <Text className="text-body my-2 font-bold text-text">{item.createdBy.jobTitle}</Text>
+            <Text className="text-body my-2 font-bold text-text">{item.likedItem.jobTitle}</Text>
             <Text className="text-body text-textSecondary" numberOfLines={2}>
-              {item.createdBy.customerExpect}
+              {item.likedItem.customerExpect}
             </Text>
+            {item.likedItem.address.village !== '' && item.likedItem.address.district !== '' && item.likedItem?.address.province !== '' &&
+
+              <View className="flex-row mt-3 items-center">
+
+
+                <View className="flex-row gap-2 items-center">
+                  <Ionicons name="location-outline" size={18} color="#F59E0B" />
+
+                  <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                    {/* {formatDate(item.deadLine as string, currentLanguage)} */}
+
+                    {item.likedItem?.address.village}, {item.likedItem?.address.district}, {item.likedItem?.address.province}
+                  </Text>
+                </View>
+              </View>
+            }
           </View>
 
-        </TouchableOpacity>
+        </Pressable>
       ))}
     </View>
   );

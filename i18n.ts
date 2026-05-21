@@ -10,7 +10,7 @@ const resources = {
   la: { translation: la },
 };
 
-const fallback = 'en';
+const fallback = 'la'; // Default to Lao if no language is detected
 const locales = getLocales();
 const languageTag = locales[0]?.languageCode || fallback;
 

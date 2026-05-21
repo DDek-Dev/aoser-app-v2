@@ -9,10 +9,12 @@ import {
   Animated,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback,
   Alert,
   KeyboardAvoidingView,
   Pressable,
+  Modal,
+  StyleSheet,
+  findNodeHandle,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -35,9 +37,9 @@ import FileOptionsMenu from 'components/chat/FileOptionsMenu';
 import ChatListContainer from 'components/chat/ChatListContainer';
 import { chatApi } from 'api/chatApi';
 import ProjectSelectionModal from 'components/chat/ProjectSelectionModal';
-import { MediaFile, Message, WorkApplies, OptimisticMessage, Job } from 'types';
+import { MediaFile, Message, OptimisticMessage, Job, ProjectUpdateData } from 'types';
 import { useMessageActions } from 'hooks/useMessageActions';
-import { publicWorkKeys, useGetAllAppliedWork } from 'hooks/usePublicWork';
+import { publicWorkKeys } from 'hooks/usePublicWork';
 import { useQueryClient } from '@tanstack/react-query';
 import { publiceWorkApi } from 'api/publicWork';
 // import ChatItemSkeleton from 'skeletonScreens/ChatItemSkeleton';
@@ -55,14 +57,11 @@ const RoomChat = () => {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const queryClient = useQueryClient();
   const { userId: partnerId } = route.params;
-  const { data: works, isLoading: appliIsLoading } = useGetAllAppliedWork();
   const { tokens, user, isLoadingAuth } = useAuth();
+  const currentUserId = user?._id || '';
 
   const { data: chat, isLoading } = useChatRoom(partnerId);
-
-  if (!user?._id) {
-    return null;
-  }
+  // const { data: appliedWorks, isLoading: isLoadingApplied } = useGetAllAppliedWork();
 
   const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -80,8 +79,11 @@ const RoomChat = () => {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [isFileSending, setIsFileSending] = useState(false);
 
+  const [showDurationModal, setShowDurationModal] = useState(false);
+
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [updateTo, setUpdateTo] = useState<Message | null>(null);
+
   // Default upload size limits
   const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
   const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -89,7 +91,9 @@ const RoomChat = () => {
   // Refs
   const textInputRef = useRef<TextInput>(null);
   const flatListRef = useRef<FlatList>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<any>(null);
+  const remoteTypingTimeoutsRef = useRef<Record<string, any>>({});
+  const initializedConversationRef = useRef<string | null>(null);
   const { t } = useTranslation();
   const {
     handleCopyMessage,
@@ -97,32 +101,97 @@ const RoomChat = () => {
     handleAIResponse,
   } = useMessageActions();
 
+  const fetchMessagesPage = useCallback(
+    async (skip: number, limit: number) => {
+      try {
+        if (!tokens?.accessToken || !partnerId) return [];
+        const res = await chatApi.getChatroom(tokens.accessToken, partnerId, skip, limit);
+        return res?.conversationMessages || [];
+      } catch (e: any) {
+        // Avoid noisy logs for expected rate limiting; let the UI keep existing data.
+        const status = e?.response?.status;
+        if (status !== 429) {
+          console.log('Failed to fetch messages:', e);
+        }
+        return [];
+      }
+    },
+    [tokens?.accessToken, partnerId]
+  );
+
 
   const handleReplyToMessage = useCallback((message: Message) => {
-    console.log('message', message)
+
     setReplyTo(message)
     return message
   }, []);
   const handleUpdateMessage = useCallback((message: Message) => {
-    console.log('message on update', message)
+  
     setUpdateTo(message)
     return message
   }, []);
   // console.log('replto', replyTo)
 
+  const getOptimisticTimestamp = useCallback(() => new Date().toISOString(), []);
 
-  // Load initial messages from API
+  const clearRemoteTypingTimeout = useCallback((userId: string) => {
+    const timeout = remoteTypingTimeoutsRef.current[userId];
+    if (timeout) {
+      clearTimeout(timeout);
+      delete remoteTypingTimeoutsRef.current[userId];
+    }
+  }, []);
+
+  const scheduleRemoteTypingClear = useCallback((userId: string) => {
+    clearRemoteTypingTimeout(userId);
+    remoteTypingTimeoutsRef.current[userId] = setTimeout(() => {
+      setTypingUsers(prev => prev.filter(id => id !== userId));
+      delete remoteTypingTimeoutsRef.current[userId];
+    }, 3500);
+  }, [clearRemoteTypingTimeout]);
+
+  const markCurrentConversationRead = useCallback(() => {
+    if (!chat?.conversation?._id || !user?._id) return;
+    SocketService.markMessagesAsRead(chat.conversation._id);
+  }, [chat?.conversation?._id, user?._id]);
+
+  // console.log('chat', JSON.stringify(chat, null, 2))
+
+  useEffect(() => {
+    if (!chat?.conversation?._id) return;
+
+    if (initializedConversationRef.current !== chat.conversation._id) {
+      initializedConversationRef.current = chat.conversation._id;
+      setMessages(chat.conversationMessages || []);
+      return;
+    }
+
+    // Merge any fresh API messages without removing local optimistic state
+    setMessages(prev => {
+      const existingIds = new Set(
+        prev.map(m => (m as any)._id || (m as any).tempId).filter(Boolean)
+      );
+      const incoming = (chat.conversationMessages || []).filter(m => {
+        const id = (m as any)._id || (m as any).tempId;
+        return id && !existingIds.has(id);
+      });
+      if (incoming.length === 0) return prev;
+      return [...prev, ...incoming];
+    });
+  }, [chat?.conversation?._id, chat?.conversationMessages]);
+
+  useEffect(() => {
+    if (updateTo) {
+      setMessage(updateTo.message);
+    } else if (!replyTo) {
+      setMessage('');
+    }
+  }, [updateTo, replyTo]);
+
+
+  // Prefetch work payloads used in chat messages
   useEffect(() => {
 
-
-
-    if (updateTo) {
-      setMessage(updateTo.message)
-    } else {
-      if (!replyTo) {
-        setMessage('');
-      }
-    }
     // ✅ PREFETCH ALL WORK IDs (only happens once per session)
     const workMessages = chat?.conversationMessages.filter(
       (msg: Message) => msg.messageType === 'WORK' && msg.work
@@ -147,7 +216,7 @@ const RoomChat = () => {
       }
     });
 
-  }, [chat?.conversationMessages, queryClient, updateTo]);
+  }, [chat?.conversationMessages, queryClient]);
 
 
   // Socket connection and event listeners
@@ -156,7 +225,6 @@ const RoomChat = () => {
 
     const conversationId = chat.conversation._id;
 
-    console.log('chat.conversation._id', chat.conversation._id)
     try {
       // Connect socket
       SocketService.connect(SERVER_URL, tokens.accessToken, user?._id || null);
@@ -165,12 +233,14 @@ const RoomChat = () => {
       const joinTimeout = setTimeout(() => {
         if (SocketService.isConnected()) {
           SocketService.joinConversation(conversationId);
+          markCurrentConversationRead();
         }
       }, 500);
 
       // Listen for new messages
       const handleNewMessage = (newMessage: Message & { tempId?: string }) => {
-
+        const incomingSenderId = String((newMessage as any)?.sender || '');
+        const currentUserId = String(user?._id || '');
 
         setMessages(prev => {
           // Check if message already exists (avoid duplicates)
@@ -188,9 +258,15 @@ const RoomChat = () => {
             }
           }
 
-          // Fallback: replace first pending optimistic message from this user
-          const tempIndex = prev.findIndex(m => (m as OptimisticMessage).pending && m.sender === newMessage.sender);
-          if (tempIndex !== -1 && newMessage.sender === user._id) {
+          // Fallback: replace a matching pending optimistic message from this user
+          const tempIndex = prev.findIndex(m => {
+            const optimistic = m as OptimisticMessage;
+            return optimistic.pending
+              && optimistic.sender === newMessage.sender
+              && optimistic.messageType === newMessage.messageType
+              && (optimistic.message || '') === (newMessage.message || '');
+          });
+          if (tempIndex !== -1 && incomingSenderId === currentUserId) {
             const updated = [...prev];
             updated[tempIndex] = newMessage;
             return updated;
@@ -199,42 +275,53 @@ const RoomChat = () => {
           return [...prev, newMessage];
         });
 
-
-
-        // Auto-mark as read if from other user
-        // if (newMessage.sender !== user._id) {
-        //   SocketService.markMessagesAsRead(conversationId);
-        // }
+        // Auto-mark as read when a new message comes from the other participant
+        if (incomingSenderId && incomingSenderId !== currentUserId) {
+          markCurrentConversationRead();
+        }
       };
 
       // Listen for message status updates
-      const handleStatusUpdate = (data: { conversationId: string; status: string }) => {
-        if (data.conversationId !== conversationId) {
+      const handleStatusUpdate = (data: any) => {
+        const payloadConversationId = String(data?.conversationId || data?.conversation || '');
+        if (payloadConversationId !== conversationId) return;
+        const nextStatus = data?.status as 'SENT' | 'DELIVERED' | 'READ' | undefined;
+        if (!nextStatus) return;
 
-          setMessages(prev =>
-            prev.map(msg =>
-              msg.sender === user._id && msg.status !== 'READ'
-                ? { ...msg, status: data.status as 'SENT' | 'DELIVERED' | 'READ' }
-                : msg
-            )
-          );
-        }
+        const messageIds: string[] = Array.isArray(data?.messageIds)
+          ? data.messageIds.map((id: any) => String(id))
+          : data?.messageId
+            ? [String(data.messageId)]
+            : [];
+
+        setMessages(prev =>
+          prev.map(msg =>
+            messageIds.length > 0
+              ? (messageIds.includes(String(msg._id || '')) ? { ...msg, status: nextStatus } : msg)
+              : (
+                String(msg.sender || '') === String(user?._id || '') && msg.status !== 'READ'
+                  ? { ...msg, status: nextStatus }
+                  : msg
+              )
+          )
+        );
       };
 
       // Listen for typing indicators
-      const handleTyping = (data: { userId: string; isTyping: boolean }) => {
-        if (data.userId !== user._id) {
-          setTypingUsers(prev => {
-            if (data.isTyping) {
-              return prev.includes(data.userId) ? prev : [...prev, data.userId];
-            } else {
-              return prev.filter(id => id !== data.userId);
-            }
-          });
+      const handleTyping = (data: any) => {
+        const typingUserId = String(data?.userId || data?.senderId || data?.sender || '');
+        const isTyping = Boolean(data?.isTyping ?? data?.typing);
+        if (!typingUserId || typingUserId === String(user?._id || '')) return;
+
+        if (isTyping) {
+          setTypingUsers(prev => (prev.includes(typingUserId) ? prev : [...prev, typingUserId]));
+          scheduleRemoteTypingClear(typingUserId);
+          return;
         }
+
+        clearRemoteTypingTimeout(typingUserId);
+        setTypingUsers(prev => prev.filter(id => id !== typingUserId));
       };
-
-
 
       SocketService.onMessageReceived(handleNewMessage);
       SocketService.onMessageStatusUpdate(handleStatusUpdate);
@@ -242,6 +329,8 @@ const RoomChat = () => {
 
       return () => {
         clearTimeout(joinTimeout);
+        setTypingUsers([]);
+        Object.keys(remoteTypingTimeoutsRef.current).forEach(id => clearRemoteTypingTimeout(id));
         SocketService.removeListener('message:send');
         SocketService.removeListener('messages:status:update');
         SocketService.removeListener('typing');
@@ -249,7 +338,22 @@ const RoomChat = () => {
     } catch (err) {
       console.log('Socket error:', err);
     }
-  }, [SERVER_URL, tokens?.accessToken, user?._id, chat?.conversation?._id]);
+  }, [
+    SERVER_URL,
+    tokens?.accessToken,
+    user?._id,
+    chat?.conversation?._id,
+    markCurrentConversationRead,
+    clearRemoteTypingTimeout,
+    scheduleRemoteTypingClear,
+  ]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      markCurrentConversationRead();
+    });
+    return unsubscribe;
+  }, [navigation, markCurrentConversationRead]);
 
   // Keyboard listeners
   useEffect(() => {
@@ -279,6 +383,15 @@ const RoomChat = () => {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      Object.keys(remoteTypingTimeoutsRef.current).forEach(id => clearRemoteTypingTimeout(id));
+    };
+  }, [clearRemoteTypingTimeout]);
+
 
 
   // Handlers
@@ -290,11 +403,46 @@ const RoomChat = () => {
     }
   };
 
-  const handleBackgroundPress = () => {
-    if (fileOptionsVisible) {
-      setFileOptionsVisible(false);
-    }
-  };
+  const dismissKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+    textInputRef.current?.blur();
+  }, []);
+
+  const handleScreenTouchCapture = useCallback(
+    (e: any) => {
+      // When the file options menu is open, a dedicated overlay handles outside taps.
+      // Avoid closing it here or it can unmount before option `onPress` runs.
+      if (fileOptionsVisible) return false;
+
+      const target = e?.nativeEvent?.target;
+      const textInputState = (TextInput as any)?.State;
+      const focusedInput = textInputState?.currentlyFocusedInput?.();
+
+      // `currentlyFocusedField()` is deprecated; only call it as a fallback for older RN.
+      let focusedHandle: number | null = null;
+      if (focusedInput) {
+        focusedHandle = findNodeHandle(focusedInput) as number | null;
+      } else if (!textInputState?.currentlyFocusedInput && textInputState?.currentlyFocusedField) {
+        focusedHandle = textInputState.currentlyFocusedField();
+      }
+
+      const messageInputHandle = textInputRef.current
+        ? (findNodeHandle(textInputRef.current) as number | null)
+        : null;
+
+      const isTouchOnInput =
+        (messageInputHandle != null && target != null && messageInputHandle === target) ||
+        (focusedHandle != null && target != null && focusedHandle === target);
+
+      // Dismiss keyboard when tapping outside the message input.
+      if ((focusedHandle != null || keyboardHeight > 0) && !isTouchOnInput) {
+        dismissKeyboard();
+      }
+
+      return false;
+    },
+    [dismissKeyboard, fileOptionsVisible, keyboardHeight]
+  );
 
   const handleProjectSelection = () => {
     setShowProjectSelection(true);
@@ -388,41 +536,37 @@ const RoomChat = () => {
   };
 
   const handleLocationSelection = () => {
-    // let user pick duration
-    Alert.alert(
-      t('chat.chatroom.shareLocation') || 'Share location',
-      t('chat.chatroom.chooseDuration') || 'How long should this location be shared?',
-      [
-        { text: '15 min', onPress: () => shareLocation(15) },
-        { text: '60 min', onPress: () => shareLocation(60) },
-        { text: '8 h', onPress: () => shareLocation(8 * 60) },
-        { text: '24 h', onPress: () => shareLocation(24 * 60) },
-        { text: t('common.cancel') || 'Cancel', style: 'cancel' },
-      ]
-    );
+    setShowDurationModal(true);
   };
 
-  const shareLocation = async (durationMinutes: number) => {
-    if (!chat?.conversation?._id) return;
+  const handleDurationSelect = () => {
+    setShowDurationModal(false);
+    shareLocation();
+  };
+
+
+  const shareLocation = async () => {
+    if (!chat?.conversation?._id || !currentUserId) return;
 
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert(t('chat.chatroom.permissionNeeded') || 'Permission needed', t('chat.chatroom.locationPermissionMessage') || 'Location permission is required to share your location.');
+        // Alert.alert(t('chat.chatroom.permissionNeeded') || 'Permission needed', t('chat.chatroom.locationPermissionMessage') || 'Location permission is required to share your location.');
         return;
       }
 
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
       const { latitude, longitude } = pos.coords;
-      const expiresAt = Date.now() + durationMinutes * 60_000;
+      const expiresAt = Date.now();
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 
       const tempId = `temp_${Date.now()}`;
       const optimisticMessage: OptimisticMessage = {
         tempId,
+        createdAt: getOptimisticTimestamp(),
         conversation: chat.conversation._id,
-        sender: user._id,
-        message: `Shared location (${durationMinutes} min)`,
+        sender: currentUserId,
+        message: ``,
         messageType: 'LOCATION',
         status: 'SENT',
         pending: true,
@@ -435,6 +579,7 @@ const RoomChat = () => {
         // @ts-ignore
         expiresAt,
       };
+
 
       setMessages(prev => [...prev, optimisticMessage as Message]);
 
@@ -453,85 +598,136 @@ const RoomChat = () => {
             setMessages(prev => prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m));
           } else {
             setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
-            Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
+            // Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
           }
         }
       );
 
     } catch (err) {
       console.log('shareLocation error', err);
-      Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
+      // Alert.alert(t('chat.chatroom.error') || 'Error', t('chat.chatroom.failedToShareLocation') || 'Failed to share location');
     }
 
     setFileOptionsVisible(false);
   };
 
 
-  // send project function
 
-  const sendProjectMessage = (selectedProjects: WorkApplies[]) => {
-    if (!chat?.conversation?._id) return;
-    selectedProjects.forEach((project, idx) => {
-      const workId = project.work;
-      const tempId = `temp_${Date.now()}_${idx}`;
+  const sendProjectMessage = (selectedProjects: Job[], updatedData?: ProjectUpdateData[]) => {
 
-      // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
-      queryClient.setQueryData(
-        publicWorkKeys.detail(workId),
-        project.work // You already have the full work object here!
-      );
+    const isOffering = updatedData && updatedData.length > 0;
+    
+    if (!isOffering) {
+      if (!chat?.conversation?._id || !currentUserId) return;
+      selectedProjects.forEach((project, idx) => {
+        const workId = project;
+        const tempId = `temp_${Date.now()}_${idx}`;
+       
+        // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
+        queryClient.setQueryData(
+          publicWorkKeys.detail(workId),
+          project // You already have the full work object here!
+        );
 
-      const optimisticMessage: OptimisticMessage = {
-        tempId,
-        conversation: chat.conversation._id,
-        sender: user._id,
-        message: '',
-        isUnSend: false,
-        work: workId,
-        messageType: 'WORK',
-        status: 'SENT',
-        pending: true,
-      };
-
-      setMessages(prev => [...prev, optimisticMessage as Message]);
-
-      SocketService.sendMessage(
-        {
-          conversationId: chat.conversation._id,
-          message: optimisticMessage.message,
+        const optimisticMessage: OptimisticMessage = {
+          tempId,
+          createdAt: getOptimisticTimestamp(),
+          conversation: chat.conversation._id,
+          sender: currentUserId,
+          message: '',
+          isUnSend: false,
           work: workId,
           messageType: 'WORK',
-        },
-        (response) => {
-          if (response?.ok && response.message) {
-            setMessages(prev =>
-              prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
-            );
-          } else {
-            setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
+          status: 'SENT',
+          pending: true,
+        };
 
-            Toast.show({
-              type: ALERT_TYPE.DANGER,
-              title: t('chat.chatroom.error'),
-              textBody: `${t('chat.chatroom.failedToSendProject')} ${project.work?.workTitle || workId}`,
-            });
+        setMessages(prev => [...prev, optimisticMessage as Message]);
+
+        SocketService.sendMessage(
+          {
+            conversationId: chat.conversation._id,
+            tempId,
+            message: optimisticMessage.message,
+            work: workId,
+            messageType: 'WORK',
+          },
+          (response) => {
+            if (response?.ok && response.message) {
+              setMessages(prev =>
+                prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
+              );
+            } else {
+              setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
+
+              Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: t('chat.chatroom.error'),
+                textBody: `${t('chat.chatroom.failedToSendProject')} ${project?.workTitle || workId}`,
+              });
+            }
           }
-        }
-      );
-    });
+        );
+      });
 
+    } else {
+      if (!chat?.conversation?._id || !currentUserId) return;
+      updatedData.forEach((project, idx) => {
+        const workId = project;
+        const tempId = `temp_${Date.now()}_${idx}`;
+        const optimisticMessage: OptimisticMessage = {
+          tempId,
+          createdAt: getOptimisticTimestamp(),
+          conversation: chat.conversation._id,
+          sender: currentUserId,
+          offeringWorkId: workId.offeringWorkId as any,
+          message: '',
+          isUnSend: false,
+          messageType: 'OFFERING_WORK',
+          status: 'SENT',
+          pending: true,
+        };
 
+        setMessages(prev => [...prev, optimisticMessage as Message]);
+
+        SocketService.sendMessage(
+          {
+            conversationId: chat.conversation._id,
+            tempId,
+            message: optimisticMessage.message,
+            offeringWorkId: workId.offeringWorkId,
+            messageType: 'OFFERING_WORK',
+          },
+          (response) => {
+            if (response?.ok && response.message) {
+              setMessages(prev =>
+                prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
+              );
+            } else {
+              setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
+
+              Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: t('chat.chatroom.error'),
+                textBody: `${t('chat.chatroom.failedToSendProject')}`,
+              });
+            }
+          }
+        );
+      });
+    }
   };
 
 
   // SEND MEDIA FUCNTION 
   const sendMediaMessage = async (mediaFiles: MediaFile[], textMessage: string) => {
-    if (!chat?.conversation?._id) return;
+    if (!chat?.conversation?._id || !currentUserId) return;
     setIsFileSending(true);
     // Build file metadata for presigned URL request
     const fileMeta = mediaFiles.map(f => ({
       name: f.name || `file_${Date.now()}`,
       type: f.mimeType || 'application/octet-stream',
+      size: f.size,
     }));
 
     // Validate sizes before requesting presigned URLs
@@ -540,7 +736,7 @@ const RoomChat = () => {
       .filter(({ f }) => {
         const isVideo = f.type === 'video' || f.mimeType?.startsWith('video/');
         const size = f.size || 0;
-        console.log('File blob size:', size);
+        // console.log('File blob size:', size);
         return isVideo ? size > MAX_VIDEO_SIZE : size > MAX_IMAGE_SIZE;
       });
 
@@ -571,8 +767,9 @@ const RoomChat = () => {
     // Optimistic UI: show local URIs until server responds
     const optimisticMessage: OptimisticMessage = {
       tempId,
+      createdAt: getOptimisticTimestamp(),
       conversation: chat.conversation._id,
-      sender: user._id,
+      sender: currentUserId,
       isUnSend: false,
       message: textMessage || '',
       files: mediaFiles.map(f => f.uri),
@@ -586,13 +783,18 @@ const RoomChat = () => {
 
     // Upload each file to its presigned URL
     try {
-      await Promise.all(presigned.map((p, idx) =>
-        uploadFileToUrl(p.url, mediaFiles[idx].uri, p.contentType || fileMeta[idx].type)
-      ));
+      // Upload in small batches to reduce peak memory/network usage
+      const concurrency = 3;
+      for (let i = 0; i < presigned.length; i += concurrency) {
+        const batch = presigned.slice(i, i + concurrency);
+        await Promise.all(batch.map((p, idx) =>
+          uploadFileToUrl(p.url, mediaFiles[i + idx].uri, p.contentType || fileMeta[i + idx].type)
+        ));
+      }
       setIsFileSending(false);
     } catch (err) {
       console.log('File upload failed', err);
-      Alert.alert('Upload failed', 'One or more file uploads failed.');
+      // Alert.alert('Upload failed', 'One or more file uploads failed.');
       setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
       setIsFileSending(false);
       return;
@@ -617,7 +819,7 @@ const RoomChat = () => {
             )
           );
         } else {
-          Alert.alert('Error', 'Failed to send files');
+          // Alert.alert('Error', 'Failed to send files');
           setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
         }
       }
@@ -631,7 +833,7 @@ const RoomChat = () => {
   };
 
   const handleSendMessage = () => {
-    if (!message.trim() || !chat?.conversation?._id) return;
+    if (!message.trim() || !chat?.conversation?._id || !currentUserId) return;
 
     // Check if we're updating an existing message
     if (updateTo) {
@@ -643,8 +845,9 @@ const RoomChat = () => {
     // Optimistic UI
     const optimisticMessage: OptimisticMessage = {
       tempId,
+      createdAt: getOptimisticTimestamp(),
       conversation: chat.conversation._id,
-      sender: user._id,
+      sender: currentUserId,
       isUnSend: false,
       message: message.trim(),
       messageType: 'TEXT',
@@ -658,15 +861,18 @@ const RoomChat = () => {
 
     // Stop typing indicator
     SocketService.sendTypingIndicator(chat.conversation._id, false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     // Send via socket
     SocketService.sendMessage(
-      {
-        conversationId: chat.conversation._id,
-        // tempId,
-        message: optimisticMessage.message,
-        messageType: 'TEXT',
-        replyTo: replyTo?._id,
+        {
+          conversationId: chat.conversation._id,
+          tempId,
+          message: optimisticMessage.message,
+          messageType: 'TEXT',
+          replyTo: replyTo?._id,
       },
       (response) => {
         if (response?.ok && response.message) {
@@ -678,7 +884,13 @@ const RoomChat = () => {
           );
         } else {
           // Mark as failed
-          Alert.alert('Error', 'Failed to send message');
+          
+           Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('chat.chatroom.error'),
+        textBody: t('chat.chatroom.failedToSendMessage'),
+      });
+        
           setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
         }
       }
@@ -718,6 +930,8 @@ const RoomChat = () => {
     SocketService.sendTypingIndicator(chat.conversation._id, false);
   }
 
+
+
   const handleTyping = (text: string) => {
 
     setMessage(text);
@@ -731,8 +945,15 @@ const RoomChat = () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      typingTimeoutRef.current = setTimeout(() => {
+        if (!chat?.conversation?._id) return;
+        SocketService.sendTypingIndicator(chat.conversation._id, false);
+      }, 3000);
 
     } else {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
       SocketService.sendTypingIndicator(chat.conversation._id, false);
     }
   };
@@ -742,6 +963,7 @@ const RoomChat = () => {
   const handleCloseMediaPreview = () => {
     setShowMediaPreview(false);
     setSelectedMedia([]);
+    setMessage('');
   };
 
   // Helper to infer media type from uri or mimeType
@@ -766,26 +988,7 @@ const RoomChat = () => {
     return 'image' as const;
   };
 
-  const allMedia = messages.flatMap(msg =>
-    (msg.files || []).map((f: any, idx: number) => {
-      if (typeof f === 'string') {
-        const uri = f;
-        const type = inferTypeFromUri(uri);
-        return {
-          id: uri || `${msg._id || 'msg'}_${idx}`,
-          uri,
-          type,
-          name: uri.split('/').pop() || 'file',
-        } as MediaFile;
-      }
-      // If backend already sent an object, ensure type is present or inferred
-      const obj = f as MediaFile;
-      if (!obj.type) {
-        obj.type = inferTypeFromUri(obj.uri, obj.mimeType);
-      }
-      return obj as MediaFile;
-    }) || []
-  );
+
 
   if (isLoadingAuth || !user?._id || isLoading || !chat) {
     return <MessagelistSkeleton />;
@@ -793,28 +996,39 @@ const RoomChat = () => {
   }
 
   // console.log('all nedia:', allMedia);
+  const displayMessages = (messages && messages.length > 0)
+    ? messages
+    : (chat?.conversationMessages || []);
 
   return (
-    <ScreenWrapper safeEdges={['top', 'bottom']}>
-      <TouchableWithoutFeedback onPress={handleBackgroundPress}>
-        <View className="flex-1 bg-background">
+    <ScreenWrapper safeEdges={[ 'bottom']} style={{flex: 1}}>
+      <View className="flex-1" onStartShouldSetResponderCapture={handleScreenTouchCapture}>
           {/* Header */}
-          <View className="flex-row justify-between items-center px-4 py-3 border-b border-border bg-surface">
+          <View className="flex-row pt-12 justify-between items-center px-4 py-3  bg-primary">
             <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-              <MaterialIcons name="chevron-left" size={32} color="#2b82F6" />
+              <MaterialIcons name="chevron-left" size={32} color="#E5E7EB" />
             </TouchableOpacity>
 
-            <Pressable className='flex-row items-center gap-2' onPress={() => navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })}>
+            <Pressable className='flex-row items-center gap-2'
+              disabled={chat.userProfile.businessType === 'AOSER_ADMIN'}
+              onPress={() => {
+                if (chat.userProfile.businessType === 'CUSTOMER') {
+                  navigation.navigate('CustomerProfile', { userId: chat.userProfile._id })
+                } else if ((chat.userProfile.businessType === 'FREELANCER')) {
+                  navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })
+                }
+              }}>
 
-             
+
 
               <View className="">
-                <Text className="text-body text-text font-bold">
+                <Text className="text-body text-surface font-bold">
                   {chat.userProfile.firstName} {chat.userProfile.lastName || ''}
                 </Text>
                 {typingUsers.length > 0 && (
-                  <Text className="text-sm text-primary">{t('chat.chatroom.typing')}</Text>
+                  <Text className="text-sm text-surface text-right">{t('chat.chatroom.typing')}</Text>
                 )}
+                {/* <Text className="text-sm text-primary">{t('chat.chatroom.typing')}</Text> */}
               </View>
               {/* <Header_back iconColor='#2b82F6' onPress={() => navigation.goBack()} /> */}
               {chat.userProfile.userProfileImage ? (
@@ -835,44 +1049,113 @@ const RoomChat = () => {
 
           {/* Chat List */}
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
             style={{ flex: 1 }}
           >
             <Animated.View
               style={{
                 flex: 1,
                 opacity: chatFadeAnim,
-                paddingBottom: keyboardHeight > 0 ? 120 : 80,
+                
+                // paddingBottom: keyboardHeight > 0 ? 20 : 0,
+                marginBottom:Platform.OS === 'ios' ? 24 : 20,
               }}
+              className={'bg-black/5'}
             >
               <ChatListContainer
-                messages={messages}
-
+                key={chat?.conversation?._id || partnerId}
+                messages={displayMessages}
                 onUpdateMessages={handleUpdateMessage}
                 onCopyMessage={handleCopyMessage}
                 onReplyToMessage={handleReplyToMessage}
                 onAIResponse={handleAIResponse}
                 keyboardHeight={keyboardHeight}
                 flatListRef={flatListRef}
-                onFetchPage={async (skip: number, limit: number) => {
-                  try {
-                    if (!tokens?.accessToken || (!partnerId && !chat?.userProfile?._id)) {
-                      return [];
-                    }
-                    const userIdForFetch = partnerId || chat.userProfile._id;
-                    const res = await chatApi.getChatroom(tokens.accessToken, userIdForFetch, skip, limit);
-                    const list = res?.conversationMessages || [];
-                    return list;
-                  } catch (e: any) {
-                    console.log('Failed to fetch messages:', e);
-                    return [];
-                  }
-                }}
+                onFetchPage={fetchMessagesPage}
                 pageSize={20}
 
               />
             </Animated.View>
           </KeyboardAvoidingView>
+
+          {/* =====================
+          This is popup choose time for send location 
+          ========================= */}
+
+          <Modal
+            transparent={true}
+            visible={showDurationModal}
+            animationType="fade"
+            onRequestClose={() => setShowDurationModal(false)}
+          >
+            <Pressable
+              className="flex-1 bg-black/50 justify-center items-center"
+              onPress={() => setShowDurationModal(false)}
+            >
+              <Pressable
+                className="bg-surface rounded-xl p-5 w-[80%] max-w-[400px]"
+                onPress={(e) => e.stopPropagation()}
+              >
+                <Text className="text-subheading text-text mb-2 text-center">
+                  <Ionicons
+                    name="location-outline"
+                    size={24}
+                    color='#EF4444'
+                  />
+                  {t('chat.chatroom.shareLocation') || 'Share location'}
+                </Text>
+                {/* <Text className="text-body text-textSecondary mb-5 text-center">
+                  {t('chat.chatroom.chooseDuration') || 'How long should this location be shared?'}
+                </Text> */}
+
+                <TouchableOpacity
+                  className="p-4 mt-4 rounded-lg bg-primary mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect()}
+                >
+                  <Text className="text-body text-surface font-medium">{t('chat.chatroom.send')}</Text>
+                </TouchableOpacity>
+
+                {/* <TouchableOpacity
+                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect(60)}
+                >
+                  <Text className="text-body text-text font-medium">60 {t('common.min')}</Text>
+                </TouchableOpacity> */}
+                {/* 
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect(8 * 60)}
+                >
+                  <Text className="text-body text-text font-medium">8 {t('common.hour')}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
+                  onPress={() => handleDurationSelect(24 * 60)}
+                >
+                  <Text className="text-body text-text font-medium">24 {t('common.hour')}</Text>
+                </TouchableOpacity> */}
+
+                <TouchableOpacity
+                  className="p-4 rounded-lg bg-transparent border border-border items-center active:opacity-70"
+                  onPress={() => setShowDurationModal(false)}
+                >
+                  <Text className="text-body text-textSecondary ">
+                    {t('common.cancel') || 'Cancel'}
+                  </Text>
+                </TouchableOpacity>
+              </Pressable>
+            </Pressable>
+          </Modal>
+
+          {fileOptionsVisible && (
+            <Pressable
+              style={[StyleSheet.absoluteFill, { zIndex: 40, elevation: 40 }]}
+              onPressIn={() => setFileOptionsVisible(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close file options"
+            />
+          )}
 
           {/* File Options Menu */}
           <FileOptionsMenu
@@ -884,12 +1167,9 @@ const RoomChat = () => {
             onLocationSelection={handleLocationSelection}
             onClose={() => setFileOptionsVisible(false)}
           />
-
-
-
           {/* Chat Input */}
           <View
-            className="px-4 py-4 bg-surface border-t border-border"
+            className="px-4 py-4 bg-surface "
             style={{
               position: 'absolute',
               bottom: 0,
@@ -970,23 +1250,24 @@ const RoomChat = () => {
               </View>
             )}
             <View className="flex-row items-end">
-              <TouchableOpacity
+              <Pressable
                 onPress={handleShowOptions}
                 className={`mr-3 mb-2 w-10 h-10 rounded-full items-center justify-center border ${fileOptionsVisible ? 'bg-primary border-primary' : 'border-gray-300'
                   }`}
               >
-                <Text
+                {/* <Text
                   className={`text-body font-bold ${fileOptionsVisible ? 'text-white' : 'text-primary'
                     }`}
                 >
                   +
-                </Text>
-              </TouchableOpacity>
+                </Text> */}
+                <Ionicons name='add-outline' size={24} color={fileOptionsVisible ? '#fff' : '#3B82F6'}/>
+              </Pressable>
 
 
               <TextInput
                 ref={textInputRef}
-                className="flex-1 bg-background px-4 py-3 rounded-2xl text-body text-text"
+                className="flex-1 bg-background px-4  rounded-2xl text-body text-text"
                 placeholder={t('chat.chatroom.typeMessage')}
                 placeholderTextColor="#9CA3AF"
                 value={message}
@@ -999,11 +1280,11 @@ const RoomChat = () => {
                 editable={true}  // ✅ Ensure it's editable
                 keyboardType="default"
                 style={{
-                  minHeight: 44,
+                  minHeight: 53,
                   maxHeight: 120,
                   lineHeight: 20,
-                  paddingTop: Platform.OS === 'ios' ? 12 : 8,
-                  paddingBottom: Platform.OS === 'ios' ? 12 : 8,
+                  paddingTop: Platform.OS === 'ios' ? 12 : 12,
+                  paddingBottom: Platform.OS === 'ios' ? 12 : 12,
                 }}
                 autoFocus={false}
                 onFocus={() => {
@@ -1036,6 +1317,7 @@ const RoomChat = () => {
             onClose={handleCloseMediaPreview}
             onSend={sendMediaMessage}
             isSending={isFileSending}
+
           />
 
 
@@ -1043,13 +1325,14 @@ const RoomChat = () => {
           {/* Project Selection Modal */}
           <ProjectSelectionModal
             visible={showProjectSelection}
-            projects={works || []}
-            isLoading={appliIsLoading}
+            userProfileId={chat.userProfile._id}
             onClose={() => setShowProjectSelection(false)}
             onProjectsSelect={sendProjectMessage}
+            user={user}
+
           />
-        </View>
-      </TouchableWithoutFeedback>
+
+      </View>
     </ScreenWrapper>
   );
 };

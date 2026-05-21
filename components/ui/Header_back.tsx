@@ -1,6 +1,5 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons'
-import React from 'react'
-import { Text, View, ViewStyle } from 'react-native'
+import { Text, View } from 'react-native'
 
 // Define the icon libraries type
 type IconLibrary = 'MaterialIcons' | 'Ionicons'
@@ -53,7 +52,7 @@ function Header_back({
 
   return (
     <View 
-      className={`${containerStyles} p-4`}
+      className={`${containerStyles}`}
       onTouchEnd={onPress}
     
     >

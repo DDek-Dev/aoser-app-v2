@@ -17,9 +17,10 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   showCounter
 }) => {
   // This hook is properly called at the top level of the component
-  const videoPlayer = useVideoPlayer(media.uri, (player) => {
+  const videoPlayer = useVideoPlayer({ uri: media.uri, useCaching: true }, (player) => {
     player.loop = false;
     player.muted = true;
+    player.keepScreenOnWhilePlaying = false;
     // Pause the video by default for thumbnails
     player.pause();
   });

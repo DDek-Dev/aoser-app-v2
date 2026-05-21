@@ -5,7 +5,7 @@ import Animated, {
     withSequence, 
     withTiming,
     useSharedValue,
-    
+    cancelAnimation,
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
 
@@ -21,7 +21,10 @@ const PulseView = ({ className }: { className: string }) => {
             -1,
             false
         );
-    }, []);
+        return () => {
+            cancelAnimation(opacity);
+        };
+    }, [opacity]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         opacity: opacity.value,
@@ -31,14 +34,14 @@ const PulseView = ({ className }: { className: string }) => {
 };
 
 export const FreelancerCardSkeleton = () => (
-    <View className="w-[48%] bg-white rounded-2xl mb-3 border border-border overflow-hidden">
+    <View className="w-[49.5%] bg-white rounded-xl mb-2 border border-border overflow-hidden">
         {/* Banner Skeleton */}
-        <PulseView className="w-full h-28 bg-gray-300" />
+        <PulseView className="w-full h-48 bg-gray-300" />
         
         <View className="p-3 space-y-2">
             {/* Star and Price Row Skeleton */}
             <View className="flex-row items-center justify-between">
-                <PulseView className="w-12 h-4 bg-gray-300 rounded" />
+                <PulseView className="w-12 h-[18px] bg-gray-300 rounded" />
                 <PulseView className="w-20 h-6 bg-gray-300 rounded-full" />
             </View>
 

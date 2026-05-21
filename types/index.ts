@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 
-import { UserProfile } from "./profile";
+import { Address, UserProfile } from "./profile";
+import { string } from "yup";
 
 
 
@@ -22,15 +23,19 @@ export interface Job {
   _id: string;
   createdBy: UserProfile;
   workTitle: string;
+  jobTitle: string;
+  customerExpect: string;
   kindOfWork: "ONLINE" | "OFFLINE";
   description: string;
   exampleWork: ExampleWork[];
   serviceType: ServiceType;
   jobs: string[];
-
+  hourlyRate: number;
+  bannerImage: string;
   category: string;
   deadLine?: string;
-  budgetType: "FIXED_PRICE" | "HOURLY";
+  budgetType: "FIXED_PRICE" | "HOURLY" | "OFFERING";
+  hourlyRateCurrency: "LAK" | "USD";
   currency: "LAK" | "USD";
   startDate?: string;
   budget: number;
@@ -49,28 +54,44 @@ export interface Job {
   createdAt: string;
   updatedAt: string;
   workCode: string;
-  invoiceType:["WORK", "USER_RECOMMEND_STAR"]
+  invoiceType: ["WORK", "USER_RECOMMEND_STAR", "APPEND_WORK"];
   budget_type: string;
   myLike: Mylike[];
   applicant: UserProfile[];
   workApplicants: WorkApplicant[];
+  address: Address;
+  place: string;
+  appendWorks: AppendWork[];
 
 }
 
 export type WorkById = {
-  work:Job;
+  work: Job;
   applicant: Applicant[];
-  totalApplicant: number
+  totalApplicant: number,
+
 }
 
-export type Applicant ={
+export type Applicant = {
   _id: string;
   work: string;
   applicant: UserProfile;
   applicationStatus: 'PENDING' | 'APPROVED' | 'REJECTED'; // Add other possible statuses
   createdAt: string; // or Date if you want to use Date objects
   updatedAt: string; // or Date
+  offeringUpdate: {
+    _id: string;
+    reason: string;
+    requestStatus: "PENDING" | "CONFIRM" | "REJECTED";
+    updateData: {
+      deadLine: string;
+      budget: number;
+      currency: "LAK" | "USD";
+    }
+  }
 }
+
+export type TabType = 'mywork' | 'customerwork';
 export type Mylike = {
   _id: string,
   createdBy: string,
@@ -93,7 +114,7 @@ export interface WorkApplicant {
   createdAt: string; // or Date if you want to use Date objects
   updatedAt: string; // or Date
   __v: number;
-  applicantProfile: UserProfile[]; // Replace 'any' with specific profile interface if known
+  applicantProfile: UserProfile; // Replace 'any' with specific profile interface if known
 }
 
 // For frontend display, you might want a simplified version
@@ -141,16 +162,24 @@ export type BookingFormData = {
   userId?: string;
   workTitle: string;
   description: string;
-  budget: number | null;
-  category: string;
+  budget?: number | null;
+
   kindOfWork: 'ONLINE' | 'OFFLINE';
   deadLine?: string | null;
   startDate?: string | null;
-  subWorkDetails: SubWorkDetail[];
+  subWorkDetails?: SubWorkDetail[];
   currency: 'LAK' | 'USD';
   budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
   serviceType: string;
+  assignedTo?: string;
   jobs?: string[];
+  address?: {
+    country: string;
+    province: string;
+    district: string;
+    village: string;
+  };
+  place: string;
 };
 export type CategoryOption = {
   name: string;
@@ -159,6 +188,23 @@ export type CategoryOption = {
 };
 
 
+export type AppendWork = {
+  _id: string;
+  createdBy: string;
+  description: string;
+  workId: string;
+  subWorkDetails: SubWorkDetail[];
+  currency: 'LAK' | 'USD';
+  budget: number;
+  budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
+  deadLine?: string;
+  status: "PENDING" | "CONFIRMED" | "PAYMENT_COMPLETED" | "REJECTED";
+  systemPercent: number;
+  totalDonePercent: number;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
 
 
 // types/chat.ts
@@ -181,25 +227,47 @@ export type Message = {
   message: string;
   conversation: string;
   sender: string;
- 
+
   files?: string[];
   // projects?: string[] | WorkApplicant[];
   work?: Job;
   isUnSend: boolean;
   // projectUpdates?: ProjectUpdateData[];
   replyTo?: ReplyTo;
-  messageType: "TEXT" | "FILE" | "LINK" | "WORK"| "LOCATION";
-  status: "SENT"| "DELIVERED"| "READ";
+  messageType: "TEXT" | "FILE" | "LINK" | "WORK" | "LOCATION" | "OFFERING_WORK";
+  status: "SENT" | "DELIVERED" | "READ";
   createdAt?: string;
   updatedAt?: string;
   userProfile?: UserProfile;
-} 
+  offeringWorkId?: IOfferingWorkUpdate | string;
+}
+export type IOfferingWorkUpdate = {
+  _id: string;
+  workId: Job;
+  requester: string;
+  requestStatus: "PENDING" | "CONFIRM" | "REJECTED";
+  reason: string;
+  updateData: {
+    deadLine: string;
+    budgetType: string;
+    currency: string;
+    budget: number;
+    assignedTo: string;
+  };
+  confirmedAt: Date;
+}
+
+export interface NewOfferData {
+  conversationId: string,
+  offeringWorkId: string
+  requestStatus: "PENDING" | "CONFIRM" | "REJECTED"
+}
 export interface OptimisticMessage extends Omit<Message, '_id' | 'createdAt'> {
-  _id?: string;                   
-  tempId?: string;              
-  createdAt?: string;             
-  pending?: boolean;   
-  replyTo?: any;        
+  _id?: string;
+  tempId?: string;
+  createdAt?: string;
+  pending?: boolean;
+  replyTo?: any;
 }
 
 export type ChatRoom = {
@@ -217,12 +285,12 @@ export type ReplyTo = {
   sender: string;
   files?: string[];
   work?: Job;
-  messageType: "TEXT" | "FILE" | "LINK" | "WORK"| "LOCATION";
+  messageType: "TEXT" | "FILE" | "LINK" | "WORK" | "LOCATION";
   status: "SENT" | "DELIVERED" | "READ";
   createdAt?: string;
   updatedAt?: string;
- deletedUserIds?: string[]
- isUnsend?: boolean
+  deletedUserIds?: string[]
+  isUnsend?: boolean
 }
 export type Conversation = {
   participants: [
@@ -245,11 +313,16 @@ export interface MediaFile {
 }
 
 export interface ProjectUpdateData {
-  projectId: string;
-  newBudget?: string;
-  newDeadline?: string;
-}
+  // offeringWorkId: string;
+  // newBudget?: number;
+  // newDeadline?: string;
 
+  projectId: string;
+  newBudget: number;
+  newDeadline: string;
+  currency: string; // Add currency field
+  offeringWorkId?: string;
+}
 
 
 // address slector type 
@@ -438,6 +511,25 @@ export interface JobpopularData {
 
 export type NotificationType = "Like" | "Work" | "Review" | "Message" | "PaymentHistory" | "PostComment" | "UserProfile" | "News";
 
+export type NotifyAbout =
+  | "ADMING_PAYMENT_CLAIM_TO_WORKER"
+  | "ADMIN_UPDATE_WORK_DATA"
+  | "FREELANCER_SUBMIT_WORK"
+  | "FREELANCER_EXCEPT_ASIGNED_WORK"
+  | "FREELANCER_EXCEPTION_APPEND_WORK"
+  | "FREELANCER_APPLY_WORK"
+  | "OWNER_APPEND_WORK"
+  | "CONFIRMATION_WORK"
+  | "UPDATE_WORK_DATA"
+  | "CREATE_WORK_AND_ASSIGNED_WORKER"
+  | "CREATE_PUBLIC_WORK"
+  | "CREATE_REVIEW"
+  | "AOSER_ADMIN_UPDATE_NEWS"
+  | "AOSER_ADMIN_CREATE_NEWS"
+  | "UPDATE_FREELANCER_DATA"
+  | "UPDATE_FREELANCER_KYC"
+  | "CREATE_FREELANCER_KYC";
+
 export interface Notifications {
   _id: string;
   recipient: UserProfile;
@@ -452,4 +544,67 @@ export interface Notifications {
   relatedFreelancer?: string;
   createdAt: string;
   updatedAt: string;
+  notifyAbout: NotifyAbout;
+}
+
+
+export type UreadNotification = {
+  isViewed: boolean;
+  notificationUnreadCount: number;
+}
+
+export type WalletData = {
+  earnings: {
+    LAK: {
+      currency: "LAK";
+      totalWorkCost: number;
+      totalAppendWorkCost: number;
+      totalAwaitingClaimWorkCost: number;
+      totalAwaitingClaimAppendWorkCost: number;
+      totalClaimCompleteWorkCost: number;
+      totalClaimCompleteAppendWorkCost: number;
+      totalRevenue: number;
+      totalAwaitingClaimCost: number;
+      totalClaimCompleteCost: number;
+      totalProcessingWorkCost: number;
+    };
+    USD: {
+      currency: "USD";
+      totalWorkCost: number;
+      totalAppendWorkCost: number;
+      totalAwaitingClaimWorkCost: number;
+      totalAwaitingClaimAppendWorkCost: number;
+      totalClaimCompleteWorkCost: number;
+      totalClaimCompleteAppendWorkCost: number;
+      totalRevenue: number;
+      totalAwaitingClaimCost: number;
+      totalClaimCompleteCost: number;
+      totalProcessingWorkCost: number;
+    }
+  };
+  totalWorks: number;
+  totalCompletedWork: number;
+  totalProcessingWork: number;
+  totalAwaitingClaimWork: number;
+  totalClaimCompleteWork: number
+}
+
+export type NewsType = {
+  _id: string;
+  title: string;
+  detail: string;
+  image: string;
+  isPublished: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+}
+
+export type ReportType = {
+  reportType: "FREELANCER" | "WORK";
+  reportedUser?:string;
+  work?: string;
+  reason?: "INAPPROPRIATE_BEHAVIOR" | "FRAUD" | "NO_SHOW" | "POOR_QUALITY" | "HARASSMENT" | "OTHER" | null,  /// [ SPAM,INAPPROPRIATE_BEHAVIOR,FRAUD,NO_SHOW,POOR_QUALITY,HARASSMENT,OTHER]
+  description: string
 }

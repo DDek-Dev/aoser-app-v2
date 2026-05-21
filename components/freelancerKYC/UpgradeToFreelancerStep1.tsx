@@ -19,7 +19,6 @@ import { useUpgradeToFreelancerStep1 } from 'hooks/useFreelancerKYC';
 import LoadingScreen from 'screens/Loading/LoadingScreen';
 import { FileWithType } from 'types';
 import { useTranslation } from 'react-i18next';
-// import { ServiceTypeList } from 'components/ui/Testicon';
 
 
 type Props = {
@@ -32,6 +31,7 @@ type Props = {
     setJobTitle: (jobTitle: string) => void;
     setBannerImageFile: (bannerImageFile: FileWithType | null) => void;
     setPromoVideoFile: (promoVideoFile: FileWithType | null) => void;
+    setPromoVideoTouched: (touched: boolean) => void;
     setFreelancerType: (freelancerType: string) => void;
     setCategory: (category: string) => void;
     setSubcategories: (subcategories: string[]) => void;
@@ -49,6 +49,7 @@ const UpgradeToFreelancerStep1 = (
         setJobTitle,
         setBannerImageFile,
         setPromoVideoFile,
+        setPromoVideoTouched,
         setFreelancerType,
         setCategory,
         setSubcategories
@@ -62,7 +63,10 @@ const UpgradeToFreelancerStep1 = (
         if (dataStep1) {
             setJobTitle(dataStep1.jobTitle);
 
-            setPromoVideoFile(dataStep1.promoVideoFile);
+            setPromoVideoTouched(!!dataStep1.promoVideoTouched || dataStep1.promoVideoFile !== undefined);
+            if (dataStep1.promoVideoFile !== undefined) {
+                setPromoVideoFile(dataStep1.promoVideoFile);
+            }
             setFreelancerType(dataStep1.freelancerType);
             setCategory(dataStep1.category);
             setSubcategories(dataStep1.subcategories);
@@ -85,7 +89,7 @@ const UpgradeToFreelancerStep1 = (
         setBannerImageFile(file || null);
     };
     const handleVideoChange = (file?: FileWithType) => {
-
+        setPromoVideoTouched(true);
         setPromoVideoFile(file || null);
     };
 
@@ -109,25 +113,6 @@ const UpgradeToFreelancerStep1 = (
                 required
                 isValidate={`${errors.jobTitle ? t('kyc.step1.jobTitle.required') : ''}`}
             />
-
-
-            <SelectImage
-                image={bannerImageFile?.uri || null}
-                label={t('kyc.step1.bannerImage.label')}
-                onChange={handleImageChange}
-                required
-                inputClassName={errors.bannerImageFile ? 'border-error' : 'border-border'}
-                isValidate={`${errors.bannerImageFile ? t('kyc.step1.bannerImage.required') : ''}`}
-            />
-
-            <SelectVideo
-                video={promoVideoFile?.uri || null}
-                label={t('kyc.step1.promoVideo.label')}
-                // required
-                onChange={handleVideoChange}
-            />
-            {/* Freelancer Type */}
-
 
             <SelectFreelancerType
                 label={t('kyc.step1.freelancerType.label')}
@@ -153,12 +138,27 @@ const UpgradeToFreelancerStep1 = (
                         setSubcategories(jobIds);
                     }}
                     required
+                    inputClassName={errors.freelancerType ? 'border-error' : 'border-border'}
+
                     isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
                 />
             </View>
+            <SelectImage
+                image={bannerImageFile?.uri || null}
+                label={t('kyc.step1.bannerImage.label')}
+                onChange={handleImageChange}
+                required
+                inputClassName={errors.bannerImageFile ? 'border-error' : 'border-border'}
+                isValidate={`${errors.bannerImageFile ? t('kyc.step1.bannerImage.required') : ''}`}
+            />
 
+            <SelectVideo
+                video={promoVideoFile?.uri || null}
+                label={t('kyc.step1.promoVideo.label')}
+                // required
+                onChange={handleVideoChange}
+            />
 
-            {/* <ServiceTypeList /> */}
 
         </View>
 

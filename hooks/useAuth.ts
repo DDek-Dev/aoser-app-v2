@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as AppleAuthentication from 'expo-apple-authentication';
+
 import {
   authApi,
 } from '../api/authApi';
@@ -13,14 +14,15 @@ import {
 } from '../utils/apiClient';
 import { OTPVerifyData } from '../types/auth';
 
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { FreelancerStackParamList } from 'types/navigation';
+import { navigate, replace } from 'navigation/RootNavigation';
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { Use } from 'react-native-svg';
+
 import { UserProfile } from 'types/profile';
-import { use } from 'react';
+import { clearStaleKycDataForOtherUsers } from 'utils/kycStorage';
+import axios from 'axios';
+import { auth } from 'firebaceConfig';
+
 
 
 export const AUTH_KEYS = {
@@ -54,7 +56,6 @@ export const useAuth = () => {
     staleTime: Infinity, // Tokens don't become stale
   });
 
-  const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
 
   // Login mutation
   const loginMutation = useMutation({
@@ -65,7 +66,7 @@ export const useAuth = () => {
         refreshToken: data.data.refreshToken,
       };
       const userData = data.data.userData;
-
+      await clearStaleKycDataForOtherUsers(userData?._id || '');
       await storeTokens(newTokens);
       await storeUser(userData as UserProfile);
 
@@ -90,7 +91,7 @@ export const useAuth = () => {
   const googleUrlMutation = useMutation({
     mutationFn: authApi.handleGoogleLogin,
     onSuccess: async (data) => {  // ← CORRECT! Remove the extra () =>
-      console.log('✅ Mutation success, data:');
+      // console.log('✅ Mutation success, data:');
 
       const newTokens = {
         accessToken: data.data.accessToken,
@@ -98,17 +99,18 @@ export const useAuth = () => {
       };
       // console.log( "New daTa in Google Login API : ", { newTokens });
 
+      await clearStaleKycDataForOtherUsers(data.data.userProfile?._id || '');
       await storeTokens(newTokens);
       await storeUser(data.data.userProfile);
 
       // Update cache
       queryClient.setQueryData(AUTH_KEYS.tokens, newTokens);
       queryClient.setQueryData(AUTH_KEYS.user, data.data.userProfile);
-      const isUserProfileSetup = data.data.userProfile.gender && data.data.userProfile.firstName && data.data.userProfile.lastName && data.data.userProfile.phone && data.data.userProfile.address;
+      const isUserProfileSetup = data.data.userProfile.gender && data.data.userProfile.firstName && data.data.userProfile.lastName && data.data.userProfile.phone ;
       if (isUserProfileSetup) {
-        navigation.replace('MainTabs');
+        replace('MainTabs');
       } else {
-        navigation.navigate('ProfileSetup');
+        navigate('ProfileSetup');
       }
 
       // navigation.goBack();
@@ -116,13 +118,13 @@ export const useAuth = () => {
     },
     onError: (error) => {
       console.log('❌ Google login failed:', error);
-      Alert.alert('Error', 'Failed to login with Google');
+      // Alert.alert('Error', 'Failed to login with Google');
     },
   });
 
 
   const googleLogin = async () => {
-    console.log('Starting Google login process', process.env.EXPO_PUBLIC_WEBCLIENT_ID);
+    // console.log('Starting Google login process', process.env.EXPO_PUBLIC_WEBCLIENT_ID);
     try {
       GoogleSignin.configure({
         webClientId: process.env.EXPO_PUBLIC_WEBCLIENT_ID, // from Google Cloud Console
@@ -136,10 +138,69 @@ export const useAuth = () => {
       const user: any = await GoogleSignin.signIn();
       const idToken = user.data.idToken;
 
+
       await googleUrlMutation.mutate(idToken);
 
     } catch (err) {
       console.log('❌ Google login failed:', err);
+    }
+  };
+
+
+  const appleUrlMutation = useMutation({
+    mutationFn: authApi.handleApplelogin,
+    onSuccess: async (data) => {
+
+      const newTokens = {
+        accessToken: data.data.accessToken,
+        refreshToken: data.data.refreshToken,
+      };
+      // console.log( "New daTa in Google Login API : ", { newTokens });
+
+      await clearStaleKycDataForOtherUsers(data.data.userProfile?._id || '');
+      await storeTokens(newTokens);
+      await storeUser(data.data.userProfile);
+
+      // Update cache
+      queryClient.setQueryData(AUTH_KEYS.tokens, newTokens);
+      queryClient.setQueryData(AUTH_KEYS.user, data.data.userProfile);
+      const isUserProfileSetup = 
+    data.data.userProfile.gender &&
+    data.data.userProfile.firstName &&
+    data.data.userProfile.lastName &&
+    data.data.userProfile.phone &&
+    data.data.userProfile.userProfileImage;
+      if (isUserProfileSetup) {
+        replace('MainTabs');
+      } else {
+        navigate('ProfileSetup');
+      }
+      // ทำสิ่งที่ต้องทำต่อ เช่น เก็บ Token หรือนำทางไปหน้า Home
+    },
+    onError: (error) => {
+      console.log('Login Error:', error);
+    }
+  });
+
+  const appleLogin = async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      const payload = {
+        idToken: credential.identityToken,
+        firstName: credential.fullName?.givenName || "",
+        lastName: credential.fullName?.familyName || ""
+      };
+
+      // ส่งไปที่ Backend
+      await appleUrlMutation.mutate(payload as any);
+
+    } catch (err) {
+      console.log('❌ Apple login failed:', err);
     }
   };
 
@@ -149,6 +210,18 @@ export const useAuth = () => {
 
     onError: (error) => {
       console.log('Send OTP failed:', error);
+    },
+  });
+
+  const useDeleteAccount = useMutation({
+    mutationFn: (token: string) => authApi.deleteAccount(token),
+    onSuccess: async (data) => {
+      console.log('Account deletion successful:', data);
+      await clearTokens();
+      navigate('MainTabs');
+    },
+    onError: (error) => {
+      console.log('Delete account failed:', error);
     },
   });
 
@@ -162,6 +235,7 @@ export const useAuth = () => {
       };
 
 
+      await clearStaleKycDataForOtherUsers((userData as any)?._id || '');
       await storeTokens(newTokens);
       await storeUser(userData as UserProfile);
 
@@ -209,16 +283,17 @@ export const useAuth = () => {
       // await AsyncStorage.multiRemove(['onboarding_complete', 'selected_language']);
       await AsyncStorage.multiRemove(['authTokens', 'authUser', 'user']);
 
-      navigation.navigate('MainTabs');
+      navigate('MainTabs');
 
     },
     onSuccess: () => {
       console.log("Logout successful, look is authenticated:", isAuthenticated);
       queryClient.clear();
-      navigation.navigate('MainTabs');
+      navigate('MainTabs');
 
     },
   });
+
 
 
   // Token refresh mutation
@@ -285,6 +360,7 @@ export const useAuth = () => {
     login,
     logout: logoutMutation.mutate,
     googleLogin,
+    appleLogin,
     // handleGoogleCallback,
     signupOTPRequest,
     signupWithOTP,
@@ -293,11 +369,14 @@ export const useAuth = () => {
 
     resetPassword: resetPasswordMutation.mutate,
     refreshToken: refreshTokenMutation.mutate,
-
+    useDeleteAccount,
+    deletingAccount: useDeleteAccount.isPending,
     // Loading states
     loading: loginMutation.isPending, // Keep for backward compatibility
     loginLoading: loginMutation.isPending,
     googleloading: googleUrlMutation.isPending,
+    appleleloading: appleUrlMutation.isPending,
+    appleError: appleUrlMutation.error,
     otpSendLoading: sendOTPMutation.isPending,
     otpVerifyLoading: verifyOTPMutation.isPending,
     forgotPwIsLoading: forgotOTPMutation.isPending,

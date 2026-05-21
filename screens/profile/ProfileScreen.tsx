@@ -1,15 +1,17 @@
-import { View, Text, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useAuth } from 'hooks/useAuth';
-import { useMyProfile } from 'hooks/useFreelancer';
-import { UserProfile } from 'types/profile';
+import { useAdminID, useMyProfile } from 'hooks/useFreelancer';
+
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import LogoutModal from 'components/ui/LogoutModal';
 import Constants from 'expo-constants';
+import { profileImage } from 'assets';
+
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -17,16 +19,18 @@ const ProfileScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { loading, logout, isAuthenticated } = useAuth();
-  const { data, isLoading, isError } = useMyProfile();
+  const { data, isLoading, isError, refetch } = useMyProfile();
+  const [isLogout, setIsLogout] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { data: adminID, isLoading: adminIdLoading } = useAdminID();
 
   // Configuration arrays
-  const settings = [
-    { label: t('profile.edit_profile'), icon: 'person-outline', route: 'EditAoserProfile' },
-    { label: t('profile.language'), icon: 'globe-outline', route: "LanguageSelectScreen" },
-    { label: t('profile.change_password'), icon: 'lock-closed-outline', route: 'ChangePasswordScreen' },
-    { label: t('profile.help_support'), icon: 'help-circle-outline', route: { 'RoomChat': { userId: '686250a8a971bfa8a145e85e' } } },
-  ];
+const settings = useMemo(() => [
+  { label: t('profile.edit_profile'), icon: 'person-outline', route: 'EditAoserProfile' },
+  { label: t('profile.language'), icon: 'globe-outline', route: "LanguageSelectScreen" },
+  { label: t('profile.change_password'), icon: 'lock-closed-outline', route: 'ChangePasswordScreen' },
+  { label: t('profile.help_support'), icon: 'help-circle-outline', route: { name: 'RoomChat', params: { userId: adminID } } },
+], [adminID, t]);
 
   const policy = [
     { label: t('profile.privacy_policy'), icon: 'document-text-outline', route: 'PrivacyPolicyScreen' },
@@ -36,13 +40,22 @@ const ProfileScreen = () => {
   const handleLogout = () => setShowLogoutModal(true);
 
   const confirmLogout = async () => {
+    setIsLogout(true);
     await logout();
     setShowLogoutModal(false);
     navigation.reset({
       index: 0,
       routes: [{ name: 'MainTabs' }],
     });
+    setIsLogout(false);
   };
+
+  useFocusEffect(
+    useCallback(() => {
+     
+      refetch();
+    }, [])
+  );
 
   const handleNavigate = (route: any) => {
     try {
@@ -72,10 +85,17 @@ const ProfileScreen = () => {
 
   // Component sections
   const ProfileHeader = () => (
-    <View className="bg-primary px-4 pt-12 pb-6 rounded-b-3xl">
+    <View className="bg-primary px-4 pt-12 pb-6 rounded-b-3xl flex-row justify-between items-center">
       <View className="flex-row justify-between items-center mt-4">
         <Text className="text-heading font-bold text-white">{t('profile.profile')}</Text>
       </View>
+      <Pressable onPress={()=> navigation.navigate('Setting')} className="flex-row justify-between items-center mt-4 gap-2">
+        {/* <Text className="text-body font-bold text-white">Setting</Text> */}
+        <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
+      </Pressable>
+
+
+      
     </View>
   );
 
@@ -92,10 +112,11 @@ const ProfileScreen = () => {
   );
 
   const AuthenticatedProfile = () => (
-    <TouchableOpacity onPress={() => navigation.navigate('UserIdScreen', { userId: data as UserProfile })}>
+    // <Pressable onPress={() => navigation.navigate('UserIdScreen', { userId: data as UserProfile })}>
+    <Pressable onPress={() => navigation.navigate('CustomerProfile', { userId: data?._id as string })}>
       <View className="flex-row items-center">
         <Image
-          source={{ uri: BASE_IMAGE + data?.userProfileImage }}
+          source={ data?.userProfileImage ? {  uri: BASE_IMAGE + data?.userProfileImage } : profileImage }
           className="w-14 h-14 rounded-full mr-3"
         />
         <View>
@@ -105,49 +126,49 @@ const ProfileScreen = () => {
           <Text className="text-caption text-text">{data?.user.email || "undefined"}</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const UnauthenticatedProfile = () => (
     <View className="flex-1">
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('SignIn')}
         className="bg-blue-50 px-8 py-4 rounded-lg mb-3"
-        activeOpacity={0.8}
+      // activeOpacity={0.8}
       >
         <Text className="text-warning font-semibold text-body  h-6 text-center">
           {t('profile.signin')}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('SignUp')}
-        activeOpacity={0.8}
+      // activeOpacity={0.8}
       >
         <Text className="text-primary font-semibold text-body text-center">
-          {t('loginScreen.signup')} ?
+          {t('loginScreen.signup')} 
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 
   const QuickActions = () => (
     <View className="flex-row gap-8">
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('FavoriteScreen')}
         className="flex-col items-center"
       >
         <Ionicons name="heart-outline" size={32} color="#3B82F6" />
         <Text className="text-caption text-textSecondary">{t('profile.favorites')}</Text>
-      </TouchableOpacity>
+      </Pressable>
 
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('HistoryScreen')}
         className="flex-col items-center"
       >
         <Ionicons name="time-outline" size={32} color="#3B82F6" />
         <Text className="text-caption text-textSecondary">{t('profile.history')}</Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 
@@ -155,7 +176,7 @@ const ProfileScreen = () => {
     <View className="mt-6 mx-4 space-y-4">
       {title && <Text className="text-sm font-semibold text-textSecondary">{title}</Text>}
       {items.map((item, idx) => (
-        <TouchableOpacity
+        <Pressable
           onPress={() => handleNavigate(item.route)}
           key={idx}
           className="flex-row justify-between items-center py-3"
@@ -165,14 +186,14 @@ const ProfileScreen = () => {
             <Text className="text-body text-text">{item.label}</Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-        </TouchableOpacity>
+        </Pressable>
       ))}
     </View>
   );
 
   const FreelancerSection = () => (
     <View className="mx-4 space-y-4">
-      <TouchableOpacity
+      <Pressable
         className="flex-row justify-between items-center py-3"
         onPress={() => navigation.navigate('FreelancerRoleGate')}
       >
@@ -185,7 +206,7 @@ const ProfileScreen = () => {
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 
@@ -197,7 +218,7 @@ const ProfileScreen = () => {
       <View className="px-4 my-8 flex-row justify-between items-center">
         <View className="flex-1 mr-4">
           {isAuthenticated ? (
-            isLoading || !data || isError ? (
+            isLoading || !data || adminIdLoading|| isError ? (
               <ProfileLoadingSkeleton />
             ) : (
               <AuthenticatedProfile />
@@ -209,13 +230,13 @@ const ProfileScreen = () => {
         <QuickActions />
       </View>
 
-      <ScrollView
+      <View
         className="flex-1"
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
+        // showsHorizontalScrollIndicator={false}
+        // showsVerticalScrollIndicator={false}
       >
         {/* Main Content Card */}
-        <View className="bg-blue-50 mx-4 mt-8 p-4 rounded-2xl py-6">
+        <View className="bg-blue-50 mx-4 mt-4 p-4 rounded-2xl py-6">
           <FreelancerSection />
           <MenuSection title={t('profile.account_settings')} items={settings} />
           <MenuSection title={t('profile.conditions_policies')} items={policy} />
@@ -224,16 +245,23 @@ const ProfileScreen = () => {
         {/* Logout Section */}
         {isAuthenticated && (
           <View className="mt-6 mx-4 px-4 space-y-4">
-            <View className="bg-gray-300 h-[0.5px] w-full" />
-            <TouchableOpacity
+            <View className="bg-gray-300 h-[0.5px] w-full mb-4" />
+            <Pressable
               onPress={handleLogout}
               className="flex-row justify-between bg-surface border border-border rounded-full px-4 items-center py-3"
             >
               <View className="flex-row items-center gap-3">
-                <Ionicons name="log-out-outline" size={18} color="#3B82F6" />
-                <Text className="text-body text-error">{t('profile.logout')}</Text>
+                {!isLogout ? (
+                  <>
+                  
+                  <Ionicons name="log-out-outline" size={18} color="#3B82F6" />
+                    <Text className="text-body text-error">{t('profile.logout')}</Text>
+                  </>
+                ):(
+                  <ActivityIndicator size="small" color="#EF4444" />
+                )}
               </View>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 
@@ -244,7 +272,7 @@ const ProfileScreen = () => {
             {t('profile.application_version')}: v{Constants.expoConfig?.version}
           </Text>
         </View>
-      </ScrollView>
+      </View>
 
       <LogoutModal
         visible={showLogoutModal}

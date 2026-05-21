@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Image,
-  TouchableOpacity,
   ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
@@ -11,9 +10,11 @@ import {
   ActivityIndicator,
   Dimensions,
   BackHandler,
+  Pressable,
+  PanResponder,
 } from 'react-native';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
-import {  useMyProfile } from 'hooks/useFreelancer';
+import { useMyProfile } from 'hooks/useFreelancer';
 import { Ionicons } from '@expo/vector-icons';
 import { useFreelancerApplyWork } from 'hooks/usePublicWork';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
@@ -22,81 +23,98 @@ import { useTranslation } from 'react-i18next';
 type Props = {
   visible: boolean;
   onClose: () => void;
-  jobId: string
-  refetch: () => void
+  jobId: string;
+  refetch: () => void;
 };
 
-
 const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
-
-  // const { data, isLoading, error } = useFreelancerById(userId);
   const [isApplyLoading, setIsApplyLoading] = useState(false);
-
   const applyWorkMutation = useFreelancerApplyWork();
-  const { data, isLoading,  error } = useMyProfile();
-
-
+  const { data, isLoading, error } = useMyProfile();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(0)).current;
+  const scrollYRef = useRef(0);
   const screenHeight = Dimensions.get('window').height;
-
-
-  // console.log('data: 555 ', data);
-  const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL
+  const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
   const { t } = useTranslation();
+  const CLOSE_THRESHOLD = 120;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+        scrollYRef.current <= 0 &&
+        gestureState.dy > 8 &&
+        Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+      onPanResponderMove: (_, gestureState) => {
+        if (gestureState.dy > 0) {
+          sheetTranslateY.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const shouldClose = gestureState.dy > CLOSE_THRESHOLD || gestureState.vy > 1.2;
+        if (shouldClose) {
+          Animated.timing(sheetTranslateY, {
+            toValue: screenHeight,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(() => {
+            sheetTranslateY.setValue(0);
+            onClose();
+          });
+          return;
+        }
+
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 90,
+          friction: 12,
+        }).start();
+      },
+    })
+  ).current;
   const handleApply = async () => {
-
-    // if (!data?._id) {
-    //   Toast.show({
-    //     type: ALERT_TYPE.DANGER,
-    //     title: 'Error',
-    //     textBody: "You need to login first",
-    //   })
-    //   return
-    // }
-
-
     try {
       setIsApplyLoading(true);
-      const result = await applyWorkMutation.mutateAsync({
-        workId: jobId
+      await applyWorkMutation.mutateAsync({
+        workId: jobId,
       });
-      console.log('result: ', result);
+      await refetch();
+      onClose();
+
       Toast.show({
         type: ALERT_TYPE.SUCCESS,
-        title: 'Success',
-        textBody: "You have successfully applied for this work",
-      })
+        title: t('common.success') || 'Success',
+      });
+    } catch (applyError: any) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('common.error') || 'Failed',
+        textBody:
+        
+          t('profile_in_command.apply_failed') ||
+          'Failed to apply for this work. Please try again.',
+      });
+    } finally {
       setIsApplyLoading(false);
-
-      
-      onClose();
-      await refetch();
-
-    } catch (error) {
-      setIsApplyLoading(false);
-      console.log('error: ', error);
-
     }
-  }
+  };
 
-  // Handle fade animation
   useEffect(() => {
-    if (visible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible]);
+    Animated.timing(fadeAnim, {
+      toValue: visible ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [visible, fadeAnim]);
 
-  // 🔙 Back button close (Android)
+  useEffect(() => {
+    if (!visible) {
+      sheetTranslateY.setValue(0);
+      scrollYRef.current = 0;
+    }
+  }, [visible, sheetTranslateY]);
+
   useEffect(() => {
     if (!visible) return;
 
@@ -111,8 +129,8 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
 
   if (!visible) return null;
   if (isLoading) return <ActivityIndicator />;
-  if (error) return <Text>Error fetching freelancer</Text>;
-  if (!data) return <Text>No freelancer found</Text>;
+  if (error) return <Text>{t('postWork.freelancer_no_found')}</Text>;
+  if (!data) return <Text>{t('postWork.freelancer_no_found')}</Text>;
 
   return (
     <Animated.View
@@ -125,23 +143,32 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
         <View style={StyleSheet.absoluteFill} />
       </TouchableWithoutFeedback>
 
-      <View
+      <Animated.View
+        {...panResponder.panHandlers}
         style={{
           position: 'absolute',
           bottom: 0,
           width: '100%',
-          maxHeight: screenHeight * 0.8,
+          height: screenHeight * 0.8,
           backgroundColor: 'white',
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
-          paddingHorizontal: 16,
+          paddingInline:4,
           paddingTop: 16,
-          paddingBottom: 164,
+          paddingBottom: 16,
+          transform: [{ translateY: sheetTranslateY }],
         }}
       >
-        <Text className="text-lg font-bold mb-3">{t('profile.profile')}</Text>
+        <View className='flex-row justify-between px-4'>
+          <Text className="text-lg font-bold mb-3">{t('profile.profile')}</Text>
 
-        <View className="bg-gray-100 rounded-xl border border-gray-200">
+          <Pressable onPress={onClose}>
+
+            <Ionicons name='close-outline' size={24} />
+          </Pressable>
+        </View>
+
+        <View className="bg-gray-100 rounded-xl border border-gray-200 flex-1">
           <View className="flex-row items-center my-4 px-4">
             {data.userProfileImage ? (
               <Image
@@ -155,43 +182,43 @@ const ProfileInCommand = ({ visible, onClose, jobId, refetch }: Props) => {
                 color="#6B7280"
                 style={{ marginRight: 8 }}
               />
-            )
-            }
-            {/* <Image
-              source={{ uri: data.profileImage }}
-              className="w-12 h-12 rounded-full mr-3"
-            /> */}
+            )}
             <Text className="text-base font-semibold">{data.firstName}</Text>
           </View>
 
-          <View style={{ height: 220 }}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+          <View className="flex-1 mb-1 bg-surface">
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              scrollEventThrottle={16}
+              onScroll={(event) => {
+                scrollYRef.current = event.nativeEvent.contentOffset.y;
+              }}
+            >
               <TabbedProfileSection profile={data as any} stylepadd="px-4" />
             </ScrollView>
           </View>
+          <View className="flex-row justify-between mb-[8rem] px-2">
+            <Pressable
+              onPress={onClose}
+              className="border border-warning rounded-full px-12 py-2"
+            >
+              <Text className="text-warning font-semibold">{t('profile_in_command.cancel')}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleApply}
+              className="bg-blue-600 rounded-full px-24 py-2"
+            >
+              {isApplyLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text className="text-white font-semibold">{t('profile_in_command.apply')}</Text>
+              )}
+            </Pressable>
+          </View>
         </View>
 
-        <View className="flex-row justify-between mt-6 px-2">
-          <TouchableOpacity
-            onPress={onClose}
-            className="border-2 border-yellow-500 rounded-full px-12 py-2"
-          >
-            <Text className="text-yellow-500 font-semibold">{t('profile_in_command.cancel')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleApply}
-            className="bg-blue-600 rounded-full px-24 py-2"
-          >
-            {isApplyLoading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text className="text-white font-semibold">{t('profile_in_command.apply')}</Text>
-            )}
-
-          </TouchableOpacity>
-        </View>
-      </View>
+      </Animated.View>
     </Animated.View>
   );
 };

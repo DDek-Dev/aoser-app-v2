@@ -20,7 +20,7 @@ export { default as profileImage } from './profile_image.png';
 export { default as pal } from './pal.png';
 export { default as remote } from './remote.mp4';
 export { default as splash } from './splash.png';
-
+export {default as map } from './map.jpg';
 
 //  AOSER LOGO
 
@@ -40,3 +40,6 @@ export { default as selfie_with_card_png } from './selfie_with_card_png.png';
 // Payment 
 
 export { default as lao_qr } from './lao_qr.png';
+
+//icons
+export { default as checklist } from './icons/checklist.png';

@@ -49,7 +49,7 @@ const ReviewModal = ({
 
     // API
     const createReview = useCreateReview();
-const { t } = useTranslation();
+    const { t } = useTranslation();
 
     // Available tags for selection
     const availableTags = [
@@ -142,8 +142,8 @@ const { t } = useTranslation();
             console.log('Failed to submit review:', error);
             Toast.show({
                 type: ALERT_TYPE.DANGER,
-                title: 'Opps!',
-                textBody: 'Failed to submit review. Please try again.',
+                title: t('kyc.toast.oops.title'),
+                textBody: t('kyc.toast.oops.body'),
             })
         }
 
@@ -258,7 +258,7 @@ const { t } = useTranslation();
                                     </View>
                                     {rating > 0 && (
                                         <Text className="text-center text-body text-textSecondary mt-2">
-                                             {t('reviewModal.starsOutOf', { rating })}
+                                            {t('reviewModal.starsOutOf', { rating })}
                                         </Text>
                                     )}
                                 </View>
@@ -312,7 +312,7 @@ const { t } = useTranslation();
                                     className="flex-1 bg-background border border-border py-3 rounded-xl"
                                 >
                                     <Text className="text-center text-body text-textSecondary font-medium">
-                                   {t('reviewModal.cancel')}
+                                        {t('kyc.buttons.back')}
                                     </Text>
                                 </TouchableOpacity>
 
@@ -324,7 +324,7 @@ const { t } = useTranslation();
                                 >
                                     <Text className={`text-center text-body font-semibold ${rating > 0 ? 'text-surface' : 'text-textSecondary'
                                         }`}>
-                                       {t('reviewModal.submitReview')}
+                                        {t('reviewModal.submitReview')}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -381,7 +381,7 @@ const { t } = useTranslation();
                                         marginBottom: 8,
                                         textAlign: 'center',
                                     }}>
-                                       {t('reviewModal.thankYou')}
+                                        {t('reviewModal.thankYou')}
                                     </Text>
 
                                     <Text style={{
@@ -391,7 +391,7 @@ const { t } = useTranslation();
                                         marginBottom: 16,
                                         textAlign: 'center',
                                     }}>
-                                       {t('reviewModal.thankYouMessage')}
+                                        {t('reviewModal.thankYouMessage')}
                                     </Text>
 
                                     <View className="flex-row items-center mb-2">
@@ -406,14 +406,19 @@ const { t } = useTranslation();
                                         ))}
                                     </View>
 
-                                    <Text style={{
-                                        fontSize: 12,
-                                        lineHeight: 16,
-                                        color: '#6B7280',
-                                        marginTop: 4,
-                                    }}>
-                                      {t('reviewModal.starRating', { rating })}
-                                    </Text>
+                                    <View className='flex-row gap-2'>
+
+                                        <Text style={{
+                                            fontSize: 12,
+                                            lineHeight: 16,
+                                            color: '#6B7280',
+                                            marginTop: 4,
+                                        }} >
+                                            {t('reviewModal.starRating', { rating })}
+                                        </Text>
+                                        <Ionicons name='checkmark-outline' size={24} color={'#10B981'} />
+
+                                    </View>
                                 </View>
                             </Animated.View>
                         )}

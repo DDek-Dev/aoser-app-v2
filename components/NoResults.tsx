@@ -6,11 +6,13 @@ import { Text, View } from "react-native";
 type NoResultsProps = {
   title?: string;
   subtitle?: string;
+  isShow?: boolean;
 };
-export function NoResults({subtitle, title}: NoResultsProps) {
+export function NoResults({subtitle, title, isShow}: NoResultsProps) {
   return (
     <View className="flex-1 justify-start items-center px-8">
-      <MaterialIcons name="search" size={80} color="#d1d5db" />
+      {isShow && <MaterialIcons name="search" size={80} color="#d1d5db" />}
+   
       <Text className="mt-6 text-2xl font-semibold text-gray-300 text-center">
        {title || 'No Results Found'}
       </Text>

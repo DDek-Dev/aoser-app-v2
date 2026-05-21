@@ -4,13 +4,14 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TextInputProps, 
-  TouchableOpacity, 
-  Modal, 
+import { Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TextInputProps,
+  TouchableOpacity,
+  Modal,
   FlatList,
   SafeAreaView,
   Dimensions,
@@ -85,7 +86,7 @@ function PhoneInput({
   const [isFocused, setIsFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const handleCountrySelect = (country: Country) => {
     setSelectedCountry(country);
     onCountryChange?.(country);
@@ -112,15 +113,15 @@ function PhoneInput({
       </Text>
 
       <View
-        className={`flex-row items-center border ${inputClassName} rounded-xl bg-white px-3 py-2 ${
-          isFocused ? 'border-primary border' : ''
-        }`}
+        className={`flex-row items-center border ${inputClassName} rounded-xl bg-white px-3 ${isFocused ? 'border-primary border' : ''
+          }`}
+        style={{ minHeight: 52 }}
       >
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
           className="flex-row items-center mr-2 pr-2 border-r border-gray-300"
         >
-          <Text className="text-2xl mr-1">{selectedCountry.flag}</Text>
+          <Text style={{ fontSize: 24, lineHeight: 28 }}>{selectedCountry.flag}</Text>
           <Text className="text-text text-sm">▼</Text>
         </TouchableOpacity>
 
@@ -133,8 +134,10 @@ function PhoneInput({
           onChangeText={handleChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className="flex-1 text-body placeholder:text-textSecondary text-text"
+          className="flex-1 text-body text-text  mb-1 items-center"
           // placeholderClassName='#111827'
+            placeholderTextColor="#9CA3AF"
+          style={{ paddingVertical: Platform.OS === 'ios' ? 14 : 10 }}
           maxLength={10}
           {...rest}
         />
@@ -153,8 +156,10 @@ function PhoneInput({
           setSearchQuery('');
         }}
       >
+        <View className="flex-1 justify-end">
+
         <Pressable className="flex-1 justify-end bg-black/50" onPress={() => setModalVisible(false)}>
-          <View 
+          <View
             className="bg-white rounded-t-3xl"
             style={{ height: SCREEN_HEIGHT * 0.7 }}
           >
@@ -162,7 +167,7 @@ function PhoneInput({
               <View className="p-4 border-b border-gray-200">
                 <View className="flex-row justify-between items-center mb-3">
                   <Text className="text-lg font-bold text-text">{t('editProfile.select_contry')}</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     onPress={() => {
                       setModalVisible(false);
                       setSearchQuery('');
@@ -176,8 +181,12 @@ function PhoneInput({
                   placeholder="Search country or code..."
                   value={searchQuery}
                   onChangeText={setSearchQuery}
-                  className="border border-gray-300 rounded-lg px-3 py-2.5 text-body"
+                  className="border border-gray-300 rounded-lg px-3  text-body"
                   autoCapitalize="none"
+                  style={{
+                    minHeight: 44,
+                    paddingVertical: Platform.OS === 'ios' ? 12 : 10,
+                  }}
                 />
               </View>
 
@@ -194,12 +203,11 @@ function PhoneInput({
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => handleCountrySelect(item)}
-                    className={`flex-row items-center p-4 border-b border-gray-100 ${
-                      item.code === selectedCountry.code ? 'bg-primary/10' : ''
-                    }`}
+                    className={`flex-row items-center p-4 border-b border-gray-100 ${item.code === selectedCountry.code ? 'bg-primary/10' : ''
+                      }`}
                     activeOpacity={0.7}
                   >
-                    <Text className="text-3xl mr-3">{item.flag}</Text>
+                    <Text style={{ fontSize: 28, lineHeight: 34 }}>{item.flag}</Text>
                     <View className="flex-1">
                       <Text className="text-body font-medium text-text">{item.name}</Text>
                       <Text className="text-caption text-textSecondary mt-0.5">
@@ -215,6 +223,7 @@ function PhoneInput({
             </SafeAreaView>
           </View>
         </Pressable>
+        </View>
       </Modal>
     </View>
   );

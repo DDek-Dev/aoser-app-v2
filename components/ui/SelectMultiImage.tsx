@@ -91,7 +91,7 @@ const SelectMultiImage: React.FC<Props> = ({
       onChange([...images, ...newFiles]);
     } catch (error) {
       console.log('Error selecting images:', error);
-      Alert.alert('Error', 'Failed to process images. Please try again.');
+      // Alert.alert('Error', 'Failed to process images. Please try again.');
     }
   };
 

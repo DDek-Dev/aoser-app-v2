@@ -1,15 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { chatApi } from 'api/chatApi';
 import { useAuth } from './useAuth';
-// import { chatService } from 'service/chatService';
-import { useInfiniteQuery } from '@tanstack/react-query';
 
-
-export const useChats = () => {
+export const useChats = (options?: { enabled?: boolean }) => {
   const { tokens } = useAuth();
   return useQuery({
     queryKey: ['chats'],
     queryFn: () => chatApi.getChat_users(tokens?.accessToken || ''),
+    enabled: (options?.enabled ?? true) && !!tokens?.accessToken,
   });
 };
 
@@ -19,12 +17,29 @@ export const useChatRoom = (userId: string) => {
     queryKey: ['chatRoom', userId],
     queryFn: () => chatApi.getChatroom(tokens?.accessToken || '', userId),
     enabled: !!userId && !!tokens?.accessToken,
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+    retry: (failureCount: number, error: any) => {
+      const status = error?.response?.status;
+      if (status === 429) return false;
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 8000),
   });
 };
 export const useUnreadChats = () => {
   return useQuery({
     queryKey: ['chats', 'unread'],
     // queryFn: chatService.getUnread,
+  });
+};
+export const useUnreadChatCount = (userId: string) => {
+  const { tokens } = useAuth();
+
+  return useQuery({
+    queryKey: ['unreadchatCount' ,userId],
+    queryFn: ()=> chatApi.getUnreadChatcount(tokens?.accessToken || ''),
+    enabled: !!tokens?.accessToken && !!userId,
   });
 };
 

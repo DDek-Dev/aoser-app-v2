@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { 
   TouchableOpacity, 
   View, 
+  Text,
   StyleSheet, 
   Animated, 
   Dimensions,
@@ -11,12 +12,16 @@ import {
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import { useChats, useUnreadChatCount } from 'hooks/useChat';
+import { useAuth } from 'hooks/useAuth';
+import SocketService from 'service/soctketService';
+import { useQueryClient } from '@tanstack/react-query';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BUTTON_SIZE = 60;
 const EDGE_MARGIN = 8;
-const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24;
-const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 64 : 120;
+const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 104 : StatusBar.currentHeight || 24;
+const BOTTOM_SAFE_AREA = Platform.OS === 'ios' ? 104 : 120;
 
 const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   // Start at bottom right with 164px margin from bottom
@@ -32,12 +37,20 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   const scale = useRef(new Animated.Value(1)).current;
   
   const [isDragging, setIsDragging] = useState(false);
-  const fadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeTimeoutRef = useRef<any>(null);
+  const pressLockRef = useRef(false);
   
   // Keep track of gesture
   const gestureStart = useRef({ x: 0, y: 0 });
   const currentPosition = useRef({ x: initialX, y: initialY });
 
+  const { user } = useAuth();
+  const userId = user?._id || '';
+  const hasUser = !!userId;
+  const queryClient = useQueryClient();
+  const unreadCountQuery = useUnreadChatCount(userId);
+  const { data: chats = [] } = useChats({ enabled: hasUser });
+  const unreadTotal = Number(unreadCountQuery.data?.totalChatUnread || 0);
   // Auto-fade functionality
   const resetFadeTimer = () => {
     if (fadeTimeoutRef.current) {
@@ -74,13 +87,14 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   };
 
   useEffect(() => {
+    if (!hasUser) return;
     resetFadeTimer();
     return () => {
       if (fadeTimeoutRef.current) {
         clearTimeout(fadeTimeoutRef.current);
       }
     };
-  }, []);
+  }, [hasUser]);
 
   // Calculate edge positions
   const getEdgePosition = (side: 'left' | 'right', y: number) => {
@@ -123,6 +137,31 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
       }),
     ]).start();
   };
+
+  const handleMainPress = () => {
+    if (!hasUser) return;
+    if (pressLockRef.current) return;
+    pressLockRef.current = true;
+    setTimeout(() => {
+      pressLockRef.current = false;
+    }, 250);
+
+    const unreadConversations = chats.filter((chat: any) => (chat?.unreadCount || 0) > 0);
+    if (SocketService.isConnected() && unreadConversations.length > 0) {
+      unreadConversations.forEach((chat: any) => {
+        if (chat?._id) {
+          SocketService.markMessagesAsRead(chat._id);
+        }
+      });
+    }
+
+    // Optimistic badge clear, then backend/query sync follows in chat screens/socket events.
+    queryClient.setQueryData(['unreadchatCount', userId], { totalChatUnread: 0 });
+    queryClient.invalidateQueries({ queryKey: ['chats'] });
+    onPress();
+  };
+
+  if (!hasUser) return null;
 
   const onGestureEvent = (event: any) => {
     const { translationX, translationY, state } = event.nativeEvent;
@@ -188,7 +227,7 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
       
       if (dragDistance < 10) {
         // It was a tap - trigger onPress and stay in place
-        onPress(); // FIXED: Removed setTimeout delay
+        handleMainPress();
         resetFadeTimer();
       } else {
         // It was a drag - snap to nearest edge
@@ -229,7 +268,7 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
         <TouchableOpacity 
           style={styles.button}
           activeOpacity={0.9}
-          onPress={onPress} // ADDED: Direct onPress handler as backup
+          onPress={handleMainPress}
         >
           {/* Glossy overlay effect */}
           <View style={styles.glossyOverlay} />
@@ -249,6 +288,16 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
           
           {/* Subtle inner highlight */}
           <View style={styles.innerHighlight} />
+
+          {unreadTotal > 0 ? (
+            <View style={styles.unreadBadge} >
+              <Text style={styles.unreadBadgeText}>
+                {unreadTotal > 99 ? '99+' : unreadTotal}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.statusDot} />
+          )}
         </TouchableOpacity>
       </Animated.View>
     </PanGestureHandler>
@@ -303,7 +352,7 @@ const styles = StyleSheet.create({
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
     borderRadius: BUTTON_SIZE / 2,
-    overflow: 'hidden',
+    // overflow: 'hidden',
     borderWidth: 2.5,
     borderColor: '#ffffff',
     position: 'relative',
@@ -344,6 +393,44 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderRadius: BUTTON_SIZE / 2,
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    backgroundColor: '#EF4444',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  unreadBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 12,
+  },
+  statusDot: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#22C55E',
+    borderWidth: 1.5,
+    borderColor: '#ffffff',
+    zIndex: 20,
   },
 });
 

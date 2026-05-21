@@ -1,31 +1,36 @@
-import React, { useEffect, useRef, useState, useMemo, use, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Animated,
   Platform,
-  InteractionManager,
-  TouchableWithoutFeedback,
-  BackHandler,
   StyleSheet,
   ActivityIndicator,
+  Pressable,
+  BackHandler,
+  KeyboardAvoidingView,
 
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import ProfileOn_Interested from 'components/profile/ProfileOn_Interested';
+// import ProfileOn_Interested from 'components/profile/ProfileOn_Interested';
 import { useNavigation } from '@react-navigation/native';
-import ProfileInCommand from './ProfileInCommand';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 
 import { Job, Favorite } from 'types';
-import { formatDate, getCurrentLanguage } from 'utils/dateFormatter';
+import { formatDisplayDateTime } from 'utils/dateFormatter';
 import { useCreateFavorite, useDeleteFavorite, useMyProfile } from 'hooks/useFreelancer';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'hooks/useAuth';
+import BudgetInput from 'components/ui/BudgetInput';
+import TextArea from 'components/ui/TextArea';
+import { useFreelancerApplyWork, useFreeLRequestUpdateW } from 'hooks/usePublicWork';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import ReportModal from 'components/ui/ReportModal';
+
 
 
 interface JobDetailModalProps {
@@ -34,7 +39,7 @@ interface JobDetailModalProps {
   job: Job | null;
   user?: any;
   refetch: () => void;
-  onUserPress: (userId: string) => void;
+  onUserPress?: (userId: string) => void;
 }
 
 
@@ -42,26 +47,48 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
   const navigator = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [showProfile, setShowProfile] = useState(false);
+  // const [showProfile, setShowProfile] = useState(false);
   const [isFavorite, setIsFavorite] = useState<boolean>();
+  const [close, setClose] = useState<boolean>(true);
   const [favoriteId, setFavoriteId] = useState<string | null>(
     job?._id || null
   );
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+
+  // form reason 
+  const [isApplyLoading, setIsApplyLoading] = useState(false);
+  const [reason, setReason] = useState('');
+  const [budget_offer, setBudget_offer] = useState(0);
+  const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
+  const [error_offer, serError_offer] = useState({
+    reason: false,
+    budget: false,
+  })
+  const freeLRequestUpdateWMutation = useFreeLRequestUpdateW();
+  const applyWorkMutation = useFreelancerApplyWork();
+  // process
   const [isProcessing, setIsProcessing] = useState(false);
   // Add debounce ref to prevent rapid clicks
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<any>(null);
   const isFirstLoad = useRef(true);
   const [totalLikes, setTotalLikes] = useState(job?.totalLikes || 0);
   const { data, isLoading, isError, error } = useMyProfile();
   const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
+
+  const isOwner = !!(data?._id && job?.createdBy?._id && data._id === job.createdBy._id);
+  const hasApplied = !!job?.workApplicants?.some(app => app.applicant === data?._id);
+  const canApply =
+    !!job &&
+    data?.businessType === 'FREELANCER' &&
+    data?.registrationStatus === 'APPROVED_COMPLETE' &&
+    !isOwner;
+
   // Single animation value for both show/hide and position adjustment
   const footerAnim = useRef(new Animated.Value(200)).current;
 
-  const snapPoints = useMemo(() => ['70%', '100%'], []);
-
+  const snapPoints = useMemo(() => ['100%'], []);
+  const scrollViewRef = useRef(null);
   // Calculate base positions
   const basePosition70 = 564
   const basePosition100 = 164
@@ -69,56 +96,56 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
   const creatFavorite = useCreateFavorite();
   const deleteFavorite = useDeleteFavorite();
   // Reset state when modal closes
+  // useEffect(() => {
+  //   if (!visible) {
+  //     setShowProfile(false);
+  //   }
+  // }, [visible]);
+
+
+  // Show/hide bottom sheet quickly (avoid extra delays)
   useEffect(() => {
     if (!visible) {
-      setShowProfile(false);
+      bottomSheetModalRef.current?.dismiss();
+      return;
     }
+
+    const raf = requestAnimationFrame(() => {
+      bottomSheetModalRef.current?.present();
+    });
+
+    return () => cancelAnimationFrame(raf);
   }, [visible]);
 
-
-  // Show/hide modal with proper timing
+  // Reset offering inputs when opening a new job
   useEffect(() => {
-    if (animationTimeoutRef.current) {
-      clearTimeout(animationTimeoutRef.current);
-    }
+    if (!visible || !job) return;
+    setReason('');
+    setBudget_offer(0);
+    setBudgetCurrency(job.currency || 'LAK');
+    serError_offer({ reason: false, budget: false });
+  }, [visible, job?._id]);
 
+  // Handle Android hardware back button
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
 
-    animationTimeoutRef.current = setTimeout(() => {
-      InteractionManager.runAfterInteractions(() => {
-        if (visible && job) {
-          bottomSheetModalRef.current?.present();
-        } else {
-          bottomSheetModalRef.current?.dismiss();
-        }
-      });
-    }, 50);
-
-    return () => {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (visible) {
+        handleDismiss();
+        return true; // true = we handled it, prevents default back navigation
       }
-    };
-  }, [visible, job]);
+      return false; // false = let the system handle it
+    });
 
+    return () => subscription.remove();
+  }, [visible]);
 
   // Handle Android back button
-  useEffect(() => {
-    const onBackPress = () => {
-      if (currentIndex >= 0) {
-        bottomSheetModalRef.current?.dismiss();
-        return true;
-      }
-      return false;
-    };
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => backHandler.remove();
-  }, [currentIndex]);
-
 
 
   const handleSheetChanges = (index: number) => {
-    setCurrentIndex(index);
+
 
     // Calculate target position based on snap point
     let targetPosition;
@@ -138,8 +165,9 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
     }).start();
   };
 
+
   const handleDismiss = () => {
-    setCurrentIndex(-1);
+
     Animated.timing(footerAnim, {
       toValue: 100,
       duration: 200,
@@ -180,14 +208,9 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
   const handleCreateFavorite = useCallback(async () => {
     if (!job?._id || isProcessing) {
-
       return;
     }
-
-
     setIsProcessing(true);
-
-
     // Optimistic updates
     setIsFavorite(true);
     setTotalLikes(prev => prev + 1);
@@ -215,7 +238,6 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       setIsProcessing(false);
     }
   }, [job?._id, isProcessing, totalLikes, isFavorite, creatFavorite, refetch]);
-
 
   // Fixed delete favorite handler
   const handleDeleteFavorite = useCallback(async (likeId: string) => {
@@ -265,25 +287,77 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
     }, 100); // 100ms debounce
   }, [isFavorite, favoriteId, job?.myLike?.[0]?._id, handleCreateFavorite, handleDeleteFavorite, isProcessing]);
 
+
+
+
   // Loading state
   const isLoadingFavorite = creatFavorite.isPending || deleteFavorite.isPending || isProcessing;
-
-  if (!visible || !job) return null;
 
   // Safe property access with fallbacks
   const jobBudget = job?.budget || 0;
   const jobType = job?.kindOfWork || 'Unknown Type';
-  const jobDeadline = job?.deadLine || ' Unknown Deadline';
   const jobDescription = job?.description || 'No description available';
   const subwork = job?.subWorkDetails || [];
-  const currentLanguage = getCurrentLanguage();
+  const handleApply = async () => {
+    if (!job?._id) return;
+    const trimmedReason = reason.trim();
+    const hasReason = trimmedReason.length > 0;
+    const hasBudget = (budget_offer || 0) > 0;
+
+    // Validation: both empty is OK (no offering). If one is provided, require both.
+    if ((hasReason && !hasBudget) || (!hasReason && hasBudget)) {
+      serError_offer({
+        reason: !hasReason,
+        budget: !hasBudget,
+      });
+      return;
+    }
+
+    serError_offer({ reason: false, budget: false });
+
+    try {
+      setIsApplyLoading(true);
 
 
+      // Only send offering when both values are provided
+      if (hasReason && hasBudget) {
+        const updateDatas = {
+          reason: trimmedReason,
+          updateData: {
 
+            budget: budget_offer,
+            currency: budgetCurrency,
+          }
 
-  // console.log(data.businessType);
-  if (isLoading) return <ActivityIndicator />;
-  if (error) return <Text>Error fetching freelancee </Text>;
+        };
+        await freeLRequestUpdateWMutation.mutateAsync({
+          id: job._id,
+          data: updateDatas
+        });
+      }
+      await applyWorkMutation.mutateAsync({
+        workId: job._id,
+      });
+      await refetch();
+      // onClose();
+
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('common.success') || 'Success',
+      });
+    } catch (applyError: any) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('common.error') || 'Failed',
+        textBody:
+
+          t('profile_in_command.apply_failed') ||
+          'Failed to apply for this work. Please try again.',
+      });
+    } finally {
+      setIsApplyLoading(false);
+    }
+  };
 
 
   return (
@@ -291,18 +365,23 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       ref={bottomSheetModalRef}
       index={0}
       snapPoints={snapPoints}
-      onChange={handleSheetChanges}
+      // onChange={handleSheetChanges}
       onDismiss={handleDismiss}
       enablePanDownToClose={true}
-      backgroundStyle={styles.modalBackground}
-      handleIndicatorStyle={styles.handleIndicator}
+      // backgroundStyle={styles.modalBackground}
+      // handleIndicatorStyle={styles.handleIndicator}
       topInset={insets.top}
       android_keyboardInputMode="adjustResize"
-      backdropComponent={({ style }) => (
-        <TouchableWithoutFeedback onPress={handleDismiss}>
-          <View style={[style, styles.backdrop]} />
-        </TouchableWithoutFeedback>
-      )}
+
+      // backdropComponent={({ style }) => (
+      //   <TouchableWithoutFeedback onPress={handleDismiss}>
+      //     <View style={[style, styles.backdrop]} />
+      //   </TouchableWithoutFeedback>
+      // )}
+      keyboardBehavior="interactive"        // ← add this
+      keyboardBlurBehavior="restore"
+      enableDynamicSizing={false}
+
     >
       {/* Header */}
 
@@ -327,7 +406,16 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
               </View>
             </TouchableOpacity>
-
+            {/* Report Button */}
+            <TouchableOpacity
+              onPress={() => setReportModalVisible(true)}
+              className="p-2"
+              activeOpacity={0.7}
+              accessibilityLabel="Report profile"
+              accessibilityRole="button"
+            >
+              <Ionicons name="information-circle" size={28} color="#000" />
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -335,165 +423,430 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       {/* Content */}
 
 
-      <BottomSheetScrollView
-        className="flex-1 px-4 bg-surface"
-        showsVerticalScrollIndicator={false}
-        bounces={true}
-        contentContainerStyle={{ paddingBottom: 200 }}
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 60 : 0}
       >
-        <Text className="text-body font-bold text-text my-3">
-          {job?.workTitle}
-        </Text>
+        <BottomSheetScrollView
+          ref={scrollViewRef}
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="none"
+          contentContainerStyle={{
+            paddingBottom: canApply && !hasApplied
+              ? insets.bottom + 100
+              : insets.bottom + 24,
+          }}
+        >
 
-        <View className="flex-row items-center mb-4 gap-2">
-          <View>
-            {job?.budgetType === "FIXED_PRICE" ? (
-              <MaterialIcons name="attach-money" size={24} color="gray" />
-            ) : (
-              <Text className='font-bold text-textSecondary text-lg'>₭</Text>
-            )}
-          </View>
-          <Text className="text-subheading font-bold text-primary">
-            {new Intl.NumberFormat().format(jobBudget)}
-          </Text>
-        </View>
 
-        <View className="flex-row items-center mb-4 gap-2">
-          <MaterialIcons name="donut-small" size={24} color="gray" />
-          <View className="bg-blue-50 px-3 py-1 rounded-full">
-            <Text className="text-primary text-body">{jobType === "ONLINE" ? "Online" : "Offline"}</Text>
-          </View>
-        </View>
 
-        <View className="flex-row items-center mb-4 gap-2">
-          <MaterialIcons name="alarm" size={24} color="gray" />
-          <View className="bg-blue-50 px-3 py-1 rounded-full">
-            <Text className="text-primary text-body">{formatDate(jobDeadline, currentLanguage)}</Text>
-          </View>
-        </View>
+          <View className="px-2">
 
-        <View className="flex-row items-center mb-4 gap-2">
-          <MaterialIcons name="person" size={24} color="gray" />
-          <View className="px-3 py-1 rounded-full">
-            <Text className="text-primary text-body">
-              {job?.totalLikes || 0} {t('workDetail.interested_freelancers')}
+
+            {/* Job Title */}
+            <Text className="text-xl font-bold text-text my-6 ">
+              {job?.workTitle}
             </Text>
-          </View>
-        </View>
 
-        <View className='flex-row items-center gap-2 mb-4'>
-          <Text className='text-body font-bold text-text'>{t('workDetail.work_detail')}</Text>
-          <View className='bg-gray-200 flex-1 h-[1px]' />
-        </View>
-
-        <View className='bg-blue-100 p-4 rounded-2xl mb-4'>
-
-
-          <View className="bg-background p-4 rounded-2xl mb-6">
-            <Text className="text-textSecondary leading-6">
-              {jobDescription}
-            </Text>
-          </View>
-
-          {subwork.map((section, sectionIndex) => (
-            <View key={sectionIndex} className="mb-4 p-3 bg-blue-50 rounded-xl border border-border">
-              {/* Section Header */}
-              <Text className="text-body font-semibold text-primary mb-2">
-                {section.sectionTitle}
-              </Text>
-
-              {/* Subtasks */}
-              {section.subTask.map((task, taskIndex) => (
-                <View key={taskIndex} className="flex-row items-center mb-1 ml-4">
-                  <Text className="text-caption mr-1">•</Text>
-                  <Text className="flex-1 text-body text-text">
-                    {task.title}
-                  </Text>
-                  <View className={`px-2 py-1 rounded-full ${task.subWorkStatus === 'TODO' ? 'bg-gray-200' :
-                    task.subWorkStatus === 'DOING' ? 'bg-blue-200' :
-                      task.subWorkStatus === 'DONE' ? 'bg-green-200' :
-                        task.subWorkStatus === 'DELAY' ? 'bg-yellow-200' :
-                          'bg-red-200'
-                    }`}>
-                    <Text className="text-caption text-text">
-                      {task.subWorkStatus}
-                    </Text>
+            {/* Key Info Cards */}
+            <View className=" rounded-2xl p-4 mb-6">
+              {/* Budget - Most Important Info First */}
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="wallet" size={24} color="#3b82f6" />
                   </View>
+                  <Text className="text-body text-text">{t('postWork.budget')}</Text>
+                </View>
+
+                {job?.budgetType === 'OFFERING' ? (
+                  <View className=''>
+                    <Text className="text-body text-primary font-bold mr-2">{t('workDetail.offering_price')}</Text>
+                  </View>
+                ) : (
+
+                  <View className="flex-row items-center">
+                    {/* <Text>{t('postWork.budget')} : </Text> */}
+                    <Text className="font-bold text-body text-primary">
+                      {new Intl.NumberFormat().format(jobBudget)}
+                    </Text>
+                    <Text className="font-bold text-body text-warning ml-2">{job?.currency} </Text>
+                  </View>
+
+                )}
+                {/* <View className="flex-row items-baseline gap-1">
+                  <Text className="text-2xl font-bold text-primary">
+                    {new Intl.NumberFormat().format(jobBudget)}
+                  </Text>
+                  <Text className="text-body font-semibold text-warning">{job?.currency}</Text>
+                </View> */}
+              </View>
+
+              {/* Work Type */}
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="donut-small" size={24} color="#3b82f6" />
+                  </View>
+                  <Text className="text-body text-text">{t('workDetail.kind_of_work')}</Text>
+                </View>
+                <View className={`px-4 py-2 rounded-full bg-primary`}>
+                  <Text className={`text-sm font-semibold text-surface`}>
+                    {jobType === "ONLINE" ? t('editWork.workType.online') : t('editWork.workType.offline')}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Deadline */}
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="date-range" size={24} color="#3b82f6" />
+                  </View>
+                  <Text className="text-body text-text">{t('postWork.from')}</Text>
+                </View>
+                <Text className="text-sm font-semibold text-text">
+                  {formatDisplayDateTime(job?.startDate as string)}
+                </Text>
+              </View>
+              <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-primary/10 p-2 rounded-lg">
+                    <MaterialIcons name="date-range" size={24} color="#3b82f6" />
+                  </View>
+                  <Text className="text-body text-text">{t('postWork.to')}</Text>
+                </View>
+                <Text className="text-sm font-semibold text-text">
+                  {formatDisplayDateTime(job?.deadLine as string)}
+                </Text>
+              </View>
+
+              {/* Interested Freelancers */}
+              {/* <View className="flex-row items-center justify-between mb-4 pb-4 border-b border-border">
+            <View className="flex-row items-center gap-3">
+              <View className="bg-primary/10 p-2 rounded-lg">
+                <MaterialIcons name="person" size={24} color="#3b82f6" />
+              </View>
+              <Text className="text-body text-text">
+                {t('workDetail.interested_freelancers')}
+              </Text>
+            </View>
+            <View className="bg-primary/20 px-3 py-1.5 rounded-full">
+              <Text className="text-sm font-bold text-primary">
+                {job?.workApplicants?.length || 0}
+              </Text>
+            </View>
+          </View> */}
+
+              {job?.address &&
+
+                <View className="flex-row mt-3 items-center overflow-hidden  pb-4 border-b border-border">
+                  <View className="flex-row items-start gap-1">
+                    <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
+                      <Ionicons name="location-outline" size={24} color="#F59E0B" />
+                    </View>
+
+                    <View>
+
+
+                      {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
+                      {job?.address.village !== '' &&
+                        job?.address.district !== '' &&
+                        job?.address.province !== '' && (
+
+
+                          <Text className="text-body text-text ">
+                            {job.address.village}, {job.address.district}, {job.address.province}.
+
+                          </Text>
+                        )}
+
+                      {job?.place && (
+
+
+
+                        <Text className="text-body text-text ">
+                          {job?.place}
+
+                        </Text>
+
+
+                      )}
+                    </View>
+
+
+                  </View>
+                </View>
+              }
+
+
+
+
+            </View>
+
+            {/* Work Detail Section Header */}
+            <View className="flex-row items-center gap-3 mb-4">
+
+              <Text className="text-lg font-bold text-text">
+                {t('postWork.work_description')}
+              </Text>
+              <View className="flex-1 h-px bg-gray-300" />
+            </View>
+
+            <View className='bg-blue-100 p-4 rounded-2xl mb-4'>
+
+
+              <View className="bg-background p-4 rounded-2xl mb-6">
+                <Text className="text-textSecondary leading-6">
+                  {jobDescription}
+                </Text>
+              </View>
+
+              {subwork.map((section, sectionIndex) => (
+                <View key={sectionIndex} className="mb-4 p-3 bg-blue-50 rounded-xl border border-border">
+                  {/* Section Header */}
+                  <Text className="text-body font-semibold text-primary mb-2">
+                    {section.sectionTitle}
+                  </Text>
+
+                  {/* Subtasks */}
+                  {section.subTask.map((task, taskIndex) => (
+                    <View key={taskIndex} className="flex-row items-center mb-1 ml-4">
+                      <Text className="text-caption mr-1">•</Text>
+                      <Text className="flex-1 text-body text-text">
+                        {task.title}
+                      </Text>
+                      <View className={`px-2 py-1 rounded-full ${task.subWorkStatus === 'TODO' ? 'bg-gray-200' :
+                        task.subWorkStatus === 'DOING' ? 'bg-blue-200' :
+                          task.subWorkStatus === 'DONE' ? 'bg-green-200' :
+                            task.subWorkStatus === 'DELAY' ? 'bg-yellow-200' :
+                              'bg-red-200'
+                        }`}>
+                        <Text className="text-caption text-text">
+                          {task.subWorkStatus}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
               ))}
             </View>
-          ))}
-        </View>
+
+
+            {canApply && (
+              <>
+                {/* Offering form */}
+                <View className="flex-row items-center gap-3 mb-4">
+                  <View className="flex-1 h-px bg-gray-300" />
+
+                  <Text className="text-lg font-bold text-text">
+                    {t('chat.offer.your_offering')}
+                  </Text>
+                  <View className="flex-1 h-px bg-gray-300" />
+                </View>
+
+                {!hasApplied ? (
+                  <View>
+                    <BudgetInput
+                      label={t('chat.offer.price')}
+                      value={budget_offer}
+                      onChange={(value) => {
+                        setBudget_offer(value);
+                        serError_offer(prev => ({ ...prev, budget: false }));
+                      }}
+                      currency={budgetCurrency}
+                      onCurrencyChange={setBudgetCurrency}
+                      error={error_offer.budget}
+                      isValidate={error_offer.budget ? t('postWork.budget_required') : ''}
+                    />
+
+                    <View className="mt-2">
+                      <TextArea
+                        label={t('postWork.work_description_reason')}
+                        placeholder={t('postWork.work_description_placeholder_reason')}
+                        value={reason}
+                        onChangeText={(text) => {
+                          setReason(text);
+                          serError_offer(prev => ({ ...prev, reason: false }));
+                        }}
+                        inputClassName={`${error_offer.reason ? 'border-error' : 'border-border'}`}
+                        isValidate={`${error_offer.reason ? `${t('postWork.work_description_required')}` : ''}`}
+                      />
+                    </View>
+                  </View>
+                ) : (
+                  <View className="bg-blue-50 border border-primary rounded-xl p-4 mb-2">
+                    <Text className="text-body text-text self-center">
+                      {t('workDetail.already_applied') || 'Already applied'}
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+          {/* {isOwner && job?.workApplicants?.length > 0 && (
+          <>
+            <ProfileOn_Interested
+              job={job}
+              handleUserProfileNavigation={onUserPress}
+              onClose={handleDismiss}
+            />
+          </>
+        )} */}
 
 
 
-        <View className='bg-gray-200 w-full h-[1px] mb-4' />
-        <Text className='text-body font-bold text-text'>{t('workDetail.interested_freelancers')}</Text>
-        {job?.workApplicants?.length > 0 && (
-          <ProfileOn_Interested
-            job={job}
-            handleUserProfileNavigation={onUserPress}
-            onClose={handleDismiss}
-          />
-        )}
-      </BottomSheetScrollView>
-
-      {job?.workApplicants && !job.workApplicants.some(app => app.applicant === data?._id) && (
 
 
-        <Animated.View
-          className="absolute bottom-64 left-4 right-4 rounded-2xl items-center "
-        // style={{
-        //   transform: [{ translateY: footerAnim }],
-        //   zIndex: 5,
-        // }}
-        >
-          {data?.businessType === "FREELANCER" && data?._id !== job.createdBy._id && (
+
+        </BottomSheetScrollView>
+
+        {canApply && !hasApplied && (
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: insets.bottom + 24,
+              backgroundColor: 'transparent',
+            }}
+          >
             <TouchableOpacity
-              onPress={() => setShowProfile(true)}
-              className="bg-primary p-6 rounded-full shadow-md -rotate-45"
-              style={styles.blueShadow}
+              onPress={handleApply}
+              disabled={isApplyLoading}
+              className={`bg-primary p-4 mx-4 rounded-full shadow-md ${isApplyLoading ? 'opacity-60' : ''}`}
+            // style={styles.blueShadow}
+            // style={{ marginBottom: insets.bottom}}
             >
-              <Ionicons name="send" size={24} color="white" />
+              {isApplyLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <View className='flex-row gap-2 items-center justify-center'>
+                  <Text className='text-surface'>{t('workDetail.apply_now')}</Text>
+
+                  {/* <Ionicons name="send" size={24} color="white" className='-rotate-45' /> */}
+                </View>
+              )}
             </TouchableOpacity>
-          )}
+          </View>
+        )}
+      </KeyboardAvoidingView>
 
-          {data?.businessType !== "FREELANCER" && data?._id !== job.createdBy._id && (
-            <View className="bg-surface p-4 rounded-2xl items-center shadow-lg" style={styles.blueShadow}>
-              <View className="bg-blue-100 p-3 rounded-full mb-3">
-                <Ionicons name="rocket-outline" size={28} color="#2563eb" />
-              </View>
-              <Text className="text-body font-bold text-primary mb-1 text-center">
-                {t('workDetail.become_freelancer_role')}
-              </Text>
-              <Text className="text-caption text-textSecondary text-center mb-3">
-                {t('workDetail.set_up_freelancer_role')}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  handleDismiss();
-                  navigator.navigate('FreelancerRoleGate');
-                }}
-                className="bg-primary px-6 py-3 rounded-xl flex-row items-center space-x-2"
 
+      {job?.workApplicants && !hasApplied && (
+
+        <>
+          <Animated.View
+            pointerEvents="box-none"
+            className="absolute bottom-[10rem] left-4 right-4 rounded-2xl items-center "
+          >
+
+            {data?.businessType !== "FREELANCER" && data?.registrationStatus !== 'APPROVED_COMPLETE' && data?._id !== job?.createdBy?._id && (
+              <View
+                pointerEvents="box-none"
+                className="bg-surface p-4 rounded-2xl items-center shadow-lg w-[100%]"
+                style={styles.blueShadow}
               >
-                <Text className="text-surface font-bold text-caption">{t('workDetail.start_freelancer_role')}</Text>
-                <Ionicons name="arrow-forward" size={18} color="white" />
-              </TouchableOpacity>
-            </View>
-          )}
-        </Animated.View>
+                <View className="bg-blue-100 p-3 rounded-full mb-3">
+                  <Ionicons name="rocket-outline" size={28} color="#2563eb" />
+                </View>
+                <Text className="text-body font-bold text-primary mb-1 text-center">
+                  {t('workDetail.become_freelancer_role')}
+                </Text>
+                <Text className="text-caption text-textSecondary text-center mb-3">
+                  {t('workDetail.set_up_freelancer_role')}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    handleDismiss();
+                    navigator.navigate('FreelancerRoleGate');
+                  }}
+                  className="bg-primary px-6 py-3 rounded-xl flex-row items-center space-x-2"
+
+                >
+                  <Text className="text-surface font-bold text-caption">{t('workDetail.start_freelancer_role')}</Text>
+                  <Ionicons name="arrow-forward" size={18} color="white" />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {data?.businessType === 'FREELANCER' && data?.registrationStatus === 'REJECTED' && close && (
+
+              <View pointerEvents="box-none" className="flex-1 items-center justify-center p-4 bg-primary rounded-2xl">
+
+                <Pressable
+                  onPress={() => setClose(false)}
+                  className='self-end bg-border rounded-full'>
+                  <Ionicons name='close-outline' size={28} color="#EF4444" />
+                </Pressable>
+
+                {/* Title */}
+                <Text className="text-heading text-surface text-center mb-3">
+                  {t('freelancerRoleGate.rejectedTitle')}
+                </Text>
+
+                {/* Subtitle */}
+                <Text className="text-body text-surface text-center mb-8 max-w-sm">
+                  {t('freelancerRoleGate.rejectedSubtitle')}
+                </Text>
+
+
+                {/* Action Buttons */}
+                <View className="w-full gap-3">
+                  <TouchableOpacity
+                    onPress={() => {
+                      onClose()
+                      navigator.navigate('UpgradeToFreelancer')
+                    }}
+                    className="bg-surface py-4 px-6 rounded-xl items-center"
+                  >
+                    <Text className="text-primary text-body font-semibold">
+                      {t('freelancerRoleGate.reapplyButton')}
+                    </Text>
+                  </TouchableOpacity>
+
+
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      onClose()
+                    }}
+                    className="py-3 items-center"
+                  >
+                    <Text className="text-surface text-body">
+                      {t('freelancerRoleGate.backToHomeButton')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+          </Animated.View>
+        </>
       )}
 
 
-      {showProfile && (
+      {/* {showProfile && (
         <ProfileInCommand
           jobId={job._id}
           visible={showProfile}
           onClose={() => setShowProfile(false)}
           refetch={refetch}
         />
-      )}
+      )} */}
+
+      {/* ===== REPORT MODAL ===== */}
+      <ReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        reportID={job?._id || ''}
+        reportType="WORK"
+        freelancerName={``}
+      />
     </BottomSheetModal>
   );
 };

@@ -6,6 +6,7 @@ import { useAuth } from 'hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
 import { profileImage } from 'assets';
 import { formatRelativeTime, formatTime, getCurrentLanguage } from 'utils/dateFormatter';
+import { useTranslation } from 'react-i18next';
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -26,10 +27,9 @@ type ChatItemProps = {
 }
 
 export default function ChatItem({
-  _id,
+ 
   participants,
-  createdAt,
-  updatedAt,
+
   lastMessage,
   unreadCount,
   pinned,
@@ -77,8 +77,9 @@ export default function ChatItem({
   const lowerFile = (fileUrl || '').toLowerCase();
   const isImage = ['.png', '.jpg', '.jpeg', '.gif', '.webp'].some(ext => lowerFile.includes(ext));
 
-  const workTitle = (lastMessage as Message)?.work?.workTitle || (lastMessage as any)?.work?.workTitle;
+  // const workTitle = (lastMessage as Message)?.work?.workTitle || (lastMessage as any)?.work?.workTitle;
 
+  const {t} = useTranslation();
   // messagePreview will be rendered below (can be string or element)
   const messagePreviewType = lastMessage?.messageType || 'TEXT';
 
@@ -158,11 +159,11 @@ export default function ChatItem({
                 <Text className="text-textSecondary text-caption" numberOfLines={1}>
                   {prefixText}
                   {messagePreviewType === 'FILE'
-                    ? (isImage ? ' Send a Photo' : 'File')
+                    ? (isImage ? `${t('chat.chatroom.send_photo')}` : `${t('chat.chatroom.send_file')}`)
                     : messagePreviewType === 'WORK'
                       // ? `Work: ${workTitle}`
-                      ? `Send a work`
-                      : (lastMessage?.message || 'Link')}
+                      ? `${t('chat.chatroom.send_work')}`
+                      : (lastMessage?.message || `${t('chat.chatroom.send_link')}`)}
                 </Text>
               </View>
             )}

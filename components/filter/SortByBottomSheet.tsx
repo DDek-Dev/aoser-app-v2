@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import {
     Animated,
     View,
@@ -12,31 +12,55 @@ import { useTranslation } from 'react-i18next';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-
-
-
 type Props = {
     visible: boolean;
     onClose: () => void;
-    selected: string;
-    onSelect: (option: string) => void;
+    selected: string; // This should be the value, not the label
+    onSelect: (value: string) => void; // Pass the value, not the label
 };
 
 export default function SortByBottomSheet({ visible, onClose, selected, onSelect }: Props) {
+    const { t } = useTranslation();
+
+    // Animation refs
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
+    // IMPORTANT: Define sort options with value and translation key
+    // This ensures consistent behavior across language changes
+    const sortOptions = useMemo(() => [
+        {
+            label: t('sortBy.all'),
+            value: 'all', // Use lowercase consistent values
+            icon: <Ionicons name="star" size={18} color="#3b82f6" />
+        },
+        {
+            label: t('sortBy.priceLowHigh'),
+            value: 'price_low_high',
+            icon: <MaterialIcons name="arrow-upward" size={18} color="#666" />
+        },
+        {
+            label: t('sortBy.priceHighLow'),
+            value: 'price_high_low',
+            icon: <MaterialIcons name="arrow-downward" size={18} color="#666" />
+        },
+        {
+            label: t('sortBy.distanceNearFar'),
+            value: 'distance_near_far',
+            icon: <Ionicons name="location-outline" size={18} color="#10b981" />
+        },
+        {
+            label: t('sortBy.distanceFarNear'),
+            value: 'distance_far_near',
+            icon: <Ionicons name="location-outline" size={18} color="#ef4444" />
+        },
+    ], [t]); // Re-compute when translation changes
 
-    const { t } = useTranslation();
-    const sortOptions = [
-        { label: `${t('sortBy.all')}`, value: 'All', icon: <Ionicons name="star" size={18} color="#3b82f6" /> },
-        { label: `${t('sortBy.high_low')}`, value: 'Price: Low to High', icon: <MaterialIcons name="sort" size={18} color="#666" /> },
-        { label: `${t('sortBy.low_high')}`, value: 'Price: High to Low', icon: <MaterialIcons name="sort" size={18} color="#666" /> },
-        { label: `${t('sortBy.near_far')}`, value: 'Distance: Near to Far', icon: <Ionicons name="location-outline" size={18} color="#666" /> },
-        { label: `${t('sortBy.far_near')}`, value: 'Distance: Far to Near', icon: <Ionicons name="location-outline" size={18} color="#666" /> },
-    ];
+    // IMPORTANT: Animation effect for show/hide
+    // Runs both fade and slide animations in parallel
     useEffect(() => {
         if (visible) {
+            // Show animations
             Animated.parallel([
                 Animated.timing(fadeAnim, {
                     toValue: 1,
@@ -50,6 +74,7 @@ export default function SortByBottomSheet({ visible, onClose, selected, onSelect
                 }),
             ]).start();
         } else {
+            // Hide animations
             Animated.parallel([
                 Animated.timing(fadeAnim, {
                     toValue: 0,
@@ -63,13 +88,20 @@ export default function SortByBottomSheet({ visible, onClose, selected, onSelect
                 }),
             ]).start();
         }
-    }, [visible]);
+    }, [visible, fadeAnim, slideAnim]);
+
+    // IMPORTANT: Get display label for current selection
+    // This ensures the selected value shows in current language
+    const getDisplayLabel = (value: string): string => {
+        const option = sortOptions.find(opt => opt.value === value);
+        return option ? option.label : t('sortBy.all');
+    };
 
     if (!visible) return null;
 
     return (
         <View className="absolute top-0 left-0 right-0 bottom-0 z-50">
-            {/* Fade Black Background */}
+            {/* IMPORTANT: Backdrop - closes sheet when tapped */}
             <Pressable onPress={onClose} className="absolute top-0 left-0 right-0 bottom-0">
                 <Animated.View
                     style={{
@@ -80,49 +112,75 @@ export default function SortByBottomSheet({ visible, onClose, selected, onSelect
                 />
             </Pressable>
 
-            {/* White Bottom Sheet */}
-            {/* <Animated.View
-        style={{
-          transform: [{ translateY: slideAnim }],
-        }}
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5"
-      > */}
+            {/* IMPORTANT: Bottom Sheet Container with slide animation */}
             <Animated.View
                 style={{
                     transform: [{ translateY: slideAnim }],
                 }}
-                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl px-5 p-5 pb-12"
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl px-5 py-5 pb-12"
             >
                 {/* Header */}
                 <View className="flex-row justify-between items-center mb-4">
-                    <Text className="text-base font-semibold text-gray-800">Sort by</Text>
-                    <TouchableOpacity onPress={onClose}>
-                        <Ionicons name="close" size={22} color="#666" />
+                    <Text className="text-h3 font-bold text-text">
+                        {t('sortBy.title')}
+                    </Text>
+                    <TouchableOpacity
+                        onPress={onClose}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Ionicons name="close" size={24} color="#666" />
                     </TouchableOpacity>
                 </View>
 
-                {/* Sort Options */}
-                {sortOptions.map((option, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        className="flex-row items-center justify-between mb-4 px-6 py-1"
-                        onPress={() => {
-                            onSelect(option.label);
-                            onClose();
-                        }}
-                    >
-                        <View className="flex-row items-center">
-                            {option.icon}
-                            <Text className="ml-3 text-gray-700">{option.label}</Text>
-                        </View>
-                        <Ionicons
-                            name={selected === option.value ? 'radio-button-on' : 'radio-button-off'}
-                            size={20}
-                            color="#3b82f6"
-                        />
-                    </TouchableOpacity>
-                ))}
+                {/* IMPORTANT: Sort Options List */}
+                {/* Maps through options and highlights selected one */}
+                {sortOptions.map((option, index) => {
+                    const isSelected = selected === option.value;
+
+                    return (
+                        <TouchableOpacity
+                            key={option.value} // Use value as key for consistency
+                            className={`flex-row items-center justify-between mb-3 px-4 py-3 rounded-xl ${isSelected ? 'bg-blue-50' : 'bg-white'
+                                }`}
+                            onPress={() => {
+                                onSelect(option.value); // Pass value, not label
+                                onClose();
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            <View className="flex-row items-center flex-1">
+                                {option.icon}
+                                <Text
+                                    className={`ml-3 text-body w-full ${isSelected ? 'text-primary font-semibold' : 'text-text'
+                                        }`}
+                                >
+                                    {option.label}
+                                </Text>
+                            </View>
+
+                            {/* IMPORTANT: Radio button indicator */}
+                            <Ionicons
+                                name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                                size={22}
+                                color={isSelected ? '#3b82f6' : '#D1D5DB'}
+                            />
+                        </TouchableOpacity>
+                    );
+                })}
             </Animated.View>
         </View>
     );
 }
+
+// IMPORTANT: Export helper function to get display label
+// Use this in parent component to show selected sort option
+export const getSortDisplayLabel = (value: string, t: any): string => {
+    const sortMap: Record<string, string> = {
+        'all': t('sortBy.all'),
+        'price_low_high': t('sortBy.priceLowHigh'),
+        'price_high_low': t('sortBy.priceHighLow'),
+        'distance_near_far': t('sortBy.distanceNearFar'),
+        'distance_far_near': t('sortBy.distanceFarNear'),
+    };
+    return sortMap[value] || t('sortBy.all');
+};

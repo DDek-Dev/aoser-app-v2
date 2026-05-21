@@ -2,7 +2,7 @@
 import TabbedProfileSection from './TabbedProfileSection';
 import { Image, Pressable, Text, View } from 'react-native';
 import { Job } from 'types';
-import {  useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -21,7 +21,7 @@ type NavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'Freel
 
 interface ProfileOn_InterestedProps {
   job: Job;
-  handleUserProfileNavigation: (userId: string) => void;
+  handleUserProfileNavigation?: (userId: string) => void;
   onClose?: () => void;
 }
 
@@ -33,11 +33,11 @@ export default function ProfileOn_Interested({ job, handleUserProfileNavigation,
 
   const currentLanguage = getCurrentLanguage();
   const { user } = useAuth();
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const handleProfilePress = (userId: string) => {
     try {
 
-      handleUserProfileNavigation(userId);
+      // handleUserProfileNavigation(userId);
     } catch (error) {
       console.log('Navigation error:', error);
     }
@@ -77,48 +77,51 @@ export default function ProfileOn_Interested({ job, handleUserProfileNavigation,
     }
   };
 
+
+  if (job.workApplicants.length === 0) {
+    return null
+  }
+
   return (
     <>
 
+     
+
       {job.workApplicants.map((applicant) => (
-        applicant.applicantProfile.map((item) => (
-
-          <View key={item._id} className="border border-gray-200 rounded-lg  mt-6">
-            <Pressable onPress={() => handleProfilePress(item._id)} className='p-4'>
-              <View className="flex-row items-center gap-4">
-                <Image
-                  source={
-                    item?.userProfileImage
-                      ? { uri: `${IMAGE_BASE}${item.userProfileImage}` }
-                      : profileImage
-                  }
-                  className="w-12 h-12 rounded-full"
-                />
-                <Text>{item.firstName} {item.lastName} </Text>
-              </View>
-            </Pressable>
-            <TabbedProfileSection profile={item as any} stylepadd={'px-4'} />
-            <View className="w-full h-[1px] bg-gray-200" />
-
-            <View className='px-4'>
-              {job.createdBy._id === user?._id && (
-                <Pressable
-                  onPress={() => handleHire(job._id)}
-                  className={`px-4 py-3 rounded-full mt-4 ${updateWorkById.isPending ? 'bg-gray-400' : 'bg-primary'}`}
-                  disabled={updateWorkById.isPending}
-                >
-                  <Text className="text-white text-center">
-                    {updateWorkById.isPending ?  `${t('workDetail.hiring')}` : `${t('workDetail.hire')}`}
-                  </Text>
-                </Pressable>
-
-              )}
-              <Text className="text-gray-400 text-caption py-2 px-4 ">{formatRelativeTime(applicant.updatedAt as string, currentLanguage)}</Text>
+        <View key={applicant.applicantProfile._id} className="border border-gray-200 rounded-lg mt-6">
+          <Pressable onPress={() => handleProfilePress(applicant.applicantProfile._id)} className='p-4'>
+            <View className="flex-row items-center gap-4">
+              <Image
+                source={
+                  applicant.applicantProfile?.userProfileImage
+                    ? { uri: `${IMAGE_BASE}${applicant.applicantProfile.userProfileImage}` }
+                    : profileImage
+                }
+                className="w-12 h-12 rounded-full"
+              />
+              <Text>{applicant.applicantProfile.firstName} {applicant.applicantProfile.lastName}</Text>
             </View>
+          </Pressable>
+          <TabbedProfileSection profile={applicant.applicantProfile as any} stylepadd={'px-4'} />
+          <View className="w-full h-[1px] bg-gray-200" />
+
+          <View className='px-4'>
+            {job.createdBy._id === user?._id && (
+              <Pressable
+                onPress={() => handleHire(job._id)}
+                className={`px-4 py-3 rounded-full mt-4 ${updateWorkById.isPending ? 'bg-gray-400' : 'bg-primary'}`}
+                disabled={updateWorkById.isPending}
+              >
+                <Text className="text-white text-center">
+                  {updateWorkById.isPending ? `${t('workDetail.hiring')}` : `${t('workDetail.hire')}`}
+                </Text>
+              </Pressable>
+            )}
+            <Text className="text-gray-400 text-caption py-2 px-4">
+              {formatRelativeTime(applicant.updatedAt as string, currentLanguage)}
+            </Text>
           </View>
-
-        ))
-
+        </View>
       ))}
     </>
 

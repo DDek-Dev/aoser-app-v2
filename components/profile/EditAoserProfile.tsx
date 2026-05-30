@@ -17,7 +17,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useMyProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
-import LoadingScreen from 'screens/Loading/LoadingScreen';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -33,11 +32,12 @@ import PhoneInput from 'components/ui/PhoneInput';
 import { useSelectAddress } from 'hooks/useSelectAddress';
 import Dropdown from 'components/filter/Dropdown';
 import { useQueryClient } from 'node_modules/@tanstack/react-query/build/modern/QueryClientProvider';
+import EditAoserProfileSkeleton from 'skeletonScreens/EditAoserProfileSkeleton';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
 type FormErrors = {
-    gender: boolean;
+    // gender: boolean;
     firstName: boolean;
     lastName: boolean;
     phone: boolean;
@@ -77,7 +77,7 @@ const EditAoserProfile = () => {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
 
     // ── Form state ────────────────────────────────────────────────────────────
-    const [gender, setGender] = useState('');
+    // const [gender, setGender] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
@@ -102,7 +102,7 @@ const EditAoserProfile = () => {
     const [deleteConfirmModalVisible, setDeleteConfirmModalVisible] = useState(false);
 
     const [errors, setErrors] = useState<FormErrors>({
-        gender: false,
+        // gender: false,
         firstName: false,
         lastName: false,
         phone: false,
@@ -118,10 +118,10 @@ const EditAoserProfile = () => {
     const { data, isLoading: profileLoading } = useMyProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
 
-    const GENDER_OPTIONS = [
-        { label: t('signUpScreen.male'), value: 'MALE' },
-        { label: t('signUpScreen.female'), value: 'FEMALE' },
-    ];
+    // const GENDER_OPTIONS = [
+    //     { label: t('signUpScreen.male'), value: 'MALE' },
+    //     { label: t('signUpScreen.female'), value: 'FEMALE' },
+    // ];
 
     // ── Populate form from server data ────────────────────────────────────────
     // FIX: removed duplicate `setVillage` call that existed outside the address block,
@@ -129,7 +129,7 @@ const EditAoserProfile = () => {
     useEffect(() => {
         if (!data || !addressData) return;
 
-        setGender(data.gender ?? '');
+        // setGender(data.gender ?? '');
         setFirstName(data.firstName ?? '');
         setLastName(data.lastName ?? '');
         setEmail(data.user?.email ?? '');
@@ -169,8 +169,8 @@ const EditAoserProfile = () => {
     // ── Early returns (after all hooks) ──────────────────────────────────────
     // FIX: moved early returns to AFTER all hooks to avoid Rules-of-Hooks violation.
     if (profileLoading || addressLoading || !addressData) {
-        return <LoadingScreen />;
-    }
+    return <EditAoserProfileSkeleton />;
+}
 
     if (addressError || addressData.length === 0) {
         return (
@@ -190,9 +190,9 @@ const EditAoserProfile = () => {
     const provinceOptions = provinces.map((p) => ({ label: p.province_la, value: p }));
     const districtOptions = districts.map((d) => ({ label: d.district_la, value: d }));
 
-    const displayGender =
-        GENDER_OPTIONS.find((opt) => opt.value === gender)?.label ??
-        t('signUpScreen.selectGender');
+    // const displayGender =
+    //     GENDER_OPTIONS.find((opt) => opt.value === gender)?.label ??
+    //     t('signUpScreen.selectGender');
 
     const hasImage = !!profileImg;
     const isProcessing = isUpdating || isUploading;
@@ -200,7 +200,7 @@ const EditAoserProfile = () => {
     // ── Validation ────────────────────────────────────────────────────────────
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {
-            gender: !gender.trim(),
+            // gender: !gender.trim(),
             firstName: !firstName.trim(),
             lastName: !lastName.trim(),
             phone: !phone.trim(),
@@ -325,6 +325,8 @@ const EditAoserProfile = () => {
 
     // ── Submit ────────────────────────────────────────────────────────────────
     const handleUpdate = async () => {
+
+        console.log("iphone clieked")
         if (!validateForm()) return;
 
         try {
@@ -336,7 +338,7 @@ const EditAoserProfile = () => {
             }
 
             const profileData = {
-                gender: gender.trim(),
+                // gender: gender.trim(),
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
                 phone: phone.trim(),
@@ -392,6 +394,7 @@ const EditAoserProfile = () => {
 
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom : 0}
                 style={{ flex: 1 }}
             >
                 <ScrollView
@@ -447,7 +450,7 @@ const EditAoserProfile = () => {
                         </View>
 
                         {/* ── Gender ──────────────────────────────────────── */}
-                        <View className="mb-4">
+                        {/* <View className="mb-4">
                             <Text className="text-text mb-2 font-bold text-body">
                                 {t('signUpScreen.gender')}
                             </Text>
@@ -467,7 +470,7 @@ const EditAoserProfile = () => {
                                     {t('signUpScreen.gender_required')}
                                 </Text>
                             )}
-                        </View>
+                        </View> */}
 
                         {/* ── Full Name ────────────────────────────────────── */}
                         <View className="flex-row mb-2">
@@ -559,7 +562,7 @@ const EditAoserProfile = () => {
                             />
                         </View>
 
-                        {data?.businessType === "FREELANCER" && data.registrationStatus === "APPROVED_COMPLETE" &&
+                        {data?.businessType !== "FREELANCER"  &&
                             <>
 
                                 {/* ── Address ──────────────────────────────────────── */}
@@ -658,7 +661,7 @@ const EditAoserProfile = () => {
             {/* ════════════════════════════════════════════════════════════════ */}
 
             {/* Gender */}
-            <Modal
+            {/* <Modal
                 visible={genderModalVisible}
                 transparent
                 animationType="fade"
@@ -696,7 +699,7 @@ const EditAoserProfile = () => {
                         </View>
                     </TouchableWithoutFeedback>
                 </TouchableOpacity>
-            </Modal>
+            </Modal> */}
 
             {/* Image Action Sheet */}
             <Modal

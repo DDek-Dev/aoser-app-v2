@@ -174,3 +174,23 @@ export   const formatDisplayDateTime = (isoString: string | null) => {
 
     return `${dateStr} ${currentLanguage === 'la' ? 'ເວລາ' : 'at'} ${hours}:${minutes}`;
   };
+
+  export const formatTotalRate = (num:any) => {
+  if (!num) return '0';
+  
+  if (num >= 1000000) {
+    // ถ้าเกิน 1 ล้าน ให้หารด้วย 1 ล้านแล้วเติม M (เช่น 1.2M หรือ 1M)
+    return (num / 1000000).toFixed(num % 1000000 === 0 ? 0 : 1) + 'M';
+  }
+  if (num >= 10000) {
+    // ถ้าเกิน 1 หมื่น ให้หารด้วย 1 พันแล้วเติม k (เช่น 10k, 100k)
+    return (num / 1000).toFixed(0) + 'K';
+  }
+  if (num >= 1000) {
+    // (เผื่อไว้) ถ้าเกิน 1 พัน แต่ไม่ถึง 1 หมื่น เช่น 1,500 -> 1.5k 
+    // แต่ถ้าอยากให้แสดงเลขเต็ม (1500) ให้ลบเงื่อนไข if นี้ออกได้เลยครับ
+    return (num / 1000).toFixed(num % 1000 === 0 ? 0 : 1) + 'K';
+  }
+  
+  return num.toString();
+};

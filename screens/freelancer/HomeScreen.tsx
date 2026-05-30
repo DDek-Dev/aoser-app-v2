@@ -34,6 +34,7 @@ export default function HomeScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRetryingNetwork, setIsRetryingNetwork] = useState(false);
   const [isSlowConnection, setIsSlowConnection] = useState(false);
+  const [reportedFreelancerIds, setReportedFreelancerIds] = useState<string[]>([]);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateXAnim = useRef(new Animated.Value(0)).current;
@@ -65,6 +66,7 @@ export default function HomeScreen() {
     isRefetching,
   } = useRecommendedFreelancers(selectedCategoryId || '', undefined);
 
+  // console.log('Recommended Freelancers:', JSON.stringify(data, null, 2)); 
   const {
     data: topFreelancers = [],
     isLoading: isTopFreelancersLoading,
@@ -73,10 +75,31 @@ export default function HomeScreen() {
     error: topFreelancersError,
     refetch: refetchTopFreelancers,
   } = useGetTopfreelancers();
+  // console.log('Top Freelancers:', JSON.stringify(topFreelancers, null, 2));
 
   const allFreelancers = useMemo(() => {
     return data?.pages.flatMap(page => page) || [];
   }, [data?.pages]);
+
+  const reportedFreelancerIdSet = useMemo(
+    () => new Set(reportedFreelancerIds),
+    [reportedFreelancerIds]
+  );
+
+  const handleReportedFreelancer = useCallback((userId: string) => {
+    if (!userId) return;
+    setReportedFreelancerIds((prev) => (prev.includes(userId) ? prev : [...prev, userId]));
+  }, []);
+
+  const filteredAllFreelancers = useMemo(
+    () => allFreelancers.filter((f: any) => !reportedFreelancerIdSet.has(f?._id)),
+    [allFreelancers, reportedFreelancerIdSet]
+  );
+
+  const filteredTopFreelancers = useMemo(
+    () => (topFreelancers || []).filter((f: any) => !reportedFreelancerIdSet.has(f?._id)),
+    [topFreelancers, reportedFreelancerIdSet]
+  );
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -308,9 +331,10 @@ export default function HomeScreen() {
           {selectedCategory === 'All' && (
             <TopFreelancers
               scrollY={scrollY}
-              freelancers={topFreelancers}
+              freelancers={filteredTopFreelancers}
               isLoading={isTopFreelancersLoading}
               isFetching={isTopFreelancersFetching}
+              onReported={handleReportedFreelancer}
             />
           )}
 
@@ -320,7 +344,7 @@ export default function HomeScreen() {
                 ? t('home.recommended_freelancers')
                 : `${selectedCategory} ${t('home.freelancers')}`
             }
-            freelancers={allFreelancers}
+            freelancers={filteredAllFreelancers}
             isLoading={isLoading}
             isFetching={isFetching}
             hasNextPage={hasNextPage}
@@ -328,6 +352,7 @@ export default function HomeScreen() {
             fetchNextPage={fetchNextPage}
             scrollY={scrollY}
             selectedCategory={selectedCategory}
+            onReported={handleReportedFreelancer}
           />
         </Animated.View>
       </Animated.ScrollView>

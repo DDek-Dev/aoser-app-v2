@@ -18,9 +18,8 @@ const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
 const ProfileScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const { loading, logout, isAuthenticated } = useAuth();
+  const { logout, logoutLoading, isAuthenticated } = useAuth();
   const { data, isLoading, isError, refetch } = useMyProfile();
-  const [isLogout, setIsLogout] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { data: adminID, isLoading: adminIdLoading } = useAdminID();
 
@@ -40,14 +39,12 @@ const settings = useMemo(() => [
   const handleLogout = () => setShowLogoutModal(true);
 
   const confirmLogout = async () => {
-    setIsLogout(true);
-    await logout();
     setShowLogoutModal(false);
+    await logout();
     navigation.reset({
       index: 0,
       routes: [{ name: 'MainTabs' }],
     });
-    setIsLogout(false);
   };
 
   useFocusEffect(
@@ -251,13 +248,12 @@ const settings = useMemo(() => [
               className="flex-row justify-between bg-surface border border-border rounded-full px-4 items-center py-3"
             >
               <View className="flex-row items-center gap-3">
-                {!isLogout ? (
+                {!logoutLoading ? (
                   <>
-                  
-                  <Ionicons name="log-out-outline" size={18} color="#3B82F6" />
+                    <Ionicons name="log-out-outline" size={18} color="#3B82F6" />
                     <Text className="text-body text-error">{t('profile.logout')}</Text>
                   </>
-                ):(
+                ) : (
                   <ActivityIndicator size="small" color="#EF4444" />
                 )}
               </View>
@@ -278,7 +274,7 @@ const settings = useMemo(() => [
         visible={showLogoutModal}
         onClose={() => setShowLogoutModal(false)}
         onConfirm={confirmLogout}
-        loading={loading}
+        loading={logoutLoading}
       />
     </View>
   );

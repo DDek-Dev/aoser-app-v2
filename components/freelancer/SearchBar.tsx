@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Pressable,
   Keyboard,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useGetServiceTypes } from 'hooks/useFreelancer';
 import { SearchBarSkeleton } from 'skeletonScreens/ShimmerView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LoadingScreen from 'screens/Loading/LoadingScreen';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
 const MAX_HISTORY_ITEMS = 10;
@@ -126,9 +128,9 @@ export default function SearchBar() {
   }, [addToHistory, navigation]);
 
   // Show skeleton while loading
-  if (serviceTypesLoading || isLoadingHistory) {
-    return <SearchBarSkeleton />;
-  }
+  // if (serviceTypesLoading || isLoadingHistory) {
+  //   return <SearchBarSkeleton />;
+  // }
 
   // Error state
   if (isError) {
@@ -191,20 +193,32 @@ export default function SearchBar() {
         {t('home.fast_search')}
       </Text>
       <View className="flex-row flex-wrap mb-6">
-        {serviceTypes && serviceTypes.length > 0 ? (
-          serviceTypes.map((tag, index) => (
-            <Pressable
-              key={tag._id || tag._id || index}
-              className="border border-border rounded-full px-4 py-2 mr-2 mb-2"
-              onPress={() => handleTagPress(tag.name)}
-            >
-              <Text className="text-sm text-gray-700">{tag.name}</Text>
-            </Pressable>
-          ))
-        ) : (
-          <Text className="text-caption text-gray-400">
-            {t('common.no_categories') || 'No categories available'}
-          </Text>
+
+        {serviceTypesLoading? (
+          <ActivityIndicator size="small" color="#3B82F6" />
+          
+        ):(
+
+          <>
+          
+          
+          {serviceTypes && serviceTypes.length > 0 ? (
+            serviceTypes.map((tag, index) => (
+              <Pressable
+                key={tag._id || tag._id || index}
+                className="border border-border rounded-full px-4 py-2 mr-2 mb-2"
+                onPress={() => handleTagPress(tag.name)}
+              >
+                <Text className="text-sm text-gray-700">{tag.name}</Text>
+              </Pressable>
+            ))
+          ) : (
+            <Text className="text-caption text-gray-400">
+              {t('common.no_categories') || 'No categories available'}
+            </Text>
+          )}
+          </>
+
         )}
       </View>
 

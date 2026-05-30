@@ -108,9 +108,6 @@ useEffect(() => {
         </View>
       )}
 
-
-
-
       {isRejectedRegistration && (
         <View className="flex-1 items-center justify-center px-6">
           {/* Error Icon */}

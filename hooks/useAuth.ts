@@ -336,12 +336,11 @@ export const useAuth = () => {
   const isAuthenticated = !!tokens?.accessToken;
   const isLoadingAuth =
     tokensLoading ||
-    loginMutation.isPending || userLoading
-
-
-  verifyOTPMutation.isPending ||
-    refreshTokenMutation.isPending;
-
+    loginMutation.isPending ||
+    userLoading ||
+    verifyOTPMutation.isPending ||
+    refreshTokenMutation.isPending ||
+    logoutMutation.isPending;
 
   return {
     // Data
@@ -358,7 +357,7 @@ export const useAuth = () => {
     // Auth functions
     // login: loginMutation.mutate,
     login,
-    logout: logoutMutation.mutate,
+    logout: logoutMutation.mutateAsync,
     googleLogin,
     appleLogin,
     // handleGoogleCallback,
@@ -372,7 +371,7 @@ export const useAuth = () => {
     useDeleteAccount,
     deletingAccount: useDeleteAccount.isPending,
     // Loading states
-    loading: loginMutation.isPending, // Keep for backward compatibility
+    loading: loginMutation.isPending || logoutMutation.isPending, // Keep for backward compatibility
     loginLoading: loginMutation.isPending,
     googleloading: googleUrlMutation.isPending,
     appleleloading: appleUrlMutation.isPending,

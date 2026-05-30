@@ -52,7 +52,7 @@ const ProfileSetup = () => {
     // const [genderModalVisible, setGenderModalVisible] = useState(false);
     const [imageActionModalVisible, setImageActionModalVisible] = useState(false);
     const [deleteConfirmationModalVisible, setDeleteConfirmationModalVisible] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+    
 
 
     // address
@@ -128,12 +128,10 @@ const ProfileSetup = () => {
         };
 
         setErrors(newErrors);
-        return  !newErrors.firstName && !newErrors.lastName && !newErrors.phone && !newErrors.profileImage
+        return !newErrors.firstName && !newErrors.lastName && !newErrors.phone && !newErrors.profileImage
     };
 
- const handleAgree = (value: boolean) => {
-    setAgreed(value);
-  };
+ 
     //address
     const handleAddressChange = (address: SelectedAddress) => {
         // setAddressInfo(address);
@@ -248,8 +246,8 @@ const ProfileSetup = () => {
                 lastName: lastName.trim(),
                 phone: phone.trim(),
                 userProfileImage: finalProfileImage,
-                privacyException: agreed,
-                privacyVersion:Constants.expoConfig?.version
+                privacyException: true,
+                privacyVersion: Constants.expoConfig?.version
                 // address: {
                 //     province: selectedProvince?.province_la,
                 //     district: selectedDistrict?.district_la,
@@ -432,8 +430,8 @@ const ProfileSetup = () => {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
-                <Header_back text={t('protectedRoute.back')}  onPress={() => navigation.replace('MainTabs')}
-                iconColor='#3B82F6' />
+                <Header_back text={t('protectedRoute.back')} onPress={() => navigation.replace('MainTabs')}
+                    iconColor='#3B82F6' />
                 {/* Scrollable Content */}
                 <ScrollView
                     showsVerticalScrollIndicator={false}
@@ -715,7 +713,7 @@ const ProfileSetup = () => {
                             <View
                                 className={`flex-row items-center px-4 py-2 rounded-2xl ${errors.firstName ? 'border border-error' : 'border border-border'
                                     }`}
-                                    style={{ height: 52, minHeight: 52 }}
+                                style={{ height: 52, minHeight: 52 }}
                             >
                                 <TextInput
                                     placeholder={t('signUpScreen.firstName')}
@@ -856,30 +854,8 @@ const ProfileSetup = () => {
 
                         </View> */}
 
+
                         
-              <View className="px-5 pb-6 mt-6">
-                <TouchableOpacity
-                  
-                  className="flex-row items-center"
-                  activeOpacity={0.8}
-                >
-                  <Checkbox
-                    value={agreed}
-                    onValueChange={handleAgree}
-                    color={agreed ? '#3B82F6' : '#999'}
-                  />
-                  <Text className="ml-2 text-body text-text flex-1">
-                    {t('kyc.step7.agreement.text')}{' '}
-                    <Text
-                      className="text-primary underline"
-                      onPress={() => navigation.navigate('PrivacyPolicyScreen')}
-                    >
-                      {t('kyc.step7.agreement.policy')}
-                    </Text>
-                  </Text>
-                </TouchableOpacity>
-               
-              </View>
                     </View>
                 </ScrollView>
 
@@ -888,8 +864,8 @@ const ProfileSetup = () => {
                     <Pressable
                         onPress={handleUpdate}
                         className={`${isProcessing ? 'bg-gray-400' : 'bg-primary'} py-4 rounded-2xl items-center justify-center`}
-                        disabled={isProcessing || !agreed}
-                        
+                        disabled={isProcessing }
+
                     >
                         {isProcessing ? (
                             <View className="flex-row items-center">

@@ -10,7 +10,7 @@ import { NoResults } from 'components/NoResults';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import LoadingScreen from 'screens/Loading/LoadingScreen';
-
+import {formatTotalRate} from '../../utils/dateFormatter';
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
 type FreelancersProps = {
@@ -22,7 +22,8 @@ type FreelancersProps = {
   isFetchingNextPage?: boolean;
   fetchNextPage?: () => Promise<any>;
   scrollY?: any;
-  selectedCategory: string
+  selectedCategory: string;
+  onReported?: (userId: string) => void;
 };
 
 export default function Freelancers({
@@ -34,6 +35,7 @@ export default function Freelancers({
   isFetchingNextPage,
   fetchNextPage,
   selectedCategory,
+  onReported,
   scrollY,
 }: FreelancersProps) {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
@@ -88,9 +90,9 @@ export default function Freelancers({
     if (isAuthenticated && user?._id === item_id) {
       navigation.navigate('AuthFreelancerProfile', { userId: item_id });
     } else {
-      navigation.navigate('FreelancerProfile', { userId: item_id });
+      navigation.navigate('FreelancerProfile', { userId: item_id, onReported });
     }
-  }, [isAuthenticated, user?._id, navigation]);
+  }, [isAuthenticated, user?._id, navigation, onReported]);
 
   // Initial loading state
   if (isLoading && selectedCategory !== "All") {
@@ -158,11 +160,14 @@ export default function Freelancers({
             )}
 
             <View className="p-3 space-y-2">
-              <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center justify-between gap-2">
                 <View className="flex-row items-center">
                   <FontAwesome name="star" size={12} color="#facc15" />
-                  <Text className="ml-1 text-caption font-medium text-yellow-500">
-                    {item.starRating}
+                  <Text className="ml-1 text-caption font-medium text-warning">
+                    {item.starRating} 
+                  </Text>
+                  <Text className="ml-1 text-caption text-textSecondary">
+                  ({formatTotalRate(item.totalStartRate || 0)})
                   </Text>
                 </View>
 

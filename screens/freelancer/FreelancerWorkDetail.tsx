@@ -2122,14 +2122,14 @@ export default function FreelancerWorkDetail({ route }: Props) {
             </TouchableOpacity>
           )}
 
-          {data?.createdBy?._id === user?._id && (
+          
 
             <TouchableOpacity
               onPress={() => navigation.navigate('PaymentDetail_Id', { workId: data?._id })}
-              className="bg-border p-4 rounded-full flex-row items-center justify-center">
-              <Ionicons name="newspaper-outline" size={16} color="#6B7280" />
+              className="bg-border p-3 rounded-full flex-row items-center justify-center">
+              <Ionicons name="newspaper-outline" size={24} color="#6B7280" />
             </TouchableOpacity>
-          )}
+          
 
           {data?.createdBy?._id !== user?._id && (
             <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id })}>

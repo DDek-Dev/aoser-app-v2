@@ -217,7 +217,7 @@ const NotificationsScreen = () => {
 
   return (
     <ScreenWrapper safeEdges={['top']}>
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-white">
         {/* Header */}
         <View className='px-4 flex-row justify-between items-center mb-1'>
           <View className="flex-row items-center bg-surface p-3 rounded-2xl flex-1 mr-3">

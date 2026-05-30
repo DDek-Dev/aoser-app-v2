@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
+  Dimensions,
   View,
   Text,
+  Modal,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   Animated,
   Platform,
   StyleSheet,
@@ -22,7 +25,7 @@ import { FreelancerStackParamList } from 'types/navigation';
 
 import { Job, Favorite } from 'types';
 import { formatDisplayDateTime } from 'utils/dateFormatter';
-import { useCreateFavorite, useDeleteFavorite, useMyProfile } from 'hooks/useFreelancer';
+import { useCreateFavorite, useDeleteFavorite, useMyProfile, useReportProblem } from 'hooks/useFreelancer';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'hooks/useAuth';
 import BudgetInput from 'components/ui/BudgetInput';
@@ -30,6 +33,7 @@ import TextArea from 'components/ui/TextArea';
 import { useFreelancerApplyWork, useFreeLRequestUpdateW } from 'hooks/usePublicWork';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import ReportModal from 'components/ui/ReportModal';
+import BlockConfirmModal from 'components/ui/BlockConfirmModal';
 
 
 
@@ -40,10 +44,11 @@ interface JobDetailModalProps {
   user?: any;
   refetch: () => void;
   onUserPress?: (userId: string) => void;
+  onReportedJob?: (jobId: string) => void;
 }
 
 
-const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDetailModalProps) => {
+const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress, onReportedJob }: JobDetailModalProps) => {
   const navigator = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const insets = useSafeAreaInsets();
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
@@ -54,6 +59,10 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
     job?._id || null
   );
   const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportMenuVisible, setReportMenuVisible] = useState(false);
+  const [reportMenuAnchor, setReportMenuAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const reportButtonRef = useRef<any>(null);
+  const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
 
   // form reason 
   const [isApplyLoading, setIsApplyLoading] = useState(false);
@@ -95,6 +104,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
 
   const creatFavorite = useCreateFavorite();
   const deleteFavorite = useDeleteFavorite();
+  const { mutateAsync: reportProblem, isPending: isBlocking } = useReportProblem();
   // Reset state when modal closes
   // useEffect(() => {
   //   if (!visible) {
@@ -408,7 +418,13 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
             </TouchableOpacity>
             {/* Report Button */}
             <TouchableOpacity
-              onPress={() => setReportModalVisible(true)}
+              onPress={() => {
+                reportButtonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
+                  setReportMenuAnchor({ x, y, width, height });
+                  setReportMenuVisible(true);
+                });
+              }}
+              ref={reportButtonRef}
               className="p-2"
               activeOpacity={0.7}
               accessibilityLabel="Report profile"
@@ -438,7 +454,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
           keyboardDismissMode="none"
           contentContainerStyle={{
             paddingBottom: canApply && !hasApplied
-              ? insets.bottom + 100
+              ? 80 
               : insets.bottom + 24,
           }}
         >
@@ -711,7 +727,8 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
             style={{
               paddingHorizontal: 16,
               paddingTop: 8,
-              paddingBottom: insets.bottom + 24,
+              // paddingBottom:insets.bottom ,
+              paddingBottom: Platform.OS === 'ios' ? insets.bottom + 24 : insets.bottom + 24,
               backgroundColor: 'transparent',
             }}
           >
@@ -843,10 +860,83 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress }: JobDeta
       <ReportModal
         visible={reportModalVisible}
         onClose={() => setReportModalVisible(false)}
+        onReportSuccess={() => {
+          setReportModalVisible(false);
+        }}
         reportID={job?._id || ''}
         reportType="WORK"
         freelancerName={``}
       />
+
+      <BlockConfirmModal
+        visible={blockConfirmVisible}
+        loading={isBlocking}
+        title={t('report.block_title', 'Block')}
+        message={t('report.block_message_work', 'If you confirm, this work will be hidden for you.')}
+        onClose={() => setBlockConfirmVisible(false)}
+        onConfirm={async () => {
+          const jobId = job?._id || '';
+          if (!jobId) return;
+          try {
+            await reportProblem({
+              reportType: 'WORK',
+              work: jobId,
+              reaction: 'HIDE_CONTENT',
+              description: t('report.block_description_default', 'Blocked by user.'),
+            });
+            setBlockConfirmVisible(false);
+            handleDismiss();
+            onReportedJob?.(jobId);
+          } catch {
+            // Toast handled in hook
+          }
+        }}
+      />
+
+      <Modal visible={reportMenuVisible} transparent animationType="fade" onRequestClose={() => setReportMenuVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setReportMenuVisible(false)}>
+          <View className="flex-1 bg-transparent">
+            {reportMenuAnchor && (
+              <View
+                style={(() => {
+                  const MENU_WIDTH = 180;
+                  const { width: screenWidth } = Dimensions.get('window');
+                  const left = Math.max(12, Math.min(reportMenuAnchor.x, screenWidth - MENU_WIDTH - 12));
+                  const top = reportMenuAnchor.y + reportMenuAnchor.height + 6;
+                  return { position: 'absolute', top, left, width: MENU_WIDTH, zIndex: 9999 };
+                })()}
+                className="bg-white rounded-2xl border border-border shadow-lg overflow-hidden"
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    setReportMenuVisible(false);
+                    setReportModalVisible(true);
+                  }}
+                  className="px-4 py-3 flex-row items-center"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="flag-outline" size={18} color="#111827" />
+                  <Text className="ml-3 text-body text-text">{t('report.option_report', 'Report')}</Text>
+                </TouchableOpacity>
+
+                <View className="h-[1px] bg-border" />
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setReportMenuVisible(false);
+                    setBlockConfirmVisible(true);
+                  }}
+                  className="px-4 py-3 flex-row items-center"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="ban-outline" size={18} color="#EF4444" />
+                  <Text className="ml-3 text-body text-error">{t('report.option_block', 'Block')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </BottomSheetModal>
   );
 };

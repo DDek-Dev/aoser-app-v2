@@ -70,7 +70,7 @@ export default function Reviews({ reviews }: ReviewsProps) {
         <Text className="text-base font-semibold text-gray-800">
           {t('freelancer_profile.review.customer_reviews')}
         </Text>
-        <Text className="text-xs text-blue-600">{safeReviews.length} {t('freelancer_profile.review.review')}</Text>
+        <Text className="text-caption text-blue-600">{safeReviews.length} {t('freelancer_profile.review.review')}</Text>
       </View>
 
       <View className="flex-row gap-4 items-center mb-6">

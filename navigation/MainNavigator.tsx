@@ -195,7 +195,7 @@ export default function MainNavigator() {
           {(props) => (
             <ProtectedRoute
               backicon={true}
-              fallbackMessage="Sign in to book a freelancer"
+              fallbackMessage={t('protectedRoute.signinTorequest')}
               onSignInPress={() => navigation.navigate('SignIn')}
               onSignUpPress={() => navigation.navigate('SignUp')}
             >

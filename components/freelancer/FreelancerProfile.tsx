@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIsFocused } from '@react-navigation/native';
-import { Animated, Share, Text, TouchableOpacity, View, ActivityIndicator, Platform, Pressable } from 'react-native';
+import { Animated, Dimensions, Modal, Share, Text, TouchableOpacity, TouchableWithoutFeedback, View, ActivityIndicator, Platform, Pressable } from 'react-native';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import {
   useDeleteFavorite,
   useFreelancerById,
   useFreelancerReviews,
+  useReportProblem,
 } from 'hooks/useFreelancer';
 
 // Components
@@ -24,6 +25,7 @@ import TabbedProfileSection from 'components/profile/TabbedProfileSection';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 import ReportModal from 'components/ui/ReportModal';
+import BlockConfirmModal from 'components/ui/BlockConfirmModal';
 
 // Types
 import { FreelancerStackParamList } from 'types/navigation';
@@ -43,7 +45,7 @@ export default function FreelancerProfile() {
   // Navigation & Route
   const route = useRoute<RouteProp<FreelancerStackParamList, 'FreelancerProfile'>>();
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const { userId } = route.params;
+  const { userId, onReported } = route.params;
 
   // Hooks
   const { t } = useTranslation();
@@ -56,10 +58,15 @@ export default function FreelancerProfile() {
   // Mutation hooks
   const createFavorite = useCreateFavorite();
   const deleteFavorite = useDeleteFavorite();
+  const { mutateAsync: reportProblem, isPending: isBlocking } = useReportProblem();
 
   // Local state
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [reportMenuVisible, setReportMenuVisible] = useState(false);
+  const [reportMenuAnchor, setReportMenuAnchor] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const reportButtonRef = useRef<any>(null);
+  const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
 
   // Refs
   const debounceRef = useRef<any>(null);
@@ -79,7 +86,7 @@ export default function FreelancerProfile() {
     if (!profile) return;
 
     if (isFirstLoad.current) {
-      setIsFavorite(profile.isLiked ?? false);
+      setIsFavorite(profile.likes?.some(like => like.createdBy === user?._id));
       isFirstLoad.current = false;
     }
   }, [profile?.isLiked]);
@@ -95,6 +102,9 @@ export default function FreelancerProfile() {
     };
   }, []);
 
+
+  // console.log(JSON.stringify(profile, null, 2))
+  console.log(isFavorite)
   /**
    * Create favorite with optimistic update
    * 
@@ -228,39 +238,39 @@ export default function FreelancerProfile() {
    * Share profile functionality
    * Compatible with both iOS and Android
    */
-  const handleShare = useCallback(async () => {
-    try {
-      const shareUrl = `https://aoser.app/freelancer/${userId}`;
-      const shareMessage = t(
-        'freelancer_profile.share_message',
-        `Check out this freelancer profile on Aoser: ${shareUrl}`
-      );
+  // const handleShare = useCallback(async () => {
+  //   try {
+  //     const shareUrl = `https://aoser.app/freelancer/${userId}`;
+  //     const shareMessage = t(
+  //       'freelancer_profile.share_message',
+  //       `Check out this freelancer profile on Aoser: ${shareUrl}`
+  //     );
 
-      const result = await Share.share(
-        {
-          message: Platform.OS === 'ios' ? shareMessage : shareMessage,
-          url: Platform.OS === 'ios' ? shareUrl : undefined,
-          title: t('freelancer_profile.share_title', 'Freelancer Profile'),
-        },
-        {
-          // iOS only - specify the dialog title
-          dialogTitle: t('freelancer_profile.share_dialog', 'Share Profile'),
-        }
-      );
+  //     const result = await Share.share(
+  //       {
+  //         message: Platform.OS === 'ios' ? shareMessage : shareMessage,
+  //         url: Platform.OS === 'ios' ? shareUrl : undefined,
+  //         title: t('freelancer_profile.share_title', 'Freelancer Profile'),
+  //       },
+  //       {
+  //         // iOS only - specify the dialog title
+  //         dialogTitle: t('freelancer_profile.share_dialog', 'Share Profile'),
+  //       }
+  //     );
 
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          console.log('[Share] Shared via:', result.activityType);
-        } else {
-          console.log('[Share] ✅ Successfully shared');
-        }
-      } else if (result.action === Share.dismissedAction) {
-        console.log('[Share] Dismissed by user');
-      }
-    } catch (error) {
-      console.log('[Share] ❌ Error:', error);
-    }
-  }, [userId, t]);
+  //     if (result.action === Share.sharedAction) {
+  //       if (result.activityType) {
+  //         console.log('[Share] Shared via:', result.activityType);
+  //       } else {
+  //         console.log('[Share] ✅ Successfully shared');
+  //       }
+  //     } else if (result.action === Share.dismissedAction) {
+  //       console.log('[Share] Dismissed by user');
+  //     }
+  //   } catch (error) {
+  //     console.log('[Share] ❌ Error:', error);
+  //   }
+  // }, [userId, t]);
 
   // =================================================================
   // LOADING STATE
@@ -365,7 +375,13 @@ export default function FreelancerProfile() {
 
             {/* Report Button */}
             <TouchableOpacity
-              onPress={() => setReportModalVisible(true)}
+              onPress={() => {
+                reportButtonRef.current?.measureInWindow((x: number, y: number, width: number, height: number) => {
+                  setReportMenuAnchor({ x, y, width, height });
+                  setReportMenuVisible(true);
+                });
+              }}
+              ref={reportButtonRef}
               className="p-2"
               activeOpacity={0.7}
               accessibilityLabel="Report profile"
@@ -400,6 +416,7 @@ export default function FreelancerProfile() {
           rating={profile.starRating || 0}
           status={profile.workerStatus}
           isme={isOwnProfile}
+          totalStartRate={profile.totalStartRate || 0}
         />
 
         {/* ===== ACTION BUTTONS ===== */}
@@ -425,7 +442,7 @@ export default function FreelancerProfile() {
         <WhatExpected profile={profile} />
 
         {/* ===== REVIEWS SECTION ===== */}
-        <View className="mb-24">
+        <View >
           <Reviews reviews={reviews || []} />
         </View>
 
@@ -448,10 +465,84 @@ export default function FreelancerProfile() {
       <ReportModal
         visible={reportModalVisible}
         onClose={() => setReportModalVisible(false)}
+        onReportSuccess={() => {
+          setReportModalVisible(false);
+        }}
         reportID={userId}
         reportType="FREELANCER"
         freelancerName={``}
       />
+
+      <BlockConfirmModal
+        visible={blockConfirmVisible}
+        loading={isBlocking}
+        title={t('report.option_block', 'Block')}
+        message={t(
+          'report.block_message',
+          'If you confirm, this freelancer will be hidden for you.'
+        )}
+        onClose={() => setBlockConfirmVisible(false)}
+        onConfirm={async () => {
+          try {
+            await reportProblem({
+              reportType: 'FREELANCER',
+              reportedUser: userId,
+              reaction: 'HIDE_USER',
+              description: t('report.block_description_default', 'Blocked by user.'),
+            });
+            setBlockConfirmVisible(false);
+            onReported?.(userId);
+            handleGoBack();
+          } catch {
+            // Toast handled in hook
+          }
+        }}
+      />
+
+      <Modal visible={reportMenuVisible} transparent animationType="fade" onRequestClose={() => setReportMenuVisible(false)}>
+        <TouchableWithoutFeedback onPress={() => setReportMenuVisible(false)}>
+          <View className="flex-1 bg-transparent">
+            {reportMenuAnchor && (
+              <View
+                style={(() => {
+                  const MENU_WIDTH = 180;
+                  const { width: screenWidth } = Dimensions.get('window');
+                  const left = Math.max(12, Math.min(reportMenuAnchor.x, screenWidth - MENU_WIDTH - 12));
+                  const top = reportMenuAnchor.y + reportMenuAnchor.height + 6;
+                  return { position: 'absolute', top, left, width: MENU_WIDTH, zIndex: 9999 };
+                })()}
+                className="bg-white rounded-2xl border border-border shadow-lg overflow-hidden"
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    setReportMenuVisible(false);
+                    setReportModalVisible(true);
+                  }}
+                  className="px-4 py-3 flex-row items-center"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="flag-outline" size={18} color="#111827" />
+                  <Text className="ml-3 text-body text-text">{t('report.option_report', 'Report')}</Text>
+                </TouchableOpacity>
+
+                <View className="h-[1px] bg-border" />
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setReportMenuVisible(false);
+                    setBlockConfirmVisible(true);
+                  }}
+                  className="px-4 py-3 flex-row items-center"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="ban-outline" size={18} color="#EF4444" />
+                  <Text className="ml-3 text-body text-error">{t('report.option_block', 'Block')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </ScreenWrapper>
   );
 }

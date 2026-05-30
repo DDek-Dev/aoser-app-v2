@@ -15,7 +15,7 @@ export type FreelancerStackParamList = {
   SearchView: { query: string };
   Onboarding: undefined;
 
-  FreelancerProfile: { userId: string };
+  FreelancerProfile: { userId: string; onReported?: (userId: string) => void };
   ResumeImageViewer: { uri: string };
   Bookfreelancer: { userId: string };
   ConfirmBookingScreen: { formData: BookingFormData, isBook?: boolean };

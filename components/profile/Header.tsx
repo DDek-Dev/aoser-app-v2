@@ -6,6 +6,7 @@ import { FreelancerStackParamList } from 'types/navigation';
 import ProfileStatusPopup from './ProfileStatusPopup';
 import { useTranslation } from 'react-i18next';
 import { profileImage as proIMG } from 'assets';
+import {formatTotalRate} from '../../utils/dateFormatter';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -21,7 +22,8 @@ type HeaderProps = {
   busyUntil?: string | null;
   ishidden?: boolean
   isme?: boolean,
-  isReview?: boolean
+  isReview?: boolean;
+  totalStartRate?: number;
 };
 
 export default function Header({
@@ -37,6 +39,7 @@ export default function Header({
   ishidden
   , isme
   , isReview
+  , totalStartRate
 }: HeaderProps) {
 const imageUri = isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundImage}`;
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
@@ -119,7 +122,7 @@ const imageUri = isReview ? backgroundImage : `${IMAGES_BASE_URL}${backgroundIma
         <Text className="text-body text-textSecondary mb-2">{job}</Text>
         <View className="flex-row space-x-2 mt-1">
           <MaterialIcons name="star" size={16} color="#facc15" />
-          <Text className="text-blue-600 font-medium text-body">{rating} (0 {t('freelancer_profile.reviews')})</Text>
+          <Text className="text-blue-600 font-medium text-body">{rating} ({formatTotalRate(totalStartRate || 0)} {t('freelancer_profile.reviews')})</Text>
         </View>
       </View>
       

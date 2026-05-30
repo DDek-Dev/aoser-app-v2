@@ -19,6 +19,7 @@
   "protectedRoute": {
     "authentication_require": "Sign in required",
     "signInToAccess": "Please sign in to access this feature",
+    "signinTorequest": "Sign in to request this service",
     "googleLogin": "Continue with Google",
     "signIn": "Sign In",
     "newhere": "New to Aoser?",
@@ -243,7 +244,7 @@
     "posting_public_work": "Your task will be visible to everyone on Aoser.",
     "next": "Next",
     "work_title": "What do you need help with?",
-    "work_title_placeholder": "What do you need ",
+    "work_title_placeholder": "I need... ",
     "work_title_required": "Please enter the service.",
     "work_type": "Service Mode",
     "online": "Remote",
@@ -312,9 +313,9 @@
       "work_created_successfully": "Your task has been posted successfully.",
       "work_send_successfully": "Your request has been sent to the provider successfully."
     },
-    "sub_work_details": "Steps",
+    "sub_work_details": "Steps (Optional)",
     "add_sections": "Add additional steps or details for the service.",
-    "sub_work_details_req": "Additional Details",
+    "sub_work_details_req": "Additional Details (Optional)",
     "add_sections_req": "Add more details about your task.",
     "freelancer_no_found": "No provider found",
     "status": {
@@ -1504,6 +1505,9 @@
     "success_title": "Success!",
     "success_message": "Report submitted successfully.",
     "error_title": "Error!",
-    "error_message": "Failed to submit report. Please try again."
-}
+    "error_message": "Failed to submit report. Please try again.",
+    "option_report": "Report",
+    "option_block": "Block",
+    "block_message": "If you confirm, this content will be hidden for you."
+  }
 }

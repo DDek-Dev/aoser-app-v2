@@ -63,6 +63,7 @@ export type Freelancer = {
   totalCompletedWork?: number;
   totalDoingWork?: number;
   totalLikes?: number;
+  totalStartRate?: number;
 };
 
 
@@ -135,6 +136,7 @@ export interface UserProfile {
   totalCompletedWork?: number;
   totalDoingWork?: number;
   totalLikes?: number;
+  totalStartRate?: number;
 
 }
 

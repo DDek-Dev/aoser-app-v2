@@ -10,6 +10,7 @@ import { Freelancer } from 'types/profile';
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
 import { useTranslation } from 'react-i18next';
 import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton';
+import {formatTotalRate} from '../../utils/dateFormatter';
 
 
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL
@@ -19,6 +20,7 @@ type Props = {
     freelancers: Freelancer[];
     isLoading: boolean;
     isFetching?: boolean;
+    onReported?: (userId: string) => void;
 
 }
 
@@ -27,16 +29,17 @@ export default function TopFreelancers({
     freelancers,
     isLoading,
     isFetching,
+    onReported,
 
 }: Props) {
 
 
     type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList, 'FreelancerProfile'>;
     const navigation = useNavigation<SearchBarNavigationProp>();
-    const {width} = useWindowDimensions();
+    const { width } = useWindowDimensions();
     const HORIZONTAL_PADDING = 0;
-    const GAP=4;
-    const cardWidth = (width-HORIZONTAL_PADDING * 2 - GAP)/2.04
+    const GAP = 4;
+    const cardWidth = (width - HORIZONTAL_PADDING * 2 - GAP) / 2.04
 
 
     const { t } = useTranslation();
@@ -69,7 +72,7 @@ export default function TopFreelancers({
         } else {
             console.log("user not logged in")
 
-            navigation.navigate('FreelancerProfile', { userId: item_id })
+            navigation.navigate('FreelancerProfile', { userId: item_id, onReported })
         }
     }
     return (
@@ -81,7 +84,7 @@ export default function TopFreelancers({
                 </Pressable>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-1" contentContainerStyle={{paddingHorizontal:HORIZONTAL_PADDING, gap:GAP}}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-1" contentContainerStyle={{ paddingHorizontal: HORIZONTAL_PADDING, gap: GAP }}>
                 {freelancers.map((item) => (
 
                     <Pressable
@@ -103,7 +106,11 @@ export default function TopFreelancers({
 
                                         <View className="flex-row items-center ">
                                             <FontAwesome name="star" size={14} color="#facc15" />
-                                            <Text className="ml-1 text-caption font-medium text-yellow-500">{item.starRating}</Text>
+                                            <Text className="ml-1 text-caption font-medium text-warning">{item.starRating}</Text>
+                                            <Text className="ml-1 text-caption text-textSecondary">
+                                                                  ({formatTotalRate(item.totalStartRate || 0)})
+                                                
+                                            </Text>
                                         </View>
 
                                     </View>

@@ -606,5 +606,6 @@ export type ReportType = {
   reportedUser?:string;
   work?: string;
   reason?: "INAPPROPRIATE_BEHAVIOR" | "FRAUD" | "NO_SHOW" | "POOR_QUALITY" | "HARASSMENT" | "OTHER" | null,  /// [ SPAM,INAPPROPRIATE_BEHAVIOR,FRAUD,NO_SHOW,POOR_QUALITY,HARASSMENT,OTHER]
-  description: string
+  description: string;
+  reaction: "HIDE_CONTENT" | "HIDE_USER" | "BLOCK_USER" | "NONE";
 }

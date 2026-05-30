@@ -212,6 +212,7 @@ const WorkFeedScreen = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   // const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [reportedJobIds, setReportedJobIds] = useState<string[]>([]);
 
   const [jobDetailVisible, setJobDetailVisible] = useState(false);
   const [shouldRestorePopup, setShouldRestorePopup] = useState(false);
@@ -226,6 +227,17 @@ const WorkFeedScreen = () => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<any>(null);
 
+  const reportedJobIdSet = useMemo(() => new Set(reportedJobIds), [reportedJobIds]);
+
+  const unreportedJobs = useMemo(
+    () => originalJobs.filter((job) => !reportedJobIdSet.has(job._id)),
+    [originalJobs, reportedJobIdSet]
+  );
+
+  const handleReportedJob = useCallback((jobId: string) => {
+    if (!jobId) return;
+    setReportedJobIds((prev) => (prev.includes(jobId) ? prev : [...prev, jobId]));
+  }, []);
 
 
 
@@ -324,10 +336,14 @@ const WorkFeedScreen = () => {
   useEffect(() => {
     if (jobs && Array.isArray(jobs)) {
       setOriginalJobs(jobs);
-      setDisplayedJobs(jobs);
+      setDisplayedJobs(jobs.filter((job) => !reportedJobIdSet.has(job._id)));
       setVisibleJobsCount(ITEMS_PER_PAGE);
     }
-  }, [jobs]);
+  }, [jobs, reportedJobIdSet]);
+
+  useEffect(() => {
+    setDisplayedJobs((prev) => prev.filter((job) => !reportedJobIdSet.has(job._id)));
+  }, [reportedJobIdSet]);
 
   // Entry animation
   useEffect(() => {
@@ -348,7 +364,7 @@ const WorkFeedScreen = () => {
 
   // Combined filter function
   const applyFilters = useCallback((searchQuery: string, category: string) => {
-    let filtered = [...originalJobs];
+    let filtered = [...unreportedJobs];
 
     // Apply category filter
     if (category !== 'All') {
@@ -368,7 +384,7 @@ const WorkFeedScreen = () => {
 
     setDisplayedJobs(filtered);
     setVisibleJobsCount(ITEMS_PER_PAGE);
-  }, [originalJobs]);
+  }, [unreportedJobs]);
 
   // Search handler
   const handleSearch = useCallback((text: string) => {
@@ -578,7 +594,7 @@ const WorkFeedScreen = () => {
       </Animated.View> */}
       <View className='pl-2 pb-1 bg-surface'>
 
-        <SortByCategory data={originalJobs} onCategoryFilter={handleCategoryFilter} />
+        <SortByCategory data={unreportedJobs} onCategoryFilter={handleCategoryFilter} />
       </View>
 
       <Animated.ScrollView
@@ -691,7 +707,7 @@ const WorkFeedScreen = () => {
             </>
           ) : (
             activeCategory === 'All' ? <ActivityIndicator /> : <NoResults />
-
+ 
           )}
         </View>
       </Animated.ScrollView>
@@ -701,6 +717,10 @@ const WorkFeedScreen = () => {
         onClose={handleCloseJobDetail}
         job={selectedJob}
         refetch={refetch}
+        onReportedJob={(jobId) => {
+          handleReportedJob(jobId);
+          handleCloseJobDetail();
+        }}
 
       />
     </>

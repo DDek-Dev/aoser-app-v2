@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { View, Animated, ScrollView as RNScrollView, Pressable } from 'react-native';
+import { View, Animated, ScrollView as RNScrollView, Pressable, Text } from 'react-native';
 import Header from 'components/profile/Header';
 import InfoStats from 'components/profile/InfoStats';
 import Reviews from 'components/profile/Reviews';
@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import FreelancerSkeleton from 'screens/freelancer/FreelancerSkeleton';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Sparkles } from 'lucide-react-native';
 
 type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'AuthFreelancerProfile'>;
 
@@ -72,7 +73,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
     <ScreenWrapper safeEdges={['top', 'bottom']}>
       <View>
 
-      <FreelancerSkeleton />
+        <FreelancerSkeleton />
 
       </View>
     </ScreenWrapper>
@@ -96,7 +97,11 @@ export default function AuthFreelancerProfile({ route }: Props) {
 
         />
 
-        <View>
+        <View className="flex-row items-center gap-4">
+          <View className=" flex-row items-center gap-1">
+            <Sparkles size={24} color="#F59E0B" />
+            <Text className='text-lg font-semibold text-text'>{profile.recommendStar || 0}</Text>
+          </View>
           <Pressable onPress={() => navigation.navigate('AuthFreelancerSetting')} className="bg-border p-3 rounded-full">
             <Ionicons name="settings-outline" size={24} color="#3B82F6" />
 

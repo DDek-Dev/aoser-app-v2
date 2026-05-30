@@ -203,10 +203,22 @@ const HistoryScreen = () => {
         >
           {/* Public Works Tab */}
           <View style={{ display: selectedTab === 'public_works' ? 'flex' : 'none' }}>
-            
-            {publicWorkLoading ? (
+
+            {/* {publicWorkLoading ? (
               <JobListItem />
             ) : !filteredPublicWorkData || filteredPublicWorkData.length === 0 ? (
+              <HistoryNoResult
+                title={t('history.history_no_result.no_history')}
+                desc={t('history.history_no_result.items_will_appear_here')}
+              />
+            ) : (
+              <PublicWorkHistoryList data={filteredPublicWorkData} />
+            )} */}
+
+         
+            {publicWorkLoading ? (
+              <JobListItem />
+            ) : filteredPublicWorkData.length === 0 ? (  // remove the null check, useMemo guarantees []
               <HistoryNoResult
                 title={t('history.history_no_result.no_history')}
                 desc={t('history.history_no_result.items_will_appear_here')}

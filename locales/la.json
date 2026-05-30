@@ -19,6 +19,7 @@
     "protectedRoute": {
         "authentication_require": "ກະລຸນາສະໝັກບັນຊີລະບົບ",
         "signInToAccess": "ກະລຸນາເຂົ້າສູ່ລະບົບເພື່ອເຂົ້າເຖິງຄຸນສົມບັດນີ້",
+        "signinTorequest": "ກະລຸນາເຂົ້າສູ່ລະບົບເພື່ອເພາະໃຊ້ບໍລິການນີ້",
         "googleLogin": "ເຂົ້າໃຊ້ລະບົບດ້ວຍ Google",
         "signIn": "ເຂົ້າໃຊ້ລະບົບ",
         "newhere": "ຍັງບໍ່ມີບັນຊີ?",
@@ -312,9 +313,9 @@
             "work_created_successfully": "ລົງປະກາດວຽກຂອງທ່ານສຳເລັດແລ້ວ.",
             "work_send_successfully": "ສົ່ງຄຳຮ້ອງຂອງທ່ານໄປຫາ Provider ສຳເລັດແລ້ວ."
         },
-        "sub_work_details": "ຂັ້ນຕອນຍ່ອຍ",
+        "sub_work_details": "ຂັ້ນຕອນຍ່ອຍ (ບໍ່ບັງຄັບ)",
         "add_sections": "ເພີ່ມລາຍລະອຽດກ່ຽວກັບຂັ້ນຕອນວຽກຍ່ອຍ.",
-        "sub_work_details_req": "ລາຍການວຽກຍ່ອຍ",
+        "sub_work_details_req": "ລາຍການວຽກຍ່ອຍ (ບໍ່ບັງຄັບ)",
         "add_sections_req": "ເພີ່ມລາຍລະອຽດກ່ຽວກັບຂັ້ນຕອນວຽກຍ່ອຍ.",
         "freelancer_no_found": "ບໍ່ມີຟຣີແລນເຊີທີ່ສະແດງ",
         "status": {
@@ -373,7 +374,7 @@
             "unknown_date": "ບໍ່ມີວັນທິ່"
         },
         "similar_Freelancer": "ບໍລີການທີ່ກ່ຽວຂ້ອງ",
-        "no_freelancer_found": "ຄົ້ນຫາບໍ່ເຫັນຟຣີແລນເຊີນີ້",
+        "no_freelancer_found": "ຍັງບໍ່ມີບໍລີການນີ້",
         "search_another_key": "ກະລຸນາຄົ້ນຫາດ້ວຍຄຳສຳຄັນອື່ນ ຫຼື ກວດສອບການສະກົດຄຳຂອງທ່ານ.",
         "no_freelancer_fimiliar": "ຍັງບໍ່ມີບໍລີການທີ່ຄ້າຍຄືກັນ",
         "no_freelancer_fimiliar_dec": ""
@@ -1451,6 +1452,9 @@
         "success_title": "ສຳເລັດ!",
         "success_message": "ສົ່ງລາຍງານສຳເລັດແລ້ວ.",
         "error_title": "ຜິດພາດ!",
-        "error_message": "ບໍ່ສາມາດສົ່ງລາຍງານໄດ້. ກະລຸນາລອງໃໝ່."
+        "error_message": "ບໍ່ສາມາດສົ່ງລາຍງານໄດ້. ກະລຸນາລອງໃໝ່.",
+        "option_report": "ລາຍງານ",
+        "option_block": "ບລັອກ",
+        "block_message": "ຖ້າທ່ານຢືນຢັນ, ເນື້ອຫານີ້ຈະຖືກເຊື່ອງໃຫ້ທ່ານ"
     }
 }

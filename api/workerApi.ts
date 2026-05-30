@@ -103,7 +103,7 @@ export const workerApi = {
         try {
             const response = await networkCheck.get('/worker/freelancers', {
                 headers: {
-                    Authorization: `Aoser ${token}`,
+                    // Authorization: `Aoser ${token}`,
                 },
             });
 
@@ -333,7 +333,7 @@ export const workerApi = {
     getRecommandFreelancers: async (
         token: string,
         serviceTypeId: string,
-        exceptedIds: string,
+        // exceptedIds: string,
         skip: number = 0,
         limit: number = 10
     ): Promise<Freelancer[]> => {
@@ -341,7 +341,6 @@ export const workerApi = {
             const params = new URLSearchParams({
                 skip: skip.toString(),
                 limit: limit.toString(),
-                sortBy: 'recommendStar',
             });
 
             // Only add serviceType if it's not empty
@@ -349,10 +348,17 @@ export const workerApi = {
                 params.append('serviceType', serviceTypeId);
             }
 
-            const response = await apiClient.get(`/worker/freelancers?${params.toString()}&exceptedIds=${exceptedIds}`, {
+            console.log('', params.toString())
+            // console.log('exceptedIds', exceptedIds)
+            const response = await networkCheck.get(`/worker/freelancers?${params.toString()}`, {
                 headers: {
-                    Authorization: `Aoser ${token}`,
+                    // Authorization: `Aoser ${token}`,
                 },
+            });
+
+            console.log('Recommended Freelancers API response:', {
+                status: response.status,
+                data: response.data,
             });
 
             const payload = response.data?.data;

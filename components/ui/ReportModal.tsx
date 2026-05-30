@@ -14,10 +14,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useReportProblem } from 'hooks/useFreelancer';
+import { ReportType } from 'types';
 
 type ReportModalProps = {
   visible: boolean;
   onClose: () => void;
+  onReportSuccess?: (reportedId: string, reportType: 'FREELANCER' | 'WORK') => void;
   reportID: string;
   freelancerName: string;
   reportType: 'FREELANCER' | 'WORK';
@@ -26,13 +28,13 @@ type ReportModalProps = {
 export default function ReportModal({
   visible,
   onClose,
+  onReportSuccess,
   reportID,
   freelancerName,
   reportType,
 }: ReportModalProps) {
   const { t } = useTranslation();
   const [reportContent, setReportContent] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textInputRef = useRef<TextInput>(null);
   const { mutateAsync: reportProblem, isPending } = useReportProblem();
@@ -52,23 +54,26 @@ export default function ReportModal({
       return;
     }
 
+    setError(null);
+
+    const reportData: ReportType = {
+      description: reportContent.trim(),
+      reportType: reportType,
+      ...(reportType === 'FREELANCER'
+        ? { reportedUser: reportID, reaction: 'NONE' }
+        : { work: reportID, reaction: 'NONE' }),
+    };
 
     try {
-      const reportData = {
-
-        description: reportContent.trim(),
-        reportType: reportType,
-        // reportedUser:
-        ...(reportType === 'FREELANCER'
-          ? { reportedUser: reportID }
-          : { work: reportID }
-        ),
-      };
       console.log('📤 Sending report with data:', reportData);
-
-      await reportProblem(reportData);  // ← use mutateAsync here
-
+      await reportProblem(reportData);
       setReportContent('');
+      
+      // Call success callback with reported ID so parent can remove from state
+      if (onReportSuccess) {
+        onReportSuccess(reportID, reportType);
+      }
+      
       onClose();
     } catch (err) {
       console.log('❌ Error sending report:', err);
@@ -111,7 +116,7 @@ export default function ReportModal({
                 </View>
                 <TouchableOpacity
                   onPress={handleClose}
-                  disabled={isLoading}
+                  disabled={isPending}
                   className="p-2 -mr-2"
                   activeOpacity={0.6}
                 >
@@ -146,7 +151,7 @@ export default function ReportModal({
                   textAlignVertical="top"
                   value={reportContent}
                   onChangeText={setReportContent}
-                  editable={!isLoading}
+                  editable={!isPending}
                 />
 
                 {/* Error Message */}
@@ -166,7 +171,7 @@ export default function ReportModal({
                 <View className="flex-row gap-3 mt-8">
                   <TouchableOpacity
                     onPress={handleClose}
-                    disabled={isLoading}
+                    disabled={isPending}
                     className="flex-1 py-3 rounded-xl border border-gray-300 items-center justify-center active:bg-gray-50"
                   >
                     <Text className="text-body font-semibold text-text">
@@ -176,13 +181,13 @@ export default function ReportModal({
 
                   <TouchableOpacity
                     onPress={handleSendReport}
-                    disabled={isLoading || !reportContent.trim()}
-                    className={`flex-1 py-3 rounded-xl items-center justify-center flex-row ${isLoading || !reportContent.trim()
+                    disabled={isPending || !reportContent.trim()}
+                    className={`flex-1 py-3 rounded-xl items-center justify-center flex-row ${isPending || !reportContent.trim()
                       ? 'bg-gray-300'
                       : 'bg-red-600 active:bg-red-700'
                       }`}
                   >
-                    {isLoading ? (
+                    {isPending ? (
                       <>
                         <ActivityIndicator
                           color="white"

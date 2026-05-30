@@ -27,6 +27,7 @@ import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
 import { useTranslation } from 'react-i18next';
 import AppleLoginButton from './AppleLoginButton';
+import Checkbox from 'expo-checkbox';
 
 
 // ========================================
@@ -53,7 +54,7 @@ export default function SignUpScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const [showPassword, setShowPassword] = useState(false);
   // const [genderModalVisible, setGenderModalVisible] = useState(false);
-
+  const [agreed, setAgreed] = useState(false);
   const {
     otpSendLoading,
     googleloading,
@@ -131,7 +132,9 @@ export default function SignUpScreen() {
     navigation.replace('SignIn');
   };
 
- 
+  const handleAgree = (value: boolean) => {
+    setAgreed(value);
+  };
 
   // ========================================
   // COMPUTED VALUES
@@ -237,14 +240,38 @@ export default function SignUpScreen() {
                 disabled={isLoading}
               />
             </View>
+            <View className="px-5 pb-6 mt-6">
+              <TouchableOpacity
+
+                className="flex-row items-center"
+                activeOpacity={0.8}
+              >
+                <Checkbox
+                  value={agreed}
+                  onValueChange={handleAgree}
+                  color={agreed ? '#3B82F6' : '#999'}
+                />
+                <Text className="ml-2 text-body text-text flex-1">
+                  {t('kyc.step7.agreement.text')}{' '}
+                  <Text
+                    className="text-primary underline"
+                    onPress={() => navigation.navigate('PrivacyPolicyScreen')}
+                  >
+                    {t('kyc.step7.agreement.policy')}
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+
+            </View>
           </ScrollView>
+
 
           {/* Fixed Submit Button - Outside ScrollView */}
           <View className="px-6 pb-6">
             <SubmitButton
               onPress={handleSubmit(onSubmit)}
               loading={otpSendLoading}
-              disabled={isLoading}
+              disabled={isLoading || !agreed}
             />
           </View>
         </KeyboardAvoidingView>

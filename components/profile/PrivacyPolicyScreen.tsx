@@ -68,9 +68,11 @@ const PrivacyPolicyScreen = () => {
           );
         })}
 
-        <Text className="text-caption text-textSecondary text-center mt-6 mb-6">
+        {/* <Text className="text-caption text-textSecondary text-center mt-6 mb-6">
           {t('privacyPolicy.footer')}
-        </Text>
+        </Text> */}
+
+        <View className="mb-8"/>
       </ScrollView>
     </ScreenWrapper>
   );

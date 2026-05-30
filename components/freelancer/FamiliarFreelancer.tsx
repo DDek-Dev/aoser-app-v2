@@ -75,7 +75,7 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY, excep
     // Loading state
     if (isLoading || !data || error) {
         return (
-            <View className="mt-6 px-4 mb-24">
+            <View className="mt-4 px-4 mb-24">
                 <View className="flex-row justify-between items-center mb-2">
                     <Text className="text-body font-bold mb-2">{title}</Text>
                 </View>
@@ -134,7 +134,7 @@ export default function FamiliarFreelancers({ title, serviceType, scrollY, excep
 
         <View >
 
-            <View ref={containerRef} className="mt-6 px-1 ">
+            <View ref={containerRef} className="mt-4 px-1 ">
                 <View className="flex-row justify-between items-center mb-2">
                     <Text className="text-body font-bold mb-2">{title}</Text>
                 </View>

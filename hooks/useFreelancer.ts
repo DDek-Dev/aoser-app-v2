@@ -302,33 +302,38 @@ export const useGetTopfreelancers = () => {
  * Hook for fetching recommended freelancers with infinite scroll
  * Implements automatic background refetching and cache management
  */
-export const useRecommendedFreelancers = (serviceTypeId: string, exceptedIds: string | undefined) => {
+
+export const useRecommendedFreelancers = (
+  serviceTypeId: string,
+  exceptedIds?: string | string[]
+) => {
   const { tokens } = useAuth();
+  const exceptedIdsParam = Array.isArray(exceptedIds)
+    ? exceptedIds.filter(Boolean).join(',')
+    : exceptedIds || '';
+
+    console.log('exceptedIdsParam:', exceptedIdsParam);
 
   return useInfiniteQuery<Freelancer[]>({
-    queryKey: ['recommended-freelancers', serviceTypeId, exceptedIds],
-    queryFn: ({ pageParam = 0 }) =>
+    queryKey: ['recommended-freelancers', serviceTypeId || 'all', exceptedIdsParam],
+    queryFn: ({ pageParam = 0 }: { pageParam?: unknown }) =>
       workerApi.getRecommandFreelancers(
         tokens?.accessToken || '',
         serviceTypeId,
-        exceptedIds || '',
+        // exceptedIdsParam,
         pageParam as number,
         10
       ),
     getNextPageParam: (lastPage, allPages) => {
-      // Continue fetching if last page is full
-      if (lastPage.length === 10) {
-        return allPages.length * 10;
-      }
-      return undefined; // No more pages
+      if (!Array.isArray(lastPage)) return undefined;
+      return lastPage.length === 10 ? (allPages.length === 0 ? 10 : allPages.length * 10) : undefined;
     },
     initialPageParam: 0,
-    // Cache and refetch configuration
-    staleTime: 1000 * 60 * 2, // Data is fresh for 2 minutes
-    gcTime: 1000 * 60 * 10, // Cache persists for 10 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to app
-    refetchOnMount: 'always', // Always check for new data on mount
-    retry: 2, // Retry failed requests twice
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: true,
+    refetchOnMount: false,
+    retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     placeholderData: (previousData) => previousData,
   });

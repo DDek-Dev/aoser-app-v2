@@ -2,10 +2,10 @@
   "expo": {
     "name": "Aoser",
     "slug": "aoser",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "scheme": "com.aoser.app",
     "orientation": "portrait",
-    "icon": "./assets/aoser_logo_and2.png",
+    "icon": "./assets/aoser_logo_ios.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -22,9 +22,9 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Aoser to save QR codes to your photo library",
-        "NSCameraUsageDescription":"Aoser needs access to your camera to take photos for your profile and to capture images of services you offer as a freelancer.",
+        "NSCameraUsageDescription": "Aoser needs access to your camera to take photos for your profile and to capture images of services you offer as a freelancer.",
         "ITSAppUsesNonExemptEncryption": false,
-        "CFBundleURLTypes": [ 
+        "CFBundleURLTypes": [
           {
             "CFBundleURLSchemes": [
               "com.googleusercontent.apps.534310388147-ie1fa8js9n91smba52idrpns8hjme379"
@@ -32,7 +32,7 @@
           }
         ]
       },
-      "buildNumber": "5"
+      "buildNumber": "6"
     },
     "android": {
       "adaptiveIcon": {
@@ -42,7 +42,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.aoser.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.WRITE_EXTERNAL_STORAGE",
@@ -68,7 +68,25 @@
       "expo-notifications",
       "expo-dev-client",
       "expo-image-picker",
-      "./plugins/withAdiRegistrationToken"
+      "./plugins/withAdiRegistrationToken",
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/perf",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "deploymentTarget": "15.1",
+            "forceStaticLinking": [
+              "RNFBApp",
+              "RNFBAnalytics",
+              "RNFBCrashlytics",
+              "RNFBPerf"
+            ]
+          }
+        }
+      ]
     ]
   }
 }

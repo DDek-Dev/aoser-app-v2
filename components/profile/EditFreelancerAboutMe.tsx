@@ -3,7 +3,7 @@ import {
     View,
     Text,
     TouchableOpacity,
-    Alert,
+    
 } from 'react-native';
 import SelectImage from 'components/ui/SelectImage';
 import TextArea from 'components/ui/TextArea';

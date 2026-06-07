@@ -10,7 +10,7 @@ export const useMessageActions = () => {
       await Clipboard.setStringAsync(text);
       // Alert.alert('Copied', 'Message copied to clipboard');
     } catch (error) {
-      Alert.alert('Error', 'Failed to copy message');
+      console.log('Error', 'Failed to copy message');
     }
   }, []);
 
@@ -29,7 +29,7 @@ export const useMessageActions = () => {
   const handleAIResponse = useCallback((message: Message) => {
     // You can implement your AI response logic here
     // For example, send the message to your AI service
-    Alert.alert('AI Response', `Generating AI response for: "${message.message?.substring(0, 50)}..."`);
+    console.log('AI Response', `Generating AI response for: "${message.message?.substring(0, 50)}..."`);
   }, []);
 
   const shareMessage = useCallback(async (message: string) => {
@@ -38,7 +38,7 @@ export const useMessageActions = () => {
         message: message,
       });
     } catch (error) {
-      Alert.alert('Error', 'Failed to share message');
+      console.log('Error', 'Failed to share message');
     }
   }, []);
 

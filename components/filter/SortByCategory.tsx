@@ -161,6 +161,7 @@ const SortByCategory: React.FC<SortByCategoryProps> = ({
           {item.name == 'All' ? t('categoryTabs.all') : item.name}
 
         </Text>
+        
       </Pressable>
     );
   };

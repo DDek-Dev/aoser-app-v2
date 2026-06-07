@@ -75,9 +75,10 @@ export default function Reviews({ reviews }: ReviewsProps) {
 
       <View className="flex-row gap-4 items-center mb-6">
         <View className="items-center h-24 w-24 bg-blue-100 justify-center rounded-full">
-          <Text className="text-2xl font-bold text-blue-600">{avgRating} </Text>
-          {/* <Text className="text-gray-500 text-sm">{t('freelancer_profile.review.from')} 5.0</Text> */}
-          <Text className="text-gray-500 text-sm">0.0/5.0</Text>
+
+        <Text className="text-2xl font-bold text-blue-600">{avgRating}</Text>
+
+          <Text className="text-gray-500 text-xs">0.0/5.0</Text>
         </View>
         <View className="items-center">
           {renderStars(parseFloat(avgRating))}

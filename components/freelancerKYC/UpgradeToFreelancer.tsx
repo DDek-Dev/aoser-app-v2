@@ -80,7 +80,7 @@ const remoteFile = (filename: string | undefined, type: 'image' | 'video' = 'ima
     return {
         uri: `${CDN_BASE_URL}${filename}`,
         name: filename,
-        type: mimeType, 
+        type: mimeType,
     };
 };
 
@@ -96,9 +96,9 @@ const UpgradeToFreelancer = () => {
     const queryClient = useQueryClient();
 
     // ─── Registration mode flags ───────────────────────────────────────────────
-    const isRejectedRegistration =profileData?.businessType === 'FREELANCER'&& profileData?.registrationStatus === 'REJECTED';
-        
-    
+    const isRejectedRegistration = profileData?.businessType === 'FREELANCER' && profileData?.registrationStatus === 'REJECTED';
+
+
     // ──────────────────────────────────────────────────────────────────────────
 
     // console.log("User profile:: ", JSON.stringify(profileData, null, 2))
@@ -114,7 +114,7 @@ const UpgradeToFreelancer = () => {
 
     const [aoserProfile, setAoserProfile] = useState<ErrorState>({
         firstName: false, lastName: false, profileImg: false,
-         phone: false, province: false, district: false, village: false,
+        phone: false, province: false, district: false, village: false,
     });
 
     // Step 1
@@ -430,6 +430,12 @@ const UpgradeToFreelancer = () => {
     const handleNext = async () => {
         if (isSubmitting) return;
 
+        // Guard: Ensure profile data and ID are stable before proceeding
+        if (!profileData || !currentUserId) {
+            console.log('⚠️ Cannot proceed: Profile data or User ID is missing');
+            return;
+        }
+
         // ── Step 0: Profile ──────────────────────────────────────────────────
         if (step === 0) {
             const newErrors: ErrorState = {
@@ -703,10 +709,15 @@ const UpgradeToFreelancer = () => {
         }
 
         // ── Step 8: Submit ───────────────────────────────────────────────────
+        // ── Step 8: Submit ───────────────────────────────────────────────────
         if (step === 8) {
             setIsSubmitting(true);
+            
+            // Re-calculate rejection status inside the handler to ensure we use the most 
+            // current profileData state at the moment of click.
+            const isActuallyRejected = profileData.businessType === 'FREELANCER' && profileData.registrationStatus === 'REJECTED';
+
             try {
-                // const allStepData = await getAllStepData();
                 const allStepData = await getAllScopedStepData(currentUserId);
 
                 const reconstructedData: any = {};
@@ -725,15 +736,15 @@ const UpgradeToFreelancer = () => {
                     !!reconstructedData['@freelancer_step5']?.cardImagePath;
 
                 if (hasPendingUploads) {
+                    console.log('❌ Cannot submit: pending uploads still in progress');
                     Toast.show({ type: ALERT_TYPE.DANGER, title: t('kyc.toast.error.title'), textBody: t('kyc.toast.error.body') });
                     setIsSubmitting(false);
-                    return;
+                    return; // ✅ early return
                 }
 
                 // ── Build final payload ──────────────────────────────────────
                 const savedFirstName = reconstructedData['@aoser_profile']?.firstName || '';
                 const savedLastName = reconstructedData['@aoser_profile']?.lastName || '';
-                // const savedGender = reconstructedData['@aoser_profile']?.gender || '';
                 const savedPhone = reconstructedData['@aoser_profile']?.phone || '';
                 const uploadedUserProfileImage = reconstructedData['@aoser_profile']?.existingProfileImg as string | undefined;
 
@@ -748,16 +759,11 @@ const UpgradeToFreelancer = () => {
                         ? (step6Draft?.paypalInfo || '')
                         : (step6Draft?.bankNumber || '');
 
-                // We use Partial<Freelancer> & Record<string, any> so optional fields like
-                // certificates, videoPromote, jobs can be added dynamically without TS complaining
                 const finalData: Partial<UserProfile> & Record<string, any> = {
                     businessType: 'FREELANCER',
                     jobTitle: reconstructedData['@freelancer_step1']?.jobTitle || '',
                     freelancerType: reconstructedData['@freelancer_step1']?.freelancerType || 'FULLTIME',
-
-                    // Use newly uploaded URL, or keep existing filename
                     bannerImage: reconstructedData['@freelancer_step1']?.existingBannerImage || '',
-
                     serviceType: reconstructedData['@freelancer_step1']?.category || '',
                     about: reconstructedData['@freelancer_step2']?.aboutMe || '',
                     skills: reconstructedData['@freelancer_step2']?.skills || [],
@@ -766,17 +772,11 @@ const UpgradeToFreelancer = () => {
                     hourlyRate: hourlyRateValue,
                     hourlyRateCurrency: hourlyRateCurrencyValue,
                     rateType: rateTypeValue,
-
-
-
                     personalCardType: reconstructedData['@freelancer_step4']?.cardType,
                     personalCardID: reconstructedData['@freelancer_step4']?.cardID || '',
                     personalCardExpireDate: reconstructedData['@freelancer_step4']?.fromDate || '',
-
                     personalCardImage: reconstructedData['@freelancer_step5']?.existingCardImage || '',
-
                     userWithCardImage: reconstructedData['@freelancer_step5']?.existingSelfieWithCard || '',
-
                     address: {
                         country: reconstructedData['@aoser_profile']?.address?.country || 'Laos',
                         province: reconstructedData['@aoser_profile']?.address?.province || '',
@@ -785,16 +785,13 @@ const UpgradeToFreelancer = () => {
                         latitude: 0,
                         longitude: 0,
                     },
-
                     bankAccountType: step6Draft?.paymentMethod,
                     bankName: step6Draft?.bankName || '',
                     bankAccountName: step6Draft?.accountName || '',
                     bankAccountNumber: bankAccountNumberValue,
                 };
 
-
                 // Optional fields
-
                 const optionalPromoVideo = reconstructedData['@freelancer_step1']?.existingPromoVideo;
                 if (optionalPromoVideo) finalData.videoPromote = optionalPromoVideo;
 
@@ -803,7 +800,6 @@ const UpgradeToFreelancer = () => {
                     finalData.jobs = optionalSubcategories;
                 }
 
-                // Merge new + existing certificates
                 const existingCerts = reconstructedData['@freelancer_step2']?.existingCertificates || [];
                 const step2Draft = reconstructedData['@freelancer_step2'];
                 const certsTouched =
@@ -816,78 +812,95 @@ const UpgradeToFreelancer = () => {
                     finalData.certificates = existingCerts;
                 }
 
-                // Don't send nullish optional fields (backend can reject explicit `null`/empty string).
                 if (finalData.videoPromote == null || finalData.videoPromote === '') delete finalData.videoPromote;
                 if (finalData.jobs == null) delete finalData.jobs;
                 if (finalData.certificates == null) delete finalData.certificates;
-                // if(isRejectedRegistration) {
-                //     finalData.registrationStatus = 'PENDING'
-                // }
-                // ── Choose create vs update based on registration status ─────
+
+                // ── onSuccess ────────────────────────────────────────────────
                 const onSuccess = async (response: any) => {
-                    const profilePayload: Record<string, string> = {
-                        firstName: savedFirstName.trim(),
-                        lastName: savedLastName.trim(),
-                        // gender: savedGender.trim(),
-                        phone: savedPhone.trim(),
-                    };
-                    if (uploadedUserProfileImage) {
-                        profilePayload.userProfileImage = uploadedUserProfileImage;
-                    } else if (reconstructedData['@aoser_profile']?.existingProfileImg) {
-                        profilePayload.userProfileImage = reconstructedData['@aoser_profile'].existingProfileImg;
+                    try {
+                        const profilePayload: any = {
+                            firstName: savedFirstName.trim(),
+                            lastName: savedLastName.trim(),
+                            phone: savedPhone.trim(),
+                        };
+                        
+                        if (uploadedUserProfileImage) {
+                            profilePayload.userProfileImage = uploadedUserProfileImage;
+                        } else if (reconstructedData['@aoser_profile']?.existingProfileImg) {
+                            profilePayload.userProfileImage = reconstructedData['@aoser_profile'].existingProfileImg;
+                        }
+
+                        // Use mutateAsync or a Promise-based approach to ensure the profile 
+                        // update finishes before we clear local data and navigate away.
+                        try {
+                            await new Promise((resolve, reject) => {
+                                updateProfile(profilePayload, {
+                                    onSuccess: resolve,
+                                    onError: reject
+                                });
+                            });
+                        } catch (err) {
+                            console.log('⚠️ Minor: Basic profile update failed, but KYC submitted.', err);
+                        }
+
+                        Toast.show({
+                            type: ALERT_TYPE.SUCCESS,
+                            title: t('kyc.toast.success.title'),
+                            textBody: t('kyc.toast.success.body'),
+                        });
+
+                        await clearScopedKycData(currentUserId);
+                        queryClient.removeQueries({ queryKey: ['aoserProfile'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerStep1'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerStep2'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerStep3'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerStep4'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerStep5'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerStep6'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerStep7'] });
+                        queryClient.removeQueries({ queryKey: ['freelancerReview'] });
+                        await queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+                        await queryClient.refetchQueries({ queryKey: ['myProfile'] });
+                        navigation.popTo('FreelancerRoleGate');
+                    } finally {
+                        setIsSubmitting(false); // ✅ always runs even if navigation fails
                     }
-
-                    updateProfile(profilePayload, {
-                        onSuccess: () => Toast.show({ type: ALERT_TYPE.SUCCESS, title: t('editProfile.success'), textBody: t('editProfile.profile_updated') }),
-                        onError: () => Toast.show({ type: ALERT_TYPE.DANGER, title: t('editProfile.oops'), textBody: t('editProfile.update_failed') }),
-                    });
-
-                    Toast.show({ type: ALERT_TYPE.SUCCESS, title: t('kyc.toast.success.title'), textBody: t('kyc.toast.success.body') });
-
-                    // await cleanup();
-                    await clearScopedKycData(currentUserId);
-                    queryClient.removeQueries({ queryKey: ['aoserProfile'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerStep1'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerStep2'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerStep3'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerStep4'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerStep5'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerStep6'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerStep7'] });
-                    queryClient.removeQueries({ queryKey: ['freelancerReview'] });
-                    await queryClient.invalidateQueries({ queryKey: ['myProfile'] });
-                    await queryClient.refetchQueries({ queryKey: ['myProfile'] });
-                    navigation.popTo('FreelancerRoleGate');
-                    setIsSubmitting(false);
                 };
 
+                // ── onError ──────────────────────────────────────────────────
                 const onError = (error: any) => {
                     console.log('❌ Submission failed:', error);
-                    Toast.show({ type: ALERT_TYPE.DANGER, title: t('kyc.toast.error.title'), textBody: t('kyc.toast.error.body') });
-                    setIsSubmitting(false);
+                    Toast.show({
+                        type: ALERT_TYPE.DANGER,
+                        title: t('kyc.toast.error.title'),
+                        textBody: t('kyc.toast.error.body'),
+                    });
+                    setIsSubmitting(false); // ✅ reset on API error
                 };
 
-               
-
-                if (isRejectedRegistration) {
-                    // ✅ Re-submission: UPDATE existing profile PENDING
-                    // console.log('final data review:', JSON.stringify(finalData, null, 2))
+                // ── Submit ───────────────────────────────────────────────────
+                if (isActuallyRejected) {
+                    console.log('🔄 Re-submitting rejected application...');
                     updateFreelancerProfile(finalData as UserProfile, { onSuccess, onError });
                 } else {
-                    // ✅ First time: CREATE new freelancer profile
-                    // console.log('final data new okyc:', JSON.stringify(finalData, null, 2))
-
+                    console.log('🆕 Submitting new application...');
                     createFreelancer(finalData as UserProfile, { onSuccess, onError });
                 }
-
-                setIsSubmitting(false);
             } catch (error) {
                 console.log('❌ Error in submission process:', error);
-                Toast.show({ type: ALERT_TYPE.DANGER, title: t('kyc.toast.oops.title'), textBody: t('kyc.toast.oops.body') });
-                setIsSubmitting(false);
+                Toast.show({
+                    type: ALERT_TYPE.DANGER,
+                    title: t('kyc.toast.oops.title'),
+                    textBody: t('kyc.toast.oops.body'),
+                });
+                setIsSubmitting(false); // ✅ only on unexpected catch
             }
+
+            return; // ✅ CRITICAL: prevents setStep(step + 1) from running after step 8
         }
 
+        // ✅ This only runs for steps 0-7
         if (step < steps.length - 1) setStep(step + 1);
     };
 
@@ -907,7 +920,7 @@ const UpgradeToFreelancer = () => {
             <View style={{ flex: 1 }}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ?110 : 110}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 110 : 110}
                     style={{ flex: 1, backgroundColor: 'white' }}
                 >
                     <ScrollView

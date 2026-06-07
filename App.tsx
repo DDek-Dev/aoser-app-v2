@@ -1,8 +1,7 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import './global.css' ;
+import './global.css';
 import MainNavigator from 'navigation/MainNavigator';
 import { navigationRef } from 'navigation/RootNavigation';
 import './i18n';
@@ -22,54 +21,57 @@ import { apiEvents } from 'api/networkCheck';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { Platform, StyleSheet, View } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context'; // ✅ เพิ่ม SafeAreaProvider
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Notifications from 'expo-notifications';
 import { usePushNotifications } from 'hooks/useNotifications';
+import { enableCrashlytics, logScreenView } from 'utils/firebase'
+import { ErrorBoundary } from 'components/ErrorBoundary';
 
 const queryClient = new QueryClient();
-// Set handler at the module level (outside component)
+
 Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-        shouldShowBanner: true,
-        shouldShowList: true,
-    }),
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
 });
 
 SplashScreen.preventAutoHideAsync();
 
-// ✅ แยก Inner Component เพื่อให้อยู่ภายใต้ SafeAreaProvider
+/**
+ * NotificationController handles push notification registration and interaction.
+ * By placing it inside AuthProvider, we ensure it can eventually react to login state.
+ */
+function NotificationController() {
+  const handleNotificationTapped = (response: Notifications.NotificationResponse) => {
+    const data = response.notification.request.content.data;
+    console.log('🔔 Notification data payload:', data);
+    if (!navigationRef.isReady()) return;
+    
+    if (data.screen && data.params) {
+      navigationRef.navigate(data.screen as any, data.params);
+    } else if (data.screen && !data.params) {
+      navigationRef.navigate(data.screen as any);
+    }
+  };
+
+  // Note: For a complete fix, your usePushNotifications hook should be updated 
+  // to skip the backend API call if the user is not logged in.
+  usePushNotifications(handleNotificationTapped);
+
+  return null;
+}
+
 function AppContent() {
   const [isConnected, setIsConnected] = useState<boolean | null>(true);
   const [hasApiError, setHasApiError] = useState(false);
+  const routeNameRef = useRef<string | undefined>(undefined); // ✅ add
 
   const [fontsLoaded, fontError] = useFonts({
     'LaoFont': require('./assets/fonts/Noto_Sans_Lao/NotoSansLao-VariableFont_wdth,wght.ttf'),
   });
-
-
-
-
-
-  // Make an route navigate function that can be called from anywhere in the app
-  const handleNotificationTapped = (response: Notifications.NotificationResponse) => {
-    const data = response.notification.request.content.data;
-    
-    console.log('🔔 Notification data payload:', data);
-    // 👇 Navigate based on data payload from your backend
-    if (!navigationRef.isReady()) return;
-
-      if (data.screen && data.params) {
-        navigationRef.navigate(data.screen as any , data.params );
-      }else if (data.screen && !data.params) {
-        navigationRef.navigate(data.screen as any );
-      }
-  };
-
-  usePushNotifications(handleNotificationTapped);
-
-
   useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
@@ -77,6 +79,8 @@ function AppContent() {
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
+    enableCrashlytics(); // ✅ add
+
     const unsubscribeNet = NetInfo.addEventListener(state => {
       setIsConnected(state.isConnected);
       if (state.isConnected) setHasApiError(false);
@@ -107,14 +111,33 @@ function AppContent() {
     setHasApiError(false);
   };
 
+  // ✅ Screen tracking
+  const onNavigationReady = () => {
+    routeNameRef.current = navigationRef.getCurrentRoute()?.name;
+  };
+
+  const onNavigationStateChange = async () => {
+    const previousRoute = routeNameRef.current;
+    const currentRoute = navigationRef.getCurrentRoute()?.name;
+    if (currentRoute && previousRoute !== currentRoute) {
+      await logScreenView(currentRoute);
+    }
+    routeNameRef.current = currentRoute;
+  };
+
   const isOverlayVisible = isConnected === false || hasApiError;
   const insets = useSafeAreaInsets();
 
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={onNavigationReady}
+      onStateChange={onNavigationStateChange}
+    >
       <AuthProvider>
+        <NotificationController />
         <GestureHandlerRootView style={{ flex: 1 }}>
           <KeyboardProvider>
             <AlertNotificationRoot theme='light'>
@@ -148,11 +171,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    // ✅ SafeAreaProvider ต้องอยู่ด้านนอกสุด
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <I18nextProvider i18n={i18n}>
-          <AppContent />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </I18nextProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

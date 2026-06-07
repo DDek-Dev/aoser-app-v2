@@ -5,8 +5,8 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import type { Notifications as AppNotification } from "types";
 
-import { Alert, PermissionsAndroid, Platform, } from 'react-native';
-import { use, useEffect, useRef, useState } from "react";
+import {  Platform, } from 'react-native';
+import {  useEffect, useRef, useState } from "react";
 import Constants from 'expo-constants';
 
 export interface PushNotificationState {
@@ -54,7 +54,7 @@ export const usePushNotifications =  (
             }
 
             if (finalStatus !== 'granted') {
-                Alert.alert('Error', 'Failed to get push token for push notification!');
+                console.log('Error', 'Failed to get push token for push notification!');
                 return;
             }
 
@@ -63,7 +63,7 @@ export const usePushNotifications =  (
             });
             return token;
         } else {
-            Alert.alert('Error', 'Must use physical device for Push Notifications');
+            console.log('Error', 'Must use physical device for Push Notifications');
         }
     }
 

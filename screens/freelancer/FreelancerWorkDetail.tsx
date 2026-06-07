@@ -1961,7 +1961,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                       <View className="flex-row items-center flex-1">
                         <Ionicons name="arrow-forward" size={16} color="#3B7280" />
                         <TextInput
-                          placeholder={t('workDetail.add_new_subtask')}
+                          placeholder={t('workDetail.add_sub_task')}
                           value={newSubTitles[String(idx)] || ''}
                           onChangeText={(text) => setNewSubTitles(prev => ({ ...prev, [String(idx)]: text }))}
                           className="ml-2 flex-1 text-body text-text"

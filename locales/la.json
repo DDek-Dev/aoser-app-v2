@@ -213,7 +213,7 @@
         "post_to_apply": "ເຜີຍແຜ່ວຽກໄປທີ່ສາທາລະນະເພື່ອຫາຜູ້ຊ່ຽວຊານທີ່ເຮັດໄດ້",
         "start_post": "ເພີ່ມວຽກ",
         "post_on": "ໂພສໃນ",
-        "result_found": "ຜົນການຄົ້ນຫາ",
+        "result_found": "ຍັງບໍ່ມີຂໍ້ມູນລາຍການວຽກ",
         "more": "ເບິ່ງເພີ່ມ",
         "search_work": "ຄົ້ນຫາວຽກ...",
         "error": {
@@ -668,7 +668,7 @@
             "otpRequired": "ກະລຸນາໃສ່ລະຫັດ 6 ຕົວເລກ",
             "failedToSendOtp": "ບໍ່ສາມາດສົ່ງລະຫັດຢືນຢັນໄດ້",
             "newPasswordRequired": "ກະລຸນາໃສ່ລະຫັດຜ່ານໃໝ່",
-            "passwordMinLength": "ລະຫັດຜ່ານຕ້ອງມີຕົວເລກ ແລະ ຕົວອັກສອນ",
+            "passwordMinLength": "ລະຫັດຜ່ານຕ້ອງມີຢ່າງນ້ອຍ 6 ຕົວ",
             "confirmPasswordRequired": "ກະລຸນາຢືນຢັນລະຫັດຜ່ານ",
             "passwordsNotMatch": "ລະຫັດຜ່ານບໍ່ກົງກັນ",
             "resetFailed": "ບໍ່ສາມາດລີເຊັດລະຫັດຜ່ານໄດ້"

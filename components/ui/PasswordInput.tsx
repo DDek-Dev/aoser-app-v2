@@ -1,21 +1,21 @@
 import { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text } from 'react-native';
-import { Controller, Control, FieldError } from 'react-hook-form';
+import { Controller, Control, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 
 
-interface PasswordInputProps {
-  control: Control<any>;
-  name: string;
+type PasswordInputProps<TFieldValues extends FieldValues = FieldValues> = {
+  control: Control<TFieldValues>;
+  name: Path<TFieldValues>;
   placeholder: string;
-  rules?: any;
+  rules?: Omit<RegisterOptions<TFieldValues, Path<TFieldValues>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
   showPassword: boolean;
   onTogglePassword: () => void;
   error?: string;
   disabled?: boolean;
-}
+};
 
-function PasswordInput({
+function PasswordInput<TFieldValues extends FieldValues = FieldValues>({
   control,
   name,
   placeholder,
@@ -24,7 +24,7 @@ function PasswordInput({
   onTogglePassword,
   error,
   disabled,
-}: PasswordInputProps) {
+}: PasswordInputProps<TFieldValues>) {
   const [isFocused, setIsFocused] = useState(false);
 
   return (

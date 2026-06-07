@@ -4,7 +4,7 @@
 // PaymentScreen.tsx
 import { Ionicons } from '@expo/vector-icons';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-import { useGenerateOnepayQRcode } from 'hooks/usePayment';
+import { useGenerateOnepayQRcode, useCheckOnepayqr } from 'hooks/usePayment';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -62,6 +62,7 @@ const PaymentScreen = ({ route }: any) => {
 
   const [isDownloading, setIsDownloading] = useState(false);
   const { mutateAsync, isSuccess, data } = useGenerateOnepayQRcode();
+  const { mutateAsync: checkPaymentStatusAsync } = useCheckOnepayqr();
   const { tokens, user } = useAuth();
   const qrRef = useRef<ViewShot>(null);
   const { t } = useTranslation();
@@ -76,37 +77,75 @@ const PaymentScreen = ({ route }: any) => {
 
 
   // ✅ Extract the payment listener setup into a reusable function
-  const setupPaymentListener = useCallback(() => {
-  if (!invoiceId || !tokens || !user) return;
-
-  console.log('[PaymentScreen] Setting up payment listener for invoice:', invoiceId);
-
-  // ✅ Use reconnect() if already has credentials, connect() for fresh start
-  if (SocketService.isConnected()) {
-    console.log('[PaymentScreen] Socket already connected, re-registering listener');
-  } else {
-    SocketService.connect(SERVER_URL, tokens.accessToken, user._id);
-  }
-
-  SocketService.onPaymentCallback(invoiceId, (payment: any) => {
+  const paymentCallback = useCallback((payment: any) => {
     console.log('[PaymentScreen] received payment callback', payment);
     setIsPaymentProcessing(false);
     setPaymentResult(payment);
     setShowSuccessPopup(true);
-  });
-}, [invoiceId, tokens, user, SERVER_URL]);
+  }, []);
+
+  const setupPaymentListener = useCallback(() => {
+    if (!invoiceId || !tokens || !user) return;
+
+    console.log('[PaymentScreen] Setting up payment listener for invoice:', invoiceId);
+
+    // Clean up previous callback for this invoice if present
+    SocketService.removePaymentCallback(invoiceId);
+
+    if (SocketService.isConnected()) {
+      console.log('[PaymentScreen] Socket already connected, re-registering listener');
+    } else {
+      SocketService.connect(SERVER_URL, tokens.accessToken, user._id);
+    }
+
+    SocketService.onPaymentCallback(invoiceId, paymentCallback);
+  }, [invoiceId, tokens, user, SERVER_URL, paymentCallback]);
 
 
-// ✅ Listen for app state changes (background → foreground)
+  // ✅ Listen for app state changes (background → foreground)
+  const checkPaymentStatus = useCallback(async () => {
+    if (!invoiceId || !tokens) return;
+
+    try {
+      const formData = {
+        amount: budget,
+        currency,
+        invoiceType,
+        terminalid,
+        paymentFor: workId,
+        desc,
+      } as Payment;
+
+      const result = await checkPaymentStatusAsync({ data: formData });
+      console.log('[PaymentScreen] resume payment status check', result);
+
+      const paid =
+        result?.status === 'SUCCESS' ||
+        result?.response === true ||
+        result?.paid === true;
+
+      if (paid) {
+        setIsPaymentProcessing(false);
+        setPaymentResult(result);
+        setShowSuccessPopup(true);
+      }
+    } catch (error) {
+      console.log('[PaymentScreen] payment status check error', error);
+    }
+  }, [invoiceId, tokens, budget, currency, invoiceType, terminalid, workId, desc, checkPaymentStatusAsync]);
+
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (
         appState.current.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
-        // App came back to foreground — reconnect socket and re-register listener
         console.log('[PaymentScreen] App returned to foreground, reconnecting socket...');
+        if (SocketService.isConnected()) {
+          SocketService.reconnect();
+        }
         setupPaymentListener();
+        checkPaymentStatus();
       }
 
       appState.current = nextAppState;
@@ -116,7 +155,7 @@ const PaymentScreen = ({ route }: any) => {
     return () => {
       subscription.remove();
     };
-  }, [setupPaymentListener]);
+  }, [setupPaymentListener, checkPaymentStatus]);
 
 
 
@@ -138,7 +177,7 @@ const PaymentScreen = ({ route }: any) => {
       try {
         setIsLoading(true);
         const result = await mutateAsync({ data: formData });
-        
+
 
         if (result && typeof result === 'object') {
           const paymentResponse = result as PaymentResponse;
@@ -234,36 +273,36 @@ const PaymentScreen = ({ route }: any) => {
 
 
   // Add a refresh handler function (place this before the return statement)
-const handleRefreshQR = async () => {
-  const formData = {
-    amount: budget,
-    currency: currency,
-    invoiceType: invoiceType,
-    terminalid: terminalid,
-    paymentFor: workId,
-    desc: desc,
-  } as Payment;
+  const handleRefreshQR = async () => {
+    const formData = {
+      amount: budget,
+      currency: currency,
+      invoiceType: invoiceType,
+      terminalid: terminalid,
+      paymentFor: workId,
+      desc: desc,
+    } as Payment;
 
-  try {
-    setIsLoading(true);
-    const result = await mutateAsync({ data: formData });
+    try {
+      setIsLoading(true);
+      const result = await mutateAsync({ data: formData });
 
-    if (result && typeof result === 'object') {
-      const paymentResponse = result as PaymentResponse;
-      const qrcValue = paymentResponse.data?.qrc || result;
-      const invoiceIdValue = paymentResponse.invoiceId || null;
-      setQrString(qrcValue);
-      setInvoiceId(invoiceIdValue);
-    } else {
-      setQrString(result);
+      if (result && typeof result === 'object') {
+        const paymentResponse = result as PaymentResponse;
+        const qrcValue = paymentResponse.data?.qrc || result;
+        const invoiceIdValue = paymentResponse.invoiceId || null;
+        setQrString(qrcValue);
+        setInvoiceId(invoiceIdValue);
+      } else {
+        setQrString(result);
+      }
+
+      setIsLoading(false);
+    } catch (error) {
+      console.log("QR generation error:", error);
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
-  } catch (error) {
-    console.log("QR generation error:", error);
-    setIsLoading(false);
-  }
-};
+  };
   const handlePopupClose = () => {
     setShowSuccessPopup(false);
     navigation.popTo('FreelancerWorkDetail', { workId: workId });
@@ -349,42 +388,42 @@ const handleRefreshQR = async () => {
 
                 {/* QR Code Container with Decorative Border */}
                 {/* QR Code Container with Decorative Border */}
-<View className="bg-white rounded-2xl p-6 border-2 border-primary shadow-inner items-center justify-center mb-4">
-  {isLoading ? (
-    <View className="w-48 h-48 items-center justify-center">
-      <ActivityIndicator size="large" color="#3B82F6" />
-    </View>
-  ) : !currentQrString ? (
-    // ✅ Show refresh button when QR string is null/undefined
-    <View className="w-48 h-48 items-center justify-center gap-3">
-      <Ionicons name="wifi-outline" size={48} color="#9CA3AF" />
-      <Text className="text-gray-500 text-sm text-center">
-        {t('payment.qrLoadFailed')}
-      </Text>
-      <TouchableOpacity
-        onPress={handleRefreshQR}
-        className="flex-row items-center bg-blue-600 px-4 py-2 rounded-xl"
-      >
-        <Ionicons name="refresh-outline" size={18} color="#ffffff" />
-        <Text className="text-white font-semibold text-sm ml-1">
-          {t('works.error.refresh')}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  ) : (
-    <QRCode
-      value={currentQrString}
-      size={192}
-      color="#1F2937"
-      backgroundColor="#ffffff"
-      logo={lao_qr}
-      logoMargin={2}
-      ecl="M"
-      enableLinearGradient={false}
-      quietZone={4}
-    />
-  )}
-</View>
+                <View className="bg-white rounded-2xl p-6 border-2 border-primary shadow-inner items-center justify-center mb-4">
+                  {isLoading ? (
+                    <View className="w-48 h-48 items-center justify-center">
+                      <ActivityIndicator size="large" color="#3B82F6" />
+                    </View>
+                  ) : !currentQrString ? (
+                    // ✅ Show refresh button when QR string is null/undefined
+                    <View className="w-48 h-48 items-center justify-center gap-3">
+                      <Ionicons name="wifi-outline" size={48} color="#9CA3AF" />
+                      <Text className="text-gray-500 text-sm text-center">
+                        {t('payment.qrLoadFailed')}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={handleRefreshQR}
+                        className="flex-row items-center bg-blue-600 px-4 py-2 rounded-xl"
+                      >
+                        <Ionicons name="refresh-outline" size={18} color="#ffffff" />
+                        <Text className="text-white font-semibold text-sm ml-1">
+                          {t('works.error.refresh')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <QRCode
+                      value={currentQrString}
+                      size={192}
+                      color="#1F2937"
+                      backgroundColor="#ffffff"
+                      logo={lao_qr}
+                      logoMargin={2}
+                      ecl="M"
+                      enableLinearGradient={false}
+                      quietZone={4}
+                    />
+                  )}
+                </View>
 
                 {/* Amount Display */}
                 <View className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 items-center">

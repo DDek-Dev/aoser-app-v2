@@ -86,7 +86,6 @@ const NotificationsScreen = () => {
   const [localNotifications, setLocalNotifications] = useState<Notifications[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-
   // console.log('data notifications: ', JSON.stringify(data?.slice(-3), null, 2))
   React.useEffect(() => {
     if (data) setLocalNotifications(data);
@@ -209,11 +208,39 @@ const NotificationsScreen = () => {
 
   const sections = groupNotifications(localNotifications);
 
-  if (isLoading || isError) return (
-    <View className='w-full h-full '>
-      <SkeletonNotification />
-    </View>
-  );
+  if (isLoading) {
+    return (
+      <View className='w-full h-full'>
+        <SkeletonNotification />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ScreenWrapper safeEdges={['top']}>
+        <View className="flex-1 justify-center items-center p-6 bg-white">
+          <View className="w-20 h-20 bg-red-50 rounded-full items-center justify-center mb-4">
+            <Ionicons name="alert-circle" size={40} color="#EF4444" />
+          </View>
+          <Text className="text-lg font-bold text-text mb-2">
+            {t('common.error')}
+          </Text>
+          <Text className="text-body text-textSecondary text-center mb-6">
+            {error instanceof Error ? error.message : t('works.error.some_wrong')}
+          </Text>
+          <Pressable
+            onPress={() => refetch()}
+            className="bg-primary px-8 py-3 rounded-full active:opacity-80"
+          >
+            <Text className="text-white font-semibold">
+              {t('works.error.try_again')}
+            </Text>
+          </Pressable>
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper safeEdges={['top']}>
@@ -242,7 +269,6 @@ const NotificationsScreen = () => {
           )}
           contentContainerStyle={{ padding: 8 }}
           showsVerticalScrollIndicator={false}
-          refreshing={isLoading}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

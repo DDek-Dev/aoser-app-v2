@@ -4,7 +4,9 @@ import { Animated, Dimensions, Modal, Share, Text, TouchableOpacity, TouchableWi
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-
+// add this import at the top
+import { trackViewProvider } from 'utils/mixpanel';
+import { logEvent } from 'utils/firebase';
 // Hooks
 import {
   useCreateFavorite,
@@ -91,6 +93,8 @@ export default function FreelancerProfile() {
     }
   }, [profile?.isLiked]);
 
+
+
   /**
    * Cleanup debounce timer on unmount to prevent memory leaks
    */
@@ -103,8 +107,22 @@ export default function FreelancerProfile() {
   }, []);
 
 
-  // console.log(JSON.stringify(profile, null, 2))
-  console.log(isFavorite)
+  // ✅ Track view provider when profile loads
+  useEffect(() => {
+    if (!profile) return;
+
+    trackViewProvider(
+      profile._id,
+      profile.serviceType ?? profile.jobTitle ?? 'unknown',
+      profile.address?.province ?? undefined,
+    );
+    logEvent('view_provider', {
+      provider_id: profile._id,
+      category: profile.serviceType ?? profile.jobTitle ?? 'unknown',
+      business_type: profile.businessType ?? 'FREELANCER',
+    });
+  }, [profile?._id]);
+
   /**
    * Create favorite with optimistic update
    * 
@@ -203,7 +221,7 @@ export default function FreelancerProfile() {
         like => like.createdBy === user?._id
       )?._id;
 
-   
+
       if (isFavorite && likeId) {
         // Unlike: we have the like ID from the server
         handleDeleteFavorite(likeId);
@@ -350,8 +368,8 @@ export default function FreelancerProfile() {
           iconColor="#3B82F6"
           backgroundColor="bg-surface"
         />
-        
-        
+
+
         {/* Favorite Button & Report Button - Only shown to authenticated users */}
         {isAuthenticated && !isOwnProfile && (
           <View className="flex-row mr-6 items-center ">
@@ -432,14 +450,15 @@ export default function FreelancerProfile() {
         {/* ===== VIDEO PROMOTION ===== */}
 
         {profile.videoPromote && <VDOPromote video={profile.videoPromote} context="profile" scrollY={scrollY} isScreenFocused={isFocused} />}
+        {/* {!!profile.videoPromote && <VDOPromote video={profile.videoPromote} context="profile" scrollY={scrollY} isScreenFocused={isFocused} />} */}
 
         {/* ===== TABBED PROFILE SECTION ===== */}
         <TabbedProfileSection profile={profile} stylepadd="" />
 
 
-
         {/* ===== WHAT TO EXPECT ===== */}
         <WhatExpected profile={profile} />
+
 
         {/* ===== REVIEWS SECTION ===== */}
         <View >

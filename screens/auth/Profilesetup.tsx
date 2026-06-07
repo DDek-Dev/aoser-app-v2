@@ -4,14 +4,12 @@ import {
     Text,
     TouchableOpacity,
     Image,
-    Alert,
     TextInput,
     Pressable,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
     TouchableWithoutFeedback,
-    Keyboard,
     ActivityIndicator,
     Modal,
 } from 'react-native';
@@ -29,8 +27,7 @@ import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { profileImage } from 'assets';
 import { useTranslation } from 'react-i18next';
 import PhoneInput from 'components/ui/PhoneInput';
-import { useSelectAddress } from 'hooks/useSelectAddress';
-import Checkbox from 'expo-checkbox';
+
 import Constants from 'expo-constants';
 import Header_back from 'components/ui/Header_back';
 
@@ -67,7 +64,7 @@ const ProfileSetup = () => {
     //     longitude: 0,
     //     latitude: 0
     // });
-    const { data: addressData, isLoading: add_isLoading, error } = useSelectAddress();
+    // const { data: addressData, isLoading: add_isLoading, error } = useSelectAddress();
 
 
     // Validation errors
@@ -154,49 +151,56 @@ const ProfileSetup = () => {
         });
     };
 
-    const handleDistrictSelect = (district: District) => {
-        setSelectedDistrict(district);
-        setVillage('');
-        handleAddressChange({
-            province: selectedProvince,
-            district,
-            village: '',
-            longitude: 0,
-            latitude: 0
-        });
-    };
 
-    const handleVillageChange = (text: string) => {
-        setVillage(text);
-        handleAddressChange({
-            province: selectedProvince,
-            district: selectedDistrict,
-            village: text,
-            longitude: 0,
-            latitude: 0
-        });
-    };
+    // const handleDistrictSelect = (district: District) => {
+    //     setSelectedDistrict(district);
+    //     setVillage('');
+    //     handleAddressChange({
+    //         province: selectedProvince,
+    //         district,
+    //         village: '',
+    //         longitude: 0,
+    //         latitude: 0
+    //     });
+    // };
+
+    // const handleVillageChange = (text: string) => {
+    //     setVillage(text);
+    //     handleAddressChange({
+    //         province: selectedProvince,
+    //         district: selectedDistrict,
+    //         village: text,
+    //         longitude: 0,
+    //         latitude: 0
+    //     });
+    // };
 
 
 
-    if (error || !addressData || addressData.length === 0) {
+    // if (error || !addressData || addressData.length === 0) {
+    //     return (
+    //         <LoadingScreen />
+    //     );
+    // }
+
+
+     if (isLoading) {
         return (
             <LoadingScreen />
         );
     }
+    // const provinces = addressData[0]?.provinces || [];
+    // const districts = selectedProvince?.districts || [];
 
-    const provinces = addressData[0]?.provinces || [];
-    const districts = selectedProvince?.districts || [];
+    // const provinceOptions = provinces.map(province => ({
+    //     label: province.province_la,
+    //     value: province
+    // }));
 
-    const provinceOptions = provinces.map(province => ({
-        label: province.province_la,
-        value: province
-    }));
-
-    const districtOptions = districts.map(district => ({
-        label: district.district_la,
-        value: district
-    }));
+    // const districtOptions = districts.map(district => ({
+    //     label: district.district_la,
+    //     value: district
+    // }));
     const uploadProfileImage = async (): Promise<string> => {
         if (!profileImageFile) {
             if (profileImg.startsWith('http')) {

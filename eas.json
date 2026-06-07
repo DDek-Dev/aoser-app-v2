@@ -7,12 +7,18 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1"
+      },
       "android": {
         "buildType": "apk"
       }
@@ -20,6 +26,9 @@
     "production": {
       "distribution": "store",
       "autoIncrement": true,
+      "env": {
+        "RCT_NEW_ARCH_ENABLED": "1"
+      },
       "android": {
         "buildType": "app-bundle"
       }

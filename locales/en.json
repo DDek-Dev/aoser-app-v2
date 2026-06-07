@@ -213,7 +213,7 @@
     "post_to_apply": "Publish your task and connect with providers.",
     "start_post": "Post task",
     "post_on": "Posted on",
-    "result_found": "",
+    "result_found": "No result found",
     "more": "More",
     "search_work": "Search tasks...",
     "error": {
@@ -673,7 +673,7 @@
       "otpRequired": "Please enter the 6-digit code",
       "failedToSendOtp": "Failed to send verification code",
       "newPasswordRequired": "New password is required",
-      "passwordMinLength": "Password must be number and characters",
+      "passwordMinLength": "Password at least 6 characters",
       "confirmPasswordRequired": "Please confirm your password",
       "passwordsNotMatch": "Passwords do not match",
       "resetFailed": "Failed to reset password"

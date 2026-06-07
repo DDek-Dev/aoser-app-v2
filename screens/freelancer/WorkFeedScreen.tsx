@@ -508,7 +508,7 @@ const WorkFeedScreen = () => {
   }
 
   // Empty state
-  if (!Array.isArray(jobs) || jobs.length === 0) {
+  if (!Array.isArray(jobs)) {
     return (
       <ScreenWrapper>
         <View className="flex-1 justify-center items-center p-4">
@@ -664,51 +664,55 @@ const WorkFeedScreen = () => {
             </View>
           )} */}
 
-          {displayedJobs.length !== 0 ? (
-            <>
-              {visibleJobs.map((job) => (
-                <JobItem
-                  key={job._id}
-                  item={job}
-                  t={t}
-                  onPress={
-                    user && user._id === job.createdBy._id
-                      ? handleWorkPress
-                      : handleJobPress
-                  }
-                />
-              ))}
+          {jobs.length === 0 ? (
+            <NoResults  title={t('works.result_found')}/>
+          ) : (
+            displayedJobs.length !== 0 ? (
+              <>
+                {visibleJobs.map((job) => (
+                  <JobItem
+                    key={job._id}
+                    item={job}
+                    t={t}
+                    onPress={
+                      user && user._id === job.createdBy._id
+                        ? handleWorkPress
+                        : handleJobPress
+                    }
+                  />
+                ))}
 
-              {/* Loading indicator for infinite scroll */}
-              {(isLoadingMore || hasMoreJobs) && (
-                <View className="py-6 items-center">
-                  {isLoadingMore ? (
-                    <ActivityIndicator size="small" color="#2B68F2" />
-                  ) : (
-                    <Text className="text-sm text-gray-400">
-                      {t('works.more')}
-                    </Text>
-                  )}
-                </View>
-              )}
+                {/* Loading indicator for infinite scroll */}
+                {(isLoadingMore || hasMoreJobs) && (
+                  <View className="py-6 items-center">
+                    {isLoadingMore ? (
+                      <ActivityIndicator size="small" color="#2B68F2" />
+                    ) : (
+                      <Text className="text-sm text-gray-400">
+                        {t('works.more')}
+                      </Text>
+                    )}
+                  </View>
+                )}
 
-              {/* End of list indicator */}
-              {!hasMoreJobs && displayedJobs.length > ITEMS_PER_PAGE && (
-                <View className="py-6 items-center">
-                  {/* <Text className="text-sm text-gray-400">
+                {/* End of list indicator */}
+                {!hasMoreJobs && displayedJobs.length > ITEMS_PER_PAGE && (
+                  <View className="py-6 items-center">
+                    {/* <Text className="text-sm text-gray-400">
                     {t('works.all_jobs_loaded')}
                   </Text> */}
 
-                  {/* show loading component */}
-                  {/* <ActivityIndicator size="small" color="#2B68F2" /> */}
+                    {/* show loading component */}
+                    {/* <ActivityIndicator size="small" color="#2B68F2" /> */}
 
-                </View>
-              )}
-            </>
-          ) : (
-            activeCategory === 'All' ? <ActivityIndicator /> : <NoResults />
- 
+                  </View>
+                )}
+              </>
+            ) : (
+              activeCategory === 'All' ? <ActivityIndicator /> : <NoResults/>
+            )
           )}
+
         </View>
       </Animated.ScrollView>
 

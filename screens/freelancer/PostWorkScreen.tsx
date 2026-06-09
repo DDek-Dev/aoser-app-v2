@@ -3,9 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  TextInput,
   Pressable,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -41,7 +38,7 @@ export default function PostWorkScreen() {
   const [category, setCategory] = useState('');
   const [nameOfWork, setNameOfWork] = useState('');
   const [workDetail, setWorkDetail] = useState('');
-  const [budget, setBudget] = useState<number | null>(null);
+  const [budget, setBudget] = useState<number>(0);
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
   // const fromInputRef = useRef<TextInput>(null);
   // const toInputRef = useRef<TextInput>(null);

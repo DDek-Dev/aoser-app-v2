@@ -56,13 +56,12 @@ const RoomChat = () => {
   const route = useRoute<RouteProp<FreelancerStackParamList, 'RoomChat'>>();
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const queryClient = useQueryClient();
-  const { userId: partnerId } = route.params;
+  const { userId: partnerId, workData } = route.params;
   const { tokens, user, isLoadingAuth } = useAuth();
   const currentUserId = user?._id || '';
 
   const { data: chat, isLoading } = useChatRoom(partnerId);
   // const { data: appliedWorks, isLoading: isLoadingApplied } = useGetAllAppliedWork();
-
   const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   // State
@@ -82,6 +81,7 @@ const RoomChat = () => {
   const [showDurationModal, setShowDurationModal] = useState(false);
 
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [isWorkData, setWorkData] = useState<boolean>(true);
   const [updateTo, setUpdateTo] = useState<Message | null>(null);
 
   // Default upload size limits
@@ -125,8 +125,9 @@ const RoomChat = () => {
     setReplyTo(message)
     return message
   }, []);
+
   const handleUpdateMessage = useCallback((message: Message) => {
-  
+
     setUpdateTo(message)
     return message
   }, []);
@@ -616,13 +617,13 @@ const RoomChat = () => {
   const sendProjectMessage = (selectedProjects: Job[], updatedData?: ProjectUpdateData[]) => {
 
     const isOffering = updatedData && updatedData.length > 0;
-    
+
     if (!isOffering) {
       if (!chat?.conversation?._id || !currentUserId) return;
       selectedProjects.forEach((project, idx) => {
         const workId = project;
         const tempId = `temp_${Date.now()}_${idx}`;
-       
+
         // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
         queryClient.setQueryData(
           publicWorkKeys.detail(workId),
@@ -715,6 +716,67 @@ const RoomChat = () => {
           }
         );
       });
+    }
+  };
+
+
+  const handleSendWorkData = () => {
+    try {
+      if (isWorkData && workData) {
+        console.log('sending updated work data', workData)
+        if (!chat?.conversation?._id || !currentUserId) return;
+
+        const tempId = `temp_${Date.now()}`;
+
+        // ✅ CACHE THE WORK DATA IMMEDIATELY (so it never needs to fetch)
+        queryClient.setQueryData(
+          publicWorkKeys.detail(workData),
+          workData // You already have the full work object here!
+        );
+
+        const optimisticMessage: OptimisticMessage = {
+          tempId: tempId,
+          createdAt: getOptimisticTimestamp(),
+          conversation: chat.conversation._id,
+          sender: currentUserId,
+          message: '',
+          isUnSend: false,
+          work: workData,
+          messageType: 'WORK',
+          status: 'SENT',
+          pending: true,
+        };
+
+        setMessages(prev => [...prev, optimisticMessage as Message]);
+
+        SocketService.sendMessage(
+          {
+            conversationId: chat.conversation._id,
+            tempId,
+            message: optimisticMessage.message,
+            work: workData,
+            messageType: 'WORK',
+          },
+          (response) => {
+            if (response?.ok && response.message) {
+              setMessages(prev =>
+                prev.map(m => (m as OptimisticMessage).tempId === tempId ? response.message : m)
+              );
+            } else {
+              setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
+
+              Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: t('chat.chatroom.error'),
+                textBody: `${t('chat.chatroom.failedToSendProject')} ${workData?.workTitle || workData}`,
+              });
+            }
+          }
+        );
+
+      }
+    } catch (err) {
+      console.log('handleSendWorkData error', err);
     }
   };
 
@@ -835,6 +897,11 @@ const RoomChat = () => {
   const handleSendMessage = () => {
     if (!message.trim() || !chat?.conversation?._id || !currentUserId) return;
 
+    if (isWorkData && workData) {
+      handleSendWorkData();
+    }
+    setWorkData(false);
+    setReplyTo(null);
     // Check if we're updating an existing message
     if (updateTo) {
       handleNewUpdateMessage();
@@ -867,12 +934,12 @@ const RoomChat = () => {
 
     // Send via socket
     SocketService.sendMessage(
-        {
-          conversationId: chat.conversation._id,
-          tempId,
-          message: optimisticMessage.message,
-          messageType: 'TEXT',
-          replyTo: replyTo?._id,
+      {
+        conversationId: chat.conversation._id,
+        tempId,
+        message: optimisticMessage.message,
+        messageType: 'TEXT',
+        replyTo: replyTo?._id,
       },
       (response) => {
         if (response?.ok && response.message) {
@@ -884,17 +951,18 @@ const RoomChat = () => {
           );
         } else {
           // Mark as failed
-          
-           Toast.show({
-        type: ALERT_TYPE.DANGER,
-        title: t('chat.chatroom.error'),
-        textBody: t('chat.chatroom.failedToSendMessage'),
-      });
-        
+
+          Toast.show({
+            type: ALERT_TYPE.DANGER,
+            title: t('chat.chatroom.error'),
+            textBody: t('chat.chatroom.failedToSendMessage'),
+          });
+
           setMessages(prev => prev.filter(m => (m as OptimisticMessage).tempId !== tempId));
         }
       }
     );
+
 
   };
 
@@ -1001,127 +1069,127 @@ const RoomChat = () => {
     : (chat?.conversationMessages || []);
 
   return (
-    <ScreenWrapper safeEdges={[ 'bottom']} style={{flex: 1}}>
+    <ScreenWrapper safeEdges={['bottom']} style={{ flex: 1 }}>
       <View className="flex-1" onStartShouldSetResponderCapture={handleScreenTouchCapture}>
-          {/* Header */}
-          <View className="flex-row pt-12 justify-between items-center px-4 py-3  bg-primary">
-            <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-              <MaterialIcons name="chevron-left" size={32} color="#E5E7EB" />
-            </TouchableOpacity>
+        {/* Header */}
+        <View className="flex-row pt-12 justify-between items-center px-4 py-3  bg-primary">
+          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
+            <MaterialIcons name="chevron-left" size={32} color="#E5E7EB" />
+          </TouchableOpacity>
 
-            <Pressable className='flex-row items-center gap-2'
-              disabled={chat.userProfile.businessType === 'AOSER_ADMIN'}
-              onPress={() => {
-                if (chat.userProfile.businessType === 'CUSTOMER') {
-                  navigation.navigate('CustomerProfile', { userId: chat.userProfile._id })
-                } else if ((chat.userProfile.businessType === 'FREELANCER')) {
-                  navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })
-                }
-              }}>
+          <Pressable className='flex-row items-center gap-2'
+            disabled={chat.userProfile.businessType === 'AOSER_ADMIN'}
+            onPress={() => {
+              if (chat.userProfile.businessType === 'CUSTOMER') {
+                navigation.navigate('CustomerProfile', { userId: chat.userProfile._id })
+              } else if ((chat.userProfile.businessType === 'FREELANCER')) {
+                navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })
+              }
+            }}>
 
 
 
-              <View className="">
-                <Text className="text-body text-surface font-bold">
-                  {chat.userProfile.firstName} {chat.userProfile.lastName || ''}
-                </Text>
-                {typingUsers.length > 0 && (
-                  <Text className="text-sm text-surface text-right">{t('chat.chatroom.typing')}</Text>
-                )}
-                {/* <Text className="text-sm text-primary">{t('chat.chatroom.typing')}</Text> */}
-              </View>
-              {/* <Header_back iconColor='#2b82F6' onPress={() => navigation.goBack()} /> */}
-              {chat.userProfile.userProfileImage ? (
-                <Image
-                  source={{ uri: BASE_IMAGE + chat.userProfile.userProfileImage }}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
-              ) : (
-                <Image
-                  source={profileImage}
-                  className="w-10 h-10 rounded-full mr-3"
-                />
+            <View className="">
+              <Text className="text-body text-surface font-bold">
+                {chat.userProfile.firstName} {chat.userProfile.lastName || ''}
+              </Text>
+              {typingUsers.length > 0 && (
+                <Text className="text-sm text-surface text-right">{t('chat.chatroom.typing')}</Text>
               )}
-
-            </Pressable>
-
-          </View>
-
-          {/* Chat List */}
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-            style={{ flex: 1 }}
-          >
-            <Animated.View
-              style={{
-                flex: 1,
-                opacity: chatFadeAnim,
-                
-                // paddingBottom: keyboardHeight > 0 ? 20 : 0,
-                marginBottom:Platform.OS === 'ios' ? 24 : 20,
-              }}
-              className={'bg-black/5'}
-            >
-              <ChatListContainer
-                key={chat?.conversation?._id || partnerId}
-                messages={displayMessages}
-                onUpdateMessages={handleUpdateMessage}
-                onCopyMessage={handleCopyMessage}
-                onReplyToMessage={handleReplyToMessage}
-                onAIResponse={handleAIResponse}
-                keyboardHeight={keyboardHeight}
-                flatListRef={flatListRef}
-                onFetchPage={fetchMessagesPage}
-                pageSize={20}
-
+              {/* <Text className="text-sm text-primary">{t('chat.chatroom.typing')}</Text> */}
+            </View>
+            {/* <Header_back iconColor='#2b82F6' onPress={() => navigation.goBack()} /> */}
+            {chat.userProfile.userProfileImage ? (
+              <Image
+                source={{ uri: BASE_IMAGE + chat.userProfile.userProfileImage }}
+                className="w-10 h-10 rounded-full mr-3"
               />
-            </Animated.View>
-          </KeyboardAvoidingView>
+            ) : (
+              <Image
+                source={profileImage}
+                className="w-10 h-10 rounded-full mr-3"
+              />
+            )}
 
-          {/* =====================
+          </Pressable>
+
+        </View>
+
+        {/* Chat List */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+          style={{ flex: 1 }}
+        >
+          <Animated.View
+            style={{
+              flex: 1,
+              opacity: chatFadeAnim,
+
+              // paddingBottom: keyboardHeight > 0 ? 20 : 0,
+              marginBottom: Platform.OS === 'ios' ? 24 : 20,
+            }}
+            className={'bg-black/5'}
+          >
+            <ChatListContainer
+              key={chat?.conversation?._id || partnerId}
+              messages={displayMessages}
+              onUpdateMessages={handleUpdateMessage}
+              onCopyMessage={handleCopyMessage}
+              onReplyToMessage={handleReplyToMessage}
+              onAIResponse={handleAIResponse}
+              keyboardHeight={keyboardHeight}
+              flatListRef={flatListRef}
+              onFetchPage={fetchMessagesPage}
+              pageSize={20}
+
+            />
+          </Animated.View>
+        </KeyboardAvoidingView>
+
+        {/* =====================
           This is popup choose time for send location 
           ========================= */}
 
-          <Modal
-            transparent={true}
-            visible={showDurationModal}
-            animationType="fade"
-            onRequestClose={() => setShowDurationModal(false)}
+        <Modal
+          transparent={true}
+          visible={showDurationModal}
+          animationType="fade"
+          onRequestClose={() => setShowDurationModal(false)}
+        >
+          <Pressable
+            className="flex-1 bg-black/50 justify-center items-center"
+            onPress={() => setShowDurationModal(false)}
           >
             <Pressable
-              className="flex-1 bg-black/50 justify-center items-center"
-              onPress={() => setShowDurationModal(false)}
+              className="bg-surface rounded-xl p-5 w-[80%] max-w-[400px]"
+              onPress={(e) => e.stopPropagation()}
             >
-              <Pressable
-                className="bg-surface rounded-xl p-5 w-[80%] max-w-[400px]"
-                onPress={(e) => e.stopPropagation()}
-              >
-                <Text className="text-subheading text-text mb-2 text-center">
-                  <Ionicons
-                    name="location-outline"
-                    size={24}
-                    color='#EF4444'
-                  />
-                  {t('chat.chatroom.shareLocation') || 'Share location'}
-                </Text>
-                {/* <Text className="text-body text-textSecondary mb-5 text-center">
+              <Text className="text-subheading text-text mb-2 text-center">
+                <Ionicons
+                  name="location-outline"
+                  size={24}
+                  color='#EF4444'
+                />
+                {t('chat.chatroom.shareLocation') || 'Share location'}
+              </Text>
+              {/* <Text className="text-body text-textSecondary mb-5 text-center">
                   {t('chat.chatroom.chooseDuration') || 'How long should this location be shared?'}
                 </Text> */}
 
-                <TouchableOpacity
-                  className="p-4 mt-4 rounded-lg bg-primary mb-2.5 items-center active:opacity-70"
-                  onPress={() => handleDurationSelect()}
-                >
-                  <Text className="text-body text-surface font-medium">{t('chat.chatroom.send')}</Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                className="p-4 mt-4 rounded-lg bg-primary mb-2.5 items-center active:opacity-70"
+                onPress={() => handleDurationSelect()}
+              >
+                <Text className="text-body text-surface font-medium">{t('chat.chatroom.send')}</Text>
+              </TouchableOpacity>
 
-                {/* <TouchableOpacity
+              {/* <TouchableOpacity
                   className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
                   onPress={() => handleDurationSelect(60)}
                 >
                   <Text className="text-body text-text font-medium">60 {t('common.min')}</Text>
                 </TouchableOpacity> */}
-                {/* 
+              {/* 
                 <TouchableOpacity
                   className="p-4 rounded-lg bg-background mb-2.5 items-center active:opacity-70"
                   onPress={() => handleDurationSelect(8 * 60)}
@@ -1136,201 +1204,269 @@ const RoomChat = () => {
                   <Text className="text-body text-text font-medium">24 {t('common.hour')}</Text>
                 </TouchableOpacity> */}
 
-                <TouchableOpacity
-                  className="p-4 rounded-lg bg-transparent border border-border items-center active:opacity-70"
-                  onPress={() => setShowDurationModal(false)}
-                >
-                  <Text className="text-body text-textSecondary ">
-                    {t('common.cancel') || 'Cancel'}
-                  </Text>
-                </TouchableOpacity>
-              </Pressable>
+              <TouchableOpacity
+                className="p-4 rounded-lg bg-transparent border border-border items-center active:opacity-70"
+                onPress={() => setShowDurationModal(false)}
+              >
+                <Text className="text-body text-textSecondary ">
+                  {t('common.cancel') || 'Cancel'}
+                </Text>
+              </TouchableOpacity>
             </Pressable>
-          </Modal>
+          </Pressable>
+        </Modal>
 
-          {fileOptionsVisible && (
-            <Pressable
-              style={[StyleSheet.absoluteFill, { zIndex: 40, elevation: 40 }]}
-              onPressIn={() => setFileOptionsVisible(false)}
-              accessibilityRole="button"
-              accessibilityLabel="Close file options"
-            />
-          )}
-
-          {/* File Options Menu */}
-          <FileOptionsMenu
-            visible={fileOptionsVisible}
-            keyboardHeight={keyboardHeight}
-            onPhotoSelection={handlePhotoSelection}
-            onFileSelection={handleFileSelection}
-            onProjectSelection={handleProjectSelection}
-            onLocationSelection={handleLocationSelection}
-            onClose={() => setFileOptionsVisible(false)}
+        {fileOptionsVisible && (
+          <Pressable
+            style={[StyleSheet.absoluteFill, { zIndex: 40, elevation: 40 }]}
+            onPressIn={() => setFileOptionsVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close file options"
           />
-          {/* Chat Input */}
-          <View
-            className="px-4 py-4 bg-surface "
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 20,
-            }}
-          >
-            {replyTo && (
-              <View className='mx-4 mb-2 p-3 rounded-lg bg-border border-l-4 border-blue-500'>
-                <View className='flex-row items-start justify-between'>
-                  <View className='flex-1 mr-2'>
-                    {/* Reply label */}
-                    <Text className='text-xs font-semibold text-gray-500 mb-1'>
-                      {t('chat.chatroom.replyingTo')}
-                    </Text>
+        )}
 
-                    {/* Message content */}
-                    {replyTo.message && (
-                      <Text
-                        className='text-sm text-gray-700'
-                        numberOfLines={2}
-                        ellipsizeMode='tail'
-                      >
-                        {replyTo.message}
-                      </Text>
-                    )}
+        {/* File Options Menu */}
+        <FileOptionsMenu
+          visible={fileOptionsVisible}
+          keyboardHeight={keyboardHeight}
+          onPhotoSelection={handlePhotoSelection}
+          onFileSelection={handleFileSelection}
+          onProjectSelection={handleProjectSelection}
+          onLocationSelection={handleLocationSelection}
+          onClose={() => setFileOptionsVisible(false)}
+        />
+        {/* Chat Input */}
+        <View
+          className="px-4 py-4 bg-surface "
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 20,
+          }}
+        >
+          {replyTo && (
+            <View className='mx-4 mb-2 p-3 rounded-lg bg-border border-l-4 border-blue-500'>
+              {/* Reply label */}
+              <Text className='text-xs font-semibold text-gray-500 mb-1'>
+                {t('chat.chatroom.replyingTo')}
+              </Text>
+              <View className='flex-row items-start justify-between'>
+                <View className='flex-1 mr-2'>
+                  {replyTo.messageType === 'WORK' && (
 
-                    {/* File preview */}
-                    {replyTo.files && replyTo.files.length > 0 && (() => {
-                      const fileUri = BASE_IMAGE + replyTo.files[0];
-                      const fileType = inferTypeFromUri(fileUri);
+                    <>
+                      <View>
 
-                      return (
-                        <View className='flex-row items-center mt-2'>
-                          {fileType === 'image' && (
-                            <Image
-                              source={{ uri: fileUri }}
-                              className="w-12 h-12 rounded-md mr-2"
-                              resizeMode="cover"
-                            />
-                          )}
-
-                          {fileType === 'video' && (
-                            <View className='w-12 h-12 rounded-md mr-2 bg-gray-800 items-center justify-center'>
-                              <Ionicons name="play-circle" size={28} color="#FFF" />
-                            </View>
-                          )}
-
-                          {fileType === 'document' && (
-                            <View className='w-12 h-12 rounded-md mr-2 bg-blue-100 items-center justify-center'>
-                              <Ionicons name="document-text" size={28} color="#3B82F6" />
-                            </View>
-                          )}
-
-                          <View className='flex-1'>
-                            <Text className='text-xs text-gray-700 font-medium' numberOfLines={1}>
-                              {replyTo.files[0].split('/').pop()}
-                            </Text>
-                            <Text className='text-xs text-gray-400 capitalize'>
-                              {fileType}
-                            </Text>
+                        <View className="flex-row items-center">
+                          <View className="bg-blue-300 rounded-full p-2 mr-2">
+                            <Ionicons name="document-text" size={16} color="white" />
                           </View>
+                          <Text className="text-primary font-bold text-sm">
+                            {replyTo?.work?.workTitle}
+                          </Text>
                         </View>
-                      );
-                    })()}
+                        <View>
+                          <Text numberOfLines={1}>{replyTo?.work?.description}</Text>
+                        </View>
+                        <View className="flex-row mt-1 gap-2">
+                          <Text className="text-primary font-bold">
+                            {new Intl.NumberFormat().format(replyTo?.work?.budget as number)}
+
+                          </Text>
+                          <Text className="text-warning font-bold">{replyTo?.work?.currency}</Text>
+                        </View>
+                      </View>
+
+                    </>
+                  )}
+
+                  {/* Message content */}
+                  {replyTo.message && (
+                    <Text
+                      className='text-sm text-gray-700'
+                      numberOfLines={2}
+                      ellipsizeMode='tail'
+                    >
+                      {replyTo.message}
+                    </Text>
+                  )}
+
+                  {/* File preview */}
+                  {replyTo.files && replyTo.files.length > 0 && (() => {
+                    const fileUri = BASE_IMAGE + replyTo.files[0];
+                    const fileType = inferTypeFromUri(fileUri);
+
+                    return (
+                      <View className='flex-row items-center mt-2'>
+                        {fileType === 'image' && (
+                          <Image
+                            source={{ uri: fileUri }}
+                            className="w-12 h-12 rounded-md mr-2"
+                            resizeMode="cover"
+                          />
+                        )}
+
+                        {fileType === 'video' && (
+                          <View className='w-12 h-12 rounded-md mr-2 bg-gray-800 items-center justify-center'>
+                            <Ionicons name="play-circle" size={28} color="#FFF" />
+                          </View>
+                        )}
+
+                        {fileType === 'document' && (
+                          <View className='w-12 h-12 rounded-md mr-2 bg-blue-100 items-center justify-center'>
+                            <Ionicons name="document-text" size={28} color="#3B82F6" />
+                          </View>
+                        )}
+
+
+                        <View className='flex-1'>
+                          <Text className='text-xs text-gray-700 font-medium' numberOfLines={1}>
+                            {replyTo.files[0].split('/').pop()}
+                          </Text>
+                          <Text className='text-xs text-gray-400 capitalize'>
+                            {fileType}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })()}
+                </View>
+
+                {/* Close button */}
+                <Pressable
+                  onPress={() => setReplyTo(null)}
+                  className='p-1 rounded-full bg-gray-200 active:bg-gray-300'
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="close" size={18} color="#6B7280" />
+                </Pressable>
+              </View>
+            </View>
+          )}
+          {isWorkData && workData && (
+            <View className='mx-4 mb-2 p-3 rounded-lg bg-border border-l-4 border-blue-500'>
+              {/* Reply label */}
+              <Text className='text-xs font-semibold text-gray-500 mb-1'>
+                {t('chat.chatroom.replyingTo')}
+              </Text>
+              <View className='flex-row items-start justify-between'>
+                <View>
+
+                  <View className="flex-row items-center">
+                    <View className="bg-blue-300 rounded-full p-2 mr-2">
+                      <Ionicons name="document-text" size={16} color="white" />
+                    </View>
+                    <Text className="text-primary font-bold text-sm">
+                      {workData?.workTitle}
+                    </Text>
                   </View>
 
-                  {/* Close button */}
-                  <Pressable
-                    onPress={() => setReplyTo(null)}
-                    className='p-1 rounded-full bg-gray-200 active:bg-gray-300'
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Ionicons name="close" size={18} color="#6B7280" />
-                  </Pressable>
+                  <View>
+                    <Text numberOfLines={1}>{workData?.description}</Text>
+                  </View>
+                  <View className="flex-row mt-1 gap-2">
+                    <Text className="text-primary font-bold">
+                      {new Intl.NumberFormat().format(workData?.budget as number)}
+                    </Text>
+                    <Text className="text-warning font-bold">{workData?.currency}</Text>
+                  </View>
                 </View>
+
+                {/* Close button */}
+                <Pressable
+                  onPress={() => setWorkData(false)}
+                  className='p-1 rounded-full bg-gray-200 active:bg-gray-300'
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Ionicons name="close" size={18} color="#6B7280" />
+                </Pressable>
               </View>
-            )}
-            <View className="flex-row items-end">
-              <Pressable
-                onPress={handleShowOptions}
-                className={`mr-3 mb-2 w-10 h-10 rounded-full items-center justify-center border ${fileOptionsVisible ? 'bg-primary border-primary' : 'border-gray-300'
-                  }`}
-              >
-                {/* <Text
+            </View>
+          )}
+          <View className="flex-row items-end">
+            <Pressable
+              onPress={handleShowOptions}
+              className={`mr-3 mb-2 w-10 h-10 rounded-full items-center justify-center border ${fileOptionsVisible ? 'bg-primary border-primary' : 'border-gray-300'
+                }`}
+            >
+              {/* <Text
                   className={`text-body font-bold ${fileOptionsVisible ? 'text-white' : 'text-primary'
                     }`}
                 >
                   +
                 </Text> */}
-                <Ionicons name='add-outline' size={24} color={fileOptionsVisible ? '#fff' : '#3B82F6'}/>
-              </Pressable>
+              <Ionicons name='add-outline' size={24} color={fileOptionsVisible ? '#fff' : '#3B82F6'} />
+            </Pressable>
 
 
-              <TextInput
-                ref={textInputRef}
-                className="flex-1 bg-background px-4  rounded-2xl text-body text-text"
-                placeholder={t('chat.chatroom.typeMessage')}
-                placeholderTextColor="#9CA3AF"
-                value={message}
-                onChangeText={handleTyping}
-                multiline={true}
-                textAlignVertical="top"
-                returnKeyType="default"
-                blurOnSubmit={false}
-                scrollEnabled={true}
-                editable={true}  // ✅ Ensure it's editable
-                keyboardType="default"
-                style={{
-                  minHeight: 53,
-                  maxHeight: 120,
-                  lineHeight: 20,
-                  paddingTop: Platform.OS === 'ios' ? 12 : 12,
-                  paddingBottom: Platform.OS === 'ios' ? 12 : 12,
-                }}
-                autoFocus={false}
-                onFocus={() => {
-                  setFileOptionsVisible(false);
+            <TextInput
+              ref={textInputRef}
+              className="flex-1 bg-background px-4  rounded-2xl text-body text-text"
+              placeholder={t('chat.chatroom.typeMessage')}
+              placeholderTextColor="#9CA3AF"
+              value={message}
+              onChangeText={handleTyping}
+              multiline={true}
+              textAlignVertical="top"
+              returnKeyType="default"
+              blurOnSubmit={false}
+              scrollEnabled={true}
+              editable={true}  // ✅ Ensure it's editable
+              keyboardType="default"
+              style={{
+                minHeight: 53,
+                maxHeight: 120,
+                lineHeight: 20,
+                paddingTop: Platform.OS === 'ios' ? 12 : 12,
+                paddingBottom: Platform.OS === 'ios' ? 12 : 12,
+              }}
+              autoFocus={false}
+              onFocus={() => {
+                setFileOptionsVisible(false);
 
-                }}
+              }}
+            />
+
+            <TouchableOpacity
+              onPress={() => { handleSendMessage(); setReplyTo(null) }}
+              className={`ml-3 mb-2 w-10 h-10 rounded-full items-center justify-center ${message.trim() ? 'bg-primary' : 'bg-gray-300'
+                }`}
+              disabled={!message.trim()}
+            >
+              <Ionicons
+                name="send"
+                size={20}
+                color={message.trim() ? '#fff' : '#9CA3AF'}
               />
-
-              <TouchableOpacity
-                onPress={() => { handleSendMessage(); setReplyTo(null) }}
-                className={`ml-3 mb-2 w-10 h-10 rounded-full items-center justify-center ${message.trim() ? 'bg-primary' : 'bg-gray-300'
-                  }`}
-                disabled={!message.trim()}
-              >
-                <Ionicons
-                  name="send"
-                  size={20}
-                  color={message.trim() ? '#fff' : '#9CA3AF'}
-                />
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
+        </View>
 
-          {/* Media Preview Modal */}
-          <MediaPreviewModal
-            visible={showMediaPreview}
-            selectedMedia={selectedMedia}
-            message={message}
-            onMessageChange={setMessage}
-            onClose={handleCloseMediaPreview}
-            onSend={sendMediaMessage}
-            isSending={isFileSending}
+        {/* Media Preview Modal */}
+        <MediaPreviewModal
+          visible={showMediaPreview}
+          selectedMedia={selectedMedia}
+          message={message}
+          onMessageChange={setMessage}
+          onClose={handleCloseMediaPreview}
+          onSend={sendMediaMessage}
+          isSending={isFileSending}
 
-          />
+        />
 
 
 
-          {/* Project Selection Modal */}
-          <ProjectSelectionModal
-            visible={showProjectSelection}
-            userProfileId={chat.userProfile._id}
-            onClose={() => setShowProjectSelection(false)}
-            onProjectsSelect={sendProjectMessage}
-            user={user}
+        {/* Project Selection Modal */}
+        <ProjectSelectionModal
+          visible={showProjectSelection}
+          userProfileId={chat.userProfile._id}
+          onClose={() => setShowProjectSelection(false)}
+          onProjectsSelect={sendProjectMessage}
+          user={user}
 
-          />
+        />
 
       </View>
     </ScreenWrapper>

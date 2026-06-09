@@ -143,7 +143,7 @@ export const publiceWorkApi = {
                 },
             });
 
-      
+
             return res.data.data.work;
 
         } catch (error) {
@@ -171,7 +171,7 @@ export const publiceWorkApi = {
     },
 
     acceptAppendWork: async (id: string, data: any, token: string): Promise<AppendWork> => {
-      
+
         try {
 
             const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-except-append-work/${id}`, data, {
@@ -194,7 +194,7 @@ export const publiceWorkApi = {
 
         try {
             const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-work/${id}`,
-                data, 
+                data,
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -266,37 +266,6 @@ export const publiceWorkApi = {
 
 
     createPublicWork: async (data: BookingFormData, token: string) => {
-        // Transform data to match backend format with safety checks
-        // const requestData = {
-        //     workTitle: data.workTitle,
-        //     description: data.description,
-        //     budget: data.budget || 0, // Ensure budget is never null
-        //     kindOfWork: data.kindOfWork,
-        //     deadLine: data.deadLine ? new Date(data.deadLine) : undefined,
-        //     startDate: data.startDate ? new Date(data.startDate) : undefined,
-        //     subWorkDetails: data.subWorkDetails || [], // Ensure array exists
-        //     currency: data.currency,
-        //     budgetType: data.budgetType,
-        //     serviceType: data.serviceType,
-        //     jobs: data.jobs || [],
-        //     exampleWork: undefined,
-        //     assignedTo: data.assignedTo,
-        //     address: {
-        //         country: data?.address?.country || "Laos",
-        //         province: data?.address?.province || '',
-        //         district: data?.address?.district || '',
-        //         village: data?.address?.village || '',
-        //     }
-        // };
-
-       
-
-        // Remove undefined values to avoid sending empty fields
-        // const cleanData = Object.fromEntries(
-        //     Object.entries(requestData).filter(([_, value]) => value !== undefined)
-        // );
-
-        console.log("DATA in API", JSON.stringify(data, null, 2))
 
         const res = await networkCheck.post(`${API_BASE_URL}/worker/work`, data, {
             headers: {
@@ -368,7 +337,7 @@ export const publiceWorkApi = {
 
         console.log("API called with id:", id, "and data:", data);
         try {
-            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, data , {
+            const res = await networkCheck.put(`${API_BASE_URL}/worker/freelancer-request-update-work/${id}`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Aoser ${token}`,

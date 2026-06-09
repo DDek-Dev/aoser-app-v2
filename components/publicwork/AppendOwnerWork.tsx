@@ -38,7 +38,7 @@ export default function AppendOwnerWork({ route }: Props) {
     const { t } = useTranslation();
 
     // Only editable fields for appending work
-    const [budget, setBudget] = useState<number | null>(null);
+    const [budget, setBudget] = useState<number>(0);
     const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
     const [subWorkDetails, setSubWorkDetails] = useState<SubWorkDetail[]>([]);
     const [additionalDescription, setAdditionalDescription] = useState('');
@@ -113,7 +113,7 @@ export default function AppendOwnerWork({ route }: Props) {
             setToDate(null);
 
             // Initialize with empty description for appending
-            setBudget(null);
+            setBudget(0);
             setBudgetCurrency(data.currency);
             setSubWorkDetails([]);
         }

@@ -47,7 +47,7 @@ export default function EditWorkById({ route }: Props) {
     const [category, setCategory] = useState('');
     const [nameOfWork, setNameOfWork] = useState('');
     const [workDetail, setWorkDetail] = useState('');
-    const [budget, setBudget] = useState<number | null>(0);
+    const [budget, setBudget] = useState<number>(0);
     const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
     const fromInputRef = useRef<TextInput>(null);
     const toInputRef = useRef<TextInput>(null);

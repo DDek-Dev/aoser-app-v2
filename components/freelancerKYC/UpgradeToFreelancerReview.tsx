@@ -108,7 +108,7 @@ export default function UpgradeToFreelancerReview() {
 
       <View className='mb-24'>
 
-        <Reviews reviews={[]} />
+        <Reviews reviews={[]}  totalStartRate={0}/>
 
       </View>
 

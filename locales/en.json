@@ -1092,7 +1092,7 @@
       "subtitle": "Describe your service clearly so clients know what to expect.",
       "serviceDescription": {
         "label": "Your Service",
-        "placeholder": "Describe your service",
+        "placeholder": "Explain briefly...",
         "error": "Service Description is required"
       },
       "hourlyRate": {

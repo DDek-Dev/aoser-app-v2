@@ -333,7 +333,7 @@ export const workerApi = {
     getRecommandFreelancers: async (
         token: string,
         serviceTypeId: string,
-        // exceptedIds: string,
+        exceptedIds: string,
         skip: number = 0,
         limit: number = 10
     ): Promise<Freelancer[]> => {
@@ -350,7 +350,7 @@ export const workerApi = {
 
             console.log('', params.toString())
             // console.log('exceptedIds', exceptedIds)
-            const response = await networkCheck.get(`/worker/freelancers?${params.toString()}`, {
+            const response = await networkCheck.get(`/worker/freelancers?${params.toString()}&exceptedIds=${exceptedIds}`, {
                 headers: {
                     // Authorization: `Aoser ${token}`,
                 },

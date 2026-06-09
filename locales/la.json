@@ -474,7 +474,7 @@
         "already_applied": "ທ່ານໄດ້ສະໝັກແລ້ວ.",
         "apply_now": "ສະໝັກເລີຍ",
         "freelancer_offering": "ໄດ້ສະເໜີຄ່າບໍລີການ",
-        "freelancer_offering_reason": "ເຫດຜົນທີ່ສະໝັກຄ່າບໍລີການ"
+        "freelancer_offering_reason": "ເຫດຜົນທີ່ສະເໜີຄ່າບໍລີການ"
     },
     "editWork": {
         "title": "ແກ້ໄຂວຽກ",
@@ -1039,7 +1039,7 @@
             "subtitle": "ຂຽນສິ່ງທີ່ລູກຄ້າສາມາດຄາດຫວັງໄດ້ຈາກທ່ານວ່າຄຸ້ມກັບຄ່າບໍລີການບໍ",
             "serviceDescription": {
                 "label": "ສີ່ງທີ່ລູກຄ້າຈະໄດ້ຮັບ",
-                "placeholder": "ຂຽນສີ່ງທີ່ຈະໃຫ້ລູກຄ້າ",
+                "placeholder": "ອະທິບາຍສັ້ນໆ...",
                 "error": "ກະລຸນາອະທິບາຍສີ່ງທີ່ລູກຄ້າຈະໄດ້ຮັບຈາກທ່ານ"
             },
             "hourlyRate": {

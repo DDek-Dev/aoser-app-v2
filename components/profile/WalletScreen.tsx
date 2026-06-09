@@ -8,7 +8,6 @@ import ScreenWrapper from "components/ui/ScreenWrapper";
 import { useGetWallet } from "hooks/usePublicWork";
 import { FreelancerStackParamList } from "types/navigation";
 import Header_back from "components/ui/Header_back";
-import { navigate } from "navigation/RootNavigation";
 
 type WalletCurrency = "LAK" | "USD";
 const CURRENCIES: WalletCurrency[] = ["LAK", "USD"];
@@ -18,7 +17,7 @@ const WalletScreen = () => {
   const route = useRoute<RouteProp<FreelancerStackParamList, "WalletScreen">>();
   const userId = route.params?.userId;
   const navigation = useNavigation();
-  const { data, isLoading, isError } = useGetWallet(userId);
+  const { data, isLoading, isError, refetch } = useGetWallet(userId);
 
   const availableCurrencies = React.useMemo<WalletCurrency[]>(() => {
     if (!data?.earnings) return ["LAK"];
@@ -41,6 +40,8 @@ const WalletScreen = () => {
   if (isLoading) {
     return (
       <ScreenWrapper safeEdges={["top", "bottom"]} style={{ flex: 1 }}>
+        <Header_back text={t("wallet.title")} iconColor="#3B82F6" onPress={() => navigation.goBack()} />
+
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#3B82F6" />
         </View>
@@ -51,11 +52,22 @@ const WalletScreen = () => {
   if (isError || !data?.earnings) {
     return (
       <ScreenWrapper safeEdges={["top", "bottom"]} style={{ flex: 1 }}>
+        <Header_back text={t("wallet.title")} iconColor="#3B82F6" onPress={() => navigation.goBack()} />
+
         <View className="flex-1 justify-center items-center px-6">
-          <Text className="text-body text-error text-center">
+          <Text className="text-body text-textSecondary text-center">
             {t("wallet.errorLoading")}
           </Text>
+          <Pressable
+            onPress={() => refetch()}
+            className="bg-primary px-8 py-4 rounded-xl mt-4 flex-row items-center active:opacity-80"
+          >
+            <Text className="text-white font-semibold text-body">
+              {t('works.error.try_again')}
+            </Text>
+          </Pressable>
         </View>
+
       </ScreenWrapper>
     );
   }

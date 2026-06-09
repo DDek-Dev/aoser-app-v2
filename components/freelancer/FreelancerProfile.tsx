@@ -462,7 +462,7 @@ export default function FreelancerProfile() {
 
         {/* ===== REVIEWS SECTION ===== */}
         <View >
-          <Reviews reviews={reviews || []} />
+          <Reviews reviews={reviews || []}          totalStartRate={profile.totalStartRate || 0}/>
         </View>
 
         {/* ===== SIMILAR FREELANCERS ===== */}

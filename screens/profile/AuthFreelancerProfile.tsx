@@ -148,7 +148,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
           <View className="h-[1px] bg-gray-200 mt-4" />
           <View className='mb-24'>
 
-            <Reviews reviews={reviews || []} />
+            <Reviews reviews={reviews || []} totalStartRate={profile.totalStartRate || 0} />
 
           </View>
 

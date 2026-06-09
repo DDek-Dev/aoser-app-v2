@@ -80,6 +80,13 @@ const AuthFreelancerSetting = () => {
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </Pressable>
+          {/* <Pressable onPress={() => navigation.navigate('EditFreelancerOffer')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="card-outline" size={20} color="#3B82F6" />
+              <Text className="text-text font-medium text-[14px]">Bank Information</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </Pressable> */}
 
         </ScrollView>
       </View>

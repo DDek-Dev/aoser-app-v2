@@ -77,8 +77,8 @@ const UpgradeToFreelancerStep3 = (
 
                     <TextArea
                         label={t('kyc.step3.serviceDescription.label')}
-                        // placeholder={t('kyc.step3.serviceDescription.placeholder')}
-                        placeholder={'...'}
+                        placeholder={t('kyc.step3.serviceDescription.placeholder')}
+                        // placeholder={'...'}
                         value={serviceDesc}
                         onChangeText={setServiceDesc}
                         inputClassName={errors.serviceDesc ? 'border-error' : 'border-border'}

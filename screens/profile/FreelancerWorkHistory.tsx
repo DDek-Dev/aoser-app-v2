@@ -20,6 +20,7 @@ import { Job } from 'types';
 // Utils
 import { formatDisplayDateTime, formatRelativeTime, getCurrentLanguage } from 'utils/dateFormatter';
 import { profileImage } from 'assets';
+import JobListItem from 'skeletonScreens/JobListItem';
 
 // =============================================================================
 // TYPES & INTERFACES
@@ -287,7 +288,7 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
 
                     }
 
-                    {item.address&& item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
+                    {item.address && item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
 
                         <View className="flex-row mt-3 items-center">
                             {/* <Text>{t('workDetail.deadline')} : </Text> */}
@@ -337,7 +338,7 @@ const FreelancerWorkHistory: React.FC = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
     const { t } = useTranslation();
-    const { data, isLoading, error } = useGetFlHistory();
+    const { data, isLoading, error, refetch } = useGetFlHistory();
     const [statusFilter, setStatusFilter] = useState<WorkStatusFilter>('ALL');
 
     const filteredData = useMemo(() => {
@@ -409,9 +410,7 @@ const FreelancerWorkHistory: React.FC = () => {
     // =================================================================
     // LOADING STATE
     // =================================================================
-    if (isLoading) {
-        return <LoadingScreen />;
-    }
+
 
     // =================================================================
     // ERROR STATE (Optional - add error handling)
@@ -419,6 +418,38 @@ const FreelancerWorkHistory: React.FC = () => {
     if (error) {
         return (
             <ScreenWrapper safeEdges={['top']}>
+
+                <View className="p-4 bg-white border-b border-border">
+                    <View className="flex-row items-center gap-3">
+                        {/* Back Button */}
+                        <TouchableOpacity
+                            onPress={handleGoBack}
+
+                            activeOpacity={0.7}
+                            accessibilityRole="button"
+                            accessibilityLabel="Go back"
+                        >
+                            <MaterialIcons name="chevron-left" size={32} color="#3B82F6" />
+                        </TouchableOpacity>
+
+                        {/* Title Section */}
+                        <View className="flex-1">
+                            <Text className="text-text font-bold text-subheading">
+                                {t('profile.freelancer_workHistory.title')}
+                            </Text>
+                            <Text className="text-textSecondary text-caption">
+                                {t('profile.freelancer_workHistory.subtitle')}
+                            </Text>
+                        </View>
+
+                        {/* Project Count Badge */}
+                        <View className="bg-primary px-3 py-1 rounded-3xl">
+                            <Text className="text-white text-caption font-semibold">
+                                {filteredData.length} {t('profile.freelancer_workHistory.projects_count')}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
                 <View className="flex-1 justify-center items-center px-6">
                     <MaterialIcons name="error-outline" size={64} color="#EF4444" />
                     <Text className="text-text font-semibold text-subheading mt-4 mb-2">
@@ -427,14 +458,14 @@ const FreelancerWorkHistory: React.FC = () => {
                     <Text className="text-textSecondary text-body text-center mb-6">
                         {t('profile.freelancer_workHistory.error_description', 'Unable to load your work history. Please try again.')}
                     </Text>
-                    <TouchableOpacity
-                        onPress={handleGoBack}
-                        className="bg-primary px-6 py-3 rounded-xl"
+                    <Pressable
+                        onPress={() => refetch()}
+                        className="bg-primary px-8 py-4 rounded-xl mt-4 flex-row items-center active:opacity-80"
                     >
-                        <Text className="text-white font-semibold">
-                            {t('profile.freelancer_workHistory.go_back', 'Go Back')}
+                        <Text className="text-white font-semibold text-body">
+                            {t('works.error.try_again')}
                         </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </ScreenWrapper>
         );
@@ -478,57 +509,64 @@ const FreelancerWorkHistory: React.FC = () => {
                 </View>
             </View>
 
-            {/* ===== STATUS FILTER (Chips) ===== */}
-            <View className="bg-white px-4 pb-3 border-b border-border">
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ gap: 8, paddingVertical: 6 }}
-                >
-                    {WORK_STATUS_FILTERS.map((filterId) => {
-                        const isActive = filterId === statusFilter;
-                        return (
-                            <Pressable
-                                key={filterId}
-                                onPress={() => setStatusFilter(filterId)}
-                                className={`px-3 py-2 rounded-full border ${isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
-                                    }`}
-                            >
-                                <Text
-                                    className={`text-sm font-medium ${isActive ? 'text-white' : 'text-textSecondary'
-                                        }`}
-                                >
-                                    {statusFilterLabel(filterId)}
-                                </Text>
-                            </Pressable>
-                        );
-                    })}
-                </ScrollView>
-            </View>
+            {isLoading ? <JobListItem /> : (
 
-            {/* ===== CONTENT - WORK LIST ===== */}
-            <View className="flex-1 bg-background">
-                <FlatList
-                    data={filteredData}
-                    keyExtractor={keyExtractor}
-                    renderItem={renderWorkItem}
-                    ListEmptyComponent={renderEmptyState}
-                    ItemSeparatorComponent={renderItemSeparator}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{
-                        paddingTop: 16,
-                        paddingBottom: insets.bottom + 16,
-                        flexGrow: 1,
-                    }}
-                    // Performance optimizations
-                    removeClippedSubviews={true}
-                //   maxToRefreshDistance={100}
-                // Add pull-to-refresh if needed
-                // refreshControl={
-                //   <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-                // }
-                />
-            </View>
+                <>
+                    {/* ===== STATUS FILTER (Chips) ===== */}
+                    <View className="bg-white px-4 pb-3 border-b border-border">
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={{ gap: 8, paddingVertical: 6 }}
+                        >
+                            {WORK_STATUS_FILTERS.map((filterId) => {
+                                const isActive = filterId === statusFilter;
+                                return (
+                                    <Pressable
+                                        key={filterId}
+                                        onPress={() => setStatusFilter(filterId)}
+                                        className={`px-3 py-2 rounded-full border ${isActive ? 'bg-primary border-primary' : 'bg-surface border-border'
+                                            }`}
+                                    >
+                                        <Text
+                                            className={`text-sm font-medium ${isActive ? 'text-white' : 'text-textSecondary'
+                                                }`}
+                                        >
+                                            {statusFilterLabel(filterId)}
+                                        </Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+
+                    {/* ===== CONTENT - WORK LIST ===== */}
+                    <View className="flex-1 bg-background">
+                        <FlatList
+                            data={filteredData}
+                            keyExtractor={keyExtractor}
+                            renderItem={renderWorkItem}
+                            ListEmptyComponent={renderEmptyState}
+                            ItemSeparatorComponent={renderItemSeparator}
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{
+                                paddingTop: 16,
+                                paddingBottom: insets.bottom + 16,
+                                flexGrow: 1,
+                            }}
+                            // Performance optimizations
+                            removeClippedSubviews={true}
+                        //   maxToRefreshDistance={100}
+                        // Add pull-to-refresh if needed
+                        // refreshControl={
+                        //   <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+                        // }
+                        />
+                    </View>
+                </>
+            )}
+
+
         </ScreenWrapper>
     );
 };

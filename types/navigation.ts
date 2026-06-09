@@ -1,4 +1,4 @@
-import { BookingFormData } from "types";
+import { BookingFormData, Job } from "types";
 import { UserProfile } from "./profile";
 import { NavigatorScreenParams } from "@react-navigation/native";
 
@@ -63,7 +63,7 @@ export type FreelancerStackParamList = {
 
   // Chat 
   ChatScreen: undefined;
-  RoomChat: { userId: string };
+  RoomChat: { userId: string , workData?: Job };
   ChatStack: undefined
   NewsScreen: undefined
   News: { newsId: string };

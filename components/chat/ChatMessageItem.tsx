@@ -133,7 +133,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
     adjustedY = adjustedY - menuHeight - 20;
   }
 
-// console.log("message: ", item)
+  // console.log("message: ", item)
 
   return (
 
@@ -564,10 +564,10 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                             {item.replyTo?.work.description}
                           </Text>
                           <View className="flex-row items-center mt-1">
-                            <Text className="font-bold text-warning text-body">{item.replyTo?.work.currency} </Text>
                             <Text className="font-bold text-primary text-body">
                               {new Intl.NumberFormat().format(item.replyTo?.work.budget as number)}
                             </Text>
+                            <Text className="font-bold text-warning text-body">{item.replyTo?.work.currency} </Text>
                           </View>
                         </View>
                       )}
@@ -585,14 +585,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                   {/* Main Message Content */}
                   <View className="p-1">
                     {/* Text Message */}
-                    {item.message && (
-                      <Text
-                        className={`text-body p-2 ${isFromUser ? 'text-white' : 'text-text'
-                          }`}
-                      >
-                        {item.message}
-                      </Text>
-                    )}
+
                     {/* Location Message */}
                     {item.messageType === 'LOCATION' && (
                       <TouchableOpacity
@@ -607,7 +600,7 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                           overflow: 'hidden',
                           backgroundColor: isFromUser ? '#3B82F6' : '#fff',
                           // borderWidth: isFromUser ? 0 : 1,
-                     
+
                         }}
                         className='w-[18rem] border border-border'
                       >
@@ -674,16 +667,16 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                             borderTopColor: isFromUser ? 'rgba(255,255,255,0.2)' : '#f3f4f6',
                             flexDirection: 'row',
                             alignItems: 'center',
-                            
+
                           }}
-                          className={`${isFromUser ? 'self-end' : 'self-start'} px-4`}
+                            className={`${isFromUser ? 'self-end' : 'self-start'} px-4`}
                           >
                             <Text style={{
                               color: isFromUser ? '#fff' : '#3B82F6',
                               fontWeight: '600',
                               fontSize: 13
                             }}>
-                              {t('chat.chatroom.view_on_map')} 
+                              {t('chat.chatroom.view_on_map')}
                               {/* {(item as any).location?.latitude} */}
                             </Text>
                             <Ionicons
@@ -712,6 +705,14 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                       </View>
                     )}
 
+                    {item.message && (
+                      <Text
+                        className={`text-body p-2 ${isFromUser ? 'text-white' : 'text-text'
+                          }`}
+                      >
+                        {item.message}
+                      </Text>
+                    )}
                     {/* Timestamp and Status */}
                     <View className={`flex-row items-center gap-2 mt-1 ${isFromUser ? 'self-end' : 'self-start'} `}>
                       <Text
@@ -741,6 +742,8 @@ const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                         <Ionicons name="warning" size={14} color="#F59E0B" />
                       )}
                     </View>
+
+
                   </View>
                 </View>
               </View>

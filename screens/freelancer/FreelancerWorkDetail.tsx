@@ -45,7 +45,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const [jobDetailVisible, setJobDetailVisible] = useState(false);
   const [isReview, setIsReview] = useState<boolean>(false);
   const [acceptState, setAcceptState] = useState<'idle' | 'accepting' | 'accepted'>('idle');
-  const [budget, setBudget] = useState<number | null>(null);
+  const [budget, setBudget] = useState<number >(0);
   const [ispriceEdit, setIspriceEdit] = useState(false);
   const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>();
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
@@ -104,7 +104,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     }, [refetch])
   );
 
-  console.log('Work data in FreelancerWorkDetail:', JSON.stringify(data, null, 2));
+  // // console.log('Work data in FreelancerWorkDetail:', JSON.stringify(data, null, 2));
   // Update local state when data changes
   useEffect(() => {
     if (data?.subWorkDetails) {
@@ -1239,7 +1239,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                   </View>
                 </View>
 
-                {data?.workStatus === 'PUBLISHED' && user?._id === data?.createdBy?._id && (
+                {(data?.workStatus === 'PUBLISHED' || data?.workStatus === 'ASSIGNED_WORKER' || data?.workStatus === 'PRIVATE' )&& user?._id === data?.createdBy?._id && (
                   <Pressable
                     onPress={() => setIspriceEdit(true)}
                     className="bg-white rounded-full p-3 shadow-sm active:bg-blue-50"
@@ -1909,25 +1909,23 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                   <Ionicons name="chevron-down" size={12} color={statusColors.text} />
                                 </View> */}
 
-                                <TouchableOpacity
-                                  onLongPress={() => handleSubTaskTitleLongPress(idx, subTaskIndex, subTask.title)}
+                                <View
+                                  
                                   className="flex-row items-center flex-1"
-                                  disabled={isCompleted ? true : false}
 
                                 >
                                   <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
                                   <Text className="text-body text-text ml-2">{subTask.title}</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
+                                </View>
+                                <View
                                   className="px-3 py-1 rounded-full flex-row items-center"
                                   style={{ backgroundColor: statusColors.bg }}
-                                  onPress={() => setShowStatusDropdown(showStatusDropdown === dropdownKey ? null : dropdownKey)}
                                 >
                                   <Text className="text-caption font-medium mr-1" style={{ color: statusColors.text }}>
                                     {currentStatus}
                                   </Text>
                                   <Ionicons name="chevron-down" size={12} color={statusColors.text} />
-                                </TouchableOpacity>
+                                </View>
                               </>
                             )}
                           </View>
@@ -1956,7 +1954,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                     );
                   })}
 
-                  {data?.workStatus === "DOING" && data?.createdBy?._id !== user?._id && (
+                  {shouldShowAddButton() && (
                     <View className="flex-row mt-2 items-center justify-between border border-border px-3 py-1 rounded-full bg-gray-50">
                       <View className="flex-row items-center flex-1">
                         <Ionicons name="arrow-forward" size={16} color="#3B7280" />
@@ -2117,12 +2115,10 @@ export default function FreelancerWorkDetail({ route }: Props) {
         {/* Bottom Action Bar */}
         <View className="flex-row justify-evenly items-center px-6 py-4 border-t border-border bg-white">
           {data?.createdBy?._id === user?._id && data?.workStatus !== 'PUBLISHED' && data?.assignedTo && (
-            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.assignedTo?._id })}>
+            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.assignedTo?._id , workData:data})}>
               <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
             </TouchableOpacity>
           )}
-
-          
 
             <TouchableOpacity
               onPress={() => navigation.navigate('PaymentDetail_Id', { workId: data?._id })}

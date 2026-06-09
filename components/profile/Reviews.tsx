@@ -9,6 +9,7 @@ import { formatDate } from 'utils/dateFormatter';
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 type ReviewsProps = {
   reviews: Review[];
+  totalStartRate: number;
 };
 
 const renderStars = (rating: number) => {
@@ -26,7 +27,7 @@ const renderStars = (rating: number) => {
   return <View className="flex-row">{stars}</View>;
 };
 
-export default function Reviews({ reviews }: ReviewsProps) {
+export default function Reviews({ reviews , totalStartRate }: ReviewsProps) {
   const [visibleCount, setVisibleCount] = useState(3);
   const { t } = useTranslation();
   const handleSeeMore = () => {
@@ -70,15 +71,13 @@ export default function Reviews({ reviews }: ReviewsProps) {
         <Text className="text-base font-semibold text-gray-800">
           {t('freelancer_profile.review.customer_reviews')}
         </Text>
-        <Text className="text-caption text-blue-600">{safeReviews.length} {t('freelancer_profile.review.review')}</Text>
+        {/* <Text className="text-caption text-blue-600">{safeReviews.length} {t('freelancer_profile.review.review')}</Text> */}
       </View>
 
       <View className="flex-row gap-4 items-center mb-6">
         <View className="items-center h-24 w-24 bg-blue-100 justify-center rounded-full">
 
-        <Text className="text-2xl font-bold text-blue-600">{avgRating}</Text>
-
-          <Text className="text-gray-500 text-xs">0.0/5.0</Text>
+        <Text className="text-2xl font-bold text-blue-600">{totalStartRate || 0}</Text>
         </View>
         <View className="items-center">
           {renderStars(parseFloat(avgRating))}

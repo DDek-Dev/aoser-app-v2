@@ -312,7 +312,6 @@ export const useRecommendedFreelancers = (
     ? exceptedIds.filter(Boolean).join(',')
     : exceptedIds || '';
 
-    console.log('exceptedIdsParam:', exceptedIdsParam);
 
   return useInfiniteQuery<Freelancer[]>({
     queryKey: ['recommended-freelancers', serviceTypeId || 'all', exceptedIdsParam],
@@ -320,7 +319,7 @@ export const useRecommendedFreelancers = (
       workerApi.getRecommandFreelancers(
         tokens?.accessToken || '',
         serviceTypeId,
-        // exceptedIdsParam,
+        exceptedIdsParam,
         pageParam as number,
         10
       ),

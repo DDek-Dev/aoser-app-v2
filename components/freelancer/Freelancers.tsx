@@ -164,11 +164,9 @@ export default function Freelancers({
                 <View className="flex-row items-center">
                   <FontAwesome name="star" size={12} color="#facc15" />
                   <Text className="ml-1 text-caption font-medium text-warning">
-                    {item.starRating} 
+                    {item.totalStartRate || 0} 
                   </Text>
-                  <Text className="ml-1 text-caption text-textSecondary">
-                  ({formatTotalRate(item.totalStartRate || 0)})
-                  </Text>
+                  
                 </View>
 
                 <View className='p-1 bg-blue-50 rounded-full flex-row'>

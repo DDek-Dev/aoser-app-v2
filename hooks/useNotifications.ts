@@ -74,7 +74,7 @@ export const usePushNotifications =  (
             .then(token => {
                 if (token) {
                     setExpoPushToken(token);
-                    console.log('✅ Token set:', token);
+                    // console.log('✅ Token set:', token);
                     // TODO: Send token to your backend
                     // sendTokenToBackend(token);
                     try {

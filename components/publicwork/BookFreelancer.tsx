@@ -53,7 +53,7 @@ const BookFreelancer = ({ route }: Props) => {
   const [category, setCategory] = useState('');
   const [nameOfWork, setNameOfWork] = useState('');
   const [workDetail, setWorkDetail] = useState('');
-  const [budget, setBudget] = useState<number | null>(null);
+  const [budget, setBudget] = useState<number>(0);
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
   const fromInputRef = useRef<TextInput>(null);
   const toInputRef = useRef<TextInput>(null);
@@ -329,7 +329,7 @@ const BookFreelancer = ({ route }: Props) => {
       setNewSubTask('');
     }
 
-    if (budget === 0 || budget === null) {
+    if (budget === 0) {
       setBudgetType('OFFERING');
     }
     const hasError = Object.values(newErrors).some(Boolean);
@@ -393,6 +393,7 @@ const BookFreelancer = ({ route }: Props) => {
     //     country: 'Laos',
     //   };
     // }
+
 
 
 

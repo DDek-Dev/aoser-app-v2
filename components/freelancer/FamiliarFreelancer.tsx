@@ -1,7 +1,7 @@
 
 
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,7 +10,6 @@ import { useRecommendedFreelancers } from 'hooks/useFreelancer';
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
 import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton';
 import { NoResults } from 'components/NoResults';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 

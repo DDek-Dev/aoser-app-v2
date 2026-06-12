@@ -78,7 +78,6 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   profileImage: string;
-
   email: string;
   businessType: "CUSTOMER" | "FREELANCER" | "TRANSPORT" | "ACCOMMODATION" | "COMPANY" | "SHOP" | "AOSER_ADMIN";
   phone: string;

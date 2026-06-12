@@ -22,6 +22,7 @@ import PhoneInput from 'components/ui/PhoneInput';
 import Dropdown from 'components/filter/Dropdown';
 import { District, Province } from 'types';
 import { useSelectAddress } from 'hooks/useSelectAddress';
+import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -246,15 +247,8 @@ const AoserProfileSetting = ({
     const pickFromGallery = async () => {
         setIsImageLoading(true);
         try {
-            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (!permission.granted) {
-                Alert.alert(
-                    t('editProfile.permission_required'),
-                    t('editProfile.permission_message')
-                );
-                setIsImageLoading(false);
-                return;
-            }
+            const hasPermission = await requestMediaPermissionIfNeeded();
+if (!hasPermission) return;
 
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],

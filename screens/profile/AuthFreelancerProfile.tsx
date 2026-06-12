@@ -1,15 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { View, Animated, ScrollView as RNScrollView, Pressable, Text } from 'react-native';
+import { View, Animated, Pressable, Text } from 'react-native';
 import Header from 'components/profile/Header';
 import InfoStats from 'components/profile/InfoStats';
 import Reviews from 'components/profile/Reviews';
 import WhatExpect from 'components/profile/whatExpect';
 import VDOPromote from 'components/profile/VDOPromote';
 import TabbedProfileSection from 'components/profile/TabbedProfileSection';
-
-
 import ScreenWrapper from 'components/ui/ScreenWrapper';
-import { RouteProp, useNavigation } from '@react-navigation/native';
+import { RouteProp, useNavigation, useIsFocused } from '@react-navigation/native';
 import Header_back from 'components/ui/Header_back';
 import { useFreelancerById, useFreelancerReviews } from 'hooks/useFreelancer';
 import { FreelancerStackParamList } from 'types/navigation';
@@ -25,35 +23,35 @@ type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'AuthF
 type Props = {
   route: AuthFreelancerProfileRouteProp;
 };
-export default function AuthFreelancerProfile({ route }: Props) {
 
+export default function AuthFreelancerProfile({ route }: Props) {
   const routeParams = route.params;
   const { data: profile, isLoading } = useFreelancerById(routeParams.userId);
-
-
-  const { data: reviews, isLoading: isLoadingReviews } = useFreelancerReviews(profile?._id ? profile._id : '');
+  const { data: reviews, isLoading: isLoadingReviews } = useFreelancerReviews(
+    profile?._id ? profile._id : ''
+  );
   const { user } = useAuth();
-  const { t } = useTranslation()
+  const { t } = useTranslation();
+  const isFocused = useIsFocused(); // ← stop video when navigating away
 
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
+
+  // ── Scroll indicator opacity animation ───────────────────────────────────
   const opacity = useRef(new Animated.Value(0.3)).current;
   const timeoutRef = useRef<any>(null);
 
+  // ── scrollY Animated.Value — passed to VDOPromote for visibility detection
+  const scrollY = useRef(new Animated.Value(0)).current;
 
-  const handleScroll = () => {
-    // Clear existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+  const handleScrollOpacity = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    // Increase opacity instantly on scroll
     Animated.timing(opacity, {
       toValue: 1,
       duration: 150,
       useNativeDriver: true,
     }).start();
 
-    // Wait 1 second, then fade out to 0.3 slowly
     timeoutRef.current = setTimeout(() => {
       Animated.timing(opacity, {
         toValue: 0.3,
@@ -68,60 +66,60 @@ export default function AuthFreelancerProfile({ route }: Props) {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
   const isOwnProfile = user?._id === profile?._id;
-  if (isLoading) return (
-    <ScreenWrapper safeEdges={['top', 'bottom']}>
-      <View>
 
-        <FreelancerSkeleton />
+  if (isLoading) {
+    return (
+      <ScreenWrapper safeEdges={['top', 'bottom']}>
+        <View>
+          <FreelancerSkeleton />
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
-      </View>
-    </ScreenWrapper>
-
-  )
   if (!profile) return null;
 
-
-  // console.log('profile', JSON.stringify(profile, null, 2))
   return (
-    <ScreenWrapper safeEdges={['top', 'bottom']} >
-
+    <ScreenWrapper safeEdges={['top', 'bottom']}>
       <View className="flex-row items-center justify-between px-4 py-2 bg-surface">
-
         <Header_back
           text={t('profile.freelancer_profile')}
-          // textStyle='text-primary'
           onPress={() => navigation.goBack()}
-          iconColor='#3B82F6'
-          backgroundColor='bg-surface'
-
+          iconColor="#3B82F6"
+          backgroundColor="bg-surface"
         />
 
         <View className="flex-row items-center gap-4">
-          <View className=" flex-row items-center gap-1">
+          <View className="flex-row items-center gap-1">
             <Sparkles size={24} color="#F59E0B" />
-            <Text className='text-lg font-semibold text-text'>{profile.recommendStar || 0}</Text>
+            <Text className="text-lg font-semibold text-text">
+              {profile.recommendStar || 0}
+            </Text>
           </View>
-          <Pressable onPress={() => navigation.navigate('AuthFreelancerSetting')} className="bg-border p-3 rounded-full">
+          <Pressable
+            onPress={() => navigation.navigate('AuthFreelancerSetting')}
+            className="bg-border p-3 rounded-full"
+          >
             <Ionicons name="settings-outline" size={24} color="#3B82F6" />
-
           </Pressable>
         </View>
       </View>
 
-      {/* <View style={{ height: insets.top }} className="bg-white" /> */}
-
-      {/* ✅ Fixed Back Button with Animated Opacity */}
-
-
-      <RNScrollView
+      {/* ✅ Animated.ScrollView so scrollY tracks position for VDOPromote */}
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        onScrollBeginDrag={handleScroll}
-        onScroll={handleScroll}
         scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          {
+            useNativeDriver: false,
+            listener: handleScrollOpacity, // ← opacity animation piggybacks here
+          }
+        )}
       >
-
-        <View className="bg-white flex-1 " >
+        <View className="bg-white flex-1">
           <Header
             userId={profile._id || ''}
             backgroundImage={profile.bannerImage || ''}
@@ -130,30 +128,38 @@ export default function AuthFreelancerProfile({ route }: Props) {
             job={profile.jobTitle || ''}
             rating={profile.starRating || 0}
             status={profile.workerStatus || ''}
-
             ishidden={true}
             isme={isOwnProfile}
           />
+
           <InfoStats
             success={profile.totalCompletedWork}
             jobs={profile.totalWorks}
             rewards={profile.totalDoingWork}
-
           />
-          <VDOPromote video={profile.videoPromote} context="profile" />
+
+          {/* ✅ Pass scrollY + isFocused so VDOPromote can detect visibility */}
+          <VDOPromote
+            video={profile.videoPromote}
+            context="profile"
+            scrollY={scrollY}
+            isScreenFocused={isFocused}
+          />
 
           <TabbedProfileSection profile={profile} stylepadd="" />
 
           <WhatExpect profile={profile} />
+
           <View className="h-[1px] bg-gray-200 mt-4" />
-          <View className='mb-24'>
 
-            <Reviews reviews={reviews || []} totalStartRate={profile.totalStartRate || 0} />
-
+          <View className="mb-24">
+            <Reviews
+              reviews={reviews || []}
+              totalStartRate={profile.totalStartRate || 0}
+            />
           </View>
-
         </View>
-      </RNScrollView>
+      </Animated.ScrollView>
     </ScreenWrapper>
   );
 }

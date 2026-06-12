@@ -7,6 +7,8 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { useTranslation } from 'react-i18next';
 import type { FileWithType } from 'types';
 import * as FileSystem from 'expo-file-system/legacy';
+import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
+
 interface Props {
   video: string | null;
   label: string;
@@ -22,18 +24,19 @@ interface ModalState {
 
 const CONSTRAINTS = {
   MAX_SIZE_BYTES: 50 * 1024 * 1024, // 50MB
-  MAX_DURATION_MS: 60000, // 60 seconds
+  MAX_DURATION_MS: 60000,           // 60 seconds
   ALLOWED_FORMATS: ['mp4', 'mov', 'avi', 'm4v'] as const,
   VIDEO_QUALITY: 0.7,
 } as const;
 
 const MIME_TYPE_MAP: Record<string, string> = {
   mp4: 'video/mp4',
-  mov: 'video/mp4',   // ← treat .mov as mp4 since iOS transcodes it
+  mov: 'video/mp4',
   m4v: 'video/mp4',
   avi: 'video/avi',
   webm: 'video/webm',
 };
+
 const PREVIEW_DURATION_MS = 5000;
 const loadedVideoUriCache = new Set<string>();
 
@@ -41,23 +44,25 @@ const SelectVideo: React.FC<Props> = ({
   video,
   label,
   required = false,
-  onChange
+  onChange,
 }) => {
   const { t } = useTranslation();
-  const playerRef = useRef<any>(null);
   const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // const [isVideoLoading, setIsVideoLoading] = useState(() => !!video && !loadedVideoUriCache.has(video));
+  const hasPlayedRef = useRef(false);
+  const videoRef = useRef(video);
+
   const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [modalState, setModalState] = useState<ModalState>({
     visible: false,
     title: '',
     message: '',
   });
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-
-  console.log('video', video)
-
+  // Keep videoRef in sync so markVideoLoaded doesn't close over stale value
+  useEffect(() => {
+    videoRef.current = video;
+  }, [video]);
 
   const player = useVideoPlayer(null, (playerInstance) => {
     playerInstance.loop = false;
@@ -66,114 +71,92 @@ const SelectVideo: React.FC<Props> = ({
     playerInstance.staysActiveInBackground = false;
   });
 
+  // Reset loading/ready state when video URI changes
   useEffect(() => {
-
-    // setIsVideoLoading(!!video && !loadedVideoUriCache.has(video));
     setIsPlayerReady(false);
     setIsVideoLoading(
       !!video &&
-      video.startsWith('http') &&  // ← only for remote URLs
+      video.startsWith('http') &&
       !loadedVideoUriCache.has(video)
     );
   }, [video]);
 
   const markVideoLoaded = () => {
-    if (video) loadedVideoUriCache.add(video);
+    if (videoRef.current) loadedVideoUriCache.add(videoRef.current);
     setIsVideoLoading(false);
   };
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (previewTimeoutRef.current) {
         clearTimeout(previewTimeoutRef.current);
         previewTimeoutRef.current = null;
       }
-      playerRef.current = null;
     };
   }, []);
 
-
-  // 2. ใช้ useEffect จัดการการเปลี่ยน Video ด้วย replaceAsync
+  // Effect 1: Register statusChange listener ONCE (player only, never torn down on video change)
   useEffect(() => {
-    // ตรวจสอบว่า player ยังมีตัวตนอยู่จริงและไม่ถูก release
     if (!player) return;
-
 
     const subscription = player.addListener('statusChange', ({ status }) => {
       console.log('📡 status changed:', status);
-      if (status === 'readyToPlay') {
+
+      // Guard: only play once per video load cycle
+      if (status === 'readyToPlay' && !hasPlayedRef.current) {
+        hasPlayedRef.current = true;
         setIsPlayerReady(true);
+        markVideoLoaded();
         player.currentTime = 0;
         player.play();
-        console.log('▶️ play called on readyToPlay');
-
+        console.log('▶️ play called');
 
         if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
         previewTimeoutRef.current = setTimeout(() => {
           try { player.pause(); } catch (e) { }
         }, PREVIEW_DURATION_MS);
       }
-
-
     });
 
+    return () => {
+      subscription.remove();
+    };
+  }, [player]); // ← player only — listener survives video changes
 
+  // Effect 2: Load video source when video URI changes
+  useEffect(() => {
+    if (!player) return;
+
+    // Reset the play guard for the new video
+    hasPlayedRef.current = false;
+    setIsPlayerReady(false);
 
     const loadVideo = async () => {
       console.log('🎬 loadVideo called, video:', video);
       try {
-        // if (video) {
-        //   // ก่อนจะ replace ให้เช็คว่า player ยังใช้งานได้
-        //   // การครอบด้วย try-catch ตรงนี้จะดัก Error "already released" ได้
-        //   await player.replaceAsync({ uri: video, useCaching: true });
-        //   console.log('✅ replaceAsync done');
-        //   setIsPlayerReady(true);
-        //   player.currentTime = 0;
-        //   player.play();
-        //   console.log('▶️ play called');
-
-        //   if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
-        //   previewTimeoutRef.current = setTimeout(() => {
-        //     try { player.pause(); } catch (e) { }
-        //   }, PREVIEW_DURATION_MS);
-        // } else {
-        //   player.pause();
-        // }
-
         if (video) {
-          // ❌ useCaching can cause issues with local file:// URIs
-          // await player.replaceAsync({ uri: video, useCaching: true });
-
-          // ✅ no caching for local files
           const source = video.startsWith('http')
-            ? { uri: video, useCaching: true }   // cache remote only
-            : { uri: video };                     // local = no cache
+            ? { uri: video, useCaching: true } // cache remote only
+            : { uri: video };                  // local = no cache
 
           await player.replaceAsync(source);
-          console.log('✅ replaceAsync done, status:', player.status);
-          player.currentTime = 0;
-          player.play();
-          console.log('▶️ play called, playing:', player.playing);
+          console.log('✅ replaceAsync done');
+          // ✅ Do NOT call play() here — statusChange listener handles it
         } else {
-          player.pause();
+          try { player.pause(); } catch (e) { }
         }
       } catch (e) {
-        console.warn("Player was released before it could be updated", e);
         console.warn('Player error:', e);
-        // ← add this to debug
         console.log('video uri was:', video);
         console.log('player status:', player?.status);
       }
     };
 
     loadVideo();
-
-    return () => {
-      subscription.remove();
-      if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
-    };
   }, [video, player]);
 
+  // ─── Validation helpers ───────────────────────────────────────────────────
 
   const showModal = (title: string, message: string) => {
     setModalState({ visible: true, title, message });
@@ -183,31 +166,14 @@ const SelectVideo: React.FC<Props> = ({
     setModalState({ visible: false, title: '', message: '' });
   };
 
-  const getFileExtension = (uri: string): string => {
-    const parts = uri.split('.');
-    return parts[parts.length - 1].toLowerCase();
-  };
-
-  const getMimeType = (extension: string): string => {
-    return MIME_TYPE_MAP[extension] || 'video/mp4';
-  };
-
   const validateFileSize = async (uri: string): Promise<boolean> => {
     try {
       const fileInfo = await getInfoAsync(uri);
-
-      if (!fileInfo.exists) {
-        throw new Error('File does not exist');
-      }
-
+      if (!fileInfo.exists) throw new Error('File does not exist');
       if (fileInfo.size && fileInfo.size > CONSTRAINTS.MAX_SIZE_BYTES) {
-        showModal(
-          t('selectVideo.fileTooLarge'),
-          t('selectVideo.fileTooLargeMessage')
-        );
+        showModal(t('selectVideo.fileTooLarge'), t('selectVideo.fileTooLargeMessage'));
         return false;
       }
-
       return true;
     } catch (error) {
       console.log('Error validating file size:', error);
@@ -215,119 +181,103 @@ const SelectVideo: React.FC<Props> = ({
     }
   };
 
-  const validateDuration = (duration?: number): boolean => {
-    if (duration && duration > CONSTRAINTS.MAX_DURATION_MS) {
-      showModal(
-        t('selectVideo.videoTooLong'),
-        t('selectVideo.videoTooLongMessage')
-      );
+  // ✅ Reads mimeType from asset first — reliable on iOS camera recordings.
+  // iOS PHPicker gives 'video/quicktime' for .MOV files from the camera,
+  // so URI extension parsing alone (.MOV uppercase) is not trustworthy.
+  const getExtensionFromAsset = (asset: ImagePicker.ImagePickerAsset): string => {
+    if (asset.mimeType) {
+      if (asset.mimeType.includes('mp4')) return 'mp4';
+      if (asset.mimeType.includes('quicktime') || asset.mimeType.includes('mov')) return 'mov';
+      if (asset.mimeType.includes('avi')) return 'avi';
+      if (asset.mimeType.includes('m4v')) return 'm4v';
+    }
+    // Fallback: parse URI — always lowercase to handle iOS uppercase .MOV
+    return asset.uri.split('.').pop()?.toLowerCase() || 'mp4';
+  };
+
+  // ✅ Also handles 'quicktime' which iOS mimeType sometimes returns
+  const validateFormat = (extension: string): boolean => {
+    const normalizedExt = extension === 'quicktime' ? 'mov' : extension;
+    if (!CONSTRAINTS.ALLOWED_FORMATS.includes(normalizedExt as any)) {
+      showModal(t('selectVideo.invalidFormat'), t('selectVideo.invalidFormatMessage'));
       return false;
     }
     return true;
   };
 
-  const validateFormat = (extension: string): boolean => {
-    if (!CONSTRAINTS.ALLOWED_FORMATS.includes(extension as any)) {
-      showModal(
-        t('selectVideo.invalidFormat'),
-        t('selectVideo.invalidFormatMessage')
-      );
-      return false;
+  // ✅ Copy .mov → .mp4 path so upload always sends mp4
+  // const normalizeVideoUri = async (uri: string): Promise<string> => {
+  //   const ext = uri.split('.').pop()?.toLowerCase();
+  //   if (ext === 'mov') {
+  //     const newUri = `${FileSystem.cacheDirectory}video_${Date.now()}.mp4`;
+  //     await FileSystem.copyAsync({ from: uri, to: newUri });
+  //     console.log('🔄 Converted MOV to:', newUri);
+  //     return newUri;
+  //   }
+  //   return uri;
+  // };
+
+  const normalizeVideoUri = async (uri: string): Promise<string> => {
+    const ext = uri.split('.').pop()?.toLowerCase();
+    if (ext === 'mov') {
+      const newUri = `${FileSystem.cacheDirectory}video_${Date.now()}.mp4`;
+      await FileSystem.copyAsync({ from: uri, to: newUri });
+
+      // ✅ Verify the copy succeeded (iOS temp files can disappear)
+      const info = await FileSystem.getInfoAsync(newUri);
+      if (!info.exists) throw new Error('Failed to copy video file');
+
+      console.log('🔄 Converted MOV to:', newUri);
+      return newUri;
     }
-    return true;
+    return uri;
   };
+  // ─── Picker ──────────────────────────────────────────────────────────────
 
   const handlePickVideo = async () => {
     try {
-
-
-
-
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permissionResult.granted) {
-        showModal(
-          t('selectVideo.permissionRequired'),
-          t('selectVideo.permissionMessage')
-        );
+      const hasPermission = await requestMediaPermissionIfNeeded();
+      if (!hasPermission) {
+        showModal(t('selectVideo.permissionRequired'), t('selectVideo.permissionMessage'));
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        // mediaTypes: ImagePicker.MediaTypeOptions.Videos,
         mediaTypes: ['videos'],
         allowsEditing: false,
-        //quality: CONSTRAINTS.VIDEO_QUALITY,
-        //videoMaxDuration: CONSTRAINTS.MAX_DURATION_MS / 1000,
         allowsMultipleSelection: false,
       });
 
-      if (result.canceled || !result.assets?.length) {
-        return;
-      }
+      if (result.canceled || !result.assets?.length) return;
 
       const asset = result.assets[0];
-      const fileExtension = getFileExtension(asset.uri);
 
-      // Validate format
-      if (!validateFormat(fileExtension)) {
-        return;
-      }
+      // ✅ mimeType-aware extension detection (handles iOS .MOV / quicktime)
+      const fileExtension = getExtensionFromAsset(asset);
 
-      // Validate duration
-      // if (!validateDuration(asset.duration)) {
-      //   return;
-      // }
-
-      // Validate file size
-      if (!(await validateFileSize(asset.uri))) {
-        return;
-      }
-
-      const fileName = `video_${Date.now()}.${fileExtension}`;
-      const mimeType = getMimeType(fileExtension);
-
-      // const fileWithType: FileWithType = {
-      //   uri: asset.uri,
-      //   name: fileName,
-      //   type: mimeType,
-      // };
-
-      const normalizeVideoUri = async (uri: string): Promise<string> => {
-        const ext = uri.split('.').pop()?.toLowerCase();
-        if (ext === 'mov') {
-          // Copy to a .mp4 path — iOS will handle the container
-          const newUri = `${FileSystem.cacheDirectory}video_${Date.now()}.mp4`;
-          await FileSystem.copyAsync({ from: uri, to: newUri });
-          console.log('🔄 Converted MOV to:', newUri);
-          return newUri;
-        }
-        return uri;
-      };
+      if (!validateFormat(fileExtension)) return;
+      if (!(await validateFileSize(asset.uri))) return;
 
       const normalizedUri = await normalizeVideoUri(asset.uri);
 
       const fileWithType: FileWithType = {
-        uri: normalizedUri,   // ← use normalized uri
-        name: `video_${Date.now()}.mp4`,  // ← always .mp4
+        uri: normalizedUri,
+        name: `video_${Date.now()}.mp4`, // always .mp4 after normalization
         type: 'video/mp4',
       };
 
-      console.log('Selected video file:', {
-        name: fileWithType.name,
-        type: fileWithType.type,
-        duration: asset.duration
-          ? `${(asset.duration / 1000).toFixed(1)}s`
-          : 'Unknown',
+      console.log('Selected video:', {
+        originalUri: asset.uri,
+        normalizedUri,
+        mimeType: asset.mimeType,
+        extension: fileExtension,
+        duration: asset.duration ? `${(asset.duration / 1000).toFixed(1)}s` : 'Unknown',
       });
 
       onChange(fileWithType);
     } catch (error) {
       console.log('Error processing video:', error);
-      showModal(
-        t('selectVideo.error'),
-        t('selectVideo.errorMessage')
-      );
+      showModal(t('selectVideo.error'), t('selectVideo.errorMessage'));
       onChange(undefined);
     }
   };
@@ -337,10 +287,11 @@ const SelectVideo: React.FC<Props> = ({
       clearTimeout(previewTimeoutRef.current);
       previewTimeoutRef.current = null;
     }
-    try { playerRef.current?.pause?.(); } catch (error) { }
-    playerRef.current = null;
+    try { player?.pause(); } catch (e) { }
     onChange(undefined);
   };
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -351,37 +302,27 @@ const SelectVideo: React.FC<Props> = ({
       <View className="relative">
         {video ? (
           <>
-            {/* {player && (
-              <VideoView
-                player={player}
-                style={styles.videoView}
-                onFirstFrameRender={markVideoLoaded}
-              />
-            )} */}
-
-            {video && player && isPlayerReady ? (
+            {isPlayerReady ? (
               <VideoView
                 key={`video-player-${video}`}
                 player={player}
                 style={styles.videoView}
                 nativeControls={true}
                 allowsFullscreen={true}
-                contentFit="cover"    // ← ADD THIS
-                onFirstFrameRender={() => {
-                  if (video) loadedVideoUriCache.add(video);
-                  setIsVideoLoading(false);
-                }}
+                contentFit="cover"
               />
             ) : (
               <View style={styles.videoView} className="bg-gray-200 justify-center items-center">
-                <ActivityIndicator />
+                <ActivityIndicator size="large" color="#3B82F6" />
               </View>
             )}
+
             {isVideoLoading && (
               <View style={styles.videoLoadingOverlay}>
                 <ActivityIndicator size="small" color="#FFFFFF" />
               </View>
             )}
+
             <TouchableOpacity
               onPress={handleRemoveVideo}
               className="absolute top-2 right-2 bg-primary p-1.5 rounded-full"
@@ -410,7 +351,7 @@ const SelectVideo: React.FC<Props> = ({
         )}
       </View>
 
-      {/* Custom Modal */}
+      {/* Error Modal */}
       <Modal
         visible={modalState.visible}
         transparent
@@ -422,11 +363,9 @@ const SelectVideo: React.FC<Props> = ({
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{modalState.title}</Text>
             </View>
-
             <View style={styles.modalBody}>
               <Text style={styles.modalMessage}>{modalState.message}</Text>
             </View>
-
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 onPress={hideModal}
@@ -434,9 +373,7 @@ const SelectVideo: React.FC<Props> = ({
                 accessibilityLabel={t('selectVideo.ok')}
                 accessibilityRole="button"
               >
-                <Text style={styles.modalButtonText}>
-                  {t('selectVideo.ok')}
-                </Text>
+                <Text style={styles.modalButtonText}>{t('selectVideo.ok')}</Text>
               </TouchableOpacity>
             </View>
           </View>

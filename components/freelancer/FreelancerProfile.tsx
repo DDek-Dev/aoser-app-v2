@@ -356,6 +356,7 @@ export default function FreelancerProfile() {
   }
 
 
+  console.log('[FreelancerProfile] Rendered with profile ID:', profile);
   // =================================================================
   // MAIN RENDER - Profile Content
   // =================================================================
@@ -462,7 +463,7 @@ export default function FreelancerProfile() {
 
         {/* ===== REVIEWS SECTION ===== */}
         <View >
-          <Reviews reviews={reviews || []}          totalStartRate={profile.totalStartRate || 0}/>
+          <Reviews reviews={reviews || []}   totalStartRate={profile.totalStartRate || 0}/>
         </View>
 
         {/* ===== SIMILAR FREELANCERS ===== */}

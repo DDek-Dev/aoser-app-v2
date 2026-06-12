@@ -166,6 +166,7 @@ const settings = useMemo(() => [
         <Ionicons name="time-outline" size={32} color="#3B82F6" />
         <Text className="text-caption text-textSecondary">{t('profile.history')}</Text>
       </Pressable>
+      
     </View>
   );
 

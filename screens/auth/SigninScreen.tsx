@@ -98,8 +98,6 @@ export default function SigninScreen({ navigation }: any) {
   const handleGoogleLoginPress = async () => {
     try {
       await googleLogin();
-
-
     } catch (err) {
       console.log('❌ Google login failed:', err);
     }

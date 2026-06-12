@@ -3,11 +3,10 @@ import {
     Text,
     TouchableOpacity,
     View,
-    Alert,
 } from 'react-native';
 import FormInput from 'components/ui/Input';
 import SelectInput from 'components/ui/SelectInput';
-import { getCategories, useFreelancerById, useMyProfile, useUpdateFreelancerProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
+import { useFreelancerById, useMyProfile, useUpdateMyProfile } from 'hooks/useFreelancer';
 import SelectImage from 'components/ui/SelectImage';
 import SelectVideo from 'components/ui/SelectVideo';
 import SelectFreelancerType from 'components/ui/SelectfreelancerType';
@@ -18,122 +17,124 @@ import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { getPresignedUrls, uploadFileToUrl } from 'api/uploadUtils';
-import { Freelancer, UserProfile } from 'types/profile';
+
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useTranslation } from 'react-i18next';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
-
 const EditFreelancerJobsection = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
+    const { t } = useTranslation();
 
     const [jobTitle, setJobTitle] = useState('');
-    const [bannerImage, setBannerImage] = useState<FileWithType | string>('');
-    const [bannerImageFile, setBannerImageFile] = useState<FileWithType | null>(null);
-    const [promoteVideoFile, setPromoteVideoFile] = useState<FileWithType | null>(null);
-    const [promoVideo, setPromoVideo] = useState<FileWithType | string>('');
     const [freelancerType, setFreelancerType] = useState('FULLTIME');
     const [category, setCategory] = useState('');
     const [subcategories, setSubcategories] = useState<string[]>([]);
-    const [errors, setErrors] = useState({ jobTitle: false, category: false, bannerImage: false, freelancerType: false });
+    const [errors, setErrors] = useState({
+        jobTitle: false,
+        category: false,
+        bannerImage: false,
+        freelancerType: false,
+    });
     const [isUploading, setIsUploading] = useState(false);
+
+    // ── Banner image ─────────────────────────────────────────────────────────
+    // Separate display URI (shown in SelectImage) from the new file to upload
+    const [bannerImageDisplayUri, setBannerImageDisplayUri] = useState<string>('');
+    const [bannerImageFile, setBannerImageFile] = useState<FileWithType | null>(null);
+
+    // ── Promo video ──────────────────────────────────────────────────────────
+    // Separate display URI (passed to SelectVideo) from the new file to upload.
+    // This prevents SelectVideo from re-triggering player.replaceAsync every
+    // time something unrelated in the parent re-renders.
+    const [promoVideoDisplayUri, setPromoVideoDisplayUri] = useState<string>('');
+    const [promoteVideoFile, setPromoteVideoFile] = useState<FileWithType | null>(null);
 
     const categoryRef = useRef<{ focus: () => void }>(null);
     const { data } = useMyProfile();
     const { data: profile, isLoading } = useFreelancerById(data?._id || '');
-    // const updateProfileMutation = useUpdateFreelancerProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
 
-
-    const { t } = useTranslation();
-
+    // Populate form from existing profile (runs once when profile loads)
     useEffect(() => {
         if (profile) {
-            console.log("sub ----: ", profile.jobs)
+            console.log('sub ----: ', profile.jobs);
             setJobTitle(profile.jobTitle || '');
-            setBannerImage(`${IMAGES_BASE_URL}${profile.bannerImage}` || '');
-            setPromoVideo(`${IMAGES_BASE_URL}${profile.videoPromote}` || '');
+            setBannerImageDisplayUri(
+                profile.bannerImage ? `${IMAGES_BASE_URL}${profile.bannerImage}` : ''
+            );
+            setPromoVideoDisplayUri(
+                profile.videoPromote ? `${IMAGES_BASE_URL}${profile.videoPromote}` : ''
+            );
             setFreelancerType(profile.freelancerType || '');
             setCategory(profile.serviceType || '');
             setSubcategories(profile.jobs || []);
         }
     }, [profile]);
 
-
+    // ── Image change handler ──────────────────────────────────────────────────
     const handleImageChange = (file?: FileWithType) => {
         if (file) {
             setBannerImageFile(file);
-            setBannerImage(file.uri); // Show preview
+            setBannerImageDisplayUri(file.uri); // show local preview
         } else {
-            // Handle removal
             setBannerImageFile(null);
-            setBannerImage(''); // Clear the image
+            setBannerImageDisplayUri('');
         }
     };
 
+    // ── Video change handler ──────────────────────────────────────────────────
+    // Key fix: update promoVideoDisplayUri so SelectVideo receives the new URI
+    // and reloads the player — but only when a new file is actually picked.
     const promoteVideoChange = (file?: FileWithType) => {
         if (file) {
             setPromoteVideoFile(file);
-            setPromoVideo(file.uri);
+            setPromoVideoDisplayUri(file.uri); // triggers player reload in SelectVideo
         } else {
-            // Handle removal
             setPromoteVideoFile(null);
-            setPromoVideo(''); // Clear the video
+            setPromoVideoDisplayUri('');
         }
     };
 
-    const uploadBannerImage = async (): Promise<{ bannerUrl: string, videoUrl: string }> => {
-
-
-        let bannerUrl = bannerImage as string;
-        let videoUrl = promoVideo as string;
+    // ── Upload helper ─────────────────────────────────────────────────────────
+    const uploadFiles = async (): Promise<{ bannerUrl: string; videoUrl: string }> => {
+        let bannerUrl = bannerImageDisplayUri;
+        let videoUrl = promoVideoDisplayUri;
 
         setIsUploading(true);
         try {
-            const filesToUpload = [];
+            const filesToUpload: { name: string; type: string }[] = [];
 
             if (bannerImageFile) {
-                filesToUpload.push({
-                    name: bannerImageFile.name,
-                    type: bannerImageFile.type,
-                });
+                filesToUpload.push({ name: bannerImageFile.name, type: bannerImageFile.type });
+            }
+            if (promoteVideoFile) {
+                filesToUpload.push({ name: promoteVideoFile.name, type: promoteVideoFile.type });
             }
 
-            if (promoteVideoFile) {
-                filesToUpload.push({
-                    name: promoteVideoFile.name,
-                    type: promoteVideoFile.type,
-                });
-            }
+            // Helper: strip full URL down to just the filename stored in DB
+            const extractFilename = (url: string): string => {
+                if (url.includes('/uploads/')) {
+                    return url.substring(url.indexOf('/uploads/') + '/uploads/'.length);
+                }
+                if (!url.startsWith('file://')) {
+                    return url.replace('/uploads/', '');
+                }
+                return url;
+            };
 
             if (filesToUpload.length === 0) {
-                // If no new files, extract filename only from existing URLs
-                if (typeof bannerImage === 'string' && bannerImage.includes('/uploads/')) {
-                    bannerUrl = bannerImage.substring(bannerImage.indexOf('/uploads/') + '/uploads/'.length);
-                } else if (typeof bannerImage === 'string' && !bannerImage.startsWith('file://')) {
-                    // If it's already just a filename, keep it as is
-                    bannerUrl = bannerImage.replace('/uploads/', '');
-                }
-
-                if (typeof promoVideo === 'string' && promoVideo.includes('/uploads/')) {
-                    videoUrl = promoVideo.substring(promoVideo.indexOf('/uploads/') + '/uploads/'.length);
-                } else if (typeof promoVideo === 'string' && !promoVideo.startsWith('file://')) {
-                    // If it's already just a filename, keep it as is
-                    videoUrl = promoVideo.replace('/uploads/', '');
-                }
-
-                return { bannerUrl, videoUrl };
+                // No new files — just normalise the existing URLs to filenames
+                return {
+                    bannerUrl: extractFilename(bannerUrl),
+                    videoUrl: extractFilename(videoUrl),
+                };
             }
 
-
-            // Get presigned URLs
             const presignedUrls = await getPresignedUrls(filesToUpload);
             console.log('Presigned URLs:', presignedUrls);
-
-
-            // Upload files
 
             let urlIndex = 0;
 
@@ -144,17 +145,12 @@ const EditFreelancerJobsection = () => {
                     presignedUrls[urlIndex].contentType,
                 );
                 const fullUrl = presignedUrls[urlIndex].url.split('?')[0];
-                // Extract just the filename (remove /uploads/ prefix)
-                const pathWithUploads = fullUrl.substring(fullUrl.indexOf('/uploads/'));
-                bannerUrl = pathWithUploads.replace('/uploads/', '');
+                bannerUrl = fullUrl
+                    .substring(fullUrl.indexOf('/uploads/'))
+                    .replace('/uploads/', '');
                 urlIndex++;
             } else {
-                // If no new banner image, extract filename only from existing URL
-                if (typeof bannerImage === 'string' && bannerImage.includes('/uploads/')) {
-                    bannerUrl = bannerImage.substring(bannerImage.indexOf('/uploads/') + '/uploads/'.length);
-                } else if (typeof bannerImage === 'string' && !bannerImage.startsWith('file://')) {
-                    bannerUrl = bannerImage.replace('/uploads/', '');
-                }
+                bannerUrl = extractFilename(bannerUrl);
             }
 
             if (promoteVideoFile) {
@@ -164,22 +160,16 @@ const EditFreelancerJobsection = () => {
                     presignedUrls[urlIndex].contentType,
                 );
                 const fullUrl = presignedUrls[urlIndex].url.split('?')[0];
-                // Extract just the filename (remove /uploads/ prefix)
-                const pathWithUploads = fullUrl.substring(fullUrl.indexOf('/uploads/'));
-                videoUrl = pathWithUploads.replace('/uploads/', '');
+                videoUrl = fullUrl
+                    .substring(fullUrl.indexOf('/uploads/'))
+                    .replace('/uploads/', '');
             } else {
-                // If no new video, extract filename only from existing URL
-                if (typeof promoVideo === 'string' && promoVideo.includes('/uploads/')) {
-                    videoUrl = promoVideo.substring(promoVideo.indexOf('/uploads/') + '/uploads/'.length);
-                } else if (typeof promoVideo === 'string' && !promoVideo.startsWith('file://')) {
-                    videoUrl = promoVideo.replace('/uploads/', '');
-                }
+                videoUrl = extractFilename(videoUrl);
             }
 
             console.log('Files uploaded successfully');
-            console.log('Final filenames (no path):', { bannerUrl, videoUrl });
+            console.log('Final filenames:', { bannerUrl, videoUrl });
             return { bannerUrl, videoUrl };
-
         } catch (error) {
             console.log('Upload error:', error);
             throw new Error('Failed to upload files');
@@ -188,27 +178,21 @@ const EditFreelancerJobsection = () => {
         }
     };
 
+    // ── Submit ────────────────────────────────────────────────────────────────
     const handleUpdate = async () => {
-        // Validate form
         const newErrors = {
             jobTitle: !jobTitle.trim(),
             category: !category,
-            bannerImage: !bannerImage,
+            bannerImage: !bannerImageDisplayUri,
             freelancerType: !freelancerType,
         };
-
         setErrors(newErrors);
 
-        if (Object.values(newErrors).some(error => error)) {
-            // Alert.alert('Error', 'Please fill all required fields');
-            return;
-        }
+        if (Object.values(newErrors).some(Boolean)) return;
 
         try {
-            // Upload files if there are new ones
-            const { bannerUrl, videoUrl } = await uploadBannerImage();
+            const { bannerUrl, videoUrl } = await uploadFiles();
 
-            // Prepare update data
             const updateData = {
                 jobTitle,
                 bannerImage: bannerUrl,
@@ -220,65 +204,57 @@ const EditFreelancerJobsection = () => {
 
             console.log('updateData', updateData);
 
-            // Update profile
-            // const result = await updateProfileMutation.mutateAsync(updateData as UserProfile);
-
-            // console.log('Update successful:', result);
-
             updateProfile(updateData, {
                 onSuccess: () => {
                     Toast.show({
                         type: ALERT_TYPE.SUCCESS,
                         title: t('kyc.toast.success.title'),
                         textBody: t('kyc.toast.success.onupdate'),
-                    })
+                    });
                     navigation.goBack();
                 },
-                onError: (error) => {
+                onError: () => {
                     Toast.show({
                         type: ALERT_TYPE.DANGER,
                         title: t('kyc.toast.oops.title'),
                         textBody: t('kyc.toast.oops.body'),
-                    })
+                    });
                 },
             });
-
-
         } catch (error) {
             console.log('Update error:', error);
             Toast.show({
                 type: ALERT_TYPE.DANGER,
                 title: t('kyc.toast.oops.title'),
                 textBody: t('kyc.toast.oops.body'),
-            })
+            });
         }
     };
 
-    const handleBack = () => {
-        navigation.goBack();
-    };
+    const handleBack = () => navigation.goBack();
 
-    const categories = getCategories();
     const freelancerTypes = [
         { value: 'FULLTIME', display: t('kyc.step1.freelancerType.fulltime') },
         { value: 'PART_TIME', display: t('kyc.step1.freelancerType.parttime') },
     ];
 
-    if (isLoading) {
-        return <LoadingScreen />;
-    }
+    if (isLoading) return <LoadingScreen />;
 
     return (
         <ScreenWrapper safeEdges={['top']}>
             <ScrollView className="flex-1 px-5 my-4">
                 <View className="flex-row items-center bg-primary p-4 rounded-2xl mb-6">
                     <View>
-                        <Text className="font-semibold text-white text-heading">{t('kyc.update.job_section')}</Text>
-                        <Text className="text-white text-body">{t('kyc.update.updateJob_section')}</Text>
+                        <Text className="font-semibold text-white text-heading">
+                            {t('kyc.update.job_section')}
+                        </Text>
+                        <Text className="text-white text-body">
+                            {t('kyc.update.updateJob_section')}
+                        </Text>
                     </View>
                 </View>
 
-                {/* Job Title Input */}
+                {/* Job Title */}
                 <FormInput
                     label={t('kyc.step1.jobTitle.label')}
                     placeholder={t('kyc.step1.jobTitle.placeholder')}
@@ -286,33 +262,12 @@ const EditFreelancerJobsection = () => {
                     onChangeText={setJobTitle}
                     inputClassName={errors.jobTitle ? 'border-error' : 'border-border'}
                     required
-                    isValidate={`${errors.jobTitle ? t('kyc.step1.jobTitle.required') : ''}`}
-
+                    isValidate={errors.jobTitle ? t('kyc.step1.jobTitle.required') : ''}
                 />
 
-                {/* Banner Upload */}
-                <SelectImage
-                    image={typeof bannerImage === 'string' ? `${bannerImage}` : bannerImage.uri}
-                    label={t('kyc.step1.bannerImage.label')}
-
-                    onChange={handleImageChange}
-                    required
-                    inputClassName={errors.bannerImage ? 'border-error' : 'border-border'}
-                    isValidate={errors.bannerImage ? t('kyc.step1.bannerImage.required') : ''}
-                />
-
-                {/* Promo Video Upload */}
-                <SelectVideo
-                    video={typeof promoVideo === 'string' ? promoVideo : promoVideo.uri}
-                    label={t('kyc.step1.promoVideo.label')}
-                    // onChange={setPromoVideo}
-                    onChange={promoteVideoChange}
-                />
-
-                {/* Freelancer Type */}
+ {/* Freelancer Type */}
                 <SelectFreelancerType
                     label={t('kyc.step1.freelancerType.label')}
-
                     value={freelancerType}
                     onSelect={setFreelancerType}
                     options={freelancerTypes}
@@ -321,20 +276,7 @@ const EditFreelancerJobsection = () => {
                     ref={categoryRef}
                 />
 
-                <View className='mt-2'>
-                    {/* <SelectInput
-                        label={t('kyc.step1.serviceType.label')}
-                        value={category}
-                        initialSubcategories={subcategories}
-                        onSelect={(cat, subs) => {
-                            setCategory(cat);
-                            setSubcategories(subs);
-                        }}
-                        inputClassName={errors.category ? 'border-error' : 'border-border'}
-                        required
-                        ref={categoryRef}
-                        isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
-                    /> */}
+                <View className="mt-2">
                     <SelectInput
                         label={t('kyc.step1.serviceType.label')}
                         value={category}
@@ -347,17 +289,35 @@ const EditFreelancerJobsection = () => {
                         isValidate={errors.category ? t('kyc.step1.serviceType.required') : ''}
                     />
                 </View>
+                {/* Banner Image */}
+                <SelectImage
+                    image={bannerImageDisplayUri}
+                    label={t('kyc.step1.bannerImage.label')}
+                    onChange={handleImageChange}
+                    required
+                    inputClassName={errors.bannerImage ? 'border-error' : 'border-border'}
+                    isValidate={errors.bannerImage ? t('kyc.step1.bannerImage.required') : ''}
+                />
+
+                {/* Promo Video — receives stable promoVideoDisplayUri only */}
+                <SelectVideo
+                    video={promoVideoDisplayUri || null}
+                    label={t('kyc.step1.promoVideo.label')}
+                    onChange={promoteVideoChange}
+                />
+
+               
             </ScrollView>
 
-            {/* <UploadScreen/> */}
-
-            <View className='px-4 mb-6 flex-row gap-4 '>
+            <View className="px-4 mb-6 flex-row gap-4">
                 <TouchableOpacity
                     onPress={handleBack}
                     className="bg-textSecondary mt-6 py-4 rounded-full items-center w-1/3"
                     disabled={isUploading}
                 >
-                    <Text className="text-white text-base font-semibold">{t('kyc.buttons.back')}</Text>
+                    <Text className="text-white text-base font-semibold">
+                        {t('kyc.buttons.back')}
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -370,6 +330,7 @@ const EditFreelancerJobsection = () => {
                     </Text>
                 </TouchableOpacity>
             </View>
+
             <View style={{ height: insets.bottom }} />
         </ScreenWrapper>
     );

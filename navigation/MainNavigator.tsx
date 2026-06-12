@@ -63,6 +63,7 @@ import WalletScreen from 'components/profile/WalletScreen';
 import NewsScreen from 'screens/profile/NewsScreen';
 import News from 'screens/profile/News';
 import Setting from 'screens/profile/Setting';
+import EditFreelancerBank_InfomationSection from 'components/profile/EditFreelancerBank_InfomationSection';
 
 
 
@@ -344,6 +345,18 @@ export default function MainNavigator() {
               onSignUpPress={() => navigation.navigate('SignUp')}
             >
               <EditFreelancerJobsection />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+        <RootStack.Screen name="EditFreelancerBank_InfomationSection">
+          {() => (
+            <ProtectedRoute
+              backicon={true}
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <EditFreelancerBank_InfomationSection />
             </ProtectedRoute>
           )}
         </RootStack.Screen>

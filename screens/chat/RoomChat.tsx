@@ -47,6 +47,7 @@ import MessagelistSkeleton from 'skeletonScreens/MessagelistSkeleton';
 import { useTranslation } from 'react-i18next';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { profileImage } from 'assets';
+import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
 
 
 
@@ -460,8 +461,8 @@ const RoomChat = () => {
   };
 
   const handlePhotoSelection = async () => {
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
+    const hasPermission = await requestMediaPermissionIfNeeded();
+if (!hasPermission) return;
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -739,7 +740,7 @@ const RoomChat = () => {
           createdAt: getOptimisticTimestamp(),
           conversation: chat.conversation._id,
           sender: currentUserId,
-          message: '',
+          message: message,
           isUnSend: false,
           work: workData,
           messageType: 'WORK',
@@ -1083,9 +1084,9 @@ const RoomChat = () => {
               if (chat.userProfile.businessType === 'CUSTOMER') {
                 navigation.navigate('CustomerProfile', { userId: chat.userProfile._id })
               } else if ((chat.userProfile.businessType === 'FREELANCER')) {
-                navigation.navigate('AuthFreelancerProfile', { userId: chat.userProfile._id })
+                navigation.navigate('FreelancerProfile', { userId: chat.userProfile._id })
               }
-            }}>
+            }}> 
 
 
 

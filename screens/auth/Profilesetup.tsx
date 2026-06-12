@@ -27,7 +27,7 @@ import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { profileImage } from 'assets';
 import { useTranslation } from 'react-i18next';
 import PhoneInput from 'components/ui/PhoneInput';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import Header_back from 'components/ui/Header_back';
 
@@ -38,175 +38,66 @@ const ProfileSetup = () => {
     const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
 
     // Form state
-    // const [gender, setGender] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
-    const [profileImg, setProfileImg] = useState<string>('');
+    const [profileImg, setProfileImg] = useState<string>(''); // used ONLY for display
+    const [originalProfileImage, setOriginalProfileImage] = useState<string>(''); // bare filename from DB, used for save
     const [profileImageFile, setProfileImageFile] = useState<FileWithType | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    // const [genderModalVisible, setGenderModalVisible] = useState(false);
     const [imageActionModalVisible, setImageActionModalVisible] = useState(false);
     const [deleteConfirmationModalVisible, setDeleteConfirmationModalVisible] = useState(false);
-    
-
-
-    // address
-
-    const [selectedProvince, setSelectedProvince] = useState<Province | undefined>(undefined);
-    const [selectedDistrict, setSelectedDistrict] = useState<District | undefined>(undefined);
-    const [village, setVillage] = useState('');
-    // const [addressInfo, setAddressInfo] = useState<SelectedAddress>({
-    //     province: undefined,
-    //     district: undefined,
-    //     village: '',
-    //     longitude: 0,
-    //     latitude: 0
-    // });
-    // const { data: addressData, isLoading: add_isLoading, error } = useSelectAddress();
-
 
     // Validation errors
-
     const [errors, setErrors] = useState({
-        // gender: false,
         firstName: false,
         lastName: false,
         phone: false,
         profileImage: false,
-        // province: false,
-        // district: false,
-        // village: false,
     });
 
     // API hooks
     const { data, isLoading } = useMyProfile();
     const { mutate: updateProfile, isPending: isUpdating } = useUpdateMyProfile();
 
-    const GENDER_OPTIONS = [
-        { label: t('signUpScreen.male'), value: 'MALE' },
-        { label: t('signUpScreen.female'), value: 'FEMALE' },
-    ];
-
     // Load existing profile data
     useEffect(() => {
         if (data) {
-            // setGender(data.gender || '');
             setFirstName(data.firstName || '');
             setLastName(data.lastName || '');
             setEmail(data.user.email || '');
             setPhone(data.phone || '');
-            setProfileImg(data.userProfileImage ? `${IMAGES_BASE_URL}${data.userProfileImage}` : '');
 
-            // setAddressInfo({
-            //     province: data.address?.province,
-            //     district: data.address?.district,
-            //     village: data.address?.village,
-            //     longitude: 0,
-            //     latitude: 0,
-            // });
-            // setSelectedProvince(data.address?.province);
-            // setSelectedDistrict(data.address?.district);
-            // setVillage(data.address?.village || '');
+            // Keep the bare filename (what the API expects) separate from the display URL
+            setOriginalProfileImage(data.userProfileImage || '');
+            setProfileImg(data.userProfileImage ? `${IMAGES_BASE_URL}${data.userProfileImage}` : '');
         }
     }, [data]);
 
     const validateForm = () => {
         const newErrors = {
-            // gender: !gender.trim(),
             firstName: !firstName.trim(),
             lastName: !lastName.trim(),
             phone: !phone.trim(),
             profileImage: !profileImg,
-            // province: !selectedProvince,
-            // district: !selectedDistrict,
-            // village: !village
         };
 
         setErrors(newErrors);
         return !newErrors.firstName && !newErrors.lastName && !newErrors.phone && !newErrors.profileImage
     };
 
- 
-    //address
-    const handleAddressChange = (address: SelectedAddress) => {
-        // setAddressInfo(address);
-        setSelectedProvince(address.province);
-        setSelectedDistrict(address.district);
-        // setVillage(address.village);
-    };
-
-
-    const handleProvinceSelect = (province: Province) => {
-        setSelectedProvince(province);
-        setSelectedDistrict(undefined);
-        setVillage('');
-        handleAddressChange({
-            province,
-            district: undefined,
-            village: '',
-            longitude: 0,
-            latitude: 0
-        });
-    };
-
-
-    // const handleDistrictSelect = (district: District) => {
-    //     setSelectedDistrict(district);
-    //     setVillage('');
-    //     handleAddressChange({
-    //         province: selectedProvince,
-    //         district,
-    //         village: '',
-    //         longitude: 0,
-    //         latitude: 0
-    //     });
-    // };
-
-    // const handleVillageChange = (text: string) => {
-    //     setVillage(text);
-    //     handleAddressChange({
-    //         province: selectedProvince,
-    //         district: selectedDistrict,
-    //         village: text,
-    //         longitude: 0,
-    //         latitude: 0
-    //     });
-    // };
-
-
-
-    // if (error || !addressData || addressData.length === 0) {
-    //     return (
-    //         <LoadingScreen />
-    //     );
-    // }
-
-
-     if (isLoading) {
+    if (isLoading) {
         return (
             <LoadingScreen />
         );
     }
-    // const provinces = addressData[0]?.provinces || [];
-    // const districts = selectedProvince?.districts || [];
 
-    // const provinceOptions = provinces.map(province => ({
-    //     label: province.province_la,
-    //     value: province
-    // }));
-
-    // const districtOptions = districts.map(district => ({
-    //     label: district.district_la,
-    //     value: district
-    // }));
     const uploadProfileImage = async (): Promise<string> => {
+        // No new image picked -> just return whatever filename we already have
+        // (could be the original filename, or '' if the user deleted the image)
         if (!profileImageFile) {
-            if (profileImg.startsWith('http')) {
-                return profileImg.replace(IMAGES_BASE_URL || '', '');
-            }
-            return profileImg;
+            return originalProfileImage;
         }
 
         setIsUploading(true);
@@ -239,36 +130,29 @@ const ProfileSetup = () => {
         }
 
         try {
-            let finalProfileImage = profileImg;
-            if (profileImageFile) {
-                finalProfileImage = await uploadProfileImage();
-            }
+            // Always go through uploadProfileImage:
+            // - if a new file was picked, it uploads and returns the new filename
+            // - if not, it returns the original filename (or '' if deleted) unchanged
+            const finalProfileImage = await uploadProfileImage();
 
             const profileData = {
-                // gender: gender.trim(),
                 firstName: firstName.trim(),
                 lastName: lastName.trim(),
                 phone: phone.trim(),
                 userProfileImage: finalProfileImage,
                 privacyException: true,
                 privacyVersion: Constants.expoConfig?.version
-                // address: {
-                //     province: selectedProvince?.province_la,
-                //     district: selectedDistrict?.district_la,
-                //     village: village
-                // }
-
             };
 
-            // console.log('Updating profile with data:', JSON.stringify(profileData, null, 2));
-
             updateProfile(profileData, {
-                onSuccess: () => {
+                onSuccess: async () => {
+              
                     Toast.show({
                         type: ALERT_TYPE.SUCCESS,
                         title: t('editProfile.success'),
                         textBody: t('editProfile.profile_updated'),
                     });
+
                     navigation.popToTop();
                 },
                 onError: (error) => {
@@ -295,14 +179,16 @@ const ProfileSetup = () => {
             setProfileImageFile(file);
             setProfileImg(file.uri);
         } else {
+            // Image removed/deleted - clear everything, including the
+            // remembered original filename so it doesn't get re-sent on save
             setProfileImageFile(null);
             setProfileImg('');
+            setOriginalProfileImage('');
         }
     };
 
     // Function to delete current image
     const handleDeleteImage = () => {
-
         setDeleteConfirmationModalVisible(true);
     };
 
@@ -311,15 +197,12 @@ const ProfileSetup = () => {
         setDeleteConfirmationModalVisible(false);
         setImageActionModalVisible(false);
     };
+
     // Function to pick image from gallery
     const pickFromGallery = async () => {
         try {
             const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (!permission.granted) {
-                // Alert.alert(
-                //     t('editProfile.permission_required'),
-                //     t('editProfile.permission_message')
-                // );
                 return;
             }
 
@@ -358,10 +241,6 @@ const ProfileSetup = () => {
             }
         } catch (error) {
             console.log('Image picker error:', error);
-            // Alert.alert(
-            //     t('editProfile.error'),
-            //     t('editProfile.pick_image_error')
-            // );
         }
     };
 
@@ -370,10 +249,6 @@ const ProfileSetup = () => {
         try {
             const permission = await ImagePicker.requestCameraPermissionsAsync();
             if (!permission.granted) {
-                // Alert.alert(
-                //     t('editProfile.camera_permission_required'),
-                //     t('editProfile.camera_permission_message')
-                // );
                 return;
             }
 
@@ -411,10 +286,6 @@ const ProfileSetup = () => {
             }
         } catch (error) {
             console.log('Camera error:', error);
-            // Alert.alert(
-            //     t('editProfile.error'),
-            //     t('editProfile.camera_error')
-            // );
         }
     };
 
@@ -423,12 +294,10 @@ const ProfileSetup = () => {
     }
 
     const isProcessing = isUpdating || isUploading;
-    // const displayGender = GENDER_OPTIONS.find((opt) => opt.value === gender)?.label || t('signUpScreen.selectGender');
     const hasImage = !!profileImg; // Check if image exists
 
     return (
         <ScreenWrapper safeEdges={['top', 'bottom']}>
-            {/* <TouchableWithoutFeedback onPress={Keyboard.dismiss}> */}
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -450,14 +319,11 @@ const ProfileSetup = () => {
                         <View className="items-center mb-6">
                             <View className="relative">
 
-
                                 {/* Camera/Edit Icon */}
                                 <TouchableOpacity
                                     onPress={() => setImageActionModalVisible(true)}
-
                                     disabled={isProcessing}
                                 >
-
                                     <Image
                                         source={
                                             profileImg
@@ -468,7 +334,6 @@ const ProfileSetup = () => {
                                         defaultSource={profileImage}
                                     />
                                     {!hasImage && (
-
                                         <Ionicons name={"camera"} size={24} color="#3B82F6" className='absolute bottom-0 right-0 ' />
                                     )}
                                 </TouchableOpacity>
@@ -494,8 +359,6 @@ const ProfileSetup = () => {
                                 </Text>
                             )}
                         </View>
-
-
 
                         <Modal
                             visible={deleteConfirmationModalVisible}
@@ -642,68 +505,6 @@ const ProfileSetup = () => {
                             </TouchableOpacity>
                         </Modal>
 
-                        {/* Gender Dropdown */}
-                        {/* <View className="mb-4">
-                            <Text className="text-text mb-2 font-bold text-body">{t('signUpScreen.gender')}</Text>
-                            <Pressable
-                                onPress={() => !isProcessing && setGenderModalVisible(true)}
-                                disabled={isProcessing}
-                                className={`flex-row items-center justify-between px-4 py-5 rounded-2xl ${errors.gender ? 'border border-error' : 'border border-border'
-                                    }`}
-                            >
-                                <Text className={`text-body ${gender ? 'text-text' : 'text-gray-400'}`}>
-                                    {displayGender}
-                                </Text>
-                                <Ionicons name="chevron-down" size={20} color="#999" />
-                            </Pressable>
-                            {errors.gender && (
-                                <Text className="text-error text-caption mt-1">{t('signUpScreen.gender_required')}</Text>
-                            )}
-                        </View> */}
-
-                        {/* Gender Selection Modal */}
-                        {/* <Modal
-                            visible={genderModalVisible}
-                            transparent
-                            animationType="fade"
-                            onRequestClose={() => setGenderModalVisible(false)}
-                        >
-                            <TouchableOpacity
-                                className="flex-1 justify-center items-center bg-black/40 px-8"
-                                activeOpacity={1}
-                                onPressOut={() => setGenderModalVisible(false)}
-                            >
-                                <TouchableWithoutFeedback>
-                                    <View className="bg-surface w-full rounded-2xl p-4">
-                                        <Text className="text-center text-body font-bold mb-4 text-text">
-                                            {t('signUpScreen.selectGender')}
-                                        </Text>
-                                        {GENDER_OPTIONS.map((option, index) => (
-                                            <TouchableOpacity
-                                                key={option.value}
-                                                onPress={() => {
-                                                    setGender(option.value);
-                                                    setGenderModalVisible(false);
-                                                    if (errors.gender) {
-                                                        setErrors(prev => ({ ...prev, gender: false }));
-                                                    }
-                                                }}
-                                                className={`py-4 ${index !== GENDER_OPTIONS.length - 1 ? 'border-b border-border' : ''
-                                                    }`}
-                                            >
-                                                <View className="flex-row items-center justify-between">
-                                                    <Text className="text-body text-text">{option.label}</Text>
-                                                    {gender === option.value && (
-                                                        <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
-                                                    )}
-                                                </View>
-                                            </TouchableOpacity>
-                                        ))}
-                                    </View>
-                                </TouchableWithoutFeedback>
-                            </TouchableOpacity>
-                        </Modal> */}
-
                         {/* First Name & Last Name Section */}
                         <View className='flex-row'>
                             <Text className="text-text mb-2 font-bold text-body">
@@ -731,7 +532,6 @@ const ProfileSetup = () => {
                                     }}
                                     placeholderTextColor="#999"
                                     editable={!isProcessing}
-
                                 />
                             </View>
                             {errors.firstName && (
@@ -798,68 +598,6 @@ const ProfileSetup = () => {
                             />
                         </View>
 
-
-                        {/* Address */}
-
-
-
-                        {/* <Text className="text-body text-text mb-2">{t('kyc.step4.location.title')} </Text>
-
-                        <View className='bg-blue-50 px-4 py-4 rounded-xl'>
-                            <Dropdown
-                                label={t('kyc.step4.location.province.label')}
-
-                                value={selectedProvince?.province_la}
-                                placeholder={t('kyc.step4.location.province.placeholder')}
-                                options={provinceOptions}
-                                onSelect={handleProvinceSelect}
-                            // error={errors?.province}
-                            // errorMessage="Province is required"
-                            />
-
-                            <Dropdown
-                                label={t('kyc.step4.location.district.label')}
-
-                                value={selectedDistrict?.district_la}
-                                placeholder={t('kyc.step4.location.district.placeholder')}
-                                options={districtOptions}
-                                onSelect={handleDistrictSelect}
-                                disabled={!selectedProvince}
-                        
-                            />
-
-                            <View className="mb-4">
-                                <Text className="text-body font-medium text-text mb-2">{t('kyc.step4.location.village.label')}</Text>
-                                <TextInput
-                                    value={village}
-                                    onChangeText={handleVillageChange}
-                                    placeholder={t('kyc.step4.location.village.placeholder')}
-                                    className={`
-                                                    px-4 py-4 rounded-lg border text-body
-                                                    ${selectedDistrict
-                                            ? 'bg-surface border-border text-text'
-                                            : 'bg-gray-100 border-gray-200 text-gray-400'
-                                        }
-                                            ${errors?.village ? 'border-error' : ''}
-                                            `}
-                                    placeholderTextColor="#9CA3AF"
-                                    editable={!!selectedDistrict}
-                                />
-                                {errors?.village && (
-                                    <Text className="text-caption text-error mt-1">  {t('kyc.step4.location.village.error')}</Text>
-                                )}
-                                {!selectedDistrict && (
-                                    <Text className="text-caption text-textSecondary mt-1">
-                                        {t('kyc.step4.location.village.hint')}
-                                    </Text>
-                                )}
-                            </View>
-
-
-                        </View> */}
-
-
-                        
                     </View>
                 </ScrollView>
 
@@ -868,8 +606,7 @@ const ProfileSetup = () => {
                     <Pressable
                         onPress={handleUpdate}
                         className={`${isProcessing ? 'bg-gray-400' : 'bg-primary'} py-4 rounded-2xl items-center justify-center`}
-                        disabled={isProcessing }
-
+                        disabled={isProcessing}
                     >
                         {isProcessing ? (
                             <View className="flex-row items-center">
@@ -886,7 +623,6 @@ const ProfileSetup = () => {
                     </Pressable>
                 </View>
             </KeyboardAvoidingView>
-            {/* </TouchableWithoutFeedback> */}
         </ScreenWrapper>
     );
 };

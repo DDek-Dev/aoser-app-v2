@@ -36,7 +36,7 @@ const EditFreelancerOffer = () => {
             setServiceDesc(data.customerExpect || '');
             setHourlyRate(data.hourlyRate || null);
             setBudgetCurrency(data.hourlyRateCurrency || 'LAK');
-            setRateType(data.rateType || 'PER_HOUR');
+            setRateType(data.rateType);
         }
 
 

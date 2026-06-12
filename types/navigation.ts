@@ -35,6 +35,7 @@ export type FreelancerStackParamList = {
   AuthFreelancerProfile: { userId: string };
   AuthFreelancerSetting: undefined;
   EditFreelancerJobsection: undefined;
+  EditFreelancerBank_InfomationSection:undefined;
   EditAoserProfile: undefined;
   EditFreelancerAboutMe: undefined;
   EditFreelancerOffer: undefined;

@@ -33,6 +33,7 @@ import { useSelectAddress } from 'hooks/useSelectAddress';
 import Dropdown from 'components/filter/Dropdown';
 import { useQueryClient } from 'node_modules/@tanstack/react-query/build/modern/QueryClientProvider';
 import EditAoserProfileSkeleton from 'skeletonScreens/EditAoserProfileSkeleton';
+import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -255,11 +256,8 @@ const EditAoserProfile = () => {
     };
 
     const pickFromGallery = async () => {
-        const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!granted) {
-            Alert.alert(t('editProfile.permission_required'), t('editProfile.permission_message'));
-            return;
-        }
+       const hasPermission = await requestMediaPermissionIfNeeded();
+if (!hasPermission) return;
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],

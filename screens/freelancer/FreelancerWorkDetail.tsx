@@ -2128,7 +2128,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
           
 
           {data?.createdBy?._id !== user?._id && (
-            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id })}>
+            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id, workData:data })}>
               <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
             </TouchableOpacity>
           )}

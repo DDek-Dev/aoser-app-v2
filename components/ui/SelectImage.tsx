@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { Pressable } from 'react-native-gesture-handler';
+import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
 
 type FileWithType = {
   uri: string;
@@ -46,9 +47,8 @@ const SelectImage: React.FC<Props> = ({
   /* ------------------ Gallery ------------------ */
   const pickFromGallery = async () => {
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) return;
-
+    const hasPermission = await requestMediaPermissionIfNeeded();
+if (!hasPermission) return;
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,

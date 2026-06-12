@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
 
 export interface FileWithType {
   uri: string;
@@ -45,11 +46,11 @@ const SelectMultiImage: React.FC<Props> = ({
         return;
       }
 
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert('Permission required', 'Please allow access to your photos');
-        return;
-      }
+        const hasPermission = await requestMediaPermissionIfNeeded();
+  if (!hasPermission) {
+    Alert.alert('Permission required', 'Please allow access to your photos');
+    return;
+  }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,

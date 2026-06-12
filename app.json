@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aoser",
     "slug": "aoser",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "scheme": "com.aoser.app",
     "orientation": "portrait",
     "icon": "./assets/aoser_logo_and2.png",
@@ -42,12 +42,13 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.aoser.app",
-      "versionCode": 6,
+      
       "googleServicesFile": "./google-services.json",
       "permissions": [
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+         "com.google.android.gms.permission.AD_ID"
+
       ]
     },
     "web": {

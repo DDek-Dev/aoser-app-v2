@@ -41,7 +41,7 @@ const AuthFreelancerSetting = () => {
               </Pressable>
             </>
           )}
-          <Text className="text-textSecondary text-[12px] font-medium mb-2">{t('profile.freelancerSetting.account_setting_label')}</Text>
+          {/* <Text className="text-textSecondary text-[12px] font-medium mb-2">{t('profile.freelancerSetting.account_setting_label')}</Text>
 
           <Pressable onPress={() => navigation.navigate('EditAoserProfile')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-6">
             <View className="flex-row items-center gap-2">
@@ -49,7 +49,7 @@ const AuthFreelancerSetting = () => {
               <Text className="text-text font-medium text-[14px]">{t('profile.freelancerSetting.edit_profile')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </Pressable>
+          </Pressable> */}
 
           {/* Edit personal data */}
           <Text className="text-textSecondary text-[12px] font-medium mb-2">{t('profile.freelancerSetting.edit_freelancer_data_label')}</Text>
@@ -80,13 +80,22 @@ const AuthFreelancerSetting = () => {
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </Pressable>
-          {/* <Pressable onPress={() => navigation.navigate('EditFreelancerOffer')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
+          <Pressable onPress={() => navigation.navigate('EditFreelancerBank_InfomationSection')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
             <View className="flex-row items-center gap-2">
               <Ionicons name="card-outline" size={20} color="#3B82F6" />
-              <Text className="text-text font-medium text-[14px]">Bank Information</Text>
+              <Text className="text-text font-medium text-[14px]">{t('kyc.steps.bankInfo')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </Pressable> */}
+          </Pressable>
+
+          
+          <Pressable onPress={() => navigation.navigate('EditFreelancerBank_InfomationSection')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="card-outline" size={20} color="#3B82F6" />
+              <Text className="text-text font-medium text-[14px]">{t('kyc.steps.bankInfo')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          </Pressable>
 
         </ScrollView>
       </View>

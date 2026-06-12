@@ -1,41 +1,52 @@
 import { View, StyleSheet, Pressable, Modal, Dimensions, AppState, AppStateStatus } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import VideoSkeleton from 'components/skeletonScreens/VideoSkeleton';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 
 type Props = {
-  video?: string | null,
-  isReview?: boolean,
+  video?: string | null;
+  isReview?: boolean;
   context?: 'home' | 'profile';
   scrollY?: any;
   isScreenFocused?: boolean;
-}
+};
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 const HOME_PREVIEW_DURATION_MS = 7000;
-const VISIBILITY_CHECK_INTERVAL_MS = 120;
+const VISIBILITY_CHECK_INTERVAL_MS = 100;
 const ACTIVATE_VISIBILITY_RATIO = 0.25;
 const DEACTIVATE_VISIBILITY_RATIO = 0.1;
 const loadedVideoUriCache = new Set<string>();
 
-export default function VDOPromote({ video, isReview, context = 'home', scrollY, isScreenFocused = true }: Props) {
+export default function VDOPromote({
+  video,
+  isReview,
+  context = 'home',
+  scrollY,
+  isScreenFocused = true,
+}: Props) {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAppActive, setIsAppActive] = useState(appState.current === 'active');
-  
-  const videoUri = video ? (isReview ? video : `${IMAGES_BASE_URL}${video}`) : null;
+
+  const videoUri = video
+    ? isReview
+      ? video
+      : `${IMAGES_BASE_URL}${video}`
+    : null;
   const videoS = videoUri ? { uri: videoUri, useCaching: true as const } : null;
+
   const [showFullScreen, setShowFullScreen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const containerRef = useRef<any>(null);
-  const scrollListener = useRef<any>(null);
+  const [isVisible, setIsVisible] = useState(false); // ← start FALSE, only play when measured visible
+  const containerRef = useRef<View>(null);
+  const scrollListenerRef = useRef<any>(null);
   const rafRef = useRef<number | null>(null);
   const previewLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const measureThrottleRef = useRef(0);
-  const isVisibleRef = useRef(true);
+  const isVisibleRef = useRef(false); // ← start false to match state
+  const isMountedRef = useRef(false);
 
-  // Single shared player (inline + fullscreen) to avoid double decoder allocation.
   const player = useVideoPlayer(videoS, (p) => {
     p.muted = true;
     p.loop = false;
@@ -50,8 +61,12 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
 
   const [muted, setMuted] = useState(true);
   const prevMutedRef = useRef<boolean>(muted);
-  const [isLoadingInline, setIsLoadingInline] = useState(() => !!videoUri && !loadedVideoUriCache.has(videoUri));
-  const [isLoadingFullscreen, setIsLoadingFullscreen] = useState(() => !!videoUri && !loadedVideoUriCache.has(videoUri));
+  const [isLoadingInline, setIsLoadingInline] = useState(
+    () => !!videoUri && !loadedVideoUriCache.has(videoUri)
+  );
+  const [isLoadingFullscreen, setIsLoadingFullscreen] = useState(
+    () => !!videoUri && !loadedVideoUriCache.has(videoUri)
+  );
 
   useEffect(() => {
     const shouldShowLoading = !!videoUri && !loadedVideoUriCache.has(videoUri);
@@ -65,15 +80,14 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
     setIsLoadingFullscreen(false);
   };
 
-  // Sync muted state only.
+  // Sync muted state
   useEffect(() => {
     try {
-      // @ts-ignore
-      if (player) player.muted = muted;
+      if (player) (player as any).muted = muted;
     } catch (e) {}
   }, [muted, player]);
 
-  // AppState listener
+  // AppState listener — pause when app goes background
   useEffect(() => {
     const handle = (nextAppState: AppStateStatus) => {
       appState.current = nextAppState;
@@ -83,82 +97,111 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
         try { player.pause(); } catch (e) {}
       }
     };
-
-    const sub = AppState.addEventListener ? AppState.addEventListener('change', handle) : undefined;
-    return () => { if (sub && typeof sub.remove === 'function') sub.remove(); };
+    const sub = AppState.addEventListener('change', handle);
+    return () => { sub?.remove(); };
   }, [player]);
-  
-  const updateVisibilityState = (ratio: number) => {
+
+  // ─── Visibility helpers ───────────────────────────────────────────────────
+
+  const updateVisibilityState = useCallback((ratio: number) => {
     const previous = isVisibleRef.current;
     const next = previous
-      ? ratio >= DEACTIVATE_VISIBILITY_RATIO
-      : ratio >= ACTIVATE_VISIBILITY_RATIO;
+      ? ratio >= DEACTIVATE_VISIBILITY_RATIO   // hysteresis: harder to turn off
+      : ratio >= ACTIVATE_VISIBILITY_RATIO;    // easier to turn on
 
     if (previous !== next) {
       isVisibleRef.current = next;
       setIsVisible(next);
     }
-  };
+  }, []);
 
-  // Visibility detection for profile context using measure() with throttling and hysteresis.
-  useEffect(() => {
-    if (!scrollY || !containerRef.current) return;
+  const measureVisibility = useCallback(() => {
+    if (!containerRef.current || !isMountedRef.current) return;
 
-    const add = (scrollY as any).addListener;
-    if (typeof add !== 'function') return;
-
-    scrollListener.current = (scrollY as any).addListener(() => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-
-      rafRef.current = requestAnimationFrame(() => {
-        if (!containerRef.current) return;
-
-        const now = Date.now();
-        if (now - measureThrottleRef.current < VISIBILITY_CHECK_INTERVAL_MS) return;
-        measureThrottleRef.current = now;
-
-        try {
-          containerRef.current.measure((fx: number, fy: number, width: number, height: number, pageX: number, pageY: number) => {
-            const winH = Dimensions.get('window').height;
-
-            if (pageY + height <= 0 || pageY >= winH) {
-              updateVisibilityState(0);
-              return;
-            }
-
-            const visibleTop = Math.max(0, pageY);
-            const visibleBottom = Math.min(winH, pageY + height);
-            const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-            const ratio = height > 0 ? visibleHeight / height : 0;
-            updateVisibilityState(ratio);
-          });
-        } catch (e) {}
-      });
-    });
+    const now = Date.now();
+    if (now - measureThrottleRef.current < VISIBILITY_CHECK_INTERVAL_MS) return;
+    measureThrottleRef.current = now;
 
     try {
-      const winH = Dimensions.get('window').height;
-      if (containerRef.current) {
-        containerRef.current.measure((fx: number, fy: number, width: number, height: number, pageX: number, pageY: number) => {
+      containerRef.current.measure(
+        (_fx, _fy, _width, height, _pageX, pageY) => {
+          if (!isMountedRef.current) return;
+          const winH = Dimensions.get('window').height;
+
+          if (pageY + height <= 0 || pageY >= winH) {
+            updateVisibilityState(0);
+            return;
+          }
+
           const visibleTop = Math.max(0, pageY);
           const visibleBottom = Math.min(winH, pageY + height);
           const visibleHeight = Math.max(0, visibleBottom - visibleTop);
           const ratio = height > 0 ? visibleHeight / height : 0;
           updateVisibilityState(ratio);
-        });
-      }
+        }
+      );
     } catch (e) {}
+  }, [updateVisibilityState]);
+
+  // ─── scrollY listener — runs whenever scrollY or measureVisibility changes ─
+  useEffect(() => {
+    if (!scrollY || context !== 'profile') return;
+
+    // Remove previous listener if any
+    if (
+      scrollListenerRef.current != null &&
+      typeof scrollY.removeListener === 'function'
+    ) {
+      scrollY.removeListener(scrollListenerRef.current);
+      scrollListenerRef.current = null;
+    }
+
+    if (typeof scrollY.addListener !== 'function') return;
+
+    scrollListenerRef.current = scrollY.addListener(() => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(measureVisibility);
+    });
+
+    // Do an immediate measure after listener is attached
+    // Delay slightly so containerRef has time to mount
+    const initialTimer = setTimeout(measureVisibility, 150);
 
     return () => {
-      try {
-        if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        if (scrollListener.current && typeof (scrollY as any).removeListener === 'function')
-          (scrollY as any).removeListener(scrollListener.current);
-      } catch (e) {}
+      clearTimeout(initialTimer);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (
+        scrollListenerRef.current != null &&
+        typeof scrollY.removeListener === 'function'
+      ) {
+        scrollY.removeListener(scrollListenerRef.current);
+        scrollListenerRef.current = null;
+      }
     };
-  }, [scrollY]);
+  }, [scrollY, context, measureVisibility]);
 
-  // Play/pause based on visibility. Home context restarts every 7 seconds.
+  // ─── isFocused / isScreenFocused change → re-measure immediately ──────────
+  useEffect(() => {
+    if (!isScreenFocused) {
+      // Screen lost focus — force invisible immediately
+      isVisibleRef.current = false;
+      setIsVisible(false);
+    } else {
+      // Screen regained focus — re-measure after short delay
+      const t = setTimeout(measureVisibility, 200);
+      return () => clearTimeout(t);
+    }
+  }, [isScreenFocused, measureVisibility]);
+
+  // ─── Track mount state ────────────────────────────────────────────────────
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // ─── Play / pause based on combined visibility state ─────────────────────
   useEffect(() => {
     if (!player || showFullScreen || !videoS) return;
 
@@ -166,11 +209,12 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
       clearInterval(previewLoopRef.current);
       previewLoopRef.current = null;
     }
-    
-    if (isVisible && isScreenFocused && isAppActive) {
+
+    const shouldPlay = isVisible && isScreenFocused && isAppActive;
+
+    if (shouldPlay) {
       if (context === 'home') {
         try { player.replay(); } catch (e) {}
-
         previewLoopRef.current = setInterval(() => {
           try { player.replay(); } catch (e) {}
         }, HOME_PREVIEW_DURATION_MS);
@@ -182,61 +226,47 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
     }
   }, [isVisible, isScreenFocused, isAppActive, player, showFullScreen, context, videoS]);
 
-  // Ensure native decoder resources are released when component unmounts.
+  // ─── Cleanup on unmount ───────────────────────────────────────────────────
   useEffect(() => {
     return () => {
       if (previewLoopRef.current) {
         clearInterval(previewLoopRef.current);
         previewLoopRef.current = null;
       }
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       try { player.pause(); } catch (e) {}
       try { (player as any)?.release?.(); } catch (e) {}
     };
   }, [player]);
 
-  const containerStyle = context === 'home' ? styles.homeContainer : styles.profileContainer;
-  const videoViewStyle = context === 'home' ? styles.homeVideo : styles.profileVideo;
+  // ─── Fullscreen handlers ──────────────────────────────────────────────────
 
-  // Optimized fullscreen opening - instant transition
   const openFullScreen = () => {
     try {
       if (previewLoopRef.current) {
         clearInterval(previewLoopRef.current);
         previewLoopRef.current = null;
       }
-
-      // Save current state
       prevMutedRef.current = muted;
-      
-      // Pause player immediately
-      try { player.pause(); } catch {}
-      
-      // Get current playback position
+
       let currentPosition = 0;
-      try { 
-        // @ts-ignore
-        currentPosition = player?.currentTime ?? 0; 
-      } catch (e) {}
-      
-      // Open modal instantly
+      try { currentPosition = (player as any)?.currentTime ?? 0; } catch (e) {}
+
+      try { player.pause(); } catch {}
+
       setShowFullScreen(true);
-      
-      // Start fullscreen immediately
+
       try {
-        // @ts-ignore
-        player.loop = true;
-        // @ts-ignore
-        player.currentTime = currentPosition;
-        // @ts-ignore
-        player.muted = false;
+        (player as any).loop = true;
+        (player as any).currentTime = currentPosition;
+        (player as any).muted = false;
         player.play();
       } catch (e) {
         console.log('Error starting fullscreen video:', e);
       }
-      
+
       const shouldShowLoading = !!videoUri && !loadedVideoUriCache.has(videoUri);
       setIsLoadingFullscreen(shouldShowLoading);
-      
     } catch (err) {
       console.log('openFullScreen error', err);
       setShowFullScreen(true);
@@ -246,35 +276,23 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
 
   const closeFullScreen = () => {
     try {
-      // Get current position before closing
       let currentPosition = 0;
-      try {
-        // @ts-ignore
-        currentPosition = player?.currentTime ?? 0;
-      } catch (e) {}
-      
-      // Pause player
+      try { currentPosition = (player as any)?.currentTime ?? 0; } catch (e) {}
+
       try { player.pause(); } catch {}
-      
-      // Close modal
+
       setShowFullScreen(false);
       setIsLoadingFullscreen(false);
-      
-      // Restore inline player state
-      try { 
-        // @ts-ignore
-        player.loop = false;
+
+      try {
+        (player as any).loop = false;
         setMuted(prevMutedRef.current);
-        // @ts-ignore
-        player.currentTime = currentPosition;
+        (player as any).currentTime = currentPosition;
       } catch (e) {}
-      
-      // Resume inline playback if visible
+
       if (isVisible && isScreenFocused && isAppActive) {
         try { player.play(); } catch {}
       }
-
-      setIsLoadingFullscreen(false);
     } catch (err) {
       console.log('closeFullScreen error', err);
       setShowFullScreen(false);
@@ -283,12 +301,18 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
 
   if (!videoS) return null;
 
+  const containerStyle = context === 'home' ? styles.homeContainer : styles.profileContainer;
+  const videoViewStyle = context === 'home' ? styles.homeVideo : styles.profileVideo;
+
   return (
     <>
       {context === 'profile' ? (
-        <View 
-          ref={containerRef} 
+        <View
+          ref={containerRef}
           style={containerStyle}
+          // Re-measure when layout changes (e.g. content above shifts)
+          onLayout={measureVisibility}
+          collapsable={false}
         >
           {!showFullScreen && (
             <>
@@ -308,34 +332,26 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
                 </View>
               )}
 
-              {/* Transparent overlay to capture taps for fullscreen */}
-              <Pressable
-                onPress={openFullScreen}
-                style={styles.tapOverlay}
-              />
+              <Pressable onPress={openFullScreen} style={styles.tapOverlay} />
 
-              {/* Mute toggle overlay */}
               <Pressable
-                onPress={(e) => { 
-                  e.stopPropagation(); 
-                  setMuted(prev => !prev); 
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setMuted((prev) => !prev);
                 }}
                 style={styles.muteButton}
               >
-                <Ionicons 
-                  name={muted ? 'volume-mute' : 'volume-high'} 
-                  size={18} 
-                  color="white" 
+                <Ionicons
+                  name={muted ? 'volume-mute' : 'volume-high'}
+                  size={18}
+                  color="white"
                 />
               </Pressable>
             </>
           )}
         </View>
       ) : (
-        <View 
-          ref={containerRef} 
-          style={containerStyle}
-        >
+        <View ref={containerRef} style={containerStyle} onLayout={measureVisibility} collapsable={false}>
           <VideoView
             style={videoViewStyle}
             player={player}
@@ -354,7 +370,6 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
         </View>
       )}
 
-      {/* Full Screen Modal */}
       {context === 'profile' && (
         <Modal
           visible={showFullScreen}
@@ -364,16 +379,18 @@ export default function VDOPromote({ video, isReview, context = 'home', scrollY,
           onRequestClose={closeFullScreen}
         >
           <ScreenWrapper safeEdges={['bottom', 'top']} style={styles.fullScreenContainer}>
-            <Pressable 
+            <Pressable
               style={styles.closeButton}
               onPress={closeFullScreen}
-              className='mt-6'
+              className="mt-6"
             >
               <Ionicons name="close" size={28} color="white" />
             </Pressable>
-            
-            {isLoadingFullscreen && <VideoSkeleton height={Dimensions.get('window').height} />}
-            
+
+            {isLoadingFullscreen && (
+              <VideoSkeleton height={Dimensions.get('window').height} />
+            )}
+
             <VideoView
               style={styles.fullScreenVideo}
               player={player}

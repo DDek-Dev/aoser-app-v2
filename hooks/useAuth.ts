@@ -141,11 +141,7 @@ export const useAuth = () => {
       });
       trackLogin('google', toMixpanelRole(data.data.userProfile?.businessType));
 
-      const isUserProfileSetup =
-        data.data.userProfile.gender &&
-        data.data.userProfile.firstName &&
-        data.data.userProfile.lastName &&
-        data.data.userProfile.phone;
+      const isUserProfileSetup =data.isUserProfileSetup;
       if (isUserProfileSetup) {
         replace('MainTabs');
       } else {
@@ -206,12 +202,7 @@ export const useAuth = () => {
       });
       trackLogin('apple', toMixpanelRole(data.data.userProfile?.businessType));
 
-      const isUserProfileSetup =
-        data.data.userProfile.gender &&
-        data.data.userProfile.firstName &&
-        data.data.userProfile.lastName &&
-        data.data.userProfile.phone &&
-        data.data.userProfile.userProfileImage;
+      const isUserProfileSetup =data.isUserProfileSetup;
       if (isUserProfileSetup) {
         replace('MainTabs');
       } else {

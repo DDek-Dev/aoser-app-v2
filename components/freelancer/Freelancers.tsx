@@ -181,7 +181,7 @@ export default function Freelancers({
                 </View>
               </View>
 
-              <Text className="text-body font-semibold text-text" numberOfLines={1}>
+              <Text className="text-body text-text" numberOfLines={1}>
                 {item.jobTitle}
               </Text>
 

@@ -24,16 +24,18 @@ const ProfileScreen = () => {
   const { data: adminID, isLoading: adminIdLoading } = useAdminID();
 
   // Configuration arrays
-const settings = useMemo(() => [
-  { label: t('profile.edit_profile'), icon: 'person-outline', route: 'EditAoserProfile' },
-  { label: t('profile.language'), icon: 'globe-outline', route: "LanguageSelectScreen" },
-  { label: t('profile.change_password'), icon: 'lock-closed-outline', route: 'ChangePasswordScreen' },
-  { label: t('profile.help_support'), icon: 'help-circle-outline', route: { name: 'RoomChat', params: { userId: adminID } } },
-], [adminID, t]);
+  const settings = useMemo(() => [
+    { label: t('profile.edit_profile'), icon: 'person-outline', route: 'EditAoserProfile' },
+    { label: t('profile.language'), icon: 'globe-outline', route: "LanguageSelectScreen" },
+    { label: t('profile.change_password'), icon: 'lock-closed-outline', route: 'ChangePasswordScreen' },
+    { label: t('profile.help_support'), icon: 'help-circle-outline', route: { name: 'RoomChat', params: { userId: adminID } } },
+  ], [adminID, t]);
 
   const policy = [
     { label: t('profile.privacy_policy'), icon: 'document-text-outline', route: 'PrivacyPolicyScreen' },
   ];
+
+
 
   // Handlers
   const handleLogout = () => setShowLogoutModal(true);
@@ -49,7 +51,7 @@ const settings = useMemo(() => [
 
   useFocusEffect(
     useCallback(() => {
-     
+
       refetch();
     }, [])
   );
@@ -86,13 +88,13 @@ const settings = useMemo(() => [
       <View className="flex-row justify-between items-center mt-4">
         <Text className="text-heading font-bold text-white">{t('profile.profile')}</Text>
       </View>
-      <Pressable onPress={()=> navigation.navigate('Setting')} className="flex-row justify-between items-center mt-4 gap-2">
+      <Pressable onPress={() => navigation.navigate('Setting')} className="flex-row justify-between items-center mt-4 gap-2">
         {/* <Text className="text-body font-bold text-white">Setting</Text> */}
         <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
       </Pressable>
 
 
-      
+
     </View>
   );
 
@@ -113,7 +115,7 @@ const settings = useMemo(() => [
     <Pressable onPress={() => navigation.navigate('CustomerProfile', { userId: data?._id as string })}>
       <View className="flex-row items-center">
         <Image
-          source={ data?.userProfileImage ? {  uri: BASE_IMAGE + data?.userProfileImage } : profileImage }
+          source={data?.userProfileImage ? { uri: BASE_IMAGE + data?.userProfileImage } : profileImage}
           className="w-14 h-14 rounded-full mr-3"
         />
         <View>
@@ -143,7 +145,7 @@ const settings = useMemo(() => [
       // activeOpacity={0.8}
       >
         <Text className="text-primary font-semibold text-body text-center">
-          {t('loginScreen.signup')} 
+          {t('loginScreen.signup')}
         </Text>
       </Pressable>
     </View>
@@ -166,7 +168,7 @@ const settings = useMemo(() => [
         <Ionicons name="time-outline" size={32} color="#3B82F6" />
         <Text className="text-caption text-textSecondary">{t('profile.history')}</Text>
       </Pressable>
-      
+
     </View>
   );
 
@@ -191,20 +193,37 @@ const settings = useMemo(() => [
 
   const FreelancerSection = () => (
     <View className="mx-4 space-y-4">
-      <Pressable
-        className="flex-row justify-between items-center py-3"
-        onPress={() => navigation.navigate('FreelancerRoleGate')}
-      >
-        <View className="flex-row items-center gap-3">
-          <Ionicons name="briefcase-outline" size={18} color="#3B82F6" />
-          <Text className="text-body text-text">
-            {data?.businessType === 'FREELANCER'
-              ? t('profile.see_freelancer_profile')
-              : t('profile.freelancer')}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-      </Pressable>
+
+      {data?.businessType === 'FREELANCER' ? (
+        <Pressable
+          className="flex-row justify-between items-center py-3"
+          onPress={() => navigation.navigate('AuthFreelancerProfile', { userId: data?._id || '' })}
+        >
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="briefcase-outline" size={18} color="#3B82F6" />
+            <Text className="text-body text-text">
+              {t('profile.see_freelancer_profile')
+              }
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+        </Pressable>
+      ) : (
+        <Pressable
+          className="flex-row justify-between items-center py-3"
+          onPress={() => navigation.navigate('UpgradeToFreelancer')}
+        >
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="briefcase-outline" size={18} color="#3B82F6" />
+            <Text className="text-body text-text">
+              {t('profile.freelancer')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+        </Pressable>
+      )}
+
+      
     </View>
   );
 
@@ -216,7 +235,7 @@ const settings = useMemo(() => [
       <View className="px-4 my-8 flex-row justify-between items-center">
         <View className="flex-1 mr-4">
           {isAuthenticated ? (
-            isLoading || !data || adminIdLoading|| isError ? (
+            isLoading || !data || adminIdLoading || isError ? (
               <ProfileLoadingSkeleton />
             ) : (
               <AuthenticatedProfile />
@@ -230,8 +249,8 @@ const settings = useMemo(() => [
 
       <View
         className="flex-1"
-        // showsHorizontalScrollIndicator={false}
-        // showsVerticalScrollIndicator={false}
+      // showsHorizontalScrollIndicator={false}
+      // showsVerticalScrollIndicator={false}
       >
         {/* Main Content Card */}
         <View className="bg-blue-50 mx-4 mt-4 p-4 rounded-2xl py-6">

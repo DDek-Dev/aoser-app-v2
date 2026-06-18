@@ -288,23 +288,31 @@ const WorkItemCard: React.FC<WorkItemCardProps> = ({ item, onPress }) => {
 
                     }
 
-                    {item.address && item.address.village !== '' && item.address.district !== '' && item.address.province !== '' &&
+                    <View className="flex-row row-auto items-center">
+                        {(item.address || item.place) && (
+                            <View className="flex-row mt-3 items-center">
+                                <View className="flex-row gap-2 items-start">
+                                    <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-                        <View className="flex-row mt-3 items-center">
-                            {/* <Text>{t('workDetail.deadline')} : </Text> */}
-                            <Text>{t('payment_success.address')}:  </Text>
-
-                            <View className="flex-row gap-2 items-center">
-                                <Ionicons name="location-outline" size={18} color="#F59E0B" />
-
-                                <Text className="text-sm text-textSecondary">
-                                    {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-
-                                    {item.address.village}, {item.address.district}, {item.address.province}
-                                </Text>
+                                    <View>
+                                        {item.address &&
+                                            item.address.village !== '' &&
+                                            item.address.district !== '' &&
+                                            item.address.province !== '' && (
+                                                <Text className="text-sm text-textSecondary">
+                                                    {item.address.village}, {item.address.district}, {item.address.province}.
+                                                </Text>
+                                            )}
+                                        {item.place && (
+                                            <Text className="text-sm text-textSecondary">
+                                                {item.place}
+                                            </Text>
+                                        )}
+                                    </View>
+                                </View>
                             </View>
-                        </View>
-                    }
+                        )}
+                    </View>
 
                 </View>
 
@@ -379,7 +387,7 @@ const FreelancerWorkHistory: React.FC = () => {
             <View className="bg-primary/10 p-6 rounded-full mb-4">
                 <MaterialIcons name="work-off" size={48} color="#3B82F6" />
             </View>
-            <Text className="text-text font-semibold text-subheading mb-2">
+            <Text className="text-textSecondary font-semibold text-subheading mb-2">
                 {t('profile.freelancer_workHistory.empty_state_title')}
             </Text>
             <Text className="text-textSecondary text-body text-center px-8">

@@ -32,7 +32,7 @@ export interface Job {
   jobs: string[];
   hourlyRate: number;
   bannerImage: string;
-  category: string;
+  category?: string;
   deadLine?: string;
   budgetType: "FIXED_PRICE" | "HOURLY" | "OFFERING";
   hourlyRateCurrency: "LAK" | "USD";
@@ -170,7 +170,7 @@ export type BookingFormData = {
   subWorkDetails?: SubWorkDetail[];
   currency: 'LAK' | 'USD';
   budgetType: 'FIXED_PRICE' | 'HOURLY' | 'OFFERING';
-  serviceType: string;
+  serviceType?: string;
   assignedTo?: string;
   jobs?: string[];
   address?: {
@@ -179,7 +179,7 @@ export type BookingFormData = {
     district: string;
     village: string;
   };
-  place: string;
+  place?: string;
 };
 export type CategoryOption = {
   name: string;
@@ -466,7 +466,7 @@ export type Favorite = {
 export type GetFavorite = {
   _id: string;
   createdBy: UserProfile;
-  likedItem: Job;
+  likedItem: Job ;
   likedItemType: 'Work' | 'UserProfile';
   createdAt: string;
   updatedAt: string;

@@ -170,7 +170,9 @@
       "edit_freelancer_data_label": "Provider Profile",
       "job_section": "Professional Profile",
       "about_section": "About You",
-      "offer_section": "Service Rates"
+      "offer_section": "Service Rates",
+      "personalIfo":"Personal Information"
+
     },
     "buyStar": {
       "title": "Buy recommend star",
@@ -242,18 +244,21 @@
   "postWork": {
     "public_work": "Post a Task",
     "posting_public_work": "Your task will be visible to everyone on Aoser.",
-    "next": "Next",
+    "post": "Post",
+    "posting": "Posting...",
+    "send": "Send",
+    "sending": "Sending...",
     "work_title": "What do you need help with?",
     "work_title_placeholder": "I need... ",
     "work_title_required": "Please enter the service.",
     "work_type": "Service Mode",
     "online": "Remote",
     "offline": "On-site",
-    "work_description": "Task Details",
+    "work_description": "Task Details (Optional)",
     "work_description_reason": "Reason for offer",
     "work_description_placeholder": "Describe your task...",
     "work_description_placeholder_reason": "Add details",
-    "work_description_req": "Request Details",
+    "work_description_req": "Request Details (Optional)",
     "work_description_placeholder_req": "Describe your request...",
     "work_description_required": "Task details is required",
     "sample_work": "Sample Work (Optional)",
@@ -398,6 +403,8 @@
     "add_work": "Add More Task",
     "accept_unlock_payment": "Accept this task to unlock client payment",
     "accept_question": "accept ?",
+    "project_paid_successfullyPopTitle": "Payment successful!",
+    "project_paid_successfullyPopDesc": "Complete the task to recieve your earnings",
     "project_paid_successfully": "Payment successful! Complete the task to recieve your earnings",
     "project_did_successfully": "Task completed! Leave a review or",
     "rehire": "Request again ?",
@@ -965,10 +972,10 @@
     "becomeFreelancerTitle": "Become a Provider",
     "becomeFreelancerSubtitle": "You are not a provider yet. Upgrade your account to offer services and start receiving tasks.",
     "getStartedButton": "Get Started",
-    "pendingTitle": "Application Under Review",
-    "pendingSubtitle": "We're reviewing your profile \n You'll be notified once it's approved.",
+    "pendingTitle": "Submission Successful",
+    "pendingSubtitle": "We're reviewing your information \n You'll be notified once it's approved.",
     "whatHappensNext": "What happens next?",
-    "reviewProcess": "Our team will review your application shortly and you will be notified once it is approved.",
+    "reviewProcess": "Our team will review your information shortly and you will be notified once it is approved.",
     "contactSupport": "Contact Support",
     "backToHomeButton": "Back to Home",
     "estimatedTime": "We will review your information shortly to verify your account.",
@@ -1034,7 +1041,8 @@
       "next": "Next",
       "submit": "Submit",
       "cancel": "Close",
-      "go_live": "Go Live"
+      "go_live": "Go Live",
+            "save":"Save"
     },
     "aoser_profile": {
       "some_wrong": "Sorry! Something went wrong",
@@ -1055,7 +1063,8 @@
         "required": "Banner image is required"
       },
       "promoVideo": {
-        "label": "Showcase your service (Video)"
+        "label": "Showcase your service (Video)",
+        "required": "Promo video is required"
       },
       "freelancerType": {
         "label": "Availability",

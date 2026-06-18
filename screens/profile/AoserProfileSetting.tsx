@@ -91,60 +91,11 @@ const AoserProfileSetting = ({
     const [deleteConfirmationModalVisible, setDeleteConfirmationModalVisible] = useState(false);
     const [selectedProvince, setSelectedProvince] = useState<Province | undefined>(undefined);
     const [selectedDistrict, setSelectedDistrict] = useState<District | undefined>(undefined);
-    const initializedRef = useRef(false);
+
     const { data: addressData, isLoading: isAddressLoading, isError: isAddressError } = useSelectAddress();
 
-    const GENDER_OPTIONS = [
-        { label: t('signUpScreen.male'), value: 'MALE' },
-        { label: t('signUpScreen.female'), value: 'FEMALE' },
-    ];
-
-
-    // Load profile data once. User edits should not be overwritten after initial hydration.
-    // useEffect(() => {
-    //     if (initializedRef.current) return;
-    //     const myProfileAllowed = prefillFromMyProfile ? myProfile : undefined;
-    //      if (!userId) return;
-    //     if (!profile && !myProfileAllowed) return;
-
-    //     const userIdValue = profile?._id || profile?.userId || myProfileAllowed?._id || '';
-    //     const firstNameValue = profile?.firstName || myProfileAllowed?.firstName || '';
-    //     const lastNameValue = profile?.lastName || myProfileAllowed?.lastName || '';
-    //     const genderValue = profile?.gender || myProfileAllowed?.gender || '';
-    //     const phoneValue = profile?.phone || myProfileAllowed?.phone || '';
-    //     const provinceValue = profile?.address?.province || myProfileAllowed?.address?.province || '';
-    //     const districtValue = profile?.address?.district || myProfileAllowed?.address?.district || '';
-    //     const villageValue = profile?.address?.village || myProfileAllowed?.address?.village || '';
-
-    //     setUserId(userIdValue);
-    //     setFirstName(firstNameValue);
-    //     setLastName(lastNameValue);
-    //     setGender(genderValue);
-    //     setPhone(phoneValue);
-    //     setProvince(provinceValue);
-    //     setDistrict(districtValue);
-    //     setVillage(villageValue);
-
-    //     if (profile?.profileImg?.uri) {
-    //         setProfileImg({
-    //             uri: profile.profileImg.uri,
-    //             name: profile.profileImg.name || "profile_existing.jpg",
-    //             type: profile.profileImg.type || "image/jpeg",
-    //         });
-    //     } else if (myProfileAllowed?.userProfileImage) {
-    //         setProfileImg({
-    //             uri: `${IMAGES_BASE_URL}${myProfileAllowed.userProfileImage}`,
-    //             name: "profile_existing.jpg",
-    //             type: "image/jpeg",
-    //         });
-    //     } else {
-    //         setProfileImg(null);
-    //     }
-
-    //     initializedRef.current = true;
-    // }, [myProfile, profile]);
     useEffect(() => {
-        if (initializedRef.current) return;
+
         if (!userId) return;
 
         // No storage draft → parent already prefilled via props, nothing to do
@@ -155,7 +106,6 @@ const AoserProfileSetting = ({
         const userIdValue = profile._id || profile.userId || '';
         const firstNameValue = profile.firstName || '';
         const lastNameValue = profile.lastName || '';
-        const genderValue = profile.gender || '';
         const phoneValue = profile.phone || '';
         const provinceValue = profile.address?.province || '';
         const districtValue = profile.address?.district || '';
@@ -178,7 +128,6 @@ const AoserProfileSetting = ({
             });
         }
 
-        initializedRef.current = true;
     }, [userId, profile]);
 
     useEffect(() => {
@@ -248,7 +197,7 @@ const AoserProfileSetting = ({
         setIsImageLoading(true);
         try {
             const hasPermission = await requestMediaPermissionIfNeeded();
-if (!hasPermission) return;
+            if (!hasPermission) return;
 
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],
@@ -565,61 +514,7 @@ if (!hasPermission) return;
                 </TouchableOpacity>
             </Modal>
 
-            {/* Gender Dropdown */}
-            {/* <View className="mb-4">
-                <Text className="text-text mb-2 font-bold text-body">{t('signUpScreen.gender')}</Text>
-                <Pressable
-                    onPress={() => setGenderModalVisible(true)}
-                    className={`flex-row items-center justify-between px-4 py-5 rounded-2xl ${errors.gender ? 'border border-error' : 'border border-border'}`}
-                >
-                    <Text className={`text-body ${gender ? 'text-text' : 'text-gray-400'}`}>
-                        {displayGender}
-                    </Text>
-                    <Ionicons name="chevron-down" size={20} color="#999" />
-                </Pressable>
-                {errors.gender && (
-                    <Text className="text-error text-caption mt-1">{t('signUpScreen.gender_required')}</Text>
-                )}
-            </View> */}
 
-            {/* Gender Selection Modal */}
-            {/* <Modal
-                visible={genderModalVisible}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setGenderModalVisible(false)}
-            >
-                <TouchableOpacity
-                    className="flex-1 justify-center items-center bg-black/40 px-8"
-                    activeOpacity={1}
-                    onPressOut={() => setGenderModalVisible(false)}
-                >
-                    <TouchableWithoutFeedback>
-                        <View className="bg-surface w-full rounded-2xl p-4">
-                            <Text className="text-center text-body font-bold mb-4 text-text">
-                                {t('signUpScreen.selectGender')}
-                            </Text>
-                            {GENDER_OPTIONS.map((option, index) => (
-                                <TouchableOpacity
-                                    key={option.value}
-                                    onPress={() => {
-                                        setGender(option.value);
-                                        setGenderModalVisible(false);
-                                    }}
-                                    className={`py-4 ${index !== GENDER_OPTIONS.length - 1 ? 'border-b border-border' : ''}`}
-                                >
-                                    <View className="flex-row items-center justify-between">
-                                        <Text className="text-body text-text">{option.label}</Text>
-                                        {gender === option.value && (
-                                            <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
-                                        )}
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </TouchableWithoutFeedback>
-                </TouchableOpacity>
-            </Modal> */}
 
             {/* First Name & Last Name Section */}
             <View className='flex-row'>

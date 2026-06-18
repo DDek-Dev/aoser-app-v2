@@ -155,8 +155,10 @@ const UpgradeToFreelancerStep1 = (
             <SelectVideo
                 video={promoVideoFile?.uri || null}
                 label={t('kyc.step1.promoVideo.label')}
-                // required
+                required
                 onChange={handleVideoChange}
+                inputClassName={errors.promoVideoFile ? 'border-error' : 'border-border'}
+                isValidate={`${errors.promoVideoFile ? t('kyc.step1.promoVideo.required') : ''}`}
             />
 
 

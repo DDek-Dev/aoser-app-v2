@@ -13,11 +13,11 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 const FreelancerRoleGate = () => {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const { data, refetch, isLoading  , isRefetching} = useMyProfile();
+  const { data, refetch, isLoading, isRefetching } = useMyProfile();
 
-useEffect(() => {
-  refetch();
-}, []);
+  useEffect(() => {
+    refetch();
+  }, []);
   // Refetch profile data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -26,20 +26,21 @@ useEffect(() => {
   );
   // Check if user is already approved and redirect
   useEffect(() => {
-    if (data?.businessType === 'FREELANCER' && data?.registrationStatus === 'APPROVED_COMPLETE') {
-      navigation.replace('AuthFreelancerProfile', { userId: data._id });
+    if (data?.businessType === 'FREELANCER' && data?.kycInfoStatus === '') {
+      navigation.replace('PersonalKYC');
+    }
+    if (data?.businessType === 'FREELANCER' &&( data?.kycInfoStatus === 'REJECTED' || data?.kycInfoStatus === 'APPROVED_COMPLETE') ) {
+      navigation.navigate('AuthFreelancerProfile' , {userId:data?._id});
     }
   }, [data, navigation]);
   const { t } = useTranslation();
+  const isPendingRegistration =data?.businessType === 'FREELANCER' &&  data?.kycInfoStatus === 'PENDING';
 
-  const isPendingRegistration =
-    (data?.businessType === 'CUSTOMER' || data?.businessType === 'FREELANCER') &&
-    data?.registrationStatus === 'PENDING';
-  const isRejectedRegistration =
-    (data?.businessType === 'CUSTOMER' || data?.businessType === 'FREELANCER') &&
-    data?.registrationStatus === 'REJECTED';
-  const canStartRegistration =
-    data?.businessType === 'CUSTOMER' && data?.registrationStatus === "";
+  const isRejectedRegistration =data?.businessType === 'FREELANCER'&&data?.kycInfoStatus === 'REJECTED';
+     
+    
+  const canStartRegistration =data?.businessType === 'FREELANCER' &&  data?.kycInfoStatus === "";
+    
 
   if (isLoading || isRefetching) {
     return (
@@ -63,7 +64,7 @@ useEffect(() => {
 
           {/* Title */}
           <Text className="text-heading text-text text-center mb-3">
-            {t('freelancerRoleGate.pendingTitle')}
+            {t('freelancerRoleGate.pendingTitle')}  
           </Text>
 
           {/* Subtitle */}
@@ -91,7 +92,7 @@ useEffect(() => {
 
 
             <TouchableOpacity
-              onPress={() => navigation.popToTop()}
+              onPress={() => navigation.goBack()}
               className="bg-primary flex-row gap-2 justify-center border border-border py-4 px-6 rounded-xl items-center"
             >
               <MaterialIcons name="chevron-left" size={24} color="#FFFFFF" />
@@ -160,7 +161,7 @@ useEffect(() => {
           {/* Action Buttons */}
           <View className="w-full gap-3">
             <TouchableOpacity
-              onPress={() => navigation.navigate('UpgradeToFreelancer')}
+              onPress={() => navigation.navigate('PersonalKYC')}
               className="bg-primary py-4 px-6 rounded-xl items-center"
             >
               <Text className="text-surface text-body font-semibold">
@@ -252,7 +253,7 @@ useEffect(() => {
 
           {/* CTA Button */}
           <TouchableOpacity
-            onPress={() => navigation.navigate('UpgradeToFreelancer')}
+            onPress={() => navigation.navigate('PersonalKYC')}
             className="w-full bg-primary py-4 rounded-xl items-center mb-3"
           >
             <Text className="text-surface text-body font-semibold">
@@ -262,7 +263,7 @@ useEffect(() => {
 
           {/* Back Button */}
           <TouchableOpacity
-            onPress={() => navigation.popToTop()}
+            onPress={() => navigation.replace('AuthFreelancerSetting')}
             className="py-3"
           >
             <Text className="text-textSecondary text-body">
@@ -274,6 +275,7 @@ useEffect(() => {
 
       {!isPendingRegistration && !isRejectedRegistration && !canStartRegistration && (
         <View className="flex-1 items-center justify-center px-6">
+
           <Text className="text-body text-textSecondary text-center mb-6">
             {t('freelancerRoleGate.pendingSubtitle')}
           </Text>

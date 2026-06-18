@@ -49,7 +49,7 @@ function NotificationController() {
     const data = response.notification.request.content.data;
     console.log('🔔 Notification data payload:', data);
     if (!navigationRef.isReady()) return;
-    
+
     if (data.screen && data.params) {
       navigationRef.navigate(data.screen as any, data.params);
     } else if (data.screen && !data.params) {
@@ -72,6 +72,11 @@ function AppContent() {
   const [fontsLoaded, fontError] = useFonts({
     'LaoFont': require('./assets/fonts/Noto_Sans_Lao/NotoSansLao-VariableFont_wdth,wght.ttf'),
   });
+
+
+
+
+
   useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
@@ -104,6 +109,7 @@ function AppContent() {
       apiEvents.off('network_error', onApiNetworkError);
     };
   }, []);
+
 
   const handleRetry = async () => {
     const state = await NetInfo.fetch();
@@ -148,6 +154,7 @@ function AppContent() {
                   visible={isOverlayVisible}
                   onRetry={handleRetry}
                 />
+
                 <View
                   pointerEvents="none"
                   style={{

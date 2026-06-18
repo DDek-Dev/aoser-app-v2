@@ -26,24 +26,36 @@ export default function UpgradeToFreelancerReview() {
     if (!localProfile) return dbProfile;
     if (!dbProfile) return localProfile;
 
-    const promoTouched = (localProfile as any).promoVideoTouched === true;
-    const certsTouched = (localProfile as any).certificatesTouched === true;
+    const lp = localProfile as any;
+    const dbp = dbProfile;
+
+    const promoTouched = lp.promoVideoTouched === true;
+    const certsTouched = lp.certificatesTouched === true;
+
+    // Map storage draft keys (existingX) to profile property names
+    const mergedUserProfileImage = lp.existingProfileImg || lp.userProfileImage || dbp.userProfileImage;
+    const mergedBannerImage = lp.existingBannerImage || lp.bannerImage || dbp.bannerImage;
 
     const mergedVideoPromote = promoTouched
-      ? localProfile.videoPromote
-      : (localProfile.videoPromote || dbProfile.videoPromote);
+      ? (lp.existingPromoVideo || lp.videoPromote)
+      : (lp.existingPromoVideo || lp.videoPromote || dbp.videoPromote);
 
     const mergedCertificates = certsTouched
-      ? localProfile.certificates
-      : ((localProfile.certificates && localProfile.certificates.length > 0) ? localProfile.certificates : dbProfile.certificates);
+      ? (lp.existingCertificates || lp.certificates)
+      : (lp.existingCertificates || lp.certificates || dbp.certificates);
 
     return {
       ...dbProfile,
       ...localProfile,
+      userProfileImage: mergedUserProfileImage,
+      bannerImage: mergedBannerImage,
       videoPromote: mergedVideoPromote,
       certificates: mergedCertificates,
     };
   })();
+
+  console.log("profile", JSON.stringify(profile, null, 2));
+
   const isLoading = isLoadingLocal || (!localProfile && (isLoadingMyProfile || (!!currentUserId && isLoadingDb)));
 
   const { t } = useTranslation();
@@ -89,8 +101,7 @@ export default function UpgradeToFreelancerReview() {
       {profile.videoPromote ?
         <VDOPromote
           video={profile.videoPromote}
-          // isReview={isLocalDraft}
-          isReview={true}
+          isReview={isLocalDraft}
           context="profile"
           isScreenFocused={true}
         />
@@ -108,7 +119,7 @@ export default function UpgradeToFreelancerReview() {
 
       <View className='mb-24'>
 
-        <Reviews reviews={[]}  totalStartRate={0}/>
+        <Reviews reviews={[]} totalStartRate={0} />
 
       </View>
 

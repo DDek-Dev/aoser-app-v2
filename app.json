@@ -2,10 +2,10 @@
   "expo": {
     "name": "Aoser",
     "slug": "aoser",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "scheme": "com.aoser.app",
     "orientation": "portrait",
-    "icon": "./assets/aoser_logo_and2.png",
+    "icon": "./assets/aoser_logo_ios.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -32,7 +32,7 @@
           }
         ]
       },
-      "buildNumber": "7"
+      "buildNumber": "9"
     },
     "android": {
       "adaptiveIcon": {
@@ -42,13 +42,15 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.aoser.app",
-      
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA",
-         "com.google.android.gms.permission.AD_ID"
-
+        "com.google.android.gms.permission.AD_ID"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
       ]
     },
     "web": {
@@ -68,7 +70,13 @@
       "expo-web-browser",
       "expo-notifications",
       "expo-dev-client",
-      "expo-image-picker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Aoser to access your photos to upload profile and service images.",
+          "cameraPermission": "Aoser needs camera access to take photos for your profile and services."
+        }
+      ],
       "./plugins/withAdiRegistrationToken",
       "@react-native-firebase/app",
       "@react-native-firebase/crashlytics",

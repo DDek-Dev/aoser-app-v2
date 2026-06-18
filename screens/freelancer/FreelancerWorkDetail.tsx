@@ -17,6 +17,8 @@ import InterestedFreelancer from './InterestedFreelancer';
 import { useTranslation } from 'react-i18next';
 import BudgetInput from 'components/ui/BudgetInput';
 import WorkDetailSkenleton from 'skeletonScreens/WorkDetailSkenleton';
+import { CompletePopup } from 'components/common/CompletePopup';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type AuthFreelancerProfileRouteProp = RouteProp<FreelancerStackParamList, 'FreelancerWorkDetail'>;
 
@@ -45,7 +47,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const [jobDetailVisible, setJobDetailVisible] = useState(false);
   const [isReview, setIsReview] = useState<boolean>(false);
   const [acceptState, setAcceptState] = useState<'idle' | 'accepting' | 'accepted'>('idle');
-  const [budget, setBudget] = useState<number >(0);
+  const [budget, setBudget] = useState<number>(0);
   const [ispriceEdit, setIspriceEdit] = useState(false);
   const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>();
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
@@ -95,6 +97,10 @@ export default function FreelancerWorkDetail({ route }: Props) {
   const data = workData?.work;
 
   const isCompleted = data?.workStatus === 'COMPLETED';
+  // Demo flag - replace with real KYC status from API/auth context
+
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const getConfirmedKey = (workId: string) => `work_complete_confirmed_${workId}`;
 
   // ============= EFFECTS =============
   // Refetch work data when screen comes into focus
@@ -120,8 +126,56 @@ export default function FreelancerWorkDetail({ route }: Props) {
     if (data?.workStatus !== 'ASSIGNED_WORKER') {
       setAcceptState('idle');
     }
+
   }, [data]);
 
+  useEffect(() => {
+    const checkAndShowPopup = async () => {
+      if (data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id) {
+        const workId = data?._id;
+        if (!workId) return;
+
+        try {
+          const confirmed = await AsyncStorage.getItem(getConfirmedKey(workId));
+          if (!confirmed) {
+            setShowCompleteModal(true);
+          }
+        } catch (error) {
+          console.log('Error checking confirmed status:', error);
+        }
+      }
+    };
+
+    checkAndShowPopup();
+  }, [data?.workStatus, data?.createdBy?._id, user?._id, data?._id]);
+
+  const handleCompleteClose = async () => {
+    setShowCompleteModal(false);
+
+    const workId = data?._id;
+    if (workId) {
+      try {
+        await AsyncStorage.setItem(getConfirmedKey(workId), 'true');
+      } catch (error) {
+        console.log('Error saving confirmed status:', error);
+      }
+    }
+  };
+
+  // const handleCompleteRegister = async () => {
+  //   setShowCompleteModal(false);
+
+  //   const workId = data?._id;
+  //   if (workId) {
+  //     try {
+  //       await AsyncStorage.setItem(getConfirmedKey(workId), 'true');
+  //     } catch (error) {
+  //       console.log('Error saving confirmed status:', error);
+  //     }
+  //   }
+
+  //   navigation.navigate('PersonalKYC');
+  // };
   // ============= CALLBACKS =============
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -150,6 +204,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
     setJobDetailVisible(false);
     navigation.navigate('FreelancerProfile', { userId });
   }, [navigation]);
+
 
   // ============= HELPER FUNCTIONS =============
   const toggleExpand = (sectionId: number) => {
@@ -1234,12 +1289,17 @@ export default function FreelancerWorkDetail({ route }: Props) {
                         <Text className="text-success font-bold text-2xl">
                           {new Intl.NumberFormat().format(data?.budget)}
                         </Text>
+                        <Text className="text-body text-textSecondary">{" • "}
+                          {data.budgetType === 'FIXED_PRICE' ? t('postWork.fixed_price')
+                            : data.budgetType === 'HOURLY' ? t('postWork.hourly')
+                              : t('postWork.offering')}
+                        </Text>
                       </View>
                     )}
                   </View>
                 </View>
 
-                {(data?.workStatus === 'PUBLISHED' || data?.workStatus === 'ASSIGNED_WORKER' || data?.workStatus === 'PRIVATE' )&& user?._id === data?.createdBy?._id && (
+                {(data?.workStatus === 'PUBLISHED' || data?.workStatus === 'ASSIGNED_WORKER' || data?.workStatus === 'PRIVATE') && user?._id === data?.createdBy?._id && (
                   <Pressable
                     onPress={() => setIspriceEdit(true)}
                     className="bg-white rounded-full p-3 shadow-sm active:bg-blue-50"
@@ -1296,35 +1356,29 @@ export default function FreelancerWorkDetail({ route }: Props) {
 
 
             <View className="" >
-              {data.address &&
+              {(data.address || data.place) &&
                 <View className="flex-row items-start">
                   <View className="w-8 h-8 rounded-full bg-error/10 items-center justify-center mr-3">
                     <Ionicons name="location-outline" size={16} color="#F59E0B" />
                   </View>
 
                   <View>
-                    {data.address?.village !== '' && data.address?.district !== '' && data.address?.province !== '' && (
-                      <Text className="text-body text-text ">
-                        {data?.address.village}, {data?.address.district}, {data?.address.province}.
-                      </Text>
-                    )}
+                    {data.address &&
+                      data.address.village !== '' &&
+                      data.address.district !== '' &&
+                      data.address.province !== '' && (
+                        <Text className="text-body text-text">
+                          {data.address.village}, {data.address.district}, {data.address.province}.
+                        </Text>
+                      )}
                     {data?.place && (
-
-                      <Text className="text-body text-text ">
-                        {data?.place}
+                      <Text className="text-body text-text">
+                        {data.place}
                       </Text>
-
                     )}
                   </View>
-
-
                 </View>
-
               }
-
-
-
-
             </View>
           </View>
 
@@ -1910,7 +1964,7 @@ export default function FreelancerWorkDetail({ route }: Props) {
                                 </View> */}
 
                                 <View
-                                  
+
                                   className="flex-row items-center flex-1"
 
                                 >
@@ -2115,20 +2169,20 @@ export default function FreelancerWorkDetail({ route }: Props) {
         {/* Bottom Action Bar */}
         <View className="flex-row justify-evenly items-center px-6 py-4 border-t border-border bg-white">
           {data?.createdBy?._id === user?._id && data?.workStatus !== 'PUBLISHED' && data?.assignedTo && (
-            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.assignedTo?._id , workData:data})}>
+            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.assignedTo?._id, workData: data })}>
               <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
             </TouchableOpacity>
           )}
 
-            <TouchableOpacity
-              onPress={() => navigation.navigate('PaymentDetail_Id', { workId: data?._id })}
-              className="bg-border p-3 rounded-full flex-row items-center justify-center">
-              <Ionicons name="newspaper-outline" size={24} color="#6B7280" />
-            </TouchableOpacity>
-          
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PaymentDetail_Id', { workId: data?._id })}
+            className="bg-border p-3 rounded-full flex-row items-center justify-center">
+            <Ionicons name="newspaper-outline" size={24} color="#6B7280" />
+          </TouchableOpacity>
+
 
           {data?.createdBy?._id !== user?._id && (
-            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id, workData:data })}>
+            <TouchableOpacity className="bg-primary p-3 rounded-full" onPress={() => navigation.navigate('RoomChat', { userId: data?.createdBy?._id, workData: data })}>
               <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
             </TouchableOpacity>
           )}
@@ -2290,6 +2344,21 @@ export default function FreelancerWorkDetail({ route }: Props) {
         freelancer={data}
         onSubmitReview={() => setIsReview(true)}
       />
+
+      {/* popup Freelancer KYC  */}
+
+
+      {data?.workStatus === 'DOING' && data?.createdBy?._id !== user?._id && (
+
+        <CompletePopup
+          visible={showCompleteModal}
+          onClose={handleCompleteClose}
+          // onRegister={handleCompleteRegister}
+          title={t('workDetail.project_paid_successfullyPopTitle')}
+          desc={t('workDetail.project_paid_successfullyPopDesc')}
+          action={t('common.ok')}
+        />
+      )}
 
       <Modal
         visible={showDeleteConfirmModal}

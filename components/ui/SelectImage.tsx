@@ -47,8 +47,8 @@ const SelectImage: React.FC<Props> = ({
   /* ------------------ Gallery ------------------ */
   const pickFromGallery = async () => {
     try {
-    const hasPermission = await requestMediaPermissionIfNeeded();
-if (!hasPermission) return;
+      const hasPermission = await requestMediaPermissionIfNeeded();
+      if (!hasPermission) return;
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: true,

@@ -154,10 +154,15 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
 
             <View className="flex-row items-center">
               <Text>{t('postWork.budget')} : </Text>
+              <Text className="font-bold text-body text-warning ml-2">{workData.currency} </Text>
               <Text className="font-bold text-body text-primary">
                 {new Intl.NumberFormat().format(workData.budget)}
               </Text>
-              <Text className="font-bold text-body text-warning ml-2">{workData.currency} </Text>
+              {/* <Text className="text-body text-textSecondary">{" • "}
+                {workData.budgetType === 'FIXED_PRICE' ? t('postWork.fixed_price')
+                  : workData.budgetType === 'HOURLY' ? t('postWork.hourly')
+                    : t('postWork.offering')}
+              </Text> */}
             </View>
 
           )}
@@ -190,48 +195,32 @@ const ProjectMessageItem: React.FC<ProjectMessageItemProps> = ({ projects }) => 
             </View>
           </View>
 
-          {workAddress &&
-
+          {(workAddress || workData.place) &&
 
             <View className="flex-row mt-3 items-center">
-
               <View className="flex-row gap-2 items-start">
                 <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-
-
                 <View>
-
-
-                  {workData.address.village !== '' &&
-                    workData.address.district !== '' &&
-                    workData.address.province !== '' &&
-
+                  {workAddress &&
+                    workAddress.village !== '' &&
+                    workAddress.district !== '' &&
+                    workAddress.province !== '' &&
 
                     <Text className="text-sm text-textSecondary" numberOfLines={1}>
-                      {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-
                       {workAddress.village}, {workAddress.district}, {workAddress.province}.
                     </Text>
                   }
 
                   {workData.place && (
-
-
                     <Text className="text-sm text-textSecondary">
                       {workData.place}
                     </Text>
-
-
                   )}
                 </View>
               </View>
             </View>
           }
-
-
-
-
         </View>
       </Pressable>
     </View>

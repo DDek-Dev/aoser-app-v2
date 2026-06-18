@@ -185,6 +185,28 @@ export const workerApi = {
 
         return createdFreelancer.data;
     },
+    createKycInfo: async (data: UserProfile, token: string): Promise<UserProfile> => {
+        console.log("Data to create freelancer: ", JSON.stringify(data, null, 2));
+        const response = await fetch(`${API_BASE_URL}/worker/kyc-info`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Aoser ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        const createdFreelancer = await response.json();
+        // console.log("in api error: ", createdFreelancer);
+
+
+        if (!response.ok) {
+            console.log("in api error: ", createdFreelancer.message);
+            throw new Error(createdFreelancer.message || 'Failed to create freelancer');
+        }
+
+        return createdFreelancer.data;
+    },
 
 
     /**
@@ -356,10 +378,7 @@ export const workerApi = {
                 },
             });
 
-            console.log('Recommended Freelancers API response:', {
-                status: response.status,
-                data: response.data,
-            });
+            
 
             const payload = response.data?.data;
             if (!Array.isArray(payload)) {

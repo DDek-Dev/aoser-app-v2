@@ -170,7 +170,8 @@
             "edit_freelancer_data_label": "ຂໍ້ມູນໂປຣຂອງທ່ານ",
             "job_section": "ໂປຣໄຟລ໌ມືອາຊີບ",
             "about_section": "ກ່ຽວກັບຕົນເອງ",
-            "offer_section": "ຄ່າບໍລີການ"
+            "offer_section": "ຄ່າບໍລີການ",
+            "personalIfo":"ຂໍ້ມູນສ່ວນຕົວຂອງທ່ານ"
         },
         "buyStar": {
             "title": "ໂປຣໂມດໂປຣໄຟລ໌",
@@ -242,17 +243,20 @@
     "postWork": {
         "public_work": "ເພີ່ມວຽກ",
         "posting_public_work": "ເພີ່ມວຽກຂອງທ່ານໄປທີ່ສາທາລະນະ",
-        "next": "ຕໍ່ໄປ",
+        "post": "ປະກາດວຽກ",
+        "posting": "ກໍາລັງປະກາດວຽກ...",
+        "send": "ສົ່ງ",
+        "sending": "ກໍາລັງສົ່ງ...",
         "work_title": "ທ່ານຕ້ອງການໃຫ້ຊ່ວຍຫຍັງແດ່?",
         "work_title_placeholder": "ຕ້ອງການ...",
         "work_title_required": "ກະລຸນາຂຽນສີ່ງທີຕ້ອງການ",
         "work_type": "ຮູບແບບບໍລີການ",
         "online": "ອອນລາຍ",
-        "offline": "ໜ້າສະຖານທີ",
-        "work_description": "ລາຍລະອຽດເພີ່ມເຕີມ",
+        "offline": "ສະຖານທີ",
+        "work_description": "ລາຍລະອຽດເພີ່ມເຕີມ (ບໍ່ບັງຄັບ)",
         "work_description_reason": "ເຫດຜົນທີ່ທ່ານສະເໜີຄ່າບໍລີການ",
         "work_description_placeholder": "ອະທິບາຍຂໍ້ມູນເພີ່ມເຕີມ...",
-        "work_description_req": "ລາຍລະອຽດເພີ່ມເຕີມ",
+        "work_description_req": "ລາຍລະອຽດເພີ່ມເຕີມ (ບໍ່ບັງຄັບ)",
         "work_description_placeholder_reason": "ອະທິບາຍເຫດຜົນ...",
         "work_description_placeholder_req": "ອະທິບາຍຂໍ້ມູນເພີ່ມເຕີມ...",
         "work_description_required": "ກະລຸນາໃສ່ຂໍ້ມູນເພີ່ມເຕີມ",
@@ -398,6 +402,8 @@
         "add_work": "ເພີ່ມວຽກ",
         "accept_unlock_payment": "ຮັບວຽກເພື່ອປົດລັອກການຊຳລະເງິນຂອງລູກຄ້າ",
         "accept_question": "ຮັບບໍ",
+        "project_paid_successfullyPopTitle": "ວຽກລາຍນີ້ໄດ້ຊໍາລະແລ້ວ",
+        "project_paid_successfullyPopDesc": "ກະລຸນາເຮັດວຽກໃຫ້ສໍາເລັດສົມບູນກ່ອນຈື່ງສາມາດຮັບເງີນຂອງທ່ານໄດ້",
         "project_paid_successfully": "ວຽກລາຍນີ້ໄດ້ຊໍາລະແລ້ວ. ກະລຸນາເຮັດວຽກໃຫ້ສໍາເລັດສົມບູນກ່ອນ ຈື່ງສາມາດຮັບເງີນຂອງທ່ານ",
         "project_did_successfully": "ວຽກນີ້ສຳເລັດແລ້ວກະລຸນາໃຫ້ຄຳຄິດເຫັນ ຫຼື",
         "rehire": "ໃຊ້ບໍລີການອິກ",
@@ -908,12 +914,12 @@
         "becomeFreelancerTitle": "ສະໝັກເປັນບັນຊີໂປຣ",
         "becomeFreelancerSubtitle": "ຍົກລະດັບບັນຊີຂອງທ່ານເພື່ອເປັນໂປຣ ແລະ ຮັບວຽກເຮັດໄດ້ເລີຍ",
         "getStartedButton": "ເລີ່ມຕົ້ນ",
-        "pendingTitle": "ສະໝັກສໍາເລັດແລ້ວລະບົບກຳລັງກວດສອບຂໍ້ມູນຂອງທ່ານ",
-        "pendingSubtitle": "ຄຳຮ້ອງຂໍເປັນໂປຣຂອງທ່ານກຳລັງຖືກກວດສອບໂດຍລະບົບ Aoser. ລະບົບຈະແຈ້ງເຕືອນທ່ານເມື່ອໄດ້ຮັບການອະນຸມັດແລ້ວ.",
+        "pendingTitle": "ສົ່ງສໍາເລັດແລ້ວລະບົບກຳລັງກວດສອບຂໍ້ມູນຂອງທ່ານ",
+        "pendingSubtitle": "ຂໍ້ມູນບັນຊີສ່ວນຕົວຂອງທ່ານກຳລັງຖືກກວດສອບໂດຍລະບົບ Aoser. ລະບົບຈະແຈ້ງເຕືອນທ່ານເມື່ອໄດ້ຮັບການອະນຸມັດແລ້ວ.",
         "whatHappensNext": "ຈະເກີດຫຍັງຕໍ່ໄປ?",
         "reviewProcess": "ລະບົບ Aser ຈະກວດສອບຄຳຮ້ອງຂໍຂອງທ່ານໃນໄວໆນີ້ ແລະ ທ່ານຈະໄດ້ຮັບການແຈ້ງເຕືອນເມື່ອໄດ້ຮັບການອະນຸມັດ.",
         "contactSupport": "ຕິດຕໍ່ຝ່າຍສະໜັບສະໜູນ",
-        "backToHomeButton": "ກັບໄປໜ້າຫຼັກ",
+        "backToHomeButton": "ກັບຄືນ",
         "estimatedTime": "ພວກເຮົາຈະກວດສອບຂໍ້ມູນຂອງທ່ານໃນໄວໆນີ້ເພື່ອຢືນຢັນບັນຊີຂອງທ່ານ",
         "pendingBadge": "ກຳລັງກວດສອບ",
         "step1": "ສົ່ງຄຳຮ້ອງຂໍແລ້ວ ✓",
@@ -981,7 +987,8 @@
             "next": "ຕໍ່ໄປ",
             "submit": "ສົ່ງ",
             "cancel": "ປິດ",
-            "go_live": "ເປີດໃຊ້ງານ"
+            "go_live": "ເປີດໃຊ້ງານ",
+            "save":"ບັນທຶກ"
         },
         "aoser_profile": {
             "some_wrong": "ຂໍອະໄພ! ມີບາງຢ່າງຜິດພາດ",
@@ -1002,7 +1009,8 @@
                 "required": "ກະລຸນາເລືອກຮູບພື້ນຫຼັງ"
             },
             "promoVideo": {
-                "label": "ວິດີໂອການເຮັດວຽກ"
+                "label": "ວິດີໂອການເຮັດວຽກ",
+                "required": "ກະລຸນາເລືອກວິດີໂອການເຮັດວຽກ"
             },
             "freelancerType": {
                 "label": "ເວລາບໍລິການ",

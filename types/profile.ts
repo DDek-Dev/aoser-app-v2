@@ -92,6 +92,7 @@ export interface UserProfile {
   bankAccountNumber: string;
   userWithCardImage: string;
   registrationStatus: "PENDING" | "APPROVED_WAITING_PAYMENT" | "APPROVED_COMPLETE" | "REJECTED" | "";
+  kycInfoStatus: "PENDING" | "APPROVED_WAITING_PAYMENT" | "APPROVED_COMPLETE" | "REJECTED" | "";
   address: {
     village: string;
     country: string;

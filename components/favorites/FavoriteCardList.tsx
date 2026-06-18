@@ -72,6 +72,11 @@ const FavoriteCardList = ({ data }: Props) => {
                 <View className='flex-row'>
                   <Text className='font-bold text-warning '>{item.likedItem.hourlyRateCurrency}</Text>
                   <Text className=' text-primary ml-2'>{new Intl.NumberFormat().format(item.likedItem.hourlyRate)}</Text>
+                  {/* <Text className="text-caption text-primary" numberOfLines={1}>/
+                                      {item.likedItem.rateType === 'PER_HOUR' && t('kyc.step3.rateType.perHour')}
+                                      {item.likedItem.rateType === 'PER_DAY' && t('kyc.step3.rateType.perDay')}
+                                      {item.likedItem.rateType === 'PER_JOB' && t('kyc.step3.rateType.perJob')}
+                                    </Text> */}
                 </View>
               </View>
 
@@ -84,22 +89,29 @@ const FavoriteCardList = ({ data }: Props) => {
             <Text className="text-body text-textSecondary" numberOfLines={2}>
               {item.likedItem.customerExpect}
             </Text>
-            {item.likedItem.address.village !== '' && item.likedItem.address.district !== '' && item.likedItem?.address.province !== '' &&
-
+            {(item.likedItem?.address || item.likedItem?.place) && (
               <View className="flex-row mt-3 items-center">
-
-
-                <View className="flex-row gap-2 items-center">
+                <View className="flex-row gap-2 items-start">
                   <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
-                  <Text className="text-sm text-textSecondary" numberOfLines={1}>
-                    {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-
-                    {item.likedItem?.address.village}, {item.likedItem?.address.district}, {item.likedItem?.address.province}
-                  </Text>
+                  <View>
+                    {item.likedItem?.address &&
+                      item.likedItem.address.village !== '' &&
+                      item.likedItem.address.district !== '' &&
+                      item.likedItem.address.province !== '' && (
+                        <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                          {item.likedItem.address.village}, {item.likedItem.address.district}, {item.likedItem.address.province}
+                        </Text>
+                      )}
+                    {item.likedItem?.place && (
+                      <Text className="text-sm text-textSecondary" numberOfLines={1}>
+                        {item.likedItem.place}
+                      </Text>
+                    )}
+                  </View>
                 </View>
               </View>
-            }
+            )}
           </View>
 
         </Pressable>

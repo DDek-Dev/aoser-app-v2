@@ -19,6 +19,13 @@ export const useCreateFreelancer = (): UseMutationResult<UserProfile, Error, any
     mutationFn: (data: UserProfile) => workerApi.createFreelancer(data, tokens?.accessToken || ''),
   });
 };
+export const useCreateKycInfo = (): UseMutationResult<UserProfile, Error, any> => {
+  const { tokens } = useAuth();
+  return useMutation<UserProfile, Error, any>({
+    mutationKey: ['createFreelancer'],
+    mutationFn: (data: UserProfile) => workerApi.createKycInfo(data, tokens?.accessToken || ''),
+  });
+};
 
 
 export const useFreeLancers = () => {

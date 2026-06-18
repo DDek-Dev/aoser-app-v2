@@ -46,11 +46,11 @@ const SelectMultiImage: React.FC<Props> = ({
         return;
       }
 
-        const hasPermission = await requestMediaPermissionIfNeeded();
-  if (!hasPermission) {
-    Alert.alert('Permission required', 'Please allow access to your photos');
-    return;
-  }
+      const hasPermission = await requestMediaPermissionIfNeeded();
+      if (!hasPermission) {
+        Alert.alert('Permission required', 'Please allow access to your photos');
+        return;
+      }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,

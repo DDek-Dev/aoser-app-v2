@@ -4,11 +4,12 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FreelancerStackParamList } from 'types/navigation';
+import { FreelancerStackParamList, TabParamList } from 'types/navigation';
 import FormInput from 'components/ui/Input';
 import TextArea from 'components/ui/TextArea';
 import SelectInput from 'components/ui/SelectInput';
@@ -21,14 +22,17 @@ import BudgetInput from 'components/ui/BudgetInput';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { getCurrentLanguage, Language } from 'utils/dateFormatter';
 import SubWorkDetailsInput from 'components/ui/SubTaskInputList';
-import { SubWorkDetail } from 'types';
+import { BookingFormData, SubWorkDetail } from 'types';
 import { useTranslation } from 'react-i18next';
+import { useCreatePublicWork } from 'hooks/usePublicWork';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 
 
 
 export default function PostWorkScreen() {
   type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList>;
   const navigation = useNavigation<SearchBarNavigationProp>();
+  const navigate=useNavigation<NativeStackNavigationProp<TabParamList>>();
   const insets = useSafeAreaInsets();
   const [workType, setWorkType] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
 
@@ -63,8 +67,6 @@ export default function PostWorkScreen() {
   const { t } = useTranslation();
   const [errors, setErrors] = useState({
     nameOfWork: false,
-    workDetail: false,
-    // budget: false,
     category: false,
     toDate: false,
   });
@@ -78,8 +80,37 @@ export default function PostWorkScreen() {
   const [place, setPlace] = useState('');
 
   const currentLanguage: Language = getCurrentLanguage();
+  const createPublicWorkMutation = useCreatePublicWork();
 
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setNameOfWork('');
+    setWorkDetail('');
+    setBudget(0);
+    setWorkType('ONLINE');
+    setSubWorkDetails([]);
+    setCategory('');
+    setSubcategories([]);
+    setBudgetType('FIXED_PRICE');
+    setFromDate(null);
+    setToDate(null);
+    setFromDateString('');
+    setFromTimeString('');
+    setToDateString('');
+    setToTimeString('');
+    setSelectedProvince(undefined);
+    setSelectedDistrict(undefined);
+    setVillage('');
+    setPlace('');
+    setErrors({
+      nameOfWork: false,
+      category: false,
+      toDate: false,
+    });
+    setToDateErrorMessage('');
+  };
 
   // ─── Date Auto-Correction ────────────────────────────────────────────────────
   /**
@@ -301,9 +332,10 @@ export default function PostWorkScreen() {
     setVillage('');
   };
 
+
   // Handle submit
   const handleSubmit = () => {
-    const hasToDateInput =
+    const hasToDateInput = 
       toDateString.trim() !== '' ||
       toTimeString.trim() !== '' ||
       Boolean(toDate);
@@ -323,8 +355,6 @@ export default function PostWorkScreen() {
 
     const newErrors = {
       nameOfWork: nameOfWork.trim() === '',
-      workDetail: workDetail.trim() === '',
-      // budget: budget === 0 || budget === null,
       category: category.trim() === '',
       toDate: dateInvalid,
     };
@@ -339,56 +369,81 @@ export default function PostWorkScreen() {
       setNewSubTask('');
     }
 
-    if (budget === 0 || budget === null) {
-      setBudgetType('OFFERING');
-    }
-
     const hasError = Object.values(newErrors).some(Boolean);
 
     if (hasError) {
-      console.log('Validation Errors:', newErrors, 'Date Invalid:', dateInvalid);
-      console.log('From Date:', fromDate?.toISOString());
-      console.log('To Date:', toDate?.toISOString());
       return;
     }
 
-    const formData: any = {
-      workTitle: nameOfWork,
+    submitData();
+  };
+
+  const submitData = async () => {
+    // Determine the actual budget type locally to avoid using stale state
+    const effectiveBudgetType = (budget === 0 || budget === null) ? 'OFFERING' : budgetType;
+
+    const payload: BookingFormData = {
+      workTitle: nameOfWork.trim(),
       description: workDetail,
-      budget,
+      budget: budget > 0 ? budget : 0,
       kindOfWork: workType,
-      subWorkDetails,
       currency: budgetCurrency,
-      budgetType,
+      budgetType: effectiveBudgetType,
       serviceType: category,
-      address: {
-        country: selectedProvince ? "Laos" : '',
-        province: selectedProvince?.province_la || '',
-        district: selectedDistrict?.district_la || '',
-        village: village.trim() || '',
-      }
     };
 
-    // Only add if not null
-    if (place) formData.place = place;
-    if (toDate) formData.deadLine = toDate.toISOString();
-    if (fromDate) formData.startDate = fromDate.toISOString();
-    if (subcategories && subcategories.length > 0) {
-      formData.jobs = subcategories;
-    }
+    if (place) payload.place = place;
+    if (toDate) payload.deadLine = toDate.toISOString();
+    if (fromDate) payload.startDate = fromDate.toISOString();
+    if (subcategories.length > 0) payload.jobs = subcategories;
+    if (subWorkDetails.length > 0) payload.subWorkDetails = subWorkDetails;
 
-    // Include address only if user selected any address fields (optional)
     if (selectedProvince) {
-      (formData as any).address = {
+      payload.address = {
+        country: "Laos",
         province: selectedProvince?.province_la,
         district: selectedDistrict?.district_la ?? null,
-        village: village.trim() || null,
-        country: "Laos"
+        village: village.trim(),
       };
     }
 
-    // console.log('Submitting Form Data:', JSON.stringify(formData, null, 2));
-    navigation.navigate('ConfirmPostjob', { formData });
+    setIsSubmitting(true);
+    try {
+      const result = await createPublicWorkMutation.mutateAsync(payload);
+
+      if (result?.error) {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: t('postWork.confirm.error'),
+          textBody: result.error,
+        });
+        return;
+      }
+
+      console.log(result)
+
+      resetForm();
+
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('postWork.confirm.success'),
+        textBody: t('postWork.confirm.work_created_successfully'),
+      });
+
+      navigate.reset({
+        index: 0,
+        routes: [{ name: 'Works' as keyof TabParamList }],
+      });
+    } catch (error) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('postWork.confirm.error'),
+        textBody: t('postWork.confirm.network_error'),
+      });
+      console.log('Error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -403,17 +458,11 @@ export default function PostWorkScreen() {
             </View>
           </View>
 
-          <TouchableOpacity
-            onPress={handleSubmit}
-            className="bg-primary py-3 px-5 rounded-xl items-center justify-center"
-          >
-            <Text className="text-white font-semibold text-body">{t('postWork.next')}</Text>
-          </TouchableOpacity>
+          
         </View>
 
         <KeyboardAwareScrollView
-
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom}}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           className='p-2'
@@ -441,7 +490,7 @@ export default function PostWorkScreen() {
               inputClassName={errors.nameOfWork ? 'border-error' : 'border-border'}
               required
               placeholder={t('postWork.work_title_placeholder')}
-              isValidate={`${errors.nameOfWork ? `${t('postWork.work_title_required')}` : ''}`}
+              isValidate={errors.nameOfWork ? t('postWork.work_title_required') : ''}
             />
 
             <Text className="text-body text-text my-1 font-bold mt-2">{t('postWork.work_type')}</Text>
@@ -467,9 +516,9 @@ export default function PostWorkScreen() {
               placeholder={t('postWork.work_description_placeholder')}
               value={workDetail}
               onChangeText={setWorkDetail}
-              inputClassName={errors.workDetail ? 'border-error' : 'border-border'}
-              required
-              isValidate={`${errors.workDetail ? `${t('postWork.work_description_required')}` : ''}`}
+              inputClassName={ 'border-border'}
+              // required
+              // isValidate={`${errors.workDetail ? `${t('postWork.work_description_required')}` : ''}`}
             />
           </View>
 
@@ -735,6 +784,18 @@ export default function PostWorkScreen() {
               setSubWorkDetails={setSubWorkDetails}
             />
           )}
+
+
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+            className={`bg-primary py-4 px-5 mx-4 mt-4 rounded-2xl items-center justify-center flex-row gap-2 ${isSubmitting ? 'opacity-70' : ''}`}
+          >
+            {isSubmitting && <ActivityIndicator color="white" size="small" />}
+            <Text className="text-white font-semibold text-body">
+              {isSubmitting ? t('postWork.posting') : t('postWork.post')}
+            </Text>
+          </TouchableOpacity>
         </KeyboardAwareScrollView>
 
       </ScreenWrapper>

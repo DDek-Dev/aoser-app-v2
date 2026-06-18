@@ -1,18 +1,20 @@
-import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, Entypo, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useTranslation } from 'react-i18next';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
+import { useMyProfile } from 'hooks/useFreelancer';
 const AuthFreelancerSetting = () => {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { t } = useTranslation();
+  const { data, isLoading, isError, refetch } = useMyProfile();
+
+  console.log('data', JSON.stringify(data, null, 2))
   return (
 
     <ScreenWrapper safeEdges={['top']}>
-
-
       <View className="flex-1 bg-background">
         {/* Header */}
 
@@ -80,22 +82,53 @@ const AuthFreelancerSetting = () => {
             </View>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </Pressable>
-          <Pressable onPress={() => navigation.navigate('EditFreelancerBank_InfomationSection')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
-            <View className="flex-row items-center gap-2">
-              <Ionicons name="card-outline" size={20} color="#3B82F6" />
-              <Text className="text-text font-medium text-[14px]">{t('kyc.steps.bankInfo')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </Pressable>
 
-          
-          <Pressable onPress={() => navigation.navigate('EditFreelancerBank_InfomationSection')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
-            <View className="flex-row items-center gap-2">
-              <Ionicons name="card-outline" size={20} color="#3B82F6" />
-              <Text className="text-text font-medium text-[14px]">{t('kyc.steps.bankInfo')}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-          </Pressable>
+
+
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#3B82F6" />
+          ) : (
+            <>
+              {/* if registrationStatus === APPROVED_COMPLETE than show this */}
+
+              {data?.kycInfoStatus === 'APPROVED_COMPLETE' ? (
+                <Pressable onPress={() => navigation.navigate('EditFreelancerBank_InfomationSection')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="card-outline" size={20} color="#3B82F6" />
+                    <Text className="text-text font-medium text-[14px]">{t('kyc.steps.bankInfo')}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                </Pressable>
+              ) : (
+
+                <Pressable onPress={() => navigation.navigate('FreelancerRoleGate')} className="bg-white border border-border rounded-xl px-4 py-4 flex-row items-center justify-between mb-4">
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="card-outline" size={20} color="#3B82F6" />
+                    <Text className="text-text font-medium text-[14px]"> {t('profile.freelancerSetting.personalIfo')}</Text>
+                  </View>
+                  <View>
+                    {data?.kycInfoStatus === '' ? (
+                      <View className="flex-row items-center gap-2">
+                        <View className="text-cation  bg-error  h-2 w-2 rounded-full" />
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                      </View>
+                    ) : (
+                      <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+
+                    )}
+                  </View>
+                </Pressable>
+              )
+
+              }
+
+
+
+            </>
+
+          )}
+
+
 
         </ScrollView>
       </View>

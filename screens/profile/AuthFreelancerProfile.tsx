@@ -86,7 +86,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
       <View className="flex-row items-center justify-between px-4 py-2 bg-surface">
         <Header_back
           text={t('profile.freelancer_profile')}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.popToTop()}
           iconColor="#3B82F6"
           backgroundColor="bg-surface"
         />
@@ -103,6 +103,10 @@ export default function AuthFreelancerProfile({ route }: Props) {
             className="bg-border p-3 rounded-full"
           >
             <Ionicons name="settings-outline" size={24} color="#3B82F6" />
+            {profile.kycInfoStatus === '' ||  profile.kycInfoStatus === 'PENDING' &&
+            
+            <View className="text-cation absolute -top-1 bg-error right-1 h-2 w-2 rounded-full"/>
+            }
           </Pressable>
         </View>
       </View>

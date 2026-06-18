@@ -170,8 +170,8 @@ const EditAoserProfile = () => {
     // ── Early returns (after all hooks) ──────────────────────────────────────
     // FIX: moved early returns to AFTER all hooks to avoid Rules-of-Hooks violation.
     if (profileLoading || addressLoading || !addressData) {
-    return <EditAoserProfileSkeleton />;
-}
+        return <EditAoserProfileSkeleton />;
+    }
 
     if (addressError || addressData.length === 0) {
         return (
@@ -256,8 +256,8 @@ const EditAoserProfile = () => {
     };
 
     const pickFromGallery = async () => {
-       const hasPermission = await requestMediaPermissionIfNeeded();
-if (!hasPermission) return;
+        const hasPermission = await requestMediaPermissionIfNeeded();
+        if (!hasPermission) return;
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
@@ -482,7 +482,7 @@ if (!hasPermission) return;
                             <View
                                 className={`flex-row items-center px-4 rounded-2xl border ${errors.firstName ? 'border-error' : 'border-border'
                                     }`}
-                                    style={{ minHeight: 52 }} 
+                                style={{ minHeight: 52 }}
                             >
                                 <TextInput
                                     placeholder={t('signUpScreen.firstName')}
@@ -507,7 +507,7 @@ if (!hasPermission) return;
                             <View
                                 className={`flex-row items-center px-4  rounded-2xl border ${errors.lastName ? 'border-error' : 'border-border'
                                     }`}
-                                    style={{ minHeight: 52 }} 
+                                style={{ minHeight: 52 }}
                             >
                                 <TextInput
                                     placeholder={t('signUpScreen.lastName')}
@@ -533,7 +533,7 @@ if (!hasPermission) return;
                             {t('signUpScreen.email')}
                         </Text>
                         <View className="mb-4">
-                            <View className="flex-row items-center px-4  rounded-2xl border border-border bg-gray-100"   style={{ minHeight: 52 }} >
+                            <View className="flex-row items-center px-4  rounded-2xl border border-border bg-gray-100" style={{ minHeight: 52 }} >
                                 <TextInput
                                     placeholder="aoser@example.com"
                                     className="flex-1 text-gray-500"
@@ -560,7 +560,7 @@ if (!hasPermission) return;
                             />
                         </View>
 
-                        {data?.businessType !== "FREELANCER"  &&
+                        {data?.businessType !== "FREELANCER" &&
                             <>
 
                                 {/* ── Address ──────────────────────────────────────── */}

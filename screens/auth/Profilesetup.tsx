@@ -30,6 +30,7 @@ import PhoneInput from 'components/ui/PhoneInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import Header_back from 'components/ui/Header_back';
+import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -146,7 +147,7 @@ const ProfileSetup = () => {
 
             updateProfile(profileData, {
                 onSuccess: async () => {
-              
+
                     Toast.show({
                         type: ALERT_TYPE.SUCCESS,
                         title: t('editProfile.success'),
@@ -199,12 +200,11 @@ const ProfileSetup = () => {
     };
 
     // Function to pick image from gallery
+    // Function 5 - FIXED
     const pickFromGallery = async () => {
         try {
-            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (!permission.granted) {
-                return;
-            }
+            const hasPermission = await requestMediaPermissionIfNeeded(); // ✅ use shared helper
+            if (!hasPermission) return;
 
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ['images'],

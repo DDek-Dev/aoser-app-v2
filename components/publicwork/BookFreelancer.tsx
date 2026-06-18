@@ -15,14 +15,14 @@ import {
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RouteProp, useNavigation } from '@react-navigation/native';
-import { FreelancerStackParamList } from 'types/navigation';
+import { FreelancerStackParamList, TabParamList } from 'types/navigation';
 import { useFreelancerById } from 'hooks/useFreelancer';
 import FormInput from 'components/ui/Input';
 import TextArea from 'components/ui/TextArea';
 import SelectInput from 'components/ui/SelectInput';
 import DatePicker from 'components/ui/DatePicker';
 import BudgetInput from 'components/ui/BudgetInput';
-import { SubWorkDetail } from 'types';
+import { BookingFormData, SubWorkDetail } from 'types';
 import SubWorkDetailsInput from 'components/ui/SubTaskInputList';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
@@ -32,6 +32,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Dropdown from 'components/filter/Dropdown';
 import { useSelectAddress } from 'hooks/useSelectAddress';
 import { getCurrentLanguage, Language } from 'utils/dateFormatter';
+import { useCreatePublicWork } from 'hooks/usePublicWork';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 
 type BookFreelancerRouteProp = RouteProp<FreelancerStackParamList, 'Bookfreelancer'>;
 
@@ -42,22 +44,21 @@ type Props = {
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
 const BookFreelancer = ({ route }: Props) => {
-  type SearchBarNavigationProp = NativeStackNavigationProp<FreelancerStackParamList>;
-  const navigation = useNavigation<SearchBarNavigationProp>();
+
+  const navigate = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
 
   const [workType, setWorkType] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
 
   const [subWorkDetails, setSubWorkDetails] = useState<SubWorkDetail[]>([]);
-  const [subTasks, setSubTasks] = useState<string[]>([]);
-  const [newSubTask, setNewSubTask] = useState('');
-  const [category, setCategory] = useState('');
+  
+  // const [category, setCategory] = useState('');
   const [nameOfWork, setNameOfWork] = useState('');
   const [workDetail, setWorkDetail] = useState('');
   const [budget, setBudget] = useState<number>(0);
   const [budgetCurrency, setBudgetCurrency] = useState<'LAK' | 'USD'>('LAK');
   const fromInputRef = useRef<TextInput>(null);
   const toInputRef = useRef<TextInput>(null);
-  const categoryRef = useRef<{ focus: () => void }>(null);
+  // const categoryRef = useRef<{ focus: () => void }>(null);
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [budgetType, setBudgetType] = useState<'FIXED_PRICE' | 'HOURLY' | 'OFFERING'>('FIXED_PRICE');
 
@@ -80,9 +81,8 @@ const BookFreelancer = ({ route }: Props) => {
 
   const [errors, setErrors] = useState({
     nameOfWork: false,
-    workDetail: false,
-    // budget: false,
-    category: false,
+
+    // category: false,
     toDate: false,
   });
   const [toDateErrorMessage, setToDateErrorMessage] = useState('');
@@ -92,6 +92,35 @@ const BookFreelancer = ({ route }: Props) => {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { data: freelancer, isLoading } = useFreelancerById(userId);
+  const createPublicWorkMutation = useCreatePublicWork();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resetForm = () => {
+    setNameOfWork('');
+    setWorkDetail('');
+    setBudget(0);
+    setWorkType('ONLINE');
+    setSubWorkDetails([]);
+    // setCategory('');
+    setSubcategories([]);
+    setBudgetType('FIXED_PRICE');
+    setFromDate(null);
+    setToDate(null);
+    setFromDateString('');
+    setFromTimeString('');
+    setToDateString('');
+    setToTimeString('');
+    setSelectedProvince(undefined);
+    setSelectedDistrict(undefined);
+    setVillage('');
+    setPlace('');
+    setErrors({
+      nameOfWork: false,
+      // category: false,
+      toDate: false,
+    });
+    setToDateErrorMessage('');
+  };
 
   // ─── Date Auto-Correction ────────────────────────────────────────────────────
   /**
@@ -314,90 +343,82 @@ const BookFreelancer = ({ route }: Props) => {
 
     const newErrors = {
       nameOfWork: nameOfWork.trim() === '',
-      workDetail: workDetail.trim() === '',
+
       // budget: budget === 0 || budget === null,
-      category: category.trim() === '',
+      // category: category.trim() === '',
       toDate: dateInvalid,
     };
     setErrors(newErrors);
     setToDateErrorMessage(dateValidationMessage);
 
-    let finalSubTasks = [...subTasks];
-    if (newSubTask.trim() && !subTasks.includes(newSubTask.trim())) {
-      finalSubTasks = [...subTasks, newSubTask.trim()];
-      setSubTasks(finalSubTasks);
-      setNewSubTask('');
-    }
-
-    if (budget === 0) {
-      setBudgetType('OFFERING');
-    }
     const hasError = Object.values(newErrors).some(Boolean);
     if (hasError) return;
 
-    // const formData = {
-    //   workTitle: nameOfWork,
-    //   description: workDetail,
-    //   budget,
-    //   kindOfWork: workType,
-    //   deadLine:  toDate ? toDate.toISOString() : null,
-    //   startDate:  fromDate ? fromDate.toISOString() :null,
-    //   subWorkDetails,
-    //   currency: budgetCurrency,
-    //   budgetType,
-    //   serviceType: category,
-    //   assignedTo:userId,
-    //   jobs: subcategories,
-    //   address: {
-    //     country: selectedProvince ? 'Laos' : '',
-    //     province: selectedProvince?.province_la || '',
-    //     district: selectedDistrict?.district_la || '',
-    //     village: village.trim() || '',
-    //   },
-    // };
-    const formData: any = {
-      workTitle: nameOfWork,
+    submitData();
+  };
+
+  const submitData = async () => {
+    // Determine the actual budget type locally to avoid using stale state
+    const effectiveBudgetType = (budget === 0 || budget === null) ? 'OFFERING' : budgetType;
+
+    const payload: BookingFormData = {
+      workTitle: nameOfWork.trim(),
       description: workDetail,
-      budget,
+      budget: budget > 0 ? budget : 0,
       kindOfWork: workType,
-      subWorkDetails,
       currency: budgetCurrency,
-      budgetType,
-      serviceType: category,
+      budgetType: effectiveBudgetType,
+      // serviceType: category,
       assignedTo: userId,
     };
 
-    // Only add if not null
-    if (place) formData.place = place;
-    if (toDate) formData.deadLine = toDate.toISOString();
-    if (fromDate) formData.startDate = fromDate.toISOString();
-
-    // Only add jobs if has items
-    if (subcategories && subcategories.length > 0) {
-      formData.jobs = subcategories;
-    }
+    if (place) payload.place = place;
+    if (toDate) payload.deadLine = toDate.toISOString();
+    if (fromDate) payload.startDate = fromDate.toISOString();
+    if (subcategories.length > 0) payload.jobs = subcategories;
+    if (subWorkDetails.length > 0) payload.subWorkDetails = subWorkDetails;
 
     if (selectedProvince) {
-      formData.address = {
+      payload.address = {
         country: 'Laos',
         province: selectedProvince.province_la,
         ...(selectedDistrict && { district: selectedDistrict.district_la }),
         ...(village.trim() && { village: village.trim() }),
       };
     }
-    // if (selectedProvince) {
-    //   (formData as any).address = {
-    //     province: selectedProvince?.province_la,
-    //     district: selectedDistrict?.district_la ?? null,
-    //     village: village.trim() || null,
-    //     country: 'Laos',
-    //   };
-    // }
 
+    setIsSubmitting(true);
+    try {
+      const result = await createPublicWorkMutation.mutateAsync(payload);
 
+      if (result?.error) {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: t('postWork.confirm.error'),
+          textBody: result.error,
+        });
+        return;
+      }
 
+      resetForm();
 
-    navigation.navigate('ConfirmBookingScreen', { formData, isBook: true });
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: t('postWork.confirm.success'),
+        textBody: t('postWork.confirm.work_created_successfully'),
+      });
+
+      navigate.replace('HistoryScreen');
+    } catch (error) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: t('postWork.confirm.error'),
+        textBody: t('postWork.confirm.network_error'),
+      });
+      console.log('Error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ─── Guards ──────────────────────────────────────────────────────────────────
@@ -418,7 +439,7 @@ const BookFreelancer = ({ route }: Props) => {
   }
 
   const handleBack = () => {
-    navigation.goBack();
+    navigate.goBack();
   };
 
   // ─── Render ──────────────────────────────────────────────────────────────────
@@ -459,7 +480,7 @@ const BookFreelancer = ({ route }: Props) => {
                 </View>
               )}
 
-              <View className="bg-blue-50 p-2 rounded-2xl mb-2">
+              {/* <View className="bg-blue-50 p-2 rounded-2xl mb-2">
                 <SelectInput
                   label={t('postWork.service_type')}
                   value={category}
@@ -473,7 +494,7 @@ const BookFreelancer = ({ route }: Props) => {
                   isValidate={errors.category ? `${t('postWork.service_type_required')}` : ''}
                   ref={categoryRef}
                 />
-              </View>
+              </View> */}
 
               <View className="bg-blue-50 px-2 rounded-2xl mb-2">
                 <FormInput
@@ -509,9 +530,8 @@ const BookFreelancer = ({ route }: Props) => {
                   placeholder={t('postWork.work_description_placeholder_req')}
                   value={workDetail}
                   onChangeText={setWorkDetail}
-                  inputClassName={errors.workDetail ? 'border-error' : 'border-border'}
-                  required
-                  isValidate={`${errors.workDetail ? `${t('postWork.work_description_required')}` : ''}`}
+                  inputClassName={'border-border'}
+
                 />
               </View>
 
@@ -521,7 +541,7 @@ const BookFreelancer = ({ route }: Props) => {
                   {['FIXED_PRICE', 'HOURLY', 'OFFERING'].map((type) => (
                     <TouchableOpacity
                       key={type}
-                      onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY')}
+                      onPress={() => setBudgetType(type as 'FIXED_PRICE' | 'HOURLY' | 'OFFERING')}
                       className={`flex-1 border py-4 rounded-xl items-center ${budgetType === type ? 'border-primary bg-primary' : 'border-border'}`}
                     >
                       <View className="flex-row items-center gap-2">
@@ -749,8 +769,15 @@ const BookFreelancer = ({ route }: Props) => {
           </ScrollView>
 
           <View className="px-5  bg-white" style={{ paddingBottom: insets.bottom - 24 }}>
-            <Pressable onPress={handleSubmit} className="bg-primary py-4 rounded-2xl items-center">
-              <Text className="text-white font-semibold text-base">{t('postWork.next')}</Text>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              className={`bg-primary py-4 rounded-2xl items-center flex-row justify-center gap-2 ${isSubmitting ? 'opacity-70' : ''}`}
+            >
+              {isSubmitting && <ActivityIndicator color="white" size="small" />}
+              <Text className="text-white font-semibold text-base">
+                {isSubmitting ? t('postWork.sending') : t('postWork.send')}
+              </Text>
             </Pressable>
           </View>
 

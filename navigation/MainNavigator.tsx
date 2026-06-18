@@ -64,6 +64,7 @@ import NewsScreen from 'screens/profile/NewsScreen';
 import News from 'screens/profile/News';
 import Setting from 'screens/profile/Setting';
 import EditFreelancerBank_InfomationSection from 'components/profile/EditFreelancerBank_InfomationSection';
+import PersonalKYC from 'components/freelancerKYC/PersonalKYC';
 
 
 
@@ -216,7 +217,39 @@ export default function MainNavigator() {
 
         />
 
-        <RootStack.Screen name="UpgradeToFreelancer" component={UpgradeToFreelancer} />
+        <RootStack.Screen name="UpgradeToFreelancer"  >
+
+          {() => (
+            <ProtectedRoute
+              backicon={true}
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <UpgradeToFreelancer />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
+
+
+        <RootStack.Screen name="PersonalKYC"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+
+          {() => (
+            <ProtectedRoute
+              backicon={true}
+              fallbackMessage={t('protectedRoute.signInToAccess')}
+              onSignInPress={() => navigation.navigate('SignIn')}
+              onSignUpPress={() => navigation.navigate('SignUp')}
+            >
+              <PersonalKYC />
+            </ProtectedRoute>
+          )}
+        </RootStack.Screen>
 
         <RootStack.Screen name="FreelancerRoleGate"
           options={{
@@ -236,7 +269,11 @@ export default function MainNavigator() {
           )}
         </RootStack.Screen>
 
-        <RootStack.Screen name="AuthFreelancerProfile" component={AuthFreelancerProfile} />
+        <RootStack.Screen name="AuthFreelancerProfile" component={AuthFreelancerProfile}
+          options={{
+            headerShown: false,
+            animation: 'ios_from_right',
+          }} />
         <RootStack.Screen name="CustomerProfile" component={CustomerProfile} options={{
           headerShown: false,
           animation: 'ios_from_right',

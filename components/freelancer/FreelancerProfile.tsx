@@ -356,7 +356,7 @@ export default function FreelancerProfile() {
   }
 
 
-  console.log('[FreelancerProfile] Rendered with profile ID:', profile);
+  // console.log('[FreelancerProfile] Rendered with profile ID:', profile);
   // =================================================================
   // MAIN RENDER - Profile Content
   // =================================================================

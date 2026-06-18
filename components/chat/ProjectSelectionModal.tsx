@@ -629,10 +629,16 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
 
             <View className="flex-row items-center">
               <Text>{t('postWork.budget')} : </Text>
+              <Text className="font-bold text-body text-warning ml-2">{item.currency} </Text>
               <Text className="font-bold text-body text-primary">
                 {new Intl.NumberFormat().format(item.budget)}
               </Text>
-              <Text className="font-bold text-body text-warning ml-2">{item.currency} </Text>
+
+              <Text className="text-body text-textSecondary">{" • "}
+                {item.budgetType === 'FIXED_PRICE' ? t('postWork.fixed_price')
+                  : item.budgetType === 'HOURLY' ? t('postWork.hourly')
+                    : t('postWork.offering')}
+              </Text>
             </View>
 
           )}
@@ -665,30 +671,30 @@ const ProjectSelectionModal: React.FC<ProjectSelectionModalProps> = ({
             </View>
           </View>
 
-          <View className="flex-row row-auto items-center" >
-            {item.address &&
-
+          <View className="flex-row row-auto items-center">
+            {(item.address || item.place) && (
               <View className="flex-row mt-3 items-center">
-                {/* <Text>{t('payment_success.address')}: </Text> */}
-
-                <View className="flex-row gap-2 items-center">
+                <View className="flex-row gap-2 items-start">
                   <Ionicons name="location-outline" size={18} color="#F59E0B" />
-                  {item.address.village !== '' &&
-                    item.address.district !== '' &&
-                    item.address.province !== '' && (
 
+                  <View>
+                    {item.address &&
+                      item.address.village !== '' &&
+                      item.address.district !== '' &&
+                      item.address.province !== '' && (
+                        <Text className="text-sm text-textSecondary">
+                          {item.address.village}, {item.address.district}, {item.address.province}.
+                        </Text>
+                      )}
+                    {item.place && (
                       <Text className="text-sm text-textSecondary">
-                        {item.address.village}, {item.address.district}, {item.address.province} ,
+                        {item.place}
                       </Text>
                     )}
-                  {item.place && (
-                    <Text className="text-sm text-textSecondary">
-                      {item.place}
-                    </Text>
-                  )}
+                  </View>
                 </View>
               </View>
-            }
+            )}
           </View>
 
 

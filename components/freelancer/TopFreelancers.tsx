@@ -121,7 +121,7 @@ export default function TopFreelancers({
                                         </Text>
                                     </View>
                                 </View>
-                                <Text className="text-body font-semibold" numberOfLines={1}>{item.jobTitle}</Text>
+                                <Text className="text-body" numberOfLines={1}>{item.jobTitle}</Text>
 
                                 {/* <Text className="text-caption text-gray-600" numberOfLines={2}>
                                     {item.customerExpect}

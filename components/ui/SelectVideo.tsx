@@ -14,12 +14,15 @@ interface Props {
   label: string;
   required?: boolean;
   onChange: (file?: FileWithType) => void;
+  inputClassName?: string;
+  isValidate?: string;
 }
 
 interface ModalState {
   visible: boolean;
   title: string;
   message: string;
+  
 }
 
 const CONSTRAINTS = {
@@ -45,6 +48,8 @@ const SelectVideo: React.FC<Props> = ({
   label,
   required = false,
   onChange,
+  inputClassName,
+  isValidate
 }) => {
   const { t } = useTranslation();
   const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -333,9 +338,10 @@ const SelectVideo: React.FC<Props> = ({
             </TouchableOpacity>
           </>
         ) : (
+          <View>
           <TouchableOpacity
             onPress={handlePickVideo}
-            className="border border-dashed flex-col justify-center bg-blue-50 border-border rounded-xl p-4 items-center"
+            className={`border h-40 border-dashed bg-blue-50 rounded-xl p-4 flex-col justify-center items-center ${inputClassName}`}
             style={styles.uploadButton}
             accessibilityLabel={t('selectVideo.uploadPrompt')}
             accessibilityRole="button"
@@ -348,6 +354,10 @@ const SelectVideo: React.FC<Props> = ({
               </Text>
             </View>
           </TouchableOpacity>
+          {isValidate && (
+            <Text className="text-caption text-error mt-1">{isValidate}</Text>
+          )}
+          </View>
         )}
       </View>
 

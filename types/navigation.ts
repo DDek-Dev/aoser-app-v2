@@ -28,6 +28,7 @@ export type FreelancerStackParamList = {
   // start freelancer role 
 
   UpgradeToFreelancer: undefined;
+  PersonalKYC:undefined;
   // freelancer profile 
   CustomerProfile: { userId: string };
 

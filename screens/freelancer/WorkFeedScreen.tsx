@@ -132,6 +132,12 @@ const JobItem = React.memo(
               <Text className="font-bold text-body text-primary">
                 {numberFormatter.format(item.budget)}
               </Text>
+
+              <Text className="text-body text-textSecondary">{" • "}
+                {item.budgetType === 'FIXED_PRICE' ? t('postWork.fixed_price')
+                  : item.budgetType === 'HOURLY' ? t('postWork.hourly')
+                    : t('postWork.offering')}
+              </Text>
             </View>
           )}
 
@@ -162,22 +168,17 @@ const JobItem = React.memo(
             </View>
           )}
 
-          <View className="flex-row row-auto items-center" >
-            {item.address &&
-
+          <View className="flex-row row-auto items-center">
+            {(item.address || item.place) && (
               <View className="flex-row mt-3 items-center">
-                {/* <Text>{t('payment_success.address')}: </Text> */}
-
                 <View className="flex-row gap-2 items-start">
                   <Ionicons name="location-outline" size={18} color="#F59E0B" />
 
                   <View>
-
-
-                    {item.address.village !== '' &&
+                    {item.address &&
+                      item.address.village !== '' &&
                       item.address.district !== '' &&
                       item.address.province !== '' && (
-
                         <Text className="text-sm text-textSecondary">
                           {item.address.village}, {item.address.district}, {item.address.province}.
                         </Text>
@@ -190,7 +191,7 @@ const JobItem = React.memo(
                   </View>
                 </View>
               </View>
-            }
+            )}
           </View>
         </View>
       </Pressable>
@@ -198,6 +199,7 @@ const JobItem = React.memo(
   }
 );
 JobItem.displayName = 'JobItem';
+
 
 const WorkFeedScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<TabParamList>>();
@@ -665,7 +667,7 @@ const WorkFeedScreen = () => {
           )} */}
 
           {jobs.length === 0 ? (
-            <NoResults  title={t('works.result_found')}/>
+            <NoResults title={t('works.result_found')} />
           ) : (
             displayedJobs.length !== 0 ? (
               <>
@@ -709,7 +711,7 @@ const WorkFeedScreen = () => {
                 )}
               </>
             ) : (
-              activeCategory === 'All' ? <ActivityIndicator /> : <NoResults/>
+              activeCategory === 'All' ? <ActivityIndicator /> : <NoResults />
             )
           )}
 

@@ -5,12 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import StepProgressFreelancerBar from 'components/ui/StepProgressFreelancerBar';
 import UpgradeToFreelancerStep1 from './UpgradeToFreelancerStep1';
 import UpgradeToFreelancerStep2 from './UpgradeToFreelancerStep2';
-import UpgradeToFreelancerStep3 from './UpgradeToFreelancerStep3';
-import UpgradeToFreelancerStep4 from './UpgradeTofreelancerStep4';
-import UpgradeToFreelancerStep5 from './UpgradeToFreelancerStep5';
 import UpgradeToFreelancerReview from './UpgradeToFreelancerReview';
-import UpgradeToFreelancerStep6 from './UpgradeToFreelancerStep6';
-import UpgradeToFreelancerStep7 from './UpgradeToFreelancerStep7';
 import AoserProfileSetting from 'screens/profile/AoserProfileSetting';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,18 +16,13 @@ import { FileWithType } from 'types';
 
 import {
     saveFileToTemp,
-    saveStepData,
-    getAllStepData,
-    cleanup,
     uploadFileInstant,
     uploadFilesInstant,
     AoserProfileData,
     Step1Data,
     Step2Data,
-    Step4Data,
-    Step5Data,
-    Step6Data,
-    Step7Data
+
+
 } from 'utils/fileStorage';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
@@ -58,28 +48,40 @@ interface Step2DataExtended extends Step2Data {
     existingCertificates?: string[];
 }
 
-interface Step5DataExtended extends Step5Data {
-    existingSelfieWithCard?: string;
-    existingCardImage?: string;
-}
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ⚠️ Replace this with your actual CDN base URL
-const CDN_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL; // e.g. 'https://cdn.example.com/uploads/'
+// const CDN_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL; // e.g. 'https://cdn.example.com/uploads/'
 
 interface ErrorState {
     [key: string]: boolean;
 }
 
+const IMAGES_URL = process.env.EXPO_PUBLIC_IMAGES_URL || "";
+
 /** Build a remote FileWithType from a stored filename string */
 const remoteFile = (filename: string | undefined, type: 'image' | 'video' = 'image'): FileWithType | null => {
     if (!filename) return null;
+
+    let name = filename;
+    let uri = filename;
+
+    // If it's a full URL, extract the filename for 'name' property
+    if (filename.startsWith('http://') || filename.startsWith('https://')) {
+        const parts = filename.split('/');
+        name = parts[parts.length - 1];
+    } else if (filename && !filename.startsWith('file://')) {
+        // If it's just a filename, prepend base URL for 'uri' so it can be displayed
+        uri = `${IMAGES_URL}${filename}`;
+    }
+
     const mimeType = type === 'video'
         ? 'video/mp4'
-        : filename.endsWith('.png') ? 'image/png' : 'image/jpeg';
+        : name.endsWith('.png') ? 'image/png' : 'image/jpeg';
+
     return {
-        uri: `${CDN_BASE_URL}${filename}`,
-        name: filename,
+        uri: uri,
+        name: name,
         type: mimeType,
     };
 };
@@ -125,7 +127,7 @@ const UpgradeToFreelancer = () => {
     const [freelancerType, setFreelancerType] = useState('FULLTIME');
     const [category, setCategory] = useState('');
     const [subcategories, setSubcategories] = useState<string[]>([]);
-    const [errorsStep1, setErrorsStep1] = useState<ErrorState>({ jobTitle: false, category: false, bannerImageFile: false, freelancerType: false });
+    const [errorsStep1, setErrorsStep1] = useState<ErrorState>({ jobTitle: false, category: false, bannerImageFile: false, promoVideoFile:false, freelancerType: false });
 
     // Step 2
     const [aboutMe, setAboutMe] = useState('');
@@ -142,26 +144,10 @@ const UpgradeToFreelancer = () => {
     const [errorsStep3, setErrorsStep3] = useState({ serviceDesc: false, hourlyRate: false });
 
     // Step 4
-    const [cardID, setCardID] = useState('');
-    const [fromDate, setFromDate] = useState<Date | null>(null);
-    const [cardType, setCardType] = useState<'ID_CARD' | 'PASSPORT' | 'VISA'>('ID_CARD');
+
     const [addressProvince, setAddressProvince] = useState('');
     const [addressDistrict, setAddressDistrict] = useState('');
     const [addressVillage, setAddressVillage] = useState('');
-    const [errorsStep4, setErrorsStep4] = useState<ErrorState>({ cardID: false, cardType: false, fromDate: false });
-
-    // Step 5
-    const [selfieWithCard, setSelfieWithCard] = useState<FileWithType | null>(null);
-    const [cardImage, setCardImage] = useState<FileWithType | null>(null);
-    const [errorsStep5, setErrorsStep5] = useState<ErrorState>({ selfieWithCard: false, cardImage: false });
-
-    // Step 6
-    const [paymentMethod, setPaymentMethod] = useState<'LAOS_BANK' | 'PAYPAL'>('LAOS_BANK');
-    const [bankName, setBankName] = useState('');
-    const [accountName, setAccountName] = useState('');
-    const [bankNumber, setBankNumber] = useState('');
-    const [paypalInfo, setPaypalInfo] = useState('');
-    const [errorsStep6, setErrorsStep6] = useState<ErrorState>({});
 
     // Step 7
     const [agreed, setAgreed] = useState(false);
@@ -205,9 +191,6 @@ const UpgradeToFreelancer = () => {
             const hasStep1 = !!scopedDraft?.['@freelancer_step1'];
             const hasStep2 = !!scopedDraft?.['@freelancer_step2'];
             const hasStep3 = !!scopedDraft?.['@freelancer_step3'];
-            const hasStep4 = !!scopedDraft?.['@freelancer_step4'];
-            const hasStep5 = !!scopedDraft?.['@freelancer_step5'];
-            const hasStep6 = !!scopedDraft?.['@freelancer_step6'];
 
             const step2Draft = scopedDraft?.['@freelancer_step2'] || null;
             const step1Draft = scopedDraft?.['@freelancer_step1'] || null;
@@ -284,32 +267,6 @@ const UpgradeToFreelancer = () => {
                 setRateType((profileData.rateType as 'PER_HOUR' | 'PER_JOB' | 'PER_DAY') || 'PER_HOUR');
             }
 
-            // Step 4 — KYC ID
-            if (!hasStep4) {
-                setCardType((profileData.personalCardType as 'ID_CARD' | 'PASSPORT' | 'VISA') || 'ID_CARD');
-                setCardID(profileData.personalCardID || '');
-                if (profileData.personalCardExpireDate) {
-                    setFromDate(new Date(profileData.personalCardExpireDate));
-                }
-            }
-
-            // Step 5 — KYC Images
-            if (!hasStep5) {
-                if (profileData.userWithCardImage) {
-                    setSelfieWithCard(remoteFile(profileData.userWithCardImage));
-                }
-                if (profileData.personalCardImage) {
-                    setCardImage(remoteFile(profileData.personalCardImage));
-                }
-            }
-
-            // Step 6 — Bank Info
-            if (!hasStep6) {
-                setPaymentMethod((profileData.bankAccountType as 'LAOS_BANK' | 'PAYPAL') || 'LAOS_BANK');
-                setBankName((profileData as any).bankName || profileData.bankAccountName || '');
-                setAccountName(profileData.bankAccountName || '');
-                setBankNumber(profileData.bankAccountNumber || '');
-            }
 
         })();
 
@@ -326,12 +283,6 @@ const UpgradeToFreelancer = () => {
         t('kyc.steps.profile'),
         t('kyc.steps.basicInfo'),
         t('kyc.steps.skills'),
-        t('kyc.steps.category'),
-        t('kyc.steps.availability'),
-        t('kyc.steps.portfolio'),
-        t('kyc.steps.bankInfo'),
-        t('kyc.steps.confirmation'),
-        t('kyc.steps.review'),
     ];
 
     const renderStep = () => {
@@ -342,7 +293,7 @@ const UpgradeToFreelancer = () => {
                     firstName={firstName} setFirstName={setFirstName}
                     lastName={lastName} setLastName={setLastName}
                     profileImg={profileImg} setProfileImg={setProfileImg}
-                    // gender={gender} setGender={setGender}
+
                     phone={phone} setPhone={setPhone}
                     province={addressProvince} setProvince={setAddressProvince}
                     district={addressDistrict} setDistrict={setAddressDistrict}
@@ -367,42 +318,15 @@ const UpgradeToFreelancer = () => {
                     skills={skills} setSkills={setSkills}
                     experiences={experiences} setExperiences={setExperiences}
                     certificateImages={certificateImages} setCertificateImages={setCertificateImages}
-                    errors={errorsStep2}
-                />;
-            case 3:
-                return <UpgradeToFreelancerStep3
                     serviceDesc={serviceDesc} setServiceDesc={setServiceDesc}
                     hourlyRate={hourlyRate} setHourlyRate={setHourlyRate}
                     budgetCurrency={budgetCurrency} setBudgetCurrency={setBudgetCurrency}
                     rateType={rateType} setRateType={setRateType}
-                    errors={errorsStep3}
+                    agreed={agreed} setAgreed={setAgreed}
+                    errors={{ ...errorsStep2, ...errorsStep3, ...errorsStep7 }}
                 />;
-            case 4:
-                return <UpgradeToFreelancerStep4
-                    cardType={cardType} setCardType={setCardType}
-                    cardID={cardID} setCardID={setCardID}
-                    fromDate={fromDate} setFromDate={setFromDate}
-                    errors={errorsStep4}
-                />;
-            case 5:
-                return <UpgradeToFreelancerStep5
-                    selfieWithCard={selfieWithCard} setSelfieWithCard={setSelfieWithCard}
-                    cardImage={cardImage} setCardImage={setCardImage}
-                    errors={errorsStep5}
-                />;
-            case 6:
-                return <UpgradeToFreelancerStep6
-                    paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
-                    bankName={bankName} setBankName={setBankName}
-                    accountName={accountName} setAccountName={setAccountName}
-                    bankNumber={bankNumber} setBankNumber={setBankNumber}
-                    paypalInfo={paypalInfo} setPaypalInfo={setPaypalInfo}
-                    errors={errorsStep6}
-                />;
-            case 7:
-                return <UpgradeToFreelancerStep7 agreed={agreed} setAgreed={setAgreed} errors={errorsStep7} />;
-            case 8:
-                return <UpgradeToFreelancerReview />;
+            // case 3:
+            //     return <UpgradeToFreelancerReview />;
             default:
                 return null;
         }
@@ -442,7 +366,6 @@ const UpgradeToFreelancer = () => {
                 firstName: firstName.trim() === '',
                 lastName: lastName.trim() === '',
                 profileImg: !profileImg?.uri,
-                // gender: !gender.trim(),
                 phone: !phone.trim(),
                 province: !addressProvince.trim(),
                 district: !addressDistrict.trim(),
@@ -457,7 +380,6 @@ const UpgradeToFreelancer = () => {
                     userId,
                     firstName,
                     lastName,
-                    // gender,
                     phone,
                     address: {
                         country: 'Laos',
@@ -499,6 +421,7 @@ const UpgradeToFreelancer = () => {
                 jobTitle: jobTitle.trim() === '',
                 category: category.trim() === '',
                 bannerImageFile: bannerImageFile === null,
+                promoVideoFile: promoVideoFile === null,
                 freelancerType: freelancerType.trim() === '',
             };
             setErrorsStep1(newErrors);
@@ -551,17 +474,29 @@ const UpgradeToFreelancer = () => {
             }
         }
 
-        // ── Step 2: Skills & Experience ──────────────────────────────────────
+        // ── Step 2: Skills & Experience + Service & Rate ───────────────────
         if (step === 2) {
             const cleanedSkills = skills.filter(s => s.trim() !== '');
             const cleanedExperiences = experiences.filter(e => e.trim() !== '');
-            const newErrors: ErrorState = {
+
+            const newErrorsStep2: ErrorState = {
                 aboutMe: aboutMe.trim() === '',
                 skills: cleanedSkills.length === 0,
                 experiences: cleanedExperiences.length === 0,
             };
-            setErrorsStep2(newErrors);
-            if (Object.values(newErrors).some(Boolean)) return;
+
+            const newErrorsStep3 = {
+                serviceDesc: serviceDesc.trim() === '',
+                hourlyRate: hourlyRate === 0
+            };
+
+            const newErrorsStep7 = { agreed: agreed === false };
+
+            setErrorsStep2(newErrorsStep2);
+            setErrorsStep3(newErrorsStep3);
+            setErrorsStep7(newErrorsStep7);
+
+            if (Object.values(newErrorsStep2).some(Boolean) || Object.values(newErrorsStep3).some(Boolean) || newErrorsStep7.agreed) return;
 
             setIsSubmitting(true);
             try {
@@ -596,11 +531,17 @@ const UpgradeToFreelancer = () => {
                     certificatesTouched: true,
                     existingCertificates: [...existingCertificates, ...uploadedKeys],
                 };
-
                 // await saveStepData('@freelancer_step2', dataToSave);
                 await saveScopedStep(currentUserId, '@freelancer_step2', dataToSave);
+
+                // Also save Step 3 data since it's now in the same UI step
+                await saveScopedStep(currentUserId, '@freelancer_step3', { serviceDesc, hourlyRate, budgetCurrency, rateType });
+
+                // Save Step 7 data (Agreement)
+                await saveScopedStep(currentUserId, '@freelancer_step7', { agreed });
+
             } catch (error) {
-                console.log('❌ Step 2 upload/save failed:', error);
+                console.log('❌ Step 2 (Skills & Agreement) upload/save failed:', error);
                 Toast.show({ type: ALERT_TYPE.DANGER, title: t('kyc.toast.error.title'), textBody: t('kyc.toast.error.body') });
                 return;
             } finally {
@@ -608,114 +549,9 @@ const UpgradeToFreelancer = () => {
             }
         }
 
-        // ── Step 3: Service Description ──────────────────────────────────────
-        if (step === 3) {
-            const newErrors = { serviceDesc: serviceDesc.trim() === '', hourlyRate: hourlyRate === 0 };
-            setErrorsStep3(newErrors);
-            if (Object.values(newErrors).some(Boolean)) return;
-
-            // await saveStepData('@freelancer_step3', { serviceDesc, hourlyRate, budgetCurrency, rateType });
-            await saveScopedStep(currentUserId, '@freelancer_step3', { serviceDesc, hourlyRate, budgetCurrency, rateType });
-        }
-
-        // ── Step 4: ID Card Info ─────────────────────────────────────────────
-        if (step === 4) {
-            const newErrors = { cardType: cardType === null, cardID: cardID.trim() === '', fromDate: fromDate === null || fromDate < new Date() };
-            setErrorsStep4(newErrors);
-            if (Object.values(newErrors).some(Boolean)) return;
-
-            // await saveStepData('@freelancer_step4', { cardType, cardID, fromDate: fromDate as Date });
-
-            await saveScopedStep(currentUserId, '@freelancer_step4', { cardType, cardID, fromDate });
-
-        }
-
-        // ── Step 5: KYC Images ───────────────────────────────────────────────
-        if (step === 5) {
-            const newErrors: ErrorState = { selfieWithCard: selfieWithCard === null, cardImage: cardImage === null };
-            setErrorsStep5(newErrors);
-            if (Object.values(newErrors).some(Boolean)) return;
-
+        // ── Step 3: Submit (was 8) ───────────────────────────────────────────
+        if (step === 2) {
             setIsSubmitting(true);
-            try {
-                const dataToSave: Step5DataExtended = {};
-
-                if (selfieWithCard) {
-                    if (!isRemoteFile(selfieWithCard)) {
-                        const ext = selfieWithCard.type?.split('/')[1] || 'jpg';
-                        const fileName = selfieWithCard.name || `selfie_${Date.now()}.${ext}`;
-                        const prepared = await prepareLocalFileForUpload(selfieWithCard, fileName);
-                        const uploadedKey = await uploadFileInstant(prepared);
-                        dataToSave.existingSelfieWithCard = uploadedKey;
-                        setSelfieWithCard(remoteFile(uploadedKey, 'image'));
-                    } else {
-                        dataToSave.existingSelfieWithCard = selfieWithCard.name;
-                    }
-                }
-
-                if (cardImage) {
-                    if (!isRemoteFile(cardImage)) {
-                        const ext = cardImage.type?.split('/')[1] || 'jpg';
-                        const fileName = cardImage.name || `card_${Date.now()}.${ext}`;
-                        const prepared = await prepareLocalFileForUpload(cardImage, fileName);
-                        const uploadedKey = await uploadFileInstant(prepared);
-                        dataToSave.existingCardImage = uploadedKey;
-                        setCardImage(remoteFile(uploadedKey, 'image'));
-                    } else {
-                        dataToSave.existingCardImage = cardImage.name;
-                    }
-                }
-
-                // await saveStepData('@freelancer_step5', dataToSave);
-                await saveScopedStep(currentUserId, '@freelancer_step5', dataToSave);
-
-
-            } catch (error) {
-                console.log('❌ Step 5 upload/save failed:', error);
-                Toast.show({ type: ALERT_TYPE.DANGER, title: t('kyc.toast.error.title'), textBody: t('kyc.toast.error.body') });
-                return;
-            } finally {
-                setIsSubmitting(false);
-            }
-        }
-
-        // ── Step 6: Bank Info ────────────────────────────────────────────────
-        if (step === 6) {
-            const newErrors: ErrorState = {
-                accountName: accountName.trim() === '',
-                bankName: bankName.trim() === '',
-                ...(paymentMethod === 'PAYPAL' ? { paypalInfo: paypalInfo.trim() === '' } : { bankNumber: bankNumber.trim() === '' }),
-            };
-            setErrorsStep6(newErrors);
-            if (Object.values(newErrors).some(Boolean)) return;
-
-            const dataToSave: Step6Data = {
-                paymentMethod, bankName, accountName,
-                ...(paymentMethod === 'PAYPAL' ? { paypalInfo } : { bankNumber }),
-            };
-            // await saveStepData('@freelancer_step6', dataToSave);
-            await saveScopedStep(currentUserId, '@freelancer_step6', dataToSave);
-
-        }
-
-        // ── Step 7: Agreement ────────────────────────────────────────────────
-        if (step === 7) {
-            const newErrors: ErrorState = { agreed: agreed === false };
-            setErrorsStep7(newErrors);
-            if (Object.values(newErrors).some(Boolean)) return;
-            // await saveStepData('@freelancer_step7', { agreed });
-            await saveScopedStep(currentUserId, '@freelancer_step7', { agreed });
-
-        }
-
-        // ── Step 8: Submit ───────────────────────────────────────────────────
-        // ── Step 8: Submit ───────────────────────────────────────────────────
-        if (step === 8) {
-            setIsSubmitting(true);
-            
-            // Re-calculate rejection status inside the handler to ensure we use the most 
-            // current profileData state at the moment of click.
-            const isActuallyRejected = profileData.businessType === 'FREELANCER' && profileData.registrationStatus === 'REJECTED';
 
             try {
                 const allStepData = await getAllScopedStepData(currentUserId);
@@ -731,9 +567,8 @@ const UpgradeToFreelancer = () => {
                     !!reconstructedData['@aoser_profile']?.profileImgPath ||
                     !!reconstructedData['@freelancer_step1']?.bannerImagePath ||
                     !!reconstructedData['@freelancer_step1']?.promoVideoPath ||
-                    !!reconstructedData['@freelancer_step2']?.certificatePaths ||
-                    !!reconstructedData['@freelancer_step5']?.selfieWithCardPath ||
-                    !!reconstructedData['@freelancer_step5']?.cardImagePath;
+                    !!reconstructedData['@freelancer_step2']?.certificatePaths
+
 
                 if (hasPendingUploads) {
                     console.log('❌ Cannot submit: pending uploads still in progress');
@@ -753,11 +588,6 @@ const UpgradeToFreelancer = () => {
                 const hourlyRateCurrencyValue = (step3Draft?.budgetCurrency as 'LAK' | 'USD') || 'LAK';
                 const rateTypeValue = (step3Draft?.rateType as 'PER_HOUR' | 'PER_DAY' | 'PER_JOB') || 'PER_HOUR';
 
-                const step6Draft = reconstructedData['@freelancer_step6'] || {};
-                const bankAccountNumberValue =
-                    step6Draft?.paymentMethod === 'PAYPAL'
-                        ? (step6Draft?.paypalInfo || '')
-                        : (step6Draft?.bankNumber || '');
 
                 const finalData: Partial<UserProfile> & Record<string, any> = {
                     businessType: 'FREELANCER',
@@ -772,11 +602,6 @@ const UpgradeToFreelancer = () => {
                     hourlyRate: hourlyRateValue,
                     hourlyRateCurrency: hourlyRateCurrencyValue,
                     rateType: rateTypeValue,
-                    personalCardType: reconstructedData['@freelancer_step4']?.cardType,
-                    personalCardID: reconstructedData['@freelancer_step4']?.cardID || '',
-                    personalCardExpireDate: reconstructedData['@freelancer_step4']?.fromDate || '',
-                    personalCardImage: reconstructedData['@freelancer_step5']?.existingCardImage || '',
-                    userWithCardImage: reconstructedData['@freelancer_step5']?.existingSelfieWithCard || '',
                     address: {
                         country: reconstructedData['@aoser_profile']?.address?.country || 'Laos',
                         province: reconstructedData['@aoser_profile']?.address?.province || '',
@@ -785,10 +610,7 @@ const UpgradeToFreelancer = () => {
                         latitude: 0,
                         longitude: 0,
                     },
-                    bankAccountType: step6Draft?.paymentMethod,
-                    bankName: step6Draft?.bankName || '',
-                    bankAccountName: step6Draft?.accountName || '',
-                    bankAccountNumber: bankAccountNumberValue,
+
                 };
 
                 // Optional fields
@@ -815,7 +637,13 @@ const UpgradeToFreelancer = () => {
                 if (finalData.videoPromote == null || finalData.videoPromote === '') delete finalData.videoPromote;
                 if (finalData.jobs == null) delete finalData.jobs;
                 if (finalData.certificates == null) delete finalData.certificates;
+                const profilePayload: any = {
+                    firstName: savedFirstName.trim(),
+                    lastName: savedLastName.trim(),
+                    phone: savedPhone.trim(),
+                };
 
+               
                 // ── onSuccess ────────────────────────────────────────────────
                 const onSuccess = async (response: any) => {
                     try {
@@ -824,7 +652,7 @@ const UpgradeToFreelancer = () => {
                             lastName: savedLastName.trim(),
                             phone: savedPhone.trim(),
                         };
-                        
+
                         if (uploadedUserProfileImage) {
                             profilePayload.userProfileImage = uploadedUserProfileImage;
                         } else if (reconstructedData['@aoser_profile']?.existingProfileImg) {
@@ -855,14 +683,10 @@ const UpgradeToFreelancer = () => {
                         queryClient.removeQueries({ queryKey: ['freelancerStep1'] });
                         queryClient.removeQueries({ queryKey: ['freelancerStep2'] });
                         queryClient.removeQueries({ queryKey: ['freelancerStep3'] });
-                        queryClient.removeQueries({ queryKey: ['freelancerStep4'] });
-                        queryClient.removeQueries({ queryKey: ['freelancerStep5'] });
-                        queryClient.removeQueries({ queryKey: ['freelancerStep6'] });
-                        queryClient.removeQueries({ queryKey: ['freelancerStep7'] });
                         queryClient.removeQueries({ queryKey: ['freelancerReview'] });
                         await queryClient.invalidateQueries({ queryKey: ['myProfile'] });
                         await queryClient.refetchQueries({ queryKey: ['myProfile'] });
-                        navigation.popTo('FreelancerRoleGate');
+                        navigation.popTo('AuthFreelancerProfile', {userId: currentUserId});
                     } finally {
                         setIsSubmitting(false); // ✅ always runs even if navigation fails
                     }
@@ -880,13 +704,10 @@ const UpgradeToFreelancer = () => {
                 };
 
                 // ── Submit ───────────────────────────────────────────────────
-                if (isActuallyRejected) {
-                    console.log('🔄 Re-submitting rejected application...');
-                    updateFreelancerProfile(finalData as UserProfile, { onSuccess, onError });
-                } else {
-                    console.log('🆕 Submitting new application...');
-                    createFreelancer(finalData as UserProfile, { onSuccess, onError });
-                }
+
+                createFreelancer(finalData as UserProfile, { onSuccess, onError });
+
+                setIsSubmitting(false);
             } catch (error) {
                 console.log('❌ Error in submission process:', error);
                 Toast.show({
@@ -954,7 +775,7 @@ const UpgradeToFreelancer = () => {
                                 <ActivityIndicator color="white" size="small" />
                             ) : (
                                 <Text className="text-white text-base font-semibold">
-                                    {step === 8 ? t('kyc.buttons.go_live') : t('kyc.buttons.next')}
+                                    {step === 2 ? t('kyc.buttons.go_live') : t('kyc.buttons.next')}
                                 </Text>
                             )}
                         </TouchableOpacity>

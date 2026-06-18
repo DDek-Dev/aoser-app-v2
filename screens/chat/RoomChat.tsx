@@ -462,7 +462,7 @@ const RoomChat = () => {
 
   const handlePhotoSelection = async () => {
     const hasPermission = await requestMediaPermissionIfNeeded();
-if (!hasPermission) return;
+    if (!hasPermission) return;
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -1086,7 +1086,7 @@ if (!hasPermission) return;
               } else if ((chat.userProfile.businessType === 'FREELANCER')) {
                 navigation.navigate('FreelancerProfile', { userId: chat.userProfile._id })
               }
-            }}> 
+            }}>
 
 
 

@@ -199,7 +199,12 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                                 <View>
                                     <Text className="text-primary text-xs mb-0.5">{t('chat.offer.new_budget')}</Text>
                                     <Text className="text-primary font-bold text-base">
-                                        {new Intl.NumberFormat().format(workData.updateData.budget)} {workData.updateData.currency}
+                                        {workData.updateData.currency} {new Intl.NumberFormat().format(workData.updateData.budget)}
+                                    </Text>
+                                    <Text className="text-body text-textSecondary">{" • "}
+                                        {workData.updateData.budgetType === 'FIXED_PRICE' ? t('postWork.fixed_price')
+                                            : workData.updateData.budgetType === 'HOURLY' ? t('postWork.hourly')
+                                                : t('postWork.offering')}
                                     </Text>
                                 </View>
                             </View>
@@ -221,7 +226,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     {workData.workId?.createdBy?._id === user._id && (
                         <>
                             {/* Show buttons only when PENDING and not yet locally accepted/rejected */}
-                            {workData.requestStatus === "PENDING" && !isAccepted && !isRejected  && (
+                            {workData.requestStatus === "PENDING" && !isAccepted && !isRejected && (
                                 <View className="flex-row gap-2">
                                     <TouchableOpacity
                                         onPress={() => setShowRejectModal(true)}
@@ -257,7 +262,7 @@ const ProjectOfferingMessage: React.FC<ProjectOfferingMessageProps> = ({ project
                     )}
 
                     {/* Show confirmed message */}
-                   
+
                     {((workData.requestStatus === "CONFIRM" || isAccepted) && workData.workId.workStatus === "ASSIGNED_AWAIT_PAYMENT") && workData.workId?.createdBy?._id === user._id && (
                         <TouchableOpacity
                             className="py-4 px-16 rounded-full flex-row items-center justify-center bg-warning"

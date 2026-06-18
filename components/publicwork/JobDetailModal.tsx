@@ -454,7 +454,7 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress, onReporte
           keyboardDismissMode="none"
           contentContainerStyle={{
             paddingBottom: canApply && !hasApplied
-              ? 80 
+              ? 80
               : insets.bottom + 24,
           }}
         >
@@ -558,49 +558,33 @@ const JobDetailModal = ({ visible, onClose, job, refetch, onUserPress, onReporte
               </Text>
             </View>
           </View> */}
+              {(job?.address || job?.place) &&
 
-              {job?.address &&
-
-                <View className="flex-row mt-3 items-center overflow-hidden  pb-4 border-b border-border">
+                <View className="flex-row mt-3 items-center overflow-hidden pb-4 border-b border-border">
                   <View className="flex-row items-start gap-1">
                     <View className="p-2 rounded-xl bg-error/10 items-center justify-center mr-3">
                       <Ionicons name="location-outline" size={24} color="#F59E0B" />
                     </View>
 
                     <View>
-
-
-                      {/* <Text className="text-caption text-textSecondary mb-0.5">{t('payment_success.address')}  </Text> */}
-                      {job?.address.village !== '' &&
-                        job?.address.district !== '' &&
-                        job?.address.province !== '' && (
-
-
-                          <Text className="text-body text-text ">
+                      {job?.address &&
+                        job.address.village !== '' &&
+                        job.address.district !== '' &&
+                        job.address.province !== '' && (
+                          <Text className="text-body text-text">
                             {job.address.village}, {job.address.district}, {job.address.province}.
-
                           </Text>
                         )}
 
                       {job?.place && (
-
-
-
-                        <Text className="text-body text-text ">
-                          {job?.place}
-
+                        <Text className="text-body text-text">
+                          {job.place}
                         </Text>
-
-
                       )}
                     </View>
-
-
                   </View>
                 </View>
               }
-
-
 
 
             </View>

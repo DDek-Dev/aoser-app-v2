@@ -134,6 +134,7 @@ export default function AuthFreelancerProfile({ route }: Props) {
             status={profile.workerStatus || ''}
             ishidden={true}
             isme={isOwnProfile}
+            totalStartRate={profile.totalStartRate || 0}
           />
 
           <InfoStats

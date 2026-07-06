@@ -290,6 +290,46 @@ export default function FreelancerProfile() {
   //   }
   // }, [userId, t]);
 
+
+  if (profileError && !isLoadingProfile) {
+    return (
+      <ScreenWrapper safeEdges={['top', 'bottom']} style={{ flex: 1, backgroundColor: 'white' }}>
+
+        <Header_back
+          text={t('freelancer_profile.header_back_text', 'Profile')}
+          onPress={handleGoBack}
+          iconColor="#3B82F6"
+          backgroundColor="bg-surface"
+        />
+        <View className="flex-1 justify-center items-center px-6 bg-white">
+          <View className="mb-6 bg-red-50 p-6 rounded-full">
+            <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
+          </View>
+          <Text className="text-2xl font-bold text-gray-900 mb-3 text-center">
+            {t('postWork.public_confirm.error')}
+          </Text>
+          <Text className="text-base text-gray-600 text-center mb-8 leading-6">
+            {t('postWork.confirm.network_error', 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่')}
+          </Text>
+          <TouchableOpacity
+            onPress={() => refetch()}
+            className="bg-blue-500 px-8 py-4 rounded-lg flex-row items-center gap-2"
+            activeOpacity={0.8}
+          >
+            <Ionicons name="refresh" size={20} color="white" />
+            <Text className="text-white font-semibold text-base">
+              {t('freelancer_profile.retry')}
+            </Text>
+          </TouchableOpacity>
+          {/* <TouchableOpacity onPress={handleGoBack} className="mt-4 px-6 py-3" activeOpacity={0.7}>
+            <Text className="text-blue-500 font-medium text-base">
+              {t('freelancer_profile.go_back')}
+            </Text>
+          </TouchableOpacity> */}
+        </View>
+      </ScreenWrapper>
+    );
+  }
   // =================================================================
   // LOADING STATE
   // =================================================================
@@ -463,7 +503,7 @@ export default function FreelancerProfile() {
 
         {/* ===== REVIEWS SECTION ===== */}
         <View >
-          <Reviews reviews={reviews || []}   totalStartRate={profile.totalStartRate || 0}/>
+          <Reviews reviews={reviews || []} totalStartRate={profile.totalStartRate || 0} />
         </View>
 
         {/* ===== SIMILAR FREELANCERS ===== */}

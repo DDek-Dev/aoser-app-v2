@@ -6,7 +6,6 @@
 
 - npm run start 
 
-
 # for eas build
 
 npm installl -g eas-cli
@@ -28,4 +27,4 @@ npm installl -g eas-cli
  - npx install --package name ---
 
 
- build:
+build:

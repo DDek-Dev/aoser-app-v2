@@ -1,47 +1,66 @@
-import { View, StyleSheet, Pressable, Modal, SafeAreaView, Dimensions, AppState, AppStateStatus } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  Modal,
+  SafeAreaView,
+  AppState,
+  AppStateStatus,
+  Image,
+  Animated,
+} from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import VideoSkeleton from 'components/skeletonScreens/VideoSkeleton';
 
 type Props = {
   video?: string | null;
+  /** thumbnail image shown while video loads — ideally same frame as video start */
+  poster?: string | null;
   context?: 'home' | 'profile';
-  scrollY?: any;
+  isVisible?: boolean;
+  onPress?: () => void;
 };
 
 const IMAGES_BASE_URL = process.env.EXPO_PUBLIC_IMAGES_URL;
-const HOME_PREVIEW_DURATION_MS = 7000;
-const VISIBILITY_CHECK_INTERVAL_MS = 120;
-const ACTIVATE_VISIBILITY_RATIO = 0.55;
-const DEACTIVATE_VISIBILITY_RATIO = 0.2;
+const HOME_PREVIEW_DURATION_MS = 3000;
+
+// Module-level cache — persists across component mount/unmount cycles
 const loadedVideoUriCache = new Set<string>();
 
-export default function VDOPromote_free_profile({ video, context = 'home', scrollY }: Props) {
+export default function VDOPromote_free_profile({
+  video,
+  poster,
+  context = 'home',
+  isVisible = false,
+  onPress,
+}: Props) {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAppActive, setIsAppActive] = useState(appState.current === 'active');
+
   const videoUri = video ? `${IMAGES_BASE_URL}${video}` : null;
-  const [isLoading, setIsLoading] = useState(() => !!videoUri && !loadedVideoUriCache.has(videoUri));
+  const posterUri = poster ? `${IMAGES_BASE_URL}${poster}` : null;
+
+  // hasLoaded = video first frame has rendered (not just buffered)
+  // const [hasLoaded, setHasLoaded] = useState(
+  //   () => !!videoUri && loadedVideoUriCache.has(videoUri)
+  // );
+  // const videoOpacity = useRef(new Animated.Value(hasLoaded ? 1 : 0)).current;
   const [showFullScreen, setShowFullScreen] = useState(false);
-  const [isActive, setIsActive] = useState(false);
+const [hasLoaded, setHasLoaded] = useState(false);
+const videoOpacity = useRef(new Animated.Value(0)).current;
+  // Fade-in animation for the VideoView — goes from 0→1 when first frame renders
 
-  const layoutRef = useRef<{ top: number; height: number } | null>(null);
-  const containerRef = useRef<any>(null);
-  const scrollListener = useRef<any>(null);
   const previewLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const measureThrottleRef = useRef(0);
-  const isActiveRef = useRef(false);
 
-  const videoS = videoUri ? { uri: videoUri, useCaching: true as const } : null;
+  const videoS = useMemo(
+    () => (videoUri ? { uri: videoUri, useCaching: true as const } : null),
+    [videoUri]
+  );
 
   const player = useVideoPlayer(videoS, (p) => {
-    if (context === 'home') {
-      p.muted = true;
-      p.loop = false;
-    } else {
-      p.muted = false;
-      p.loop = false;
-    }
+    p.muted = true; // always muted in home cards — unmute only in fullscreen
+    p.loop = false;
     p.keepScreenOnWhilePlaying = false;
     p.bufferOptions = {
       preferredForwardBufferDuration: 10,
@@ -51,250 +70,188 @@ export default function VDOPromote_free_profile({ video, context = 'home', scrol
     };
   });
 
+  // AppState — pause when app goes to background
   useEffect(() => {
-    const shouldShowLoading = !!videoUri && !loadedVideoUriCache.has(videoUri);
-    setIsLoading(shouldShowLoading);
-  }, [videoUri]);
-
-  const markVideoLoaded = () => {
-    if (videoUri) loadedVideoUriCache.add(videoUri);
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    const handle = (nextAppState: AppStateStatus) => {
-      appState.current = nextAppState;
-      setIsAppActive(nextAppState === 'active');
+    const handle = (next: AppStateStatus) => {
+      appState.current = next;
+      setIsAppActive(next === 'active');
     };
-
-    const sub = AppState.addEventListener ? AppState.addEventListener('change', handle) : undefined;
-    return () => {
-      if (sub && typeof sub.remove === 'function') sub.remove();
-    };
+    const sub = AppState.addEventListener('change', handle);
+    return () => sub?.remove();
   }, []);
 
+  // Play/pause driven by isVisible + isAppActive
   useEffect(() => {
     if (!player) return;
-
     if (context === 'home') {
-      if (isActive && isAppActive && !isLoading && !showFullScreen) {
+      if (isVisible && isAppActive && !showFullScreen) {
         try { player.play(); } catch (e) {}
       } else {
         try { player.pause(); } catch (e) {}
       }
       return;
     }
-
     if (isAppActive) {
       try { player.play(); } catch (e) {}
     } else {
       try { player.pause(); } catch (e) {}
     }
-  }, [player, context, isActive, isAppActive, isLoading, showFullScreen]);
+  }, [player, context, isVisible, isAppActive, showFullScreen]);
 
+  // Preview loop — replay every N seconds while visible (home only)
   useEffect(() => {
     if (previewLoopRef.current) {
       clearInterval(previewLoopRef.current);
       previewLoopRef.current = null;
     }
+    if (!videoS || context !== 'home' || !isVisible || !isAppActive || showFullScreen) return;
 
-    if (!videoS || context !== 'home' || !isActive || !isAppActive || isLoading || showFullScreen) return;
-
-    try { player.replay(); } catch (e) {}
-
-    previewLoopRef.current = setInterval(() => {
-      try { player.replay(); } catch (e) {}
-    }, HOME_PREVIEW_DURATION_MS);
-
-    return () => {
-      if (previewLoopRef.current) {
-        clearInterval(previewLoopRef.current);
-        previewLoopRef.current = null;
-      }
-    };
-  }, [player, context, isActive, isAppActive, isLoading, showFullScreen, videoS]);
-
-  const updateActiveState = (ratio: number) => {
-    const previous = isActiveRef.current;
-    const next = previous
-      ? ratio >= DEACTIVATE_VISIBILITY_RATIO
-      : ratio >= ACTIVATE_VISIBILITY_RATIO;
-
-    if (previous !== next) {
-      isActiveRef.current = next;
-      setIsActive(next);
-    }
-  };
-
-  useEffect(() => {
-    if (!scrollY || !containerRef.current) return;
-    const add = (scrollY as any).addListener;
-    if (typeof add !== 'function') {
-      isActiveRef.current = false;
-      setIsActive(false);
-      return;
-    }
-
-    let rafId: number | null = null;
-    scrollListener.current = (scrollY as any).addListener(() => {
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-
-        const now = Date.now();
-        if (now - measureThrottleRef.current < VISIBILITY_CHECK_INTERVAL_MS) return;
-        measureThrottleRef.current = now;
-
-        try {
-          containerRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-            const winH = Dimensions.get('window').height;
-            const top = pageY || 0;
-            const h = height || (layoutRef.current?.height ?? 0);
-            const bottom = top + h;
-            const visibleTop = Math.max(top, 0);
-            const visibleBottom = Math.min(bottom, winH);
-            const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-            const ratio = h > 0 ? visibleHeight / h : 0;
-            updateActiveState(ratio);
-          });
-        } catch (e) {
-          isActiveRef.current = false;
-          setIsActive(false);
-        }
-      });
-    });
-
-    try {
-      containerRef.current?.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
-        const winH = Dimensions.get('window').height;
-        const top = pageY || 0;
-        const h = height || (layoutRef.current?.height ?? 0);
-        const bottom = top + h;
-        const visibleTop = Math.max(top, 0);
-        const visibleBottom = Math.min(bottom, winH);
-        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-        const ratio = h > 0 ? visibleHeight / h : 0;
-        updateActiveState(ratio);
-      });
-    } catch (e) {}
-
-    return () => {
+    // Seek to beginning smoothly instead of hard replay
+    const loop = () => {
       try {
-        if (scrollListener.current && typeof (scrollY as any).removeListener === 'function') {
-          (scrollY as any).removeListener(scrollListener.current);
-        }
+        player.currentTime = 0;
+        player.play();
       } catch (e) {}
-      if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [scrollY]);
 
-  useEffect(() => {
+    previewLoopRef.current = setInterval(loop, HOME_PREVIEW_DURATION_MS);
     return () => {
       if (previewLoopRef.current) {
         clearInterval(previewLoopRef.current);
         previewLoopRef.current = null;
       }
+    };
+  }, [player, context, isVisible, isAppActive, showFullScreen, videoS]);
+
+  // Cleanup on unmount — pause only, never release()
+  useEffect(() => {
+    return () => {
+      if (previewLoopRef.current) clearInterval(previewLoopRef.current);
       try { player.pause(); } catch (e) {}
     };
   }, [player]);
 
-  const containerStyle = context === 'home' ? styles.homeContainer : styles.profileContainer;
-  const videoViewStyle = context === 'home' ? styles.homeVideo : styles.profileVideo;
+  const handleFirstFrame = () => {
+  const seenBefore = videoUri ? loadedVideoUriCache.has(videoUri) : false;
+  if (videoUri) loadedVideoUriCache.add(videoUri);
+  setHasLoaded(true);
+  Animated.timing(videoOpacity, {
+    toValue: 1,
+    duration: seenBefore ? 120 : 300, // fast fade if we've shown it before, but still wait for the real frame
+    useNativeDriver: true,
+  }).start();
+};
 
   if (!videoS) return null;
 
-  return (
-    <>
-      {context === 'profile' ? (
-        <Pressable onPress={() => setShowFullScreen(true)} style={{ flex: 1 }}>
-          <View
-            ref={containerRef}
-            style={containerStyle}
-            onLayout={(e) => {
-              const { y, height } = e.nativeEvent.layout;
-              layoutRef.current = { top: y, height };
-            }}
-          >
-            <VideoView
-              style={videoViewStyle}
-              player={player}
-              surfaceType="textureView"
-              fullscreenOptions={{ enable: true }}
-              allowsPictureInPicture={true}
-              nativeControls={true}
-              contentFit="cover"
-              onFirstFrameRender={markVideoLoaded}
-            />
+  // ─── Home context (grid card) ─────────────────────────────────────────────
+  if (context === 'home') {
+    return (
+      <View style={styles.homeContainer}>
+        {/*
+          Layer 1 (bottom): Poster / thumbnail image.
+          Always rendered so there's never a black frame — the poster shows
+          instantly while the video buffers. Once the video fades in (opacity=1)
+          this poster is hidden behind it but still mounted (no layout shift).
+        */}
+        {posterUri ? (
+          <Image
+            source={{ uri: posterUri }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+        ) : (
+          // Placeholder gradient background while no poster is available
+          <View style={[StyleSheet.absoluteFill, styles.posterFallback]}  className='text-gray-100'/>
+        )}
 
-            {isLoading && (
-              <View style={styles.skeletonOverlay}>
-                <VideoSkeleton />
-              </View>
-            )}
-          </View>
-        </Pressable>
-      ) : (
-        <View
-          ref={containerRef}
-          style={containerStyle}
-          onLayout={(e) => {
-            const { y, height } = e.nativeEvent.layout;
-            layoutRef.current = { top: y, height };
-          }}
-        >
+        {/*
+          Layer 2: VideoView fades in over the poster when first frame is ready.
+          Using Animated.View wrapper because VideoView itself can't be animated directly.
+        */}
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
           <VideoView
-            style={videoViewStyle}
+            style={StyleSheet.absoluteFill}
             player={player}
             surfaceType="textureView"
             fullscreenOptions={{ enable: false }}
             allowsPictureInPicture={false}
             nativeControls={false}
             contentFit="cover"
-            onFirstFrameRender={markVideoLoaded}
+            onFirstFrameRender={handleFirstFrame}
           />
+        </Animated.View>
 
-          {isLoading && (
-            <View style={styles.skeletonOverlay}>
-              <VideoSkeleton aspectRatio={4 / 5} />
-            </View>
+        {/*
+          Layer 3: Muted indicator — small icon bottom-left so user knows
+          the video is playing silently. Only show after video has loaded.
+        */}
+        {/* {hasLoaded && isVisible && (
+          <View style={styles.mutedBadge}>
+            <Ionicons name="volume-mute" size={12} color="white" />
+          </View>
+        )} */}
+
+        {/*
+          Layer 4 (top): Transparent Pressable overlay.
+          Must be the LAST child so it sits above TextureView in Z-order.
+          TextureView on Android intercepts touches at the native layer before
+          RN's responder system — a parent Pressable never fires.
+          This overlay catches the touch first and calls onPress (navigation).
+        */}
+        <Pressable
+          onPress={onPress}
+          style={StyleSheet.absoluteFill}
+          android_ripple={null}
+        />
+      </View>
+    );
+  }
+
+  // ─── Profile context (full-width with fullscreen modal) ──────────────────
+  return (
+    <>
+      <Pressable onPress={() => setShowFullScreen(true)} style={{ flex: 1 }}>
+        <View style={styles.profileContainer}>
+          {posterUri && !hasLoaded && (
+            <Image
+              source={{ uri: posterUri }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
           )}
-        </View>
-      )}
-
-      {context === 'profile' && (
-        <Modal
-          visible={showFullScreen}
-          transparent
-          animationType="fade"
-          statusBarTranslucent
-        >
-          <SafeAreaView style={styles.fullScreenContainer}>
-            <Pressable
-              style={styles.closeButton}
-              onPress={() => setShowFullScreen(false)}
-            >
-              <Ionicons name="close" size={28} color="white" />
-            </Pressable>
-
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
             <VideoView
-              style={styles.fullScreenVideo}
+              style={StyleSheet.absoluteFill}
               player={player}
               surfaceType="textureView"
               fullscreenOptions={{ enable: true }}
               allowsPictureInPicture={true}
               nativeControls={true}
-              contentFit="contain"
-              onFirstFrameRender={markVideoLoaded}
+              contentFit="cover"
+              onFirstFrameRender={handleFirstFrame}
             />
+          </Animated.View>
+        </View>
+      </Pressable>
 
-            {isLoading && (
-              <View style={styles.skeletonOverlay}>
-                <VideoSkeleton height={Dimensions.get('window').height} />
-              </View>
-            )}
-          </SafeAreaView>
-        </Modal>
-      )}
+      <Modal visible={showFullScreen} transparent animationType="fade" statusBarTranslucent>
+        <SafeAreaView style={styles.fullScreenContainer}>
+          <Pressable style={styles.closeButton} onPress={() => setShowFullScreen(false)}>
+            <Ionicons name="close" size={28} color="white" />
+          </Pressable>
+          <VideoView
+            style={styles.fullScreenVideo}
+            player={player}
+            surfaceType="surfaceView"
+            fullscreenOptions={{ enable: true }}
+            allowsPictureInPicture={true}
+            nativeControls={true}
+            contentFit="contain"
+            onFirstFrameRender={handleFirstFrame}
+          />
+        </SafeAreaView>
+      </Modal>
     </>
   );
 }
@@ -303,25 +260,27 @@ const styles = StyleSheet.create({
   homeContainer: {
     width: '100%',
     aspectRatio: 4 / 5,
-    borderRadius: 0,
     overflow: 'hidden',
-    marginVertical: 0,
-    pointerEvents: 'none',
-  },
-  homeVideo: {
-    width: '100%',
-    height: '100%',
+    backgroundColor: '#1a1a1a',
   },
   profileContainer: {
     width: '100%',
     aspectRatio: 4 / 5,
-    borderRadius: 0,
     overflow: 'hidden',
-    marginVertical: 0,
+    backgroundColor: '#1a1a1a',
   },
-  profileVideo: {
-    width: '100%',
-    height: '100%',
+  posterFallback: {
+    backgroundColor: '#f3f4f6',
+  },
+  mutedBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 12,
+    padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   fullScreenContainer: {
     flex: 1,
@@ -329,21 +288,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  fullScreenVideo: {
-    width: '100%',
-    height: '100%',
-  },
+  fullScreenVideo: { width: '100%', height: '100%' },
   closeButton: {
     position: 'absolute',
     top: 16,
     right: 16,
     zIndex: 10,
     padding: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 20,
-  },
-  skeletonOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 5,
   },
 });

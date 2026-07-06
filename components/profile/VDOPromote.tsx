@@ -1,6 +1,6 @@
 import { View, StyleSheet, Pressable, Modal, Dimensions, AppState, AppStateStatus } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback , useMemo} from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import VideoSkeleton from 'components/skeletonScreens/VideoSkeleton';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
@@ -32,11 +32,14 @@ export default function VDOPromote({
 
   const videoUri = video
     ? isReview
-      ? video
-      : `${IMAGES_BASE_URL}${video}`
+    ? video
+    : `${IMAGES_BASE_URL}${video}`
     : null;
-  const videoS = videoUri ? { uri: videoUri, useCaching: true as const } : null;
-
+  // const videoS = videoUri ? { uri: videoUri, useCaching: true as const } : null;
+const videoS = useMemo(
+  () => (videoUri ? { uri: videoUri, useCaching: true as const } : null),
+  [videoUri]
+);
   const [showFullScreen, setShowFullScreen] = useState(false);
   const [isVisible, setIsVisible] = useState(false); // ← start FALSE, only play when measured visible
   const containerRef = useRef<View>(null);
@@ -234,8 +237,8 @@ export default function VDOPromote({
         previewLoopRef.current = null;
       }
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      try { player.pause(); } catch (e) {}
-      try { (player as any)?.release?.(); } catch (e) {}
+    try { player.pause(); } catch (e) {}
+    try { (player as any)?.release?.(); } catch (e) {}
     };
   }, [player]);
 

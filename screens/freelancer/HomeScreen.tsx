@@ -4,7 +4,6 @@ import {
   Animated,
   StyleSheet,
   Text,
-  RefreshControl,
   Pressable,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -20,27 +19,23 @@ import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useTranslation } from 'react-i18next';
 import { useGetTopfreelancers, useRecommendedFreelancers } from 'hooks/useFreelancer';
 import TopFreelancers from 'components/freelancer/TopFreelancers';
-// import NetworkErrorPopup from 'components/ui/NetworkErrorPopup';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const HIDE_THRESHOLD = 100;  // must scroll down this many px to hide
-const SHOW_THRESHOLD = 100;  // must scroll up this many px to show
-const MIN_SCROLL_Y = 10;    // don't hide when near the very top
+const HIDE_THRESHOLD = 100;
+const SHOW_THRESHOLD = 100;
+const MIN_SCROLL_Y = 10;
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isRetryingNetwork, setIsRetryingNetwork] = useState(false);
-  const [isSlowConnection, setIsSlowConnection] = useState(false);
   const [reportedFreelancerIds, setReportedFreelancerIds] = useState<string[]>([]);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const translateXAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // For hide/show search bar on scroll
   const lastScrollY = useRef(0);
   const bannerVisible = useRef(new Animated.Value(1)).current;
   const bannerState = useRef<'shown' | 'hidden'>('shown');
@@ -51,31 +46,24 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
-  const BANNER_FULL_HEIGHT = insets.top + 12 + 12; // paddingTop + search bar height + paddingBottom
+  const BANNER_FULL_HEIGHT = insets.top + 12 + 12;
 
   const {
     data,
     isLoading,
     isFetching,
-    isError: isRecommendedError,
-    error: recommendedError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     refetch,
-    isRefetching,
   } = useRecommendedFreelancers(selectedCategoryId || '', undefined);
 
-  // console.log('Recommended Freelancers:', JSON.stringify(data, null, 2)); 
   const {
     data: topFreelancers = [],
     isLoading: isTopFreelancersLoading,
     isFetching: isTopFreelancersFetching,
-    isError: isTopFreelancersError,
-    error: topFreelancersError,
     refetch: refetchTopFreelancers,
   } = useGetTopfreelancers();
-  // console.log('Top Freelancers:', JSON.stringify(topFreelancers, null, 2));
 
   const allFreelancers = useMemo(() => {
     return data?.pages.flatMap(page => page) || [];
@@ -111,62 +99,6 @@ export default function HomeScreen() {
     }
   }, [isRefreshing, refetch, refetchTopFreelancers]);
 
-  const isLikelyNetworkError = (error: unknown): boolean => {
-    if (!error) return false;
-    const maybeError = error as any;
-    const code = maybeError?.code;
-    const message = String(maybeError?.message || '').toLowerCase();
-    if (maybeError?.isAxiosError && !maybeError?.response) return true;
-    if (code === 'ERR_NETWORK' || code === 'ERR_INTERNET_DISCONNECTED' || code === 'ECONNABORTED') return true;
-    return (
-      message.includes('network') ||
-      message.includes('internet') ||
-      message.includes('timeout') ||
-      message.includes('failed to fetch')
-    );
-  };
-
-  const hasNetworkIssue =
-    (isRecommendedError && isLikelyNetworkError(recommendedError)) ||
-    (isTopFreelancersError && isLikelyNetworkError(topFreelancersError));
-
-  useEffect(() => {
-    const hasAnyData = allFreelancers.length > 0 || topFreelancers.length > 0;
-    const isAnyLoading = isLoading || isFetching || isTopFreelancersLoading || isTopFreelancersFetching;
-
-    if (!isAnyLoading || hasAnyData) {
-      setIsSlowConnection(false);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setIsSlowConnection(true);
-    }, 10000);
-
-    return () => clearTimeout(timer);
-  }, [
-    allFreelancers.length,
-    topFreelancers.length,
-    isLoading,
-    isFetching,
-    isTopFreelancersLoading,
-    isTopFreelancersFetching,
-  ]);
-
-  const showNetworkPopup = hasNetworkIssue || isSlowConnection;
-
-  const handleNetworkRetry = useCallback(async () => {
-    if (isRetryingNetwork) return;
-    setIsRetryingNetwork(true);
-    setIsSlowConnection(false);
-    try {
-      await Promise.all([refetch(), refetchTopFreelancers()]);
-    } finally {
-      setIsRetryingNetwork(false);
-    }
-  }, [isRetryingNetwork, refetch, refetchTopFreelancers]);
-
-  // Combined scroll handler: updates scrollY for other animations + handles banner hide/show
   const handleScroll = useCallback(
     Animated.event(
       [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -177,7 +109,6 @@ export default function HomeScreen() {
           const diff = currentY - lastScrollY.current;
           lastScrollY.current = currentY;
 
-          // Always show banner when near the top
           if (currentY <= MIN_SCROLL_Y) {
             if (bannerState.current !== 'shown') {
               bannerState.current = 'shown';
@@ -192,16 +123,14 @@ export default function HomeScreen() {
             return;
           }
 
-          // Accumulate scroll in the same direction, reset on direction change
           if (
             (diff > 0 && scrollAccumulator.current < 0) ||
             (diff < 0 && scrollAccumulator.current > 0)
           ) {
-            scrollAccumulator.current = 0; // direction changed, reset
+            scrollAccumulator.current = 0;
           }
           scrollAccumulator.current += diff;
 
-          // Only act when accumulated scroll crosses the threshold
           if (scrollAccumulator.current > HIDE_THRESHOLD && bannerState.current !== 'hidden') {
             bannerState.current = 'hidden';
             scrollAccumulator.current = 0;
@@ -267,6 +196,40 @@ export default function HomeScreen() {
     ]).start();
   }, [selectedIndex, fadeAnim, translateXAnim]);
 
+  // ✅ useMemo so the header object reference is stable across renders.
+  // Without this, every render creates a new JSX object → FlatList sees a new
+  // ListHeaderComponent prop → remounts the header → causes flash on tab switch.
+  const listHeader = useMemo(() => (
+    <Animated.View
+      style={{
+        paddingTop: 8,
+        opacity: fadeAnim,
+        transform: [{ translateX: translateXAnim }],
+      }}
+    >
+      {selectedCategory === 'All' && (
+        <TopFreelancers
+          scrollY={scrollY}
+          freelancers={filteredTopFreelancers}
+          isLoading={isTopFreelancersLoading}
+          isFetching={isTopFreelancersFetching}
+          onReported={handleReportedFreelancer}
+        />
+      )}
+    </Animated.View>
+  ), [
+    // Only rebuild when data or category actually changes — not on every render
+    selectedCategory,
+    filteredTopFreelancers,
+    isTopFreelancersLoading,
+    isTopFreelancersFetching,
+    handleReportedFreelancer,
+    // Animated values are stable refs, safe to include
+    fadeAnim,
+    translateXAnim,
+    scrollY,
+  ]);
+
   return (
     <ScreenWrapper safeEdges={['top']} style={{ flex: 1 }}>
       {/* Search Banner */}
@@ -301,70 +264,26 @@ export default function HomeScreen() {
         />
       </View>
 
-      <Animated.ScrollView
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        alwaysBounceVertical
-        overScrollMode="always"
-        contentContainerStyle={{ flexGrow: 1 }}
-        onScroll={handleScroll}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={['#3B82F6']}
-            tintColor="#3B82F6"
-            title={t('home.pull_to_refresh') || 'Pull to refresh...'}
-            titleColor="#666"
-          />
+      <Freelancers
+        title={
+          selectedCategory === 'All'
+            ? t('home.recommended_freelancers')
+            : `${selectedCategory} ${t('home.freelancers')}`
         }
-      >
-        <Animated.View
-          style={{
-            paddingTop: 8,
-            zIndex: 1,
-            opacity: fadeAnim,
-            transform: [{ translateX: translateXAnim }],
-          }}
-        >
-          {selectedCategory === 'All' && (
-            <TopFreelancers
-              scrollY={scrollY}
-              freelancers={filteredTopFreelancers}
-              isLoading={isTopFreelancersLoading}
-              isFetching={isTopFreelancersFetching}
-              onReported={handleReportedFreelancer}
-            />
-          )}
-
-          <Freelancers
-            title={
-              selectedCategory === 'All'
-                ? t('home.recommended_freelancers')
-                : `${selectedCategory} ${t('home.freelancers')}`
-            }
-            freelancers={filteredAllFreelancers}
-            isLoading={isLoading}
-            isFetching={isFetching}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            fetchNextPage={fetchNextPage}
-            scrollY={scrollY}
-            selectedCategory={selectedCategory}
-            onReported={handleReportedFreelancer}
-          />
-        </Animated.View>
-      </Animated.ScrollView>
-
-      {/* <NetworkErrorPopup
-        visible={showNetworkPopup}
-        title={t('works.error.some_wrong')}
-        message={t('works.error.if_the_problem')}
-        retryLabel={t('works.error.try_again')}
-        onRetry={handleNetworkRetry}
-        isRetrying={isRetryingNetwork}
-      /> */}
+        freelancers={filteredAllFreelancers}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        fetchNextPage={fetchNextPage}
+        scrollY={scrollY}
+        selectedCategory={selectedCategory}
+        onReported={handleReportedFreelancer}
+        onScroll={handleScroll}
+        isRefreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        ListHeaderComponent={listHeader}
+      />
     </ScreenWrapper>
   );
 }

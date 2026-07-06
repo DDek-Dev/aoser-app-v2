@@ -1,5 +1,13 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native';
+import React, { useRef, useCallback, useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  Pressable,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+} from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,7 +18,7 @@ import { NoResults } from 'components/NoResults';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import LoadingScreen from 'screens/Loading/LoadingScreen';
-import {formatTotalRate} from '../../utils/dateFormatter';
+
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
 type FreelancersProps = {
@@ -24,7 +32,83 @@ type FreelancersProps = {
   scrollY?: any;
   selectedCategory: string;
   onReported?: (userId: string) => void;
+  onScroll?: any;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
+  ListHeaderComponent?: React.ReactElement;
 };
+
+// ─── FreelancerCard ───────────────────────────────────────────────────────────
+// Isolated memo component so only the card that changes re-renders,
+// not the entire list when visibleIds set updates.
+const FreelancerCard = React.memo(({
+  item,
+  isVisible,
+  onPress,
+  t,
+}: {
+  item: any;
+  isVisible: boolean;
+  onPress: () => void;
+  t: any;
+}) => (
+  <Pressable
+    onPress={onPress}
+    android_ripple={{ color: 'rgba(0,0,0,0.05)', borderless: false }}
+    className="w-[49.5%] bg-white rounded-lg mb-1 border border-border overflow-hidden"
+  >
+    {item.videoPromote != null ? (
+      // ✅ Pass onPress into VDOPromote so the Pressable overlay inside it
+      // sits above the TextureView in Z-order and fires before Android's
+      // native surface steals the touch event.
+      <VDOPromote_free_profile
+        video={item.videoPromote}
+        context="home"
+        isVisible={isVisible}
+        onPress={onPress}
+      />
+    ) : (
+      <Image
+        source={{ uri: IMAGE_BASE + item.bannerImage }}
+        className="w-full h-64 object-cover"
+        resizeMode="cover"
+      />
+    )}
+    <View className="p-3 space-y-2">
+      <View className="flex-row items-center justify-between gap-2">
+        <View className="flex-row items-center">
+          <FontAwesome name="star" size={12} color="#facc15" />
+          <Text className="ml-1 text-caption font-medium text-warning">
+            {item.totalStartRate || 0}
+          </Text>
+        </View>
+        <View className="p-1 bg-blue-50 rounded-full flex-row">
+          <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
+          <Text className="text-caption font-semibold text-primary ml-2">
+            {new Intl.NumberFormat().format(item.hourlyRate)}
+          </Text>
+          <Text className="text-caption text-primary" numberOfLines={1}>
+            /
+            {item?.rateType === 'PER_HOUR' && t('kyc.step3.rateType.perHour')}
+            {item?.rateType === 'PER_DAY' && t('kyc.step3.rateType.perDay')}
+            {item?.rateType === 'PER_JOB' && t('kyc.step3.rateType.perJob')}
+          </Text>
+        </View>
+      </View>
+      <Text className="text-body text-text" numberOfLines={1}>{item.jobTitle}</Text>
+      {item.address && (
+        <View className="flex-row items-end">
+          <Ionicons name="location-outline" size={18} color="#6B7280" />
+          <View>
+            <Text className="text-[12px] text-textSecondary" numberOfLines={1}>
+              {item.address.village}, {item.address.district}, {item.address.province}
+            </Text>
+          </View>
+        </View>
+      )}
+    </View>
+  </Pressable>
+));
 
 export default function Freelancers({
   title,
@@ -36,182 +120,96 @@ export default function Freelancers({
   fetchNextPage,
   selectedCategory,
   onReported,
-  scrollY,
+  onScroll,
+  isRefreshing,
+  onRefresh,
+  ListHeaderComponent,
 }: FreelancersProps) {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
-  const containerRef = useRef<View>(null);
-  const loadingTimeoutRef = useRef<any>(null);
   const isLoadingMoreRef = useRef(false);
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
 
-  // Optimized scroll handler with debouncing
-  useEffect(() => {
-    if (!scrollY || !containerRef.current || !fetchNextPage || !hasNextPage) return;
+  // ✅ Track which item IDs are visible — used to play/pause videos
+  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
 
-    const listener = scrollY.addListener(({ value }: { value: number }) => {
-      if (isLoadingMoreRef.current || isFetchingNextPage) return;
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    setVisibleIds(new Set(viewableItems.map((v: any) => v.item._id)));
+  }).current;
 
-      containerRef.current?.measure((x, y, width, height, pageX, pageY) => {
-        const LOAD_MORE_THRESHOLD = 300;
-        const contentBottom = pageY + height;
-        const scrollBottom = value + 1000; // Approximate screen height
-        const isNearBottom = scrollBottom > contentBottom - LOAD_MORE_THRESHOLD;
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+    minimumViewTime: 100,
+  }).current;
 
-        if (isNearBottom && hasNextPage && !isFetchingNextPage) {
-          // Clear any existing timeout
-          if (loadingTimeoutRef.current) {
-            clearTimeout(loadingTimeoutRef.current);
-          }
-
-          // Debounce the load more call
-          loadingTimeoutRef.current = setTimeout(() => {
-            if (!isLoadingMoreRef.current) {
-              isLoadingMoreRef.current = true;
-              fetchNextPage()
-                .finally(() => {
-                  isLoadingMoreRef.current = false;
-                });
-            }
-          }, 300);
-        }
-      });
-    });
-
-    return () => {
-      scrollY.removeListener(listener);
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
+  const handleNavigate = useCallback(
+    (item_id: string) => {
+      if (isAuthenticated && user?._id === item_id) {
+        navigation.navigate('AuthFreelancerProfile', { userId: item_id });
+      } else {
+        // ✅ Never pass functions as navigation params — causes serialization
+        // stall and broken/slow navigation
+        navigation.navigate('FreelancerProfile', { userId: item_id });
       }
-    };
-  }, [scrollY, hasNextPage, isFetchingNextPage, fetchNextPage]);
+    },
+    [isAuthenticated, user?._id, navigation]
+  );
 
-  const handleNavigate = useCallback((item_id: string) => {
-    if (isAuthenticated && user?._id === item_id) {
-      navigation.navigate('AuthFreelancerProfile', { userId: item_id });
-    } else {
-      navigation.navigate('FreelancerProfile', { userId: item_id, onReported });
-    }
-  }, [isAuthenticated, user?._id, navigation, onReported]);
+  const handleEndReached = useCallback(() => {
+    if (!hasNextPage || isFetchingNextPage || isLoadingMoreRef.current) return;
+    isLoadingMoreRef.current = true;
+    fetchNextPage?.().finally(() => {
+      isLoadingMoreRef.current = false;
+    });
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Initial loading state
-  if (isLoading && selectedCategory !== "All") {
-    return (
+  // ✅ renderItem reads visibleIds via closure but FreelancerCard is memo'd,
+  // so only cards whose isVisible value actually changed will re-render.
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => (
+      <FreelancerCard
+        item={item}
+        isVisible={visibleIds.has(item._id)}
+        onPress={() => handleNavigate(item._id)}
+        t={t}
+      />
+    ),
+    [visibleIds, handleNavigate, t]
+  );
 
-      <View className=''>
-        <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-body font-bold mb-2">{title}</Text>
-        </View>
-        <LoadingScreen />
+  const listHeader = useMemo(() => (
+    <>
+      {ListHeaderComponent}
+      <View className="flex-row justify-between items-center px-2 mt-4 mb-2">
+        <Text className="text-body font-bold px-2">{title}</Text>
       </View>
-    )
-  }
-  if (isLoading && selectedCategory === "All") {
-    return (
-      <View className="mt-6 px-2 mb-24">
-        <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-body font-bold mb-2 px-2">{title}</Text>
+      {isLoading && selectedCategory !== 'All' && <LoadingScreen />}
+      {isLoading && selectedCategory === 'All' && (
+        <View className="px-2 mb-24">
+          <View className="flex-row gap-1">
+            <FreelancerCardSkeleton />
+            <FreelancerCardSkeleton />
+          </View>
+          <View className="flex-row gap-1">
+            <FreelancerCardSkeleton />
+            <FreelancerCardSkeleton />
+          </View>
         </View>
+      )}
+    </>
+  ), [ListHeaderComponent, title, isLoading, selectedCategory]);
 
-        <View className="flex-row gap-1">
-          <FreelancerCardSkeleton />
-          <FreelancerCardSkeleton />
-        </View>
-        <View className="flex-row gap-1">
-          <FreelancerCardSkeleton />
-          <FreelancerCardSkeleton />
-        </View>
-      </View>
-    )
-  }
-
-  // No results state
-  if (freelancers.length === 0 && !isFetching) {
-    return (
+  const listEmpty = useMemo(() => (
+    !isLoading ? (
       <NoResults
         title={t('freelancer_profile.no_freelancer_found')}
         subtitle={t('freelancer_profile.search_another_key')}
       />
-    );
-  }
+    ) : null
+  ), [isLoading, t]);
 
-  // Main render
-  return (
-    <View ref={containerRef} className="mt-4 px-1 pb-8">
-      <View className="flex-row justify-between items-center mb-2">
-        <Text className="text-body font-bold mb-2 px-2">{title}</Text>
-      </View>
-
-      <View className="flex-row flex-wrap justify-between gap-[1px]">
-        {freelancers.map((item, index) => (
-          <Pressable
-            onPress={() => handleNavigate(item._id)}
-            key={`${item._id}-${index}`}
-            className="w-[49.5%] bg-white rounded-lg mb-1 border border-border overflow-hidden"
-          >
-            {item.videoPromote !== null ? (
-              <VDOPromote_free_profile video={item.videoPromote} context="home" scrollY={scrollY} />
-            ) : (
-            <Image
-              source={{ uri: IMAGE_BASE + item.bannerImage }}
-              className="w-full h-64 object-cover"
-              resizeMode="cover"
-            />
-            )}
-
-            <View className="p-3 space-y-2">
-              <View className="flex-row items-center justify-between gap-2">
-                <View className="flex-row items-center">
-                  <FontAwesome name="star" size={12} color="#facc15" />
-                  <Text className="ml-1 text-caption font-medium text-warning">
-                    {item.totalStartRate || 0} 
-                  </Text>
-                  
-                </View>
-
-                <View className='p-1 bg-blue-50 rounded-full flex-row'>
-                  <Text className="text-caption text-warning">{item.hourlyRateCurrency}</Text>
-                  <Text className="text-caption font-semibold text-primary ml-2">{new Intl.NumberFormat().format(item.hourlyRate)}</Text>
-                  {/* <Text className="text-caption text-primary">/ {t('freelancer_profile.hour') || 'hour'}</Text> */}
-                  <Text className="text-caption text-primary" numberOfLines={1}>/
-                    {item?.rateType === 'PER_HOUR' && t('kyc.step3.rateType.perHour')}
-                    {item?.rateType === 'PER_DAY' && t('kyc.step3.rateType.perDay')}
-                    {item?.rateType === 'PER_JOB' && t('kyc.step3.rateType.perJob')}
-                  </Text>
-                </View>
-              </View>
-
-              <Text className="text-body text-text" numberOfLines={1}>
-                {item.jobTitle}
-              </Text>
-
-              {/* <Text className="text-caption text-textSecondary" numberOfLines={2}>
-                {item.address.country}, {item.address.city} 
-              </Text> */}
-              {item.address &&
-
-
-                <View className="flex-row items-end">
-                  {/* <Text>{t('workDetail.deadline')} : </Text> */}
-                  {/* <Text>{t('payment_success.address')}:  </Text> */}
-                  <Ionicons name="location-outline" size={18} color="#6B7280" />
-
-                  <View className="">
-
-                    <Text className="text-[12px] text-textSecondary" numberOfLines={1}>
-                      {/* {formatDate(item.deadLine as string, currentLanguage)} */}
-
-                      {item.address.village}, {item.address.district}, {item.address.province}
-                    </Text>
-                  </View>
-                </View>
-              }
-            </View>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* Loading more indicator */}
+  const listFooter = useMemo(() => (
+    <>
       {isFetchingNextPage && (
         <View className="py-6 items-center">
           <ActivityIndicator size="small" color="#3B82F6" />
@@ -220,15 +218,6 @@ export default function Freelancers({
           </Text>
         </View>
       )}
-
-      {/* Background fetching indicator */}
-      {isFetching && !isLoading && !isFetchingNextPage && (
-        <View className="absolute top-0 right-4">
-          <ActivityIndicator size="small" color="#3B82F6" />
-        </View>
-      )}
-
-      {/* No more data message */}
       {!hasNextPage && freelancers.length > 0 && !isFetching && (
         <View className="py-6 items-center">
           <Text className="text-caption text-textSecondary">
@@ -236,6 +225,43 @@ export default function Freelancers({
           </Text>
         </View>
       )}
-    </View>
+      {isFetching && !isLoading && !isFetchingNextPage && (
+        <View className="py-2 items-center">
+          <ActivityIndicator size="small" color="#3B82F6" />
+        </View>
+      )}
+    </>
+  ), [isFetchingNextPage, hasNextPage, freelancers.length, isFetching, isLoading, t]);
+
+  return (
+    <FlatList
+      key="freelancer-grid"
+      data={freelancers}
+      numColumns={2}
+      keyExtractor={(item, index) => `${item._id}-${index}`}
+      renderItem={renderItem}
+      ListHeaderComponent={listHeader}
+      ListEmptyComponent={listEmpty}
+      ListFooterComponent={listFooter}
+      columnWrapperStyle={{ justifyContent: 'space-between', gap: 1, paddingHorizontal: 4 }}
+      contentContainerStyle={{ paddingBottom: 32 }}
+      onEndReached={handleEndReached}
+      onEndReachedThreshold={0.5}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
+      windowSize={5}
+      maxToRenderPerBatch={6}
+      initialNumToRender={6}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing ?? false}
+          onRefresh={onRefresh}
+          colors={['#3B82F6']}
+          tintColor="#3B82F6"
+        />
+      }
+    />
   );
 }

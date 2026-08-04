@@ -1,14 +1,14 @@
 // components/ui/FloatingChatButton.tsx
 import React, { useRef, useEffect, useState } from 'react';
-import { 
-  TouchableOpacity, 
-  View, 
+import {
+  TouchableOpacity,
+  View,
   Text,
-  StyleSheet, 
-  Animated, 
+  StyleSheet,
+  Animated,
   Dimensions,
   StatusBar,
-  Platform 
+  Platform
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ import SocketService from 'service/soctketService';
 import { useQueryClient } from '@tanstack/react-query';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 const BUTTON_SIZE = 60;
 const EDGE_MARGIN = 8;
 const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 104 : StatusBar.currentHeight || 24;
@@ -27,36 +28,84 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   // Start at bottom right with 164px margin from bottom
   const initialY = SCREEN_HEIGHT - BUTTON_SIZE - BOTTOM_SAFE_AREA;
   const initialX = SCREEN_WIDTH - BUTTON_SIZE - EDGE_MARGIN;
-  
-  const [edgePosition, setEdgePosition] = useState<'left' | 'right'>('right');
-  const [yPosition, setYPosition] = useState(initialY);
-  
+
+  // const [edgePosition, setEdgePosition] = useState<'left' | 'right'>('right');
+  // const [yPosition, setYPosition] = useState(initialY);
+
   const translateX = useRef(new Animated.Value(initialX)).current;
   const translateY = useRef(new Animated.Value(initialY)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const scale = useRef(new Animated.Value(1)).current;
-  
+
   const [isDragging, setIsDragging] = useState(false);
   const fadeTimeoutRef = useRef<any>(null);
   const pressLockRef = useRef(false);
-  
+
   // Keep track of gesture
   const gestureStart = useRef({ x: 0, y: 0 });
   const currentPosition = useRef({ x: initialX, y: initialY });
 
-  const { user } = useAuth();
+  const { user, tokens } = useAuth();
   const userId = user?._id || '';
   const hasUser = !!userId;
   const queryClient = useQueryClient();
   const unreadCountQuery = useUnreadChatCount(userId);
   const { data: chats = [] } = useChats({ enabled: hasUser });
-  const unreadTotal = Number(unreadCountQuery.data?.totalChatUnread || 0);
+
+  const [liveUnread, setLiveUnread] = useState<number | null>(null);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const socketConnectedRef = useRef(false);
+
+
+  // console.log("useUnreadChatCount", unreadCountQuery.data.totalChatUnread);
+  useEffect(() => {
+    if (!hasUser || !tokens?.accessToken || !SERVER_URL) return;
+
+    // Make sure the socket is connected so the badge gets realtime updates
+    // even when the user never opened a chat screen.
+    SocketService.connect(SERVER_URL, tokens.accessToken, userId);
+
+    const handleUnreadCount = (count: number) => {
+      // Only trust the realtime value while the socket is actually connected.
+      if (!socketConnectedRef.current) return;
+      setLiveUnread(count);
+      queryClient.setQueryData(['unreadchatCount', userId], { totalChatUnread: count });
+    };
+
+    const handleConnectionStatus = (connected: boolean) => {
+      socketConnectedRef.current = connected;
+      setSocketConnected(connected);
+      if (connected) {
+        // Ask for a fresh count as soon as we have a live connection.
+        SocketService.requestUnreadCount();
+      } else {
+        // Socket offline — drop the realtime value and refetch the REST
+        // endpoint so the badge still shows the authoritative unread count
+        // from the API (not a stale value stuck in local state).
+        setLiveUnread(null);
+        queryClient.invalidateQueries({ queryKey: ['unreadchatCount', userId] });
+      }
+    };
+
+    SocketService.onUnreadCount(handleUnreadCount);
+    SocketService.onConnectionStatus(handleConnectionStatus);
+
+    return () => {
+      SocketService.removeListener('chat:messages:unread:count', handleUnreadCount);
+    };
+  }, [hasUser, userId, tokens?.accessToken, queryClient]);
+
+  // Prefer the realtime socket value when connected; fall back to the REST
+  // count when the socket is offline so the badge never hides unread messages.
+  const unreadTotal = socketConnected && liveUnread !== null
+    ? liveUnread
+    : Number(unreadCountQuery.data?.totalChatUnread || 0);
   // Auto-fade functionality
   const resetFadeTimer = () => {
     if (fadeTimeoutRef.current) {
       clearTimeout(fadeTimeoutRef.current);
     }
-    
+
     Animated.timing(opacity, {
       toValue: 1,
       duration: 200,
@@ -78,7 +127,7 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
     if (fadeTimeoutRef.current) {
       clearTimeout(fadeTimeoutRef.current);
     }
-    
+
     Animated.timing(opacity, {
       toValue: 1,
       duration: 100,
@@ -99,12 +148,12 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
   // Calculate edge positions
   const getEdgePosition = (side: 'left' | 'right', y: number) => {
     const x = side === 'left' ? EDGE_MARGIN : SCREEN_WIDTH - BUTTON_SIZE - EDGE_MARGIN;
-    
+
     // Constrain Y within safe bounds
     const minY = STATUS_BAR_HEIGHT + 20;
     const maxY = SCREEN_HEIGHT - BUTTON_SIZE - BOTTOM_SAFE_AREA - 20;
     const constrainedY = Math.max(minY, Math.min(maxY, y));
-    
+
     return { x, y: constrainedY };
   };
 
@@ -113,10 +162,10 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
     const screenCenter = SCREEN_WIDTH / 2;
     const targetEdge: 'left' | 'right' = currentX < screenCenter ? 'left' : 'right';
     const targetPosition = getEdgePosition(targetEdge, currentY);
-    
+
     // Update state
-    setEdgePosition(targetEdge);
-    setYPosition(targetPosition.y);
+    // setEdgePosition(targetEdge);
+    // setYPosition(targetPosition.y);
     currentPosition.current = targetPosition;
 
     // Animate to edge with spring effect
@@ -146,18 +195,10 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
       pressLockRef.current = false;
     }, 250);
 
-    const unreadConversations = chats.filter((chat: any) => (chat?.unreadCount || 0) > 0);
-    if (SocketService.isConnected() && unreadConversations.length > 0) {
-      unreadConversations.forEach((chat: any) => {
-        if (chat?._id) {
-          SocketService.markMessagesAsRead(chat._id);
-        }
-      });
-    }
-
-    // Optimistic badge clear, then backend/query sync follows in chat screens/socket events.
-    queryClient.setQueryData(['unreadchatCount', userId], { totalChatUnread: 0 });
-    queryClient.invalidateQueries({ queryKey: ['chats'] });
+    // Do NOT mark conversations as read here — the badge count must stay
+    // until the user actually opens a specific chat (ChatScreen.handleChatPress
+    // marks that one conversation as read). Opening the chat list alone
+    // should not clear the unread badge.
     onPress();
   };
 
@@ -165,23 +206,23 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
 
   const onGestureEvent = (event: any) => {
     const { translationX, translationY, state } = event.nativeEvent;
-    
+
     if (state === State.ACTIVE && isDragging) {
       // Calculate new position during drag
       const newX = gestureStart.current.x + translationX;
       const newY = gestureStart.current.y + translationY;
-      
+
       // Allow movement anywhere on screen during drag
-      const boundedX = Math.max(-BUTTON_SIZE/2, Math.min(SCREEN_WIDTH - BUTTON_SIZE/2, newX));
+      const boundedX = Math.max(-BUTTON_SIZE / 2, Math.min(SCREEN_WIDTH - BUTTON_SIZE / 2, newX));
       const boundedY = Math.max(STATUS_BAR_HEIGHT, Math.min(SCREEN_HEIGHT - BUTTON_SIZE - BOTTOM_SAFE_AREA, newY));
-      
+
       // Update position smoothly
       Animated.timing(translateX, {
         toValue: boundedX,
         duration: 0,
         useNativeDriver: true,
       }).start();
-      
+
       Animated.timing(translateY, {
         toValue: boundedY,
         duration: 0,
@@ -192,12 +233,12 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
 
   const onHandlerStateChange = (event: any) => {
     const { state, translationX, translationY } = event.nativeEvent;
-    
+
     if (state === State.BEGAN) {
       setIsDragging(true);
       gestureStart.current = { ...currentPosition.current };
       cancelFadeTimer();
-      
+
       // Subtle scale feedback
       Animated.spring(scale, {
         toValue: 1.1,
@@ -205,13 +246,13 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
         tension: 300,
         friction: 10,
       }).start();
-      
+
     } else if (state === State.ACTIVE) {
       cancelFadeTimer();
-      
+
     } else if (state === State.END || state === State.CANCELLED) {
       setIsDragging(false);
-      
+
       // Scale back to normal
       Animated.spring(scale, {
         toValue: 1,
@@ -219,12 +260,12 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
         tension: 300,
         friction: 10,
       }).start();
-      
+
       // Calculate final position
       const finalX = gestureStart.current.x + translationX;
       const finalY = gestureStart.current.y + translationY;
       const dragDistance = Math.sqrt(translationX * translationX + translationY * translationY);
-      
+
       if (dragDistance < 10) {
         // It was a tap - trigger onPress and stay in place
         handleMainPress();
@@ -263,29 +304,29 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
           <View style={[styles.shadowLayer, styles.shadowLayer2]} />
           <View style={[styles.shadowLayer, styles.shadowLayer3]} />
         </View>
-        
+
         {/* Main button with premium styling */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.button}
           activeOpacity={0.9}
           onPress={handleMainPress}
         >
           {/* Glossy overlay effect */}
           <View style={styles.glossyOverlay} />
-          
+
           {/* Facebook-style gradient background */}
           <View style={styles.gradientBg} />
-          
+
           {/* Icon with better positioning */}
           <View style={styles.iconContainer}>
-            <Ionicons 
-              name="chatbubble-ellipses" 
-              size={26} 
-              color="#ffffff" 
+            <Ionicons
+              name="chatbubble-ellipses"
+              size={26}
+              color="#ffffff"
               style={styles.icon}
             />
           </View>
-          
+
           {/* Subtle inner highlight */}
           <View style={styles.innerHighlight} />
 
@@ -296,7 +337,7 @@ const FloatingChatButton = ({ onPress }: { onPress: () => void }) => {
               </Text>
             </View>
           ) : (
-            <View style={styles.statusDot} />
+            <View style={[styles.statusDot, !socketConnected && styles.statusDotOffline]} />
           )}
         </TouchableOpacity>
       </Animated.View>
@@ -431,6 +472,9 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#ffffff',
     zIndex: 20,
+  },
+  statusDotOffline: {
+    backgroundColor: '#9CA3AF',
   },
 });
 

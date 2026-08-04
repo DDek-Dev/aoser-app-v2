@@ -168,7 +168,7 @@ export default function TopFreelancerList() {
   ).current;
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
+    itemVisiblePercentThreshold: 10,
     minimumViewTime: 100,
   }).current;
 
@@ -274,9 +274,9 @@ export default function TopFreelancerList() {
             scrollEventThrottle={16}
             onViewableItemsChanged={onViewableItemsChanged}
             viewabilityConfig={viewabilityConfig}
-            windowSize={5}
-            maxToRenderPerBatch={6}
-            initialNumToRender={6}
+            windowSize={3}
+            maxToRenderPerBatch={4}
+            initialNumToRender={4}
             removeClippedSubviews
             refreshControl={
               <RefreshControl

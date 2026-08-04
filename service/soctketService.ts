@@ -30,6 +30,7 @@ class SocketService {
    private userId: string | null = null;
   private serverUrl: string | null = null;
   private token: string | null = null;
+  private connectionStatusCallback: ((connected: boolean) => void) | null = null;
 
 
 
@@ -168,10 +169,12 @@ connect(serverUrl: string, token?: string | null, userId?: string | null) {
 
     this.socket.on('connect', () => {
       console.log('✅ Socket connected:', this.socket?.id);
+      this.connectionStatusCallback?.(true);
     });
 
     this.socket.on('disconnect', (reason) => {
       console.log('❌ Socket disconnected:', reason);
+      this.connectionStatusCallback?.(false);
       // ✅ If server kicked us, manually reconnect
       if (reason === 'io server disconnect') {
         this.socket?.connect();
@@ -188,6 +191,7 @@ connect(serverUrl: string, token?: string | null, userId?: string | null) {
 
     this.socket.on('connect_error', (error: any) => {
       console.log('[SocketService] connect_error:', error.message);
+      this.connectionStatusCallback?.(false);
     });
   }
 
@@ -264,11 +268,11 @@ connect(serverUrl: string, token?: string | null, userId?: string | null) {
     }
   }
   // Listen for unread count updates
-  onUnreadCount(callback: (data: any) => void) {
-    if (this.socket) {
-      this.socket.on('unread:count', callback);
-    }
-  }
+  // onUnreadCount(callback: (data: any) => void) {
+  //   if (this.socket) {
+  //     this.socket.on('unread:count', callback);
+  //   }
+  // }
 
   emitUnsendMessage(data: any) {
     if (this.socket) {
@@ -306,12 +310,6 @@ connect(serverUrl: string, token?: string | null, userId?: string | null) {
       this.socket.emit('conversation:deleteChatRoomAndConversations', conversationId);
     }
   }
-  unreadChatCount(totalChatUnread: string) {
-    if (this.socket) {
-      this.socket.emit('chat:messages:unread:count', totalChatUnread);
-    }
-  }
-
   markMessagesAsRead(conversationId: string) {
     if (this.socket && this.socket.connected) {
       console.log('Emitting typing event:', { conversationId });
@@ -338,11 +336,66 @@ connect(serverUrl: string, token?: string | null, userId?: string | null) {
       this.socket.off(event);
     }
   }
+// socketService.ts — one method, correct event name
+onUnreadCount(callback: (totalChatUnread: number) => void) {
+  if (this.socket) {
+    this.socket.on('chat:messages:unread:count', callback);
+  }
+}
 
-  // Remove specific listeners
-  removeListener(event: string) {
+requestUnreadCount() {
+  if (this.socket && this.socket.connected) {
+    this.socket.emit('chat:messages:unread:count:get');
+  }
+}
+
+// Realtime connection status — fires immediately with the current state,
+// then again on every connect / disconnect / connect_error.
+onConnectionStatus(callback: (connected: boolean) => void) {
+  this.connectionStatusCallback = callback;
+  if (this.socket) {
+    callback(this.socket.connected);
+  }
+}
+
+// =====================================================================
+// Notification realtime events (bell badge)
+// =====================================================================
+
+// Bell badge — fires on connect, on every new notification, and after read/view.
+// Payload: { notificationUnreadCount: number, isViewed: boolean }
+onNotificationUnreadCount(callback: (data: { notificationUnreadCount: number; isViewed: boolean }) => void) {
+  if (this.socket) {
+    this.socket.on('notification:unread:count', callback);
+  }
+}
+
+// The notification document itself — use it for a toast, or to prepend to the list.
+onNewNotification(callback: (notification: any) => void) {
+  if (this.socket) {
+    this.socket.on('notification:new', callback);
+  }
+}
+
+// Ask the server to re-send notification:unread:count (app resume / pull-to-refresh).
+requestNotificationUnreadCount() {
+  if (this.socket && this.socket.connected) {
+    this.socket.emit('notification:unread:count:get');
+  }
+}
+
+  // Remove a specific listener (or all for the event if no callback is given).
+  // Passing the callback is important when multiple components listen to the
+  // same event — socket.off(event) without a callback removes every handler,
+  // including ones registered by other screens (e.g. the floating chat
+  // button's badge listener gets dropped when ChatScreen unmounts).
+  removeListener(event: string, callback?: (...args: any[]) => void) {
     if (this.socket) {
-      this.socket.off(event);
+      if (callback) {
+        this.socket.off(event, callback);
+      } else {
+        this.socket.off(event);
+      }
     }
   }
 
@@ -362,8 +415,6 @@ connect(serverUrl: string, token?: string | null, userId?: string | null) {
       console.log('Socket disconnected manually');
     }
   }
-
-
 
   // Get socket instance
   getSocket() {

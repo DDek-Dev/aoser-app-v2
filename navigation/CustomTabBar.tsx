@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMarkNotificationsAsRead, useUnreadNotification } from "hooks/useNotifications";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "hooks/useAuth";
+import SocketService from "service/soctketService";
 
 // import {Grid2x2}  from 'lucide-react-native';
-
 
 interface CustomTabBarProps {
   state: any;
@@ -77,28 +79,25 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
   // const insets = useSafeAreaInsets();
   const unreadData = useUnreadNotification();
   const markAsReadMutation = useMarkNotificationsAsRead();
-
+  const queryClient = useQueryClient();
+  const { tokens, user } = useAuth();
+  const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
+  const [socketUnread, setSocketUnread] = useState<{ notificationUnreadCount: number; isViewed: boolean } | null>(null);
+  const [notificationSocketConnected, setNotificationSocketConnected] = useState(false);
+  const notificationSocketConnectedRef = useRef(false);
+  // Derived value — prefer the realtime socket value when connected,
+  // otherwise fall back to the REST API count so unread is never hidden.
+  const liveUnreadData = notificationSocketConnected && socketUnread
+    ? socketUnread
+    : unreadData?.data;
+  const shouldShowBadge = liveUnreadData?.isViewed === false;
+  const unreadCount = liveUnreadData?.notificationUnreadCount || 0;
   // ANIMATION REFS
+
   // =================================================================
   const scaleAnims = useRef(
     state.routes.map(() => new Animated.Value(1))
   ).current;
-
-  // =================================================================
-  // DERIVED STATE
-  // =================================================================
-
-  /**
-   * Extract notification badge data
-   * - isViewed: false = show badge
-   * - isViewed: true = hide badge
-   * - notificationUnreadCount: number to display
-   */
-  const shouldShowBadge = unreadData?.data?.isViewed === false;
-  // const shouldShowBadge = true;
-  const unreadCount = unreadData?.data?.notificationUnreadCount || 0;
-
-
 
   // =================================================================
   // EFFECTS
@@ -118,6 +117,46 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
       }).start();
     });
   }, [state.index]);
+
+  // =================================================================
+  // REALTIME NOTIFICATION BADGE (socket)
+  // =================================================================
+  useEffect(() => {
+    if (!tokens?.accessToken || !user?._id || !SERVER_URL) return;
+
+    // Make sure the socket is connected so the bell badge updates in realtime.
+    SocketService.connect(SERVER_URL, tokens.accessToken, user._id);
+
+    const handleUnreadCount = (data: { notificationUnreadCount: number; isViewed: boolean }) => {
+      // Only trust the realtime value while the socket is actually connected.
+      if (!notificationSocketConnectedRef.current) return;
+      setSocketUnread(data);
+      // Mirror the socket payload into the same query key the REST hook uses,
+      // so the badge updates instantly without a refetch.
+      queryClient.setQueryData(['unreadNotifications'], data);
+    };
+
+    const handleConnectionStatus = (connected: boolean) => {
+      notificationSocketConnectedRef.current = connected;
+      setNotificationSocketConnected(connected);
+      if (connected) {
+        SocketService.requestNotificationUnreadCount();
+      } else {
+        // Socket offline — drop the realtime value and refetch the REST
+        // endpoint so the badge still shows the authoritative API count.
+        setSocketUnread(null);
+        queryClient.invalidateQueries({ queryKey: ['unreadNotifications'] });
+      }
+    };
+
+    SocketService.onNotificationUnreadCount(handleUnreadCount);
+    SocketService.onConnectionStatus(handleConnectionStatus);
+
+    return () => {
+      // Pass the exact callback so we only remove OUR handler.
+      SocketService.removeListener('notification:unread:count', handleUnreadCount);
+    };
+  }, [tokens?.accessToken, user?._id, SERVER_URL, queryClient]);
 
 
   const handleMarkNotificationsAsRead = useCallback(() => {
@@ -297,10 +336,10 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
                       />
                       {/* ===== NOTIFICATION BADGE ===== */}
                       {isNotifications && (
-                        <NotificationBadge
-                          count={unreadCount}
-                          isVisible={shouldShowBadge}
-                        />
+                      <NotificationBadge
+                        count={unreadCount}
+                        isVisible={shouldShowBadge || false}
+                      />
                       )}
                     </View>
                   )}

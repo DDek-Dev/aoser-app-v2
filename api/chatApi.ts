@@ -57,7 +57,7 @@ export const chatApi = {
             });
 
             // console.log("API Response CHAT COUNT: ", response.data.data); 
-            return response.data.data || [];
+            return response.data.data || {};
         } catch (error: any) {
             // Axios error handling
             if (error.response) {

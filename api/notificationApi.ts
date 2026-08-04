@@ -68,7 +68,7 @@ export const notificationApi = {
                     'Authorization': `Aoser ${token}`,
                 },
             });
-            return response.data.data || [];
+            return response.data.data || {};
         } catch (error) {
             console.log('Error reading notification:', error);
             throw error;

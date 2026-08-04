@@ -58,7 +58,12 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
     [videoUri]
   );
 
-  const player = useVideoPlayer(videoS, (p) => {
+  // Only pass a real source to the hook when we actually want the native
+  // player created. Passing `null` keeps hook call stable but avoids
+  // allocating native resources on non-visible cards.
+  const shouldCreatePlayer = !!videoS && (context === 'profile' || isVisible || showFullScreen);
+
+  const player = useVideoPlayer(shouldCreatePlayer ? videoS : null, (p) => {
     p.muted = true; // always muted in home cards — unmute only in fullscreen
     p.loop = false;
     p.keepScreenOnWhilePlaying = false;
@@ -127,7 +132,16 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     return () => {
       if (previewLoopRef.current) clearInterval(previewLoopRef.current);
-      try { player.pause(); } catch (e) {}
+      try {
+        player.pause();
+      } catch (e) {}
+      try {
+        // release native resources held by the player to avoid OOM
+        // some player implementations expose release(), guard in case it's missing
+        if (typeof (player as any)?.release === 'function') {
+          (player as any).release();
+        }
+      } catch (e) {}
     };
   }, [player]);
 
@@ -169,18 +183,20 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
           Layer 2: VideoView fades in over the poster when first frame is ready.
           Using Animated.View wrapper because VideoView itself can't be animated directly.
         */}
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
-          <VideoView
-            style={StyleSheet.absoluteFill}
-            player={player}
-            surfaceType="textureView"
-            fullscreenOptions={{ enable: false }}
-            allowsPictureInPicture={false}
-            nativeControls={false}
-            contentFit="cover"
-            onFirstFrameRender={handleFirstFrame}
-          />
-        </Animated.View>
+        {player ? (
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
+            <VideoView
+              style={StyleSheet.absoluteFill}
+              player={player}
+              surfaceType="textureView"
+              fullscreenOptions={{ enable: false }}
+              allowsPictureInPicture={false}
+              nativeControls={false}
+              contentFit="cover"
+              onFirstFrameRender={handleFirstFrame}
+            />
+          </Animated.View>
+        ) : null}
 
         {/*
           Layer 3: Muted indicator — small icon bottom-left so user knows
@@ -220,18 +236,20 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
               resizeMode="cover"
             />
           )}
-          <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
-            <VideoView
-              style={StyleSheet.absoluteFill}
-              player={player}
-              surfaceType="textureView"
-              fullscreenOptions={{ enable: true }}
-              allowsPictureInPicture={true}
-              nativeControls={true}
-              contentFit="cover"
-              onFirstFrameRender={handleFirstFrame}
-            />
-          </Animated.View>
+          {player ? (
+            <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
+              <VideoView
+                style={StyleSheet.absoluteFill}
+                player={player}
+                surfaceType="textureView"
+                fullscreenOptions={{ enable: true }}
+                allowsPictureInPicture={true}
+                nativeControls={true}
+                contentFit="cover"
+                onFirstFrameRender={handleFirstFrame}
+              />
+            </Animated.View>
+          ) : null}
         </View>
       </Pressable>
 
@@ -240,16 +258,18 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
           <Pressable style={styles.closeButton} onPress={() => setShowFullScreen(false)}>
             <Ionicons name="close" size={28} color="white" />
           </Pressable>
-          <VideoView
-            style={styles.fullScreenVideo}
-            player={player}
-            surfaceType="surfaceView"
-            fullscreenOptions={{ enable: true }}
-            allowsPictureInPicture={true}
-            nativeControls={true}
-            contentFit="contain"
-            onFirstFrameRender={handleFirstFrame}
-          />
+          {player ? (
+            <VideoView
+              style={styles.fullScreenVideo}
+              player={player}
+              surfaceType="surfaceView"
+              fullscreenOptions={{ enable: true }}
+              allowsPictureInPicture={true}
+              nativeControls={true}
+              contentFit="contain"
+              onFirstFrameRender={handleFirstFrame}
+            />
+          ) : null}
         </SafeAreaView>
       </Modal>
     </>

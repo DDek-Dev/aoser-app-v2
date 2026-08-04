@@ -18,7 +18,7 @@ import Freelancers from 'components/freelancer/Freelancers';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import { useTranslation } from 'react-i18next';
 import { useGetTopfreelancers, useRecommendedFreelancers } from 'hooks/useFreelancer';
-import TopFreelancers from 'components/freelancer/TopFreelancers';
+// import TopFreelancers from 'components/freelancer/TopFreelancers';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const HIDE_THRESHOLD = 100;
@@ -58,12 +58,12 @@ export default function HomeScreen() {
     refetch,
   } = useRecommendedFreelancers(selectedCategoryId || '', undefined);
 
-  const {
-    data: topFreelancers = [],
-    isLoading: isTopFreelancersLoading,
-    isFetching: isTopFreelancersFetching,
-    refetch: refetchTopFreelancers,
-  } = useGetTopfreelancers();
+  // const {
+  //   data: topFreelancers = [],
+  //   isLoading: isTopFreelancersLoading,
+  //   isFetching: isTopFreelancersFetching,
+  //   refetch: refetchTopFreelancers,
+  // } = useGetTopfreelancers();
 
   const allFreelancers = useMemo(() => {
     return data?.pages.flatMap(page => page) || [];
@@ -84,20 +84,20 @@ export default function HomeScreen() {
     [allFreelancers, reportedFreelancerIdSet]
   );
 
-  const filteredTopFreelancers = useMemo(
-    () => (topFreelancers || []).filter((f: any) => !reportedFreelancerIdSet.has(f?._id)),
-    [topFreelancers, reportedFreelancerIdSet]
-  );
+  // const filteredTopFreelancers = useMemo(
+  //   () => (topFreelancers || []).filter((f: any) => !reportedFreelancerIdSet.has(f?._id)),
+  //   [topFreelancers, reportedFreelancerIdSet]
+  // );
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchTopFreelancers()]);
+      await Promise.all([refetch()]);
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, refetch, refetchTopFreelancers]);
+  }, [isRefreshing, refetch]);
 
   const handleScroll = useCallback(
     Animated.event(
@@ -199,36 +199,36 @@ export default function HomeScreen() {
   // ✅ useMemo so the header object reference is stable across renders.
   // Without this, every render creates a new JSX object → FlatList sees a new
   // ListHeaderComponent prop → remounts the header → causes flash on tab switch.
-  const listHeader = useMemo(() => (
-    <Animated.View
-      style={{
-        paddingTop: 8,
-        opacity: fadeAnim,
-        transform: [{ translateX: translateXAnim }],
-      }}
-    >
-      {selectedCategory === 'All' && (
-        <TopFreelancers
-          scrollY={scrollY}
-          freelancers={filteredTopFreelancers}
-          isLoading={isTopFreelancersLoading}
-          isFetching={isTopFreelancersFetching}
-          onReported={handleReportedFreelancer}
-        />
-      )}
-    </Animated.View>
-  ), [
-    // Only rebuild when data or category actually changes — not on every render
-    selectedCategory,
-    filteredTopFreelancers,
-    isTopFreelancersLoading,
-    isTopFreelancersFetching,
-    handleReportedFreelancer,
-    // Animated values are stable refs, safe to include
-    fadeAnim,
-    translateXAnim,
-    scrollY,
-  ]);
+  // const listHeader = useMemo(() => (
+  //   <Animated.View
+  //     style={{
+  //       paddingTop: 8,
+  //       opacity: fadeAnim,
+  //       transform: [{ translateX: translateXAnim }],
+  //     }}
+  //   >
+  //     {selectedCategory === 'All' && (
+  //       <TopFreelancers
+  //         scrollY={scrollY}
+  //         freelancers={filteredTopFreelancers}
+  //         isLoading={isTopFreelancersLoading}
+  //         isFetching={isTopFreelancersFetching}
+  //         onReported={handleReportedFreelancer}
+  //       />
+  //     )}
+  //   </Animated.View>
+  // ), [
+  //   // Only rebuild when data or category actually changes — not on every render
+  //   selectedCategory,
+  //   filteredTopFreelancers,
+  //   isTopFreelancersLoading,
+  //   isTopFreelancersFetching,
+  //   handleReportedFreelancer,
+  //   // Animated values are stable refs, safe to include
+  //   fadeAnim,
+  //   translateXAnim,
+  //   scrollY,
+  // ]);
 
   return (
     <ScreenWrapper safeEdges={['top']} style={{ flex: 1 }}>
@@ -267,7 +267,7 @@ export default function HomeScreen() {
       <Freelancers
         title={
           selectedCategory === 'All'
-            ? t('home.recommended_freelancers')
+            ? t('home.top_freelancers')
             : `${selectedCategory} ${t('home.freelancers')}`
         }
         freelancers={filteredAllFreelancers}
@@ -282,7 +282,7 @@ export default function HomeScreen() {
         onScroll={handleScroll}
         isRefreshing={isRefreshing}
         onRefresh={handleRefresh}
-        ListHeaderComponent={listHeader}
+        // ListHeaderComponent={listHeader}
       />
     </ScreenWrapper>
   );

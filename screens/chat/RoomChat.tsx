@@ -333,9 +333,12 @@ const RoomChat = () => {
         clearTimeout(joinTimeout);
         setTypingUsers([]);
         Object.keys(remoteTypingTimeoutsRef.current).forEach(id => clearRemoteTypingTimeout(id));
-        SocketService.removeListener('message:send');
-        SocketService.removeListener('messages:status:update');
-        SocketService.removeListener('typing');
+        // Pass the exact callback so we only remove OUR handler — the
+        // FloatingChatButton / ChatScreen register their own listeners and
+        // socket.off(event) without a callback would remove them all.
+        SocketService.removeListener('message:send', handleNewMessage);
+        SocketService.removeListener('messages:status:update', handleStatusUpdate);
+        SocketService.removeListener('typing', handleTyping);
       };
     } catch (err) {
       console.log('Socket error:', err);

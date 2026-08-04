@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, SectionList, Pressable, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotifications, useReadNotification } from 'hooks/useNotifications';
@@ -12,6 +12,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 // import ViewFormNotification from 'components/publicwork/ViewFormNotification';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from 'hooks/useAuth';
+import SocketService from 'service/soctketService';
 
 const getIconByType = (type: string) => {
   switch (type) {
@@ -85,11 +87,35 @@ const NotificationsScreen = () => {
   const { mutate: markAsRead } = useReadNotification();
   const [localNotifications, setLocalNotifications] = useState<Notifications[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const { tokens, user } = useAuth();
+  const SERVER_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   // console.log('data notifications: ', JSON.stringify(data?.slice(-3), null, 2))
   React.useEffect(() => {
     if (data) setLocalNotifications(data);
   }, [data]);
+
+  // Realtime: prepend new notifications as they arrive over the socket.
+  useEffect(() => {
+    if (!tokens?.accessToken || !user?._id || !SERVER_URL) return;
+
+    SocketService.connect(SERVER_URL, tokens.accessToken, user._id);
+
+    const handleNewNotification = (notification: Notifications) => {
+      setLocalNotifications(prev => {
+        // Avoid duplicates if the same notification arrives twice.
+        if (prev.some(n => n._id === notification._id)) return prev;
+        return [notification, ...prev];
+      });
+    };
+
+    SocketService.onNewNotification(handleNewNotification);
+
+    return () => {
+      // Pass the exact callback so we only remove OUR handler.
+      SocketService.removeListener('notification:new', handleNewNotification);
+    };
+  }, [tokens?.accessToken, user?._id, SERVER_URL]);
 
   const { t } = useTranslation();
 

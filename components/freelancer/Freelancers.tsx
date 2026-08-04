@@ -18,8 +18,34 @@ import { NoResults } from 'components/NoResults';
 import { useAuth } from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import LoadingScreen from 'screens/Loading/LoadingScreen';
+import { Freelancer } from 'types/profile';
 
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
+
+
+function VideoCard({ item, onPress, isVisible }: { item: Freelancer; onPress: () => void; isVisible: boolean }) {
+  const hasVideo = !!item.videoPromote;
+
+  if (!hasVideo) {
+    return (
+      <Image
+        source={{ uri: `${IMAGE_BASE}${item.bannerImage || ''}` }}
+        className="w-full h-64 object-cover"
+        resizeMode="cover"
+      />
+    );
+  }
+
+  return (
+    <VDOPromote_free_profile
+      video={item.videoPromote}
+      poster={item.bannerImage}
+      context="home"
+      isVisible={isVisible}
+      onPress={onPress}
+    />
+  );
+}
 
 type FreelancersProps = {
   title?: string;
@@ -57,19 +83,20 @@ const FreelancerCard = React.memo(({
     android_ripple={{ color: 'rgba(0,0,0,0.05)', borderless: false }}
     className="w-[49.5%] bg-white rounded-lg mb-1 border border-border overflow-hidden"
   >
-    {item.videoPromote != null ? (
+    {item.videoPromote ? (
       // ✅ Pass onPress into VDOPromote so the Pressable overlay inside it
       // sits above the TextureView in Z-order and fires before Android's
       // native surface steals the touch event.
       <VDOPromote_free_profile
         video={item.videoPromote}
+        poster={item.bannerImage}
         context="home"
         isVisible={isVisible}
         onPress={onPress}
       />
     ) : (
       <Image
-        source={{ uri: IMAGE_BASE + item.bannerImage }}
+        source={{ uri: `${IMAGE_BASE}${item.bannerImage || ''}` }}
         className="w-full h-64 object-cover"
         resizeMode="cover"
       />
@@ -98,9 +125,9 @@ const FreelancerCard = React.memo(({
       <Text className="text-body text-text" numberOfLines={1}>{item.jobTitle}</Text>
       {item.address && (
         <View className="flex-row items-end">
-          <Ionicons name="location-outline" size={18} color="#6B7280" />
+          <Ionicons name="location-outline" size={16} color="#6B7280" />
           <View>
-            <Text className="text-[12px] text-textSecondary" numberOfLines={1}>
+            <Text className="text-caption text-textSecondary" numberOfLines={1}>
               {item.address.village}, {item.address.district}, {item.address.province}
             </Text>
           </View>
@@ -130,7 +157,7 @@ export default function Freelancers({
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
 
-  // ✅ Track which item IDs are visible — used to play/pause videos
+  // Track which item IDs are visible so each visible video can play and loop.
   const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
 
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
@@ -138,7 +165,7 @@ export default function Freelancers({
   }).current;
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
+    itemVisiblePercentThreshold: 10,
     minimumViewTime: 100,
   }).current;
 
@@ -182,6 +209,14 @@ export default function Freelancers({
       {ListHeaderComponent}
       <View className="flex-row justify-between items-center px-2 mt-4 mb-2">
         <Text className="text-body font-bold px-2">{title}</Text>
+        <View className="flex-row justify-between items-center px-1 mb-2">
+          {selectedCategory === 'All' && (
+            
+          <Pressable onPress={() => navigation.navigate('TopFreelancerList')}>
+            <Text className="text-body px-2 text-primary underline">{t('home.see_all')}</Text>
+          </Pressable>
+          )}
+        </View>
       </View>
       {isLoading && selectedCategory !== 'All' && <LoadingScreen />}
       {isLoading && selectedCategory === 'All' && (
@@ -251,9 +286,11 @@ export default function Freelancers({
       scrollEventThrottle={16}
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
-      windowSize={5}
-      maxToRenderPerBatch={6}
-      initialNumToRender={6}
+      // Reduce offscreen rendering to lower memory pressure (videos + images)
+      windowSize={3}
+      maxToRenderPerBatch={4}
+      initialNumToRender={4}
+      removeClippedSubviews={true}
       refreshControl={
         <RefreshControl
           refreshing={isRefreshing ?? false}

@@ -372,7 +372,7 @@ export const workerApi = {
 
             console.log('', params.toString())
             // console.log('exceptedIds', exceptedIds)
-            const response = await networkCheck.get(`/worker/freelancers?${params.toString()}&exceptedIds=${exceptedIds}`, {
+            const response = await networkCheck.get(`/worker/top-freelancers?${params.toString()}&exceptedIds=${exceptedIds}`, {
                 headers: {
                     // Authorization: `Aoser ${token}`,
                 },

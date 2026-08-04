@@ -10,7 +10,6 @@ import { Freelancer } from 'types/profile';
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
 import { useTranslation } from 'react-i18next';
 import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton';
-import { VisibleItemsContext, useIsItemVisible } from 'utils/VisibleItemsContext';
 
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -22,16 +21,14 @@ type Props = {
   onReported?: (userId: string) => void;
 };
 
-// Fix 1 & 2: Accept onPress to bypass the touch blocker and stop unmounting the video player
-function VideoCard({ item, onPress }: { item: Freelancer; onPress: () => void }) {
-  const isVisible = useIsItemVisible(item._id);
-
+function VideoCard({ item, onPress, isVisible }: { item: Freelancer; onPress: () => void; isVisible: boolean }) {
   return (
     <VDOPromote_free_profile
       video={item.videoPromote}
+      poster={item.bannerImage}
       context="home"
       isVisible={isVisible}
-      onPress={onPress} // Fix 1: Passes down navigation touch to the internal absolute Pressable
+      onPress={onPress}
     />
   );
 }
@@ -59,7 +56,7 @@ export default function TopFreelancers({
   }).current;
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
+    itemVisiblePercentThreshold: 10,
     minimumViewTime: 100,
   }).current;
 
@@ -86,7 +83,7 @@ export default function TopFreelancers({
           >
             <View style={{ width: '100%', aspectRatio: 4 / 5, overflow: 'hidden' }}>
               {item.videoPromote !== null ? (
-                <VideoCard item={item} onPress={navigate} />
+                <VideoCard item={item} onPress={navigate} isVisible={visibleIds.has(item._id)} />
               ) : (
                 <Image
                   source={{ uri: IMAGE_BASE + item.bannerImage }}
@@ -135,7 +132,7 @@ export default function TopFreelancers({
         </Pressable>
       );
     },
-    [cardWidth, handleNavigate, t]
+    [cardWidth, handleNavigate, t, visibleIds]
   );
 
   if (isLoading && freelancers.length === 0) {
@@ -161,22 +158,20 @@ export default function TopFreelancers({
         </Pressable>
       </View>
 
-      <VisibleItemsContext.Provider value={visibleIds}>
-        <FlatList
-          horizontal
-          data={freelancers}
-          renderItem={renderItem}
-          keyExtractor={(item) => item._id}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: HORIZONTAL_PADDING }}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
-          removeClippedSubviews={true}
-          initialNumToRender={3}
-          maxToRenderPerBatch={3}
-          windowSize={3}
-        />
-      </VisibleItemsContext.Provider>
+      <FlatList
+        horizontal
+        data={freelancers}
+        renderItem={renderItem}
+        keyExtractor={(item) => item._id}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: HORIZONTAL_PADDING }}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        removeClippedSubviews={true}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={3}
+      />
     </View>
   );
 }

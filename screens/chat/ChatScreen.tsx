@@ -171,9 +171,12 @@ export default function ChatScreen() {
       SocketService.onUnreadCount(handleUnreadCount)
 
       return () => {
-        SocketService.removeListener('message:send')
-        SocketService.removeListener('messages:status:update')
-        SocketService.removeListener('unread:count')
+        // Pass the exact callback so we only remove OUR handler — the
+        // FloatingChatButton registers its own chat:messages:unread:count
+        // listener and socket.off(event) without a callback would remove it too.
+        SocketService.removeListener('message:send', handleNewMessage)
+        SocketService.removeListener('messages:status:update', handleMessageStatusUpdate)
+        SocketService.removeListener('chat:messages:unread:count', handleUnreadCount)
       }
     } catch (error) {
       console.log('Socket connection error:', error)

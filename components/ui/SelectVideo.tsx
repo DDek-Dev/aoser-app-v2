@@ -27,7 +27,7 @@ interface ModalState {
 
 const CONSTRAINTS = {
   MAX_SIZE_BYTES: 50 * 1024 * 1024, // 50MB
-  MAX_DURATION_MS: 60000,           // 60 seconds
+  MAX_DURATION_MS: 20000,           // 20 seconds
   ALLOWED_FORMATS: ['mp4', 'mov', 'avi', 'm4v'] as const,
   VIDEO_QUALITY: 0.7,
 } as const;

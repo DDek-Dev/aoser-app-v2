@@ -21,13 +21,12 @@ type Props = {
   onReported?: (userId: string) => void;
 };
 
-function VideoCard({ item, onPress, isVisible }: { item: Freelancer; onPress: () => void; isVisible: boolean }) {
+function VideoCard({ item, onPress }: { item: Freelancer; onPress: () => void }) {
   return (
     <VDOPromote_free_profile
       video={item.videoPromote}
       poster={item.bannerImage}
       context="home"
-      isVisible={isVisible}
       onPress={onPress}
     />
   );
@@ -83,7 +82,7 @@ export default function TopFreelancers({
           >
             <View style={{ width: '100%', aspectRatio: 4 / 5, overflow: 'hidden' }}>
               {item.videoPromote !== null ? (
-                <VideoCard item={item} onPress={navigate} isVisible={visibleIds.has(item._id)} />
+                <VideoCard item={item} onPress={navigate} />
               ) : (
                 <Image
                   source={{ uri: IMAGE_BASE + item.bannerImage }}

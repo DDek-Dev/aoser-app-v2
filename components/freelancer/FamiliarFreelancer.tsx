@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,12 @@ import {
   FlatList,
 } from 'react-native';
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { useRecommendedFreelancers } from 'hooks/useFreelancer';
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
+import { useVideoPlayback } from 'contexts/VideoPlaybackProvider';
 import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton';
 import { NoResults } from 'components/NoResults';
 import { useAuth } from 'hooks/useAuth';
@@ -30,12 +31,10 @@ type Props = {
 // ─── Isolated memo card ───────────────────────────────────────────────────────
 const FamiliarCard = React.memo(({
   item,
-  isVisible,
   onPress,
   t,
 }: {
   item: any;
-  isVisible: boolean;
   onPress: () => void;
   t: any;
 }) => (
@@ -49,7 +48,7 @@ const FamiliarCard = React.memo(({
         video={item.videoPromote}
         poster={item.bannerImage}
         context="home"
-        isVisible={isVisible}
+        maxActive={2}
         onPress={onPress}
       />
     ) : (
@@ -89,22 +88,37 @@ const FamiliarCard = React.memo(({
   </Pressable>
 ));
 
-export default function FamiliarFreelancers({ title, serviceType, exceptedIds }: Props) {
+export default function FamiliarFreelancers({ title, serviceType, exceptedIds, scrollY }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
+    const { markScrolled, pauseAll } = useVideoPlayback();
+  const isFocused = useIsFocused();
 
-  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
+  // When the screen gains/loses focus, re-evaluate playback or pause everything.
+  useEffect(() => {
+    if (isFocused) {
+      markScrolled();
+    } else {
+      pauseAll();
+    }
+  }, [isFocused, markScrolled, pauseAll]);
+
   const isLoadingMoreRef = useRef(false);
 
-  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    setVisibleIds(new Set(viewableItems.map((v: any) => v.item._id)));
-  }).current;
+  const handleScroll = useCallback((event: any) => {
+    markScrolled();
+  }, [markScrolled]);
 
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
-    minimumViewTime: 100,
-  }).current;
+  // This list is embedded (scrollEnabled=false) inside the profile's
+  // Animated.ScrollView, so its own onScroll never fires. Listen to the parent's
+  // scrollY Animated.Value so the VideoPlaybackProvider re-evaluates which
+  // similar-freelancer videos should play while the user scrolls the profile.
+  useEffect(() => {
+    if (!scrollY || typeof scrollY.addListener !== 'function') return;
+    const id = scrollY.addListener(() => markScrolled());
+    return () => scrollY.removeListener(id);
+  }, [scrollY, markScrolled]);
 
   const {
     data,
@@ -139,11 +153,10 @@ export default function FamiliarFreelancers({ title, serviceType, exceptedIds }:
   const renderItem = useCallback(({ item }: { item: any }) => (
     <FamiliarCard
       item={item}
-      isVisible={visibleIds.has(item._id)}
       onPress={() => handleNavigate(item._id)}
       t={t}
     />
-  ), [visibleIds, handleNavigate, t]);
+  ), [handleNavigate, t]);
 
   const listFooter = useMemo(() => (
     <>
@@ -219,8 +232,8 @@ export default function FamiliarFreelancers({ title, serviceType, exceptedIds }:
         contentContainerStyle={{ paddingBottom: 16 }}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         ListFooterComponent={listFooter}
         scrollEnabled={false}
         // scrollEnabled=false because this FlatList lives inside a parent

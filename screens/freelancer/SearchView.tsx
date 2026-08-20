@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons, FontAwesome, Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FreelancerStackParamList } from 'types/navigation';
 import { NoResults } from 'components/NoResults';
@@ -20,6 +20,7 @@ import { useFreeLancers, useGetServiceTypes } from 'hooks/useFreelancer';
 import { UserProfile } from 'types/profile';
 import { useTranslation } from 'react-i18next';
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
+import { useVideoPlayback } from 'contexts/VideoPlaybackProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React from 'react';
 
@@ -122,12 +123,10 @@ const sortProfiles = (profiles: EnhancedProfile[], sortBy: string): EnhancedProf
 // ─── Isolated memo card ───────────────────────────────────────────────────────
 const SearchFreelancerCard = React.memo(({
   item,
-  isVisible,
   onPress,
   t,
 }: {
   item: EnhancedProfile;
-  isVisible: boolean;
   onPress: () => void;
   t: any;
 }) => (
@@ -141,7 +140,7 @@ const SearchFreelancerCard = React.memo(({
         video={item.videoPromote}
         poster={item.bannerImage}
         context="home"
-        isVisible={isVisible}
+        maxActive={4}
         onPress={onPress}
       />
     ) : (
@@ -191,16 +190,22 @@ export default function SearchView() {
   const [selectedSort,  setSelectedSort]  = useState('all');
   const [isSortVisible, setIsSortVisible] = useState(false);
   const [visibleCount,  setVisibleCount]  = useState(PAGE_SIZE);
-  const [visibleIds,    setVisibleIds]    = useState<Set<string>>(new Set());
 
-  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    setVisibleIds(new Set(viewableItems.map((v: any) => v.item._id)));
-  }).current;
+    const { markScrolled, pauseAll } = useVideoPlayback();
+  const isFocused = useIsFocused();
 
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50,
-    minimumViewTime: 100,
-  }).current;
+  // When the screen gains/loses focus, re-evaluate playback or pause everything.
+  useEffect(() => {
+    if (isFocused) {
+      markScrolled();
+    } else {
+      pauseAll();
+    }
+  }, [isFocused, markScrolled, pauseAll]);
+
+  const handleScroll = useCallback((event: any) => {
+    markScrolled();
+  }, [markScrolled]);
 
   const { data: freelancers, isLoading: freelancersLoading, refetch, isRefetching } = useFreeLancers();
   const { data: serviceTypes, isLoading: serviceTypesLoading } = useGetServiceTypes();
@@ -270,12 +275,11 @@ export default function SearchView() {
     ({ item }: { item: EnhancedProfile }) => (
       <SearchFreelancerCard
         item={item}
-        isVisible={visibleIds.has(item._id)}
         onPress={() => handleProfilePress(item._id)}
         t={t}
       />
     ),
-    [visibleIds, handleProfilePress, t],
+    [handleProfilePress, t],
   );
 
   return (
@@ -365,8 +369,7 @@ export default function SearchView() {
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.3}
             ListFooterComponent={renderFooter}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
+            onScroll={handleScroll}
             scrollEventThrottle={16}
             windowSize={5}
             maxToRenderPerBatch={6}

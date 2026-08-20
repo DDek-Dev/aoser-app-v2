@@ -23,30 +23,6 @@ import { Freelancer } from 'types/profile';
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
 
-function VideoCard({ item, onPress, isVisible }: { item: Freelancer; onPress: () => void; isVisible: boolean }) {
-  const hasVideo = !!item.videoPromote;
-
-  if (!hasVideo) {
-    return (
-      <Image
-        source={{ uri: `${IMAGE_BASE}${item.bannerImage || ''}` }}
-        className="w-full h-64 object-cover"
-        resizeMode="cover"
-      />
-    );
-  }
-
-  return (
-    <VDOPromote_free_profile
-      video={item.videoPromote}
-      poster={item.bannerImage}
-      context="home"
-      isVisible={isVisible}
-      onPress={onPress}
-    />
-  );
-}
-
 type FreelancersProps = {
   title?: string;
   freelancers: any[];
@@ -75,11 +51,14 @@ const FreelancerCard = React.memo(({
 }: {
   item: any;
   isVisible: boolean;
-  onPress: () => void;
+  onPress: (userId: string) => void;
   t: any;
-}) => (
+}) => {
+  const handlePress = useCallback(() => onPress(item._id), [item._id, onPress]);
+
+  return (
   <Pressable
-    onPress={onPress}
+    onPress={handlePress}
     android_ripple={{ color: 'rgba(0,0,0,0.05)', borderless: false }}
     className="w-[49.5%] bg-white rounded-lg mb-1 border border-border overflow-hidden"
   >
@@ -91,8 +70,9 @@ const FreelancerCard = React.memo(({
         video={item.videoPromote}
         poster={item.bannerImage}
         context="home"
+        maxActive={4}
         isVisible={isVisible}
-        onPress={onPress}
+        onPress={handlePress}
       />
     ) : (
       <Image
@@ -135,7 +115,8 @@ const FreelancerCard = React.memo(({
       )}
     </View>
   </Pressable>
-));
+  );
+});
 
 export default function Freelancers({
   title,
@@ -156,17 +137,32 @@ export default function Freelancers({
   const isLoadingMoreRef = useRef(false);
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
+  const [visibleVideoIds, setVisibleVideoIds] = useState<ReadonlySet<string>>(() => new Set());
 
-  // Track which item IDs are visible so each visible video can play and loop.
-  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
-
+  // FlatList calculates visibility natively. Updating this set only when a
+  // card crosses the threshold avoids the measureInWindow bridge work that was
+  // occurring on every scroll frame.
   const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    setVisibleIds(new Set(viewableItems.map((v: any) => v.item._id)));
+    const next = new Set<string>();
+    for (const viewable of viewableItems) {
+      if (!viewable.isViewable || !viewable.item?.videoPromote) continue;
+      next.add(viewable.item._id);
+      if (next.size === 4) break;
+    }
+    setVisibleVideoIds((current) => {
+      if (current.size === next.size && [...current].every((id) => next.has(id))) {
+        return current;
+      }
+      return next;
+    });
   }).current;
 
   const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 10,
-    minimumViewTime: 100,
+    // A card must be completely inside the list viewport before it can play.
+    // As the top row becomes partly hidden, it pauses and only fully visible
+    // middle cards remain active.
+    itemVisiblePercentThreshold: 100,
+    minimumViewTime: 150,
   }).current;
 
   const handleNavigate = useCallback(
@@ -190,18 +186,19 @@ export default function Freelancers({
     });
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // ✅ renderItem reads visibleIds via closure but FreelancerCard is memo'd,
-  // so only cards whose isVisible value actually changed will re-render.
+  // ✅ renderItem only re-creates when handleNavigate or t change — cards no
+  // longer re-render on every scroll tick (played state comes from the shared
+  // VideoPlaybackProvider, not from this list's state).
   const renderItem = useCallback(
     ({ item }: { item: any }) => (
       <FreelancerCard
         item={item}
-        isVisible={visibleIds.has(item._id)}
-        onPress={() => handleNavigate(item._id)}
+        isVisible={visibleVideoIds.has(item._id)}
+        onPress={handleNavigate}
         t={t}
       />
     ),
-    [visibleIds, handleNavigate, t]
+    [visibleVideoIds, handleNavigate, t]
   );
 
   const listHeader = useMemo(() => (
@@ -284,6 +281,7 @@ export default function Freelancers({
       onEndReachedThreshold={0.5}
       onScroll={onScroll}
       scrollEventThrottle={16}
+      extraData={visibleVideoIds}
       onViewableItemsChanged={onViewableItemsChanged}
       viewabilityConfig={viewabilityConfig}
       // Reduce offscreen rendering to lower memory pressure (videos + images)

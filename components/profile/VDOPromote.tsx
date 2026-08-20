@@ -20,6 +20,8 @@ const ACTIVATE_VISIBILITY_RATIO = 0.25;
 const DEACTIVATE_VISIBILITY_RATIO = 0.1;
 const loadedVideoUriCache = new Set<string>();
 
+
+
 export default function VDOPromote({
   video,
   isReview,
@@ -230,6 +232,10 @@ const videoS = useMemo(
   }, [isVisible, isScreenFocused, isAppActive, player, showFullScreen, context, videoS]);
 
   // ─── Cleanup on unmount ───────────────────────────────────────────────────
+  // NOTE: Do NOT call player.release() here — useVideoPlayer already handles
+  // releasing the player when the component unmounts. Calling release()
+  // manually causes "Cannot use shared object that was already released"
+  // because the VideoView may still be mounted and referencing the player.
   useEffect(() => {
     return () => {
       if (previewLoopRef.current) {
@@ -237,8 +243,7 @@ const videoS = useMemo(
         previewLoopRef.current = null;
       }
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    try { player.pause(); } catch (e) {}
-    try { (player as any)?.release?.(); } catch (e) {}
+      try { player.pause(); } catch (e) {}
     };
   }, [player]);
 
@@ -320,6 +325,7 @@ const videoS = useMemo(
           {!showFullScreen && (
             <>
               <VideoView
+                key={`inline-${player}`}
                 style={videoViewStyle}
                 player={player}
                 fullscreenOptions={{ enable: false }}
@@ -356,6 +362,7 @@ const videoS = useMemo(
       ) : (
         <View ref={containerRef} style={containerStyle} onLayout={measureVisibility} collapsable={false}>
           <VideoView
+            key={`home-${player}`}
             style={videoViewStyle}
             player={player}
             fullscreenOptions={{ enable: false }}
@@ -395,6 +402,7 @@ const videoS = useMemo(
             )}
 
             <VideoView
+              key={`fullscreen-${player}`}
               style={styles.fullScreenVideo}
               player={player}
               fullscreenOptions={{ enable: false }}

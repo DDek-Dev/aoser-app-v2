@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,10 @@ import {
   Image,
   RefreshControl,
   ListRenderItemInfo,
-  ViewToken,
 } from 'react-native';
 import { FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import Header_back from 'components/ui/Header_back';
@@ -23,8 +22,8 @@ import { Freelancer } from 'types/profile';
 import { FreelancerStackParamList } from 'types/navigation';
 import { NoResults } from 'components/NoResults';
 import VDOPromote_free_profile from 'components/profile/VDOPromote-free-profile';
+import { useVideoPlayback } from 'contexts/VideoPlaybackProvider';
 import { FreelancerCardSkeleton } from 'skeletonScreens/FreelancerCardSkelenton';
-import React from 'react';
 
 const IMAGE_BASE = process.env.EXPO_PUBLIC_IMAGES_URL;
 
@@ -75,14 +74,12 @@ const sortTopFreelancers = (freelancers: Freelancer[], sortBy: string): Freelanc
 // at once).
 type FreelancerCardProps = {
   item: Freelancer;
-  isVisible: boolean;
   onPress: (userId: string) => void;
   t: (key: string) => string;
 };
 
 const FreelancerCard = React.memo(function FreelancerCard({
   item,
-  isVisible,
   onPress,
   t,
 }: FreelancerCardProps) {
@@ -104,7 +101,7 @@ const FreelancerCard = React.memo(function FreelancerCard({
           video={item.videoPromote}
           poster={item.bannerImage}
           context="home"
-          isVisible={isVisible}
+          maxActive={4}
           onPress={handlePress}
         />
       ) : (
@@ -157,20 +154,23 @@ export default function TopFreelancerList() {
   const [isSortVisible, setIsSortVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
 
   const { data: topFreelancers = [], isLoading, isFetching, refetch } = useGetTopfreelancers();
+    const { markScrolled, pauseAll } = useVideoPlayback();
+  const isFocused = useIsFocused();
 
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      setVisibleIds(new Set(viewableItems.map((v) => (v.item as Freelancer)._id)));
+  // When the screen gains/loses focus, re-evaluate playback or pause everything.
+  useEffect(() => {
+    if (isFocused) {
+      markScrolled();
+    } else {
+      pauseAll();
     }
-  ).current;
+  }, [isFocused, markScrolled, pauseAll]);
 
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 10,
-    minimumViewTime: 100,
-  }).current;
+  const handleScroll = useCallback((event: any) => {
+    markScrolled();
+  }, [markScrolled]);
 
   const sortedFreelancers = useMemo(
     () => sortTopFreelancers(topFreelancers, selectedSort),
@@ -200,21 +200,17 @@ export default function TopFreelancerList() {
     [isAuthenticated, navigation, user?._id]
   );
 
-  // ✅ renderItem still depends on `visibleIds` (so isVisible updates reach
-  // the cards), but it no longer creates new onPress closures per row — it
-  // just forwards the stable `handleProfilePress`. React.memo on
-  // FreelancerCard does the rest, only re-rendering the row whose isVisible
-  // flag actually flipped.
+  // ✅ renderItem depends only on stable props — the played state comes from
+  // the shared VideoPlaybackProvider, so cards do NOT re-render on scroll.
   const renderFreelancerCard = useCallback(
     ({ item }: ListRenderItemInfo<Freelancer>) => (
       <FreelancerCard
         item={item}
-        isVisible={visibleIds.has(item._id)}
         onPress={handleProfilePress}
         t={t}
       />
     ),
-    [visibleIds, handleProfilePress, t]
+    [handleProfilePress, t]
   );
 
   const keyExtractor = useCallback((item: Freelancer) => item._id, []);
@@ -271,9 +267,8 @@ export default function TopFreelancerList() {
               marginTop: 8,
             }}
             columnWrapperStyle={{ gap: 1 }}
+            onScroll={handleScroll}
             scrollEventThrottle={16}
-            onViewableItemsChanged={onViewableItemsChanged}
-            viewabilityConfig={viewabilityConfig}
             windowSize={3}
             maxToRenderPerBatch={4}
             initialNumToRender={4}

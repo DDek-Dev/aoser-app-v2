@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AlertNotificationRoot } from 'react-native-alert-notification';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { AuthProvider } from 'contexts/AuthContext';
+import { VideoPlaybackProvider } from 'contexts/VideoPlaybackProvider';
 import { deactivateKeepAwake } from 'expo-keep-awake';
 import i18n from './i18n';
 import { I18nextProvider } from 'react-i18next';
@@ -149,24 +150,26 @@ function AppContent() {
             <AlertNotificationRoot theme='light'>
               <BottomSheetModalProvider>
                 <StatusBar style="auto" />
-                <MainNavigator />
-                <NetworkErrorOverlay
-                  visible={isOverlayVisible}
-                  onRetry={handleRetry}
-                />
+                <VideoPlaybackProvider>
+                  <MainNavigator />
+                  <NetworkErrorOverlay
+                    visible={isOverlayVisible}
+                    onRetry={handleRetry}
+                  />
 
-                <View
-                  pointerEvents="none"
-                  style={{
-                    height: insets.bottom,
-                    backgroundColor: Platform.OS === 'ios' ? '#fff' : '#000',
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: 9999,
-                  }}
-                />
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      height: insets.bottom,
+                      backgroundColor: Platform.OS === 'ios' ? '#fff' : '#000',
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      zIndex: 9999,
+                    }}
+                  />
+                </VideoPlaybackProvider>
               </BottomSheetModalProvider>
             </AlertNotificationRoot>
           </KeyboardProvider>

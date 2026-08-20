@@ -9,15 +9,23 @@ import {
   Image,
   Animated,
 } from 'react-native';
-import { useVideoPlayer, VideoView } from 'expo-video';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { createVideoPlayer, VideoView, VideoPlayer } from 'expo-video';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useVideoPlayback } from 'contexts/VideoPlaybackProvider';
+import { useIsFocused } from '@react-navigation/native';
 
 type Props = {
   video?: string | null;
   /** thumbnail image shown while video loads — ideally same frame as video start */
   poster?: string | null;
   context?: 'home' | 'profile';
+  /** Maximum active card videos permitted by the containing screen. */
+  maxActive?: 2 | 4;
+  /**
+   * Optional FlatList-driven visibility. When supplied, this avoids native
+   * measureInWindow work on every scroll frame.
+   */
   isVisible?: boolean;
   onPress?: () => void;
 };
@@ -28,15 +36,33 @@ const HOME_PREVIEW_DURATION_MS = 3000;
 // Module-level cache — persists across component mount/unmount cycles
 const loadedVideoUriCache = new Set<string>();
 
+// Gives every mounted card a stable unique id so the VideoPlaybackProvider can
+// tell cards apart even when they share the same video URL.
+let uidCounter = 0;
+
 export default function VDOPromote_free_profile({
   video,
   poster,
   context = 'home',
-  isVisible = false,
+  maxActive = 4,
+  isVisible,
   onPress,
 }: Props) {
   const appState = useRef<AppStateStatus>(AppState.currentState);
   const [isAppActive, setIsAppActive] = useState(appState.current === 'active');
+
+  // ── VideoPlaybackProvider integration (home feed only) ────────────────────
+  const isHome = context === 'home';
+  const containerRef = useRef<View>(null);
+  const instanceId = useMemo(() => `vdo-instance-${++uidCounter}`, []);
+  const { isActive: isActiveInFeed, register: registerVideo } = useVideoPlayback();
+  const isFocused = useIsFocused();
+  const usesListVisibility = typeof isVisible === 'boolean';
+  const activeInFeed = usesListVisibility
+    ? isVisible
+    : isHome
+      ? isActiveInFeed(instanceId)
+      : false;
 
   const videoUri = video ? `${IMAGES_BASE_URL}${video}` : null;
   const posterUri = poster ? `${IMAGES_BASE_URL}${poster}` : null;
@@ -47,8 +73,8 @@ export default function VDOPromote_free_profile({
   // );
   // const videoOpacity = useRef(new Animated.Value(hasLoaded ? 1 : 0)).current;
   const [showFullScreen, setShowFullScreen] = useState(false);
-const [hasLoaded, setHasLoaded] = useState(false);
-const videoOpacity = useRef(new Animated.Value(0)).current;
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const videoOpacity = useRef(new Animated.Value(0)).current;
   // Fade-in animation for the VideoView — goes from 0→1 when first frame renders
 
   const previewLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -58,22 +84,83 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
     [videoUri]
   );
 
-  // Only pass a real source to the hook when we actually want the native
-  // player created. Passing `null` keeps hook call stable but avoids
-  // allocating native resources on non-visible cards.
-  const shouldCreatePlayer = !!videoS && (context === 'profile' || isVisible || showFullScreen);
+  // Home cards register a "measure" callback so the provider can decide which
+  // ≤2 cards (closest to the vertical screen center) should actually play.
+  useEffect(() => {
+    if (!isHome || !videoS || !isFocused || usesListVisibility) return;
+        const measure: (cb: (rect: { top: number; bottom: number } | null) => void) => void = (
+      cb
+    ) => {
+      const node = containerRef.current;
+      if (!node) {
+        cb(null);
+        return;
+      }
+      // measureInWindow can report 0x0 on the very first pass because the
+      // native layout isn't committed yet (mount / after navigation). Retry
+      // exactly once on the next frame, after layout has flushed. This is what
+      // makes the top card play reliably on initial render instead of only
+      // after the user scrolls.
+      let retried = false;
+      const run = () => {
+        node.measureInWindow((x, y, width, height) => {
+          if (!width && !height) {
+            if (!retried) {
+              retried = true;
+              requestAnimationFrame(run);
+              return;
+            }
+            cb(null); // still not laid out — re-evaluate on next scroll
+            return;
+          }
+          cb({ top: y, bottom: y + height });
+        });
+      };
+      run();
+    };
+    return registerVideo(instanceId, measure, { maxActive });
+    }, [isHome, videoS, registerVideo, instanceId, isFocused, maxActive, usesListVisibility]);
 
-  const player = useVideoPlayer(shouldCreatePlayer ? videoS : null, (p) => {
+  // A native video decoder is expensive on both Android and iOS. Inactive
+  // cards render their poster only; the native player exists solely while the
+  // provider has selected this visible card for playback.
+  const shouldCreatePlayer =
+    !!videoS &&
+    (context === 'profile' || (activeInFeed && isFocused) || showFullScreen);
+
+  const [player, setPlayer] = useState<VideoPlayer | null>(null);
+
+  useEffect(() => {
+    if (!shouldCreatePlayer || !videoS) {
+      setPlayer(null);
+      return;
+    }
+
+    setHasLoaded(false);
+    videoOpacity.setValue(0);
+    const p = createVideoPlayer(videoS);
     p.muted = true; // always muted in home cards — unmute only in fullscreen
     p.loop = false;
     p.keepScreenOnWhilePlaying = false;
     p.bufferOptions = {
-      preferredForwardBufferDuration: 10,
+      // Short previews do not need a long decoded forward buffer.
+      preferredForwardBufferDuration: 3,
       waitsToMinimizeStalling: true,
       minBufferForPlayback: 1,
       prioritizeTimeOverSizeThreshold: true,
     };
-  });
+
+    setPlayer(p);
+
+    return () => {
+      try { p.pause(); } catch(e) {}
+      // Delay release to allow React to unmount/update the native TextureVideoView first.
+      // This bypasses the expo-video crash where SharedObjects are released during render.
+      setTimeout(() => {
+        try { p.release(); } catch(e) {}
+      }, 0);
+    };
+  }, [shouldCreatePlayer, videoS]);
 
   // AppState — pause when app goes to background
   useEffect(() => {
@@ -85,23 +172,23 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
     return () => sub?.remove();
   }, []);
 
-  // Play/pause driven by isVisible + isAppActive
+  // Play/pause driven by activeInFeed (provider center selection) + app state
   useEffect(() => {
     if (!player) return;
     if (context === 'home') {
-      if (isVisible && isAppActive && !showFullScreen) {
-        try { player.play(); } catch (e) {}
+            if (activeInFeed && isAppActive && !showFullScreen && isFocused) {
+        try { player.play(); } catch (e) { }
       } else {
-        try { player.pause(); } catch (e) {}
+        try { player.pause(); } catch (e) { }
       }
       return;
     }
     if (isAppActive) {
-      try { player.play(); } catch (e) {}
+      try { player.play(); } catch (e) { }
     } else {
-      try { player.pause(); } catch (e) {}
+      try { player.pause(); } catch (e) { }
     }
-  }, [player, context, isVisible, isAppActive, showFullScreen]);
+    }, [player, context, activeInFeed, isAppActive, showFullScreen, isFocused]);
 
   // Preview loop — replay every N seconds while visible (home only)
   useEffect(() => {
@@ -109,14 +196,14 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
       clearInterval(previewLoopRef.current);
       previewLoopRef.current = null;
     }
-    if (!videoS || context !== 'home' || !isVisible || !isAppActive || showFullScreen) return;
+        if (!videoS || !player || context !== 'home' || !activeInFeed || !isAppActive || showFullScreen || !isFocused) return;
 
     // Seek to beginning smoothly instead of hard replay
     const loop = () => {
       try {
         player.currentTime = 0;
         player.play();
-      } catch (e) {}
+      } catch (e) { }
     };
 
     previewLoopRef.current = setInterval(loop, HOME_PREVIEW_DURATION_MS);
@@ -126,42 +213,41 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
         previewLoopRef.current = null;
       }
     };
-  }, [player, context, isVisible, isAppActive, showFullScreen, videoS]);
+    }, [player, context, activeInFeed, isAppActive, showFullScreen, videoS, isFocused]);
 
   // Cleanup on unmount — pause only, never release()
+  // NOTE: Do NOT call player.release() here — useVideoPlayer already handles
+  // releasing the player when the component unmounts. Calling release()
+  // manually causes "Cannot use shared object that was already released"
+  // because the VideoView may still be mounted and referencing the player.
   useEffect(() => {
     return () => {
       if (previewLoopRef.current) clearInterval(previewLoopRef.current);
-      try {
-        player.pause();
-      } catch (e) {}
-      try {
-        // release native resources held by the player to avoid OOM
-        // some player implementations expose release(), guard in case it's missing
-        if (typeof (player as any)?.release === 'function') {
-          (player as any).release();
-        }
-      } catch (e) {}
+      if (player) {
+        try {
+          player.pause();
+        } catch (e) { }
+      }
     };
   }, [player]);
 
   const handleFirstFrame = () => {
-  const seenBefore = videoUri ? loadedVideoUriCache.has(videoUri) : false;
-  if (videoUri) loadedVideoUriCache.add(videoUri);
-  setHasLoaded(true);
-  Animated.timing(videoOpacity, {
-    toValue: 1,
-    duration: seenBefore ? 120 : 300, // fast fade if we've shown it before, but still wait for the real frame
-    useNativeDriver: true,
-  }).start();
-};
+    const seenBefore = videoUri ? loadedVideoUriCache.has(videoUri) : false;
+    if (videoUri) loadedVideoUriCache.add(videoUri);
+    setHasLoaded(true);
+    Animated.timing(videoOpacity, {
+      toValue: 1,
+      duration: seenBefore ? 120 : 300, // fast fade if we've shown it before, but still wait for the real frame
+      useNativeDriver: true,
+    }).start();
+  };
 
   if (!videoS) return null;
 
   // ─── Home context (grid card) ─────────────────────────────────────────────
   if (context === 'home') {
     return (
-      <View style={styles.homeContainer}>
+      <View ref={containerRef} collapsable={false} style={styles.homeContainer}>
         {/*
           Layer 1 (bottom): Poster / thumbnail image.
           Always rendered so there's never a black frame — the poster shows
@@ -176,7 +262,7 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
           />
         ) : (
           // Placeholder gradient background while no poster is available
-          <View style={[StyleSheet.absoluteFill, styles.posterFallback]}  className='text-gray-100'/>
+          <View style={[StyleSheet.absoluteFill, styles.posterFallback]} className='text-gray-100' />
         )}
 
         {/*
@@ -186,6 +272,7 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
         {player ? (
           <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
             <VideoView
+              key={`home-${player}`}
               style={StyleSheet.absoluteFill}
               player={player}
               surfaceType="textureView"
@@ -239,6 +326,7 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
           {player ? (
             <Animated.View style={[StyleSheet.absoluteFill, { opacity: videoOpacity }]}>
               <VideoView
+                key={`profile-${player}`}
                 style={StyleSheet.absoluteFill}
                 player={player}
                 surfaceType="textureView"
@@ -260,6 +348,7 @@ const videoOpacity = useRef(new Animated.Value(0)).current;
           </Pressable>
           {player ? (
             <VideoView
+              key={`fullscreen-${player}`}
               style={styles.fullScreenVideo}
               player={player}
               surfaceType="surfaceView"

@@ -17,21 +17,17 @@ export interface PushNotificationState {
 export const usePushNotifications =  (
     onNotificationTapped?: (response: Notifications.NotificationResponse) => void
 ): PushNotificationState => {
-    Notifications.setNotificationHandler({
-        handleNotification: async () => ({
-            shouldPlaySound: true,
-            shouldSetBadge: true,
-            shouldShowBanner: true,
-            shouldShowList: true,
-        }),
-    });
-
     const [expoPushToken, setExpoPushToken] = useState<Notifications.ExpoPushToken | undefined>();
     const [notification, setNotification] = useState<Notifications.Notification | undefined>();
 
     const notificationListener = useRef<Notifications.Subscription>(undefined);
     const responseListener = useRef<Notifications.Subscription>(undefined);
+    const onNotificationTappedRef = useRef(onNotificationTapped);
     const { tokens } = useAuth();
+
+    useEffect(() => {
+        onNotificationTappedRef.current = onNotificationTapped;
+    }, [onNotificationTapped]);
     async function registerForPushNotificationsAsync() {
         let token;
 
@@ -100,6 +96,7 @@ export const usePushNotifications =  (
 
         responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
             console.log('👆 Notification tapped:', response);
+            onNotificationTappedRef.current?.(response);
         });
 
         return () => {
@@ -113,10 +110,6 @@ export const usePushNotifications =  (
         };
     }, [tokens?.accessToken]);
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-        console.log('👆 Notification tapped:', response);
-        onNotificationTapped?.(response); // 👈 call the callback
-    });
     return {
         expoPushToken,
         notification,

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aoser",
     "slug": "aoser",
-    "version": "1.0.10",
+    "version": "1.0.11",
     "scheme": "com.aoser.app",
     "orientation": "portrait",
     "icon": "./assets/aoser_logo_ios.png",
@@ -32,7 +32,7 @@
           }
         ]
       },
-      "buildNumber": "13"
+      "buildNumber": "14"
     },
     "android": {
       "adaptiveIcon": {

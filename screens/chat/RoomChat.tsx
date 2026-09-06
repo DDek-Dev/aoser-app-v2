@@ -52,6 +52,12 @@ import { requestMediaPermissionIfNeeded } from 'utils/mediaPicker';
 
 
 const BASE_IMAGE = process.env.EXPO_PUBLIC_IMAGES_URL;
+const MAX_RENDERED_MESSAGES = 200;
+
+const limitRenderedMessages = (messages: Message[]) =>
+  messages.length > MAX_RENDERED_MESSAGES
+    ? messages.slice(-MAX_RENDERED_MESSAGES)
+    : messages;
 
 const RoomChat = () => {
   const route = useRoute<RouteProp<FreelancerStackParamList, 'RoomChat'>>();
@@ -164,7 +170,7 @@ const RoomChat = () => {
 
     if (initializedConversationRef.current !== chat.conversation._id) {
       initializedConversationRef.current = chat.conversation._id;
-      setMessages(chat.conversationMessages || []);
+      setMessages(limitRenderedMessages(chat.conversationMessages || []));
       return;
     }
 
@@ -178,9 +184,15 @@ const RoomChat = () => {
         return id && !existingIds.has(id);
       });
       if (incoming.length === 0) return prev;
-      return [...prev, ...incoming];
+      return limitRenderedMessages([...prev, ...incoming]);
     });
   }, [chat?.conversation?._id, chat?.conversationMessages]);
+
+  useEffect(() => {
+    if (messages.length > MAX_RENDERED_MESSAGES) {
+      setMessages(prev => limitRenderedMessages(prev));
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (updateTo) {
@@ -205,14 +217,15 @@ const RoomChat = () => {
 
       if (workId) {
         // Check if already in cache
-        const cachedData = queryClient.getQueryData(publicWorkKeys.detail(work as Job));
+        const cachedData = queryClient.getQueryData(publicWorkKeys.detail(workId));
 
         // ✅ ONLY FETCH IF NOT IN CACHE
         if (!cachedData) {
           queryClient.prefetchQuery({
-            queryKey: publicWorkKeys.detail(workId as any),
+            queryKey: publicWorkKeys.detail(workId),
             queryFn: () => publiceWorkApi.getPublicWorkById(workId),
-            staleTime: Infinity,
+            staleTime: 5 * 60 * 1000,
+            gcTime: 10 * 60 * 1000,
           });
         }
       }
@@ -274,7 +287,7 @@ const RoomChat = () => {
             return updated;
           }
 
-          return [...prev, newMessage];
+          return limitRenderedMessages([...prev, newMessage]);
         });
 
         // Auto-mark as read when a new message comes from the other participant

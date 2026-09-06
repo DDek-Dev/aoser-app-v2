@@ -21,7 +21,10 @@ export const publicWorkKeys = {
   lists: () => [...publicWorkKeys.all, 'list'] as const,
   list: (filters: any) => [...publicWorkKeys.lists(), { filters }] as const,
   details: () => [...publicWorkKeys.all, 'detail'] as const,
-  detail: (work: Job) => [...publicWorkKeys.details(), { work }] as const,
+  detail: (work: Job | string) => [
+    ...publicWorkKeys.details(),
+    { workId: typeof work === 'string' ? work : work._id },
+  ] as const,
 };
 
 export const usePublicWork = (options?: {
@@ -63,11 +66,11 @@ export const useGetAllMyWorkInfinite = (pageSize = 15) => {
 
 export const usePublicWorkById = (id: string) => {
   return useQuery<WorkById>({
-    queryKey: publicWorkKeys.detail(id as any),
+    queryKey: publicWorkKeys.detail(id),
     queryFn: () => publiceWorkApi.getPublicWorkById(id),
     enabled: !!id,
-    staleTime: Infinity,
-    gcTime: Infinity,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

@@ -46,7 +46,6 @@ import CustomTabBar from './CustomTabBar';
 import EditWorkById from 'components/publicwork/EditworkById';
 import ProtectedRoute from './ProtectedRoute';
 import { useAuthContext } from 'contexts/AuthContext';
-import { usePushNotifications } from 'hooks/useNotifications';
 import ScreenWrapper from 'components/ui/ScreenWrapper';
 import ForgotPasswordScreen from 'screens/auth/ForgotPassword';
 import ProfileSetup from 'screens/auth/Profilesetup';
@@ -58,7 +57,7 @@ import CustomerProfile from 'screens/profile/CustomerProfile';
 import AppendOwnerWork from 'components/publicwork/AppendOwnerWork';
 import TopFreelancerList from 'components/freelancer/TopFreelancerList';
 import ConfirmPostjob from 'components/publicwork/ConfirmPostjob';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import WalletScreen from 'components/profile/WalletScreen';
 import NewsScreen from 'screens/profile/NewsScreen';
 import News from 'screens/profile/News';
@@ -135,23 +134,7 @@ function TabNavigator() {
 }
 
 export default function MainNavigator() {
-  const { expoPushToken, notification } = usePushNotifications();
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
-
-
-  useEffect(() => {
-    if (expoPushToken?.data) {
-      // console.log("TokenL: ", expoPushToken?.data);
-    }
-    if (notification) {
-      const data = JSON.stringify(notification, undefined, 2);
-      // console.log("Notification: ", data);
-    }
-
-  }, [notification, expoPushToken]);
-
-
-
   const { t } = useTranslation();
 
   const navigation = useNavigation<NativeStackNavigationProp<FreelancerStackParamList>>();

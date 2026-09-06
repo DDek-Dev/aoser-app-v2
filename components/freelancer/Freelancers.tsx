@@ -161,7 +161,7 @@ export default function Freelancers({
     // A card must be completely inside the list viewport before it can play.
     // As the top row becomes partly hidden, it pauses and only fully visible
     // middle cards remain active.
-    itemVisiblePercentThreshold: 100,
+    itemVisiblePercentThreshold: 70,
     minimumViewTime: 150,
   }).current;
 

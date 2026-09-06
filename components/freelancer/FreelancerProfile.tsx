@@ -490,7 +490,14 @@ export default function FreelancerProfile() {
 
         {/* ===== VIDEO PROMOTION ===== */}
 
-        {profile.videoPromote && <VDOPromote video={profile.videoPromote} context="profile" scrollY={scrollY} isScreenFocused={isFocused} />}
+        {isFocused && profile.videoPromote && (
+          <VDOPromote
+            video={profile.videoPromote}
+            context="profile"
+            scrollY={scrollY}
+            isScreenFocused={isFocused}
+          />
+        )}
         {/* {!!profile.videoPromote && <VDOPromote video={profile.videoPromote} context="profile" scrollY={scrollY} isScreenFocused={isFocused} />} */}
 
         {/* ===== TABBED PROFILE SECTION ===== */}

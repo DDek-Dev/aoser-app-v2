@@ -30,6 +30,13 @@ interface ChatListContainerProps {
   pageSize?: number;
 }
 
+const MAX_RENDERED_MESSAGES = 200;
+
+const limitRenderedMessages = (messages: Message[]) =>
+  messages.length > MAX_RENDERED_MESSAGES
+    ? messages.slice(-MAX_RENDERED_MESSAGES)
+    : messages;
+
 const ChatListContainer: React.FC<ChatListContainerProps> = ({
   messages,
   onUpdateMessages,
@@ -218,7 +225,7 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
 
     if (Array.isArray(messages) && messages.length > 0) {
       initializedRef.current = true;
-      setInternalMessages(messages);
+      setInternalMessages(limitRenderedMessages(messages));
       const serverCount = countServerMessages(messages);
       setSkip(serverCount);
       setHasMore(serverCount >= pageSize);
@@ -236,7 +243,7 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
         isFetchingMoreRef.current = true;
         const first = await onFetchPage(0, pageSize);
         if (!mounted) return;
-        setInternalMessages(first || []);
+        setInternalMessages(limitRenderedMessages(first || []));
         setSkip((first || []).length || 0);
         setHasMore((first || []).length >= pageSize);
       } catch (e) {
@@ -302,7 +309,7 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
           });
         }
 
-        return changed ? next : prev;
+        return changed ? limitRenderedMessages(next) : prev;
       });
     } catch (e) {
       // ignore merge errors
@@ -355,7 +362,7 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
             return id ? !existingIds.has(id) : true;
           });
           if (dedupedNext.length === 0) return existing;
-          return [...existing, ...dedupedNext];
+          return limitRenderedMessages([...existing, ...dedupedNext]);
         });
 
         setSkip(prev => prev + next.length);
